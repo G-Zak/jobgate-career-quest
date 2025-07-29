@@ -1,0 +1,19 @@
+# System files
+.DS_Store
+*.pyc
+__pycache__/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
+
+# Dependencies
+node_modules/
+
+# Build
+dist/
+build/
