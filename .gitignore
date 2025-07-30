@@ -18,10 +18,5 @@ node_modules/
 dist/
 build/
 
-# Personal Learning Documentation (Private)
-CHAT_EXPORT.txt
-LEARNING_NOTES.md
-PERSONAL_GUIDE.md
-HOW_I_LEARNED.md
-GIT_COLLABORATION_GUIDE.md
-GIT_PRACTICAL_EXAMPLE.md
+# Personal Learning Documentation (Private Directory)
+personal-learning/
