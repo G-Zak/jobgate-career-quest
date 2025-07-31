@@ -20,3 +20,39 @@ build/
 
 # Personal Learning Documentation (Private Directory)
 personal-learning/
+
+# Implementation Guides & Documentation (Development Only)
+F2_ASSET_CREATION_GUIDE.md
+F2_IMPLEMENTATION_SUMMARY.md
+F1_TASK_COMPLETE.md
+FIX_SUMMARY.md
+
+# Asset Optimization & Generation Scripts (Development Tools)
+scripts/optimize-assets.sh
+scripts/generate-atlas.js
+scripts/f2-quick-start.sh
+scripts/package.json
+
+# Asset Creation Working Files
+frontend/src/assets/images/optimized/
+frontend/src/assets/images/webp/
+frontend/src/assets/asset-manifest.json
+
+# Development Scripts (Not for Production)
+scripts/batch-convert-pdf.sh
+scripts/clean-emojis.py
+scripts/comprehensive-fix.py
+scripts/convert-to-pdf.sh
+scripts/create-pdf-optimized.py
+scripts/fix-formatting.py
+scripts/fix-task-formatting.py
+scripts/pandoc-aliases.sh
+
+# Build Tools
+.vite/
+
+# Documentation Exports
+exports/
+
+# Test Files
+frontend/phaser-test.html

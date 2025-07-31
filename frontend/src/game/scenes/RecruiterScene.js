@@ -1,20 +1,27 @@
 import BaseScene from './BaseScene';
+import { SCENE_KEYS } from '@game/config/gameConfig';
 
 export default class RecruiterScene extends BaseScene {
   constructor() {
-    super('RecruiterScene');
+    super(SCENE_KEYS.RECRUITER);
   }
 
   create() {
+    console.log('🎮 RecruiterScene: Creating recruiter interaction...');
+    
     this.createBackground();
     
-    // Get selected skill from game registry
-    const selectedSkill = this.game.registry.get('selectedSkill') || 'react';
+    // Get selected skill from initialization
+    const selectedSkill = this.selectedSkill;
+    console.log(`Selected skill: ${selectedSkill}`);
     
     this.createOfficeEnvironment();
     this.createRecruiterCharacter();
     this.createDialogue(selectedSkill);
     this.createStartButton(selectedSkill);
+    
+    // Add back button
+    this.createBackButton();
   }
 
   createOfficeEnvironment() {
@@ -128,12 +135,58 @@ Are you ready to showcase your skills?`;
   }
 
   startTest(skill) {
-    // Add click sound effect (if audio is added later)
-    // this.sound.play('buttonClick');
+    console.log(`🎯 Starting test for skill: ${skill}`);
     
-    this.createFadeTransition('TestScene', { 
-      skill: skill,
-      startTime: Date.now()
+    // Call React callback to start quiz
+    this.callReact('onQuizStart', skill);
+  }
+
+  createBackButton() {
+    const { width, height, isMobile } = this.getResponsiveDimensions();
+    
+    // Back button in top-left corner
+    this.backButton = this.createButton(
+      80, 
+      40, 
+      isMobile ? 60 : 80, 
+      30, 
+      'Back', 
+      () => this.goBack(),
+      {
+        backgroundColor: 0x95a5a6,
+        hoverColor: 0xbdc3c7,
+        fontSize: '14px'
+      }
+    );
+  }
+
+  goBack() {
+    console.log('🔙 Going back to main scene...');
+    
+    // Transition back to main scene
+    this.createFadeTransition(SCENE_KEYS.MAIN, {
+      selectedSkill: this.selectedSkill
     });
+  }
+
+  onSkillChange(newSkill) {
+    super.onSkillChange(newSkill);
+    
+    // Update dialogue if skill changes
+    if (this.dialogueText) {
+      this.children.removeAll();
+      this.create();
+    }
+  }
+
+  // Handle resize
+  resize() {
+    this.handleResize();
+    
+    // Recreate scene with new dimensions
+    if (this.children.length > 0) {
+      this.children.removeAll();
+      this.create();
+    }
   }
 }

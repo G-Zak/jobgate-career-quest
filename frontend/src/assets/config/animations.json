@@ -1,0 +1,86 @@
+{
+  "characters": {
+    "recruiter": {
+      "idle": {
+        "frameCount": 4,
+        "frameRate": 2,
+        "repeat": -1,
+        "frames": [
+          { "frame": "recruiter-idle-01", "duration": 1000 },
+          { "frame": "recruiter-idle-02", "duration": 300 },
+          { "frame": "recruiter-idle-03", "duration": 1000 },
+          { "frame": "recruiter-idle-04", "duration": 500 }
+        ]
+      },
+      "speech": {
+        "frameCount": 4,
+        "frameRate": 8,
+        "repeat": -1,
+        "frames": [
+          { "frame": "recruiter-speech-01", "duration": 200 },
+          { "frame": "recruiter-speech-02", "duration": 150 },
+          { "frame": "recruiter-speech-03", "duration": 200 },
+          { "frame": "recruiter-speech-04", "duration": 150 }
+        ]
+      }
+    }
+  },
+  "ui": {
+    "buttons": {
+      "hover": {
+        "scale": 1.1,
+        "duration": 100,
+        "ease": "Power2"
+      },
+      "press": {
+        "scale": 0.95,
+        "duration": 50,
+        "ease": "Power2"
+      }
+    },
+    "badges": {
+      "unlock": {
+        "scale": [0, 1.3, 1],
+        "rotation": [0, 0.2, 0],
+        "duration": 800,
+        "ease": "Bounce.easeOut"
+      },
+      "shine": {
+        "alpha": [0.5, 1, 0.5],
+        "duration": 1500,
+        "repeat": -1,
+        "ease": "Sine.easeInOut"
+      }
+    }
+  },
+  "effects": {
+    "particles": {
+      "success": {
+        "confetti": {
+          "quantity": 50,
+          "speed": { "min": 100, "max": 300 },
+          "scale": { "start": 0.5, "end": 0 },
+          "lifespan": 2000,
+          "gravity": 300
+        },
+        "sparkles": {
+          "quantity": 20,
+          "speed": { "min": 50, "max": 150 },
+          "scale": { "start": 0.8, "end": 0.2 },
+          "lifespan": 1500,
+          "alpha": { "start": 1, "end": 0 }
+        }
+      }
+    },
+    "transitions": {
+      "fadeIn": {
+        "duration": 500,
+        "ease": "Power2.easeOut"
+      },
+      "slideUp": {
+        "duration": 300,
+        "ease": "Back.easeOut"
+      }
+    }
+  }
+}

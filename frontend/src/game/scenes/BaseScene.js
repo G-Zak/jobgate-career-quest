@@ -1,8 +1,18 @@
 import Phaser from 'phaser';
+import { GAME_CONFIG } from '@game/config/gameConfig';
 
 export default class BaseScene extends Phaser.Scene {
   constructor(key) {
     super({ key });
+    this.gameWidth = GAME_CONFIG.CANVAS_WIDTH;
+    this.gameHeight = GAME_CONFIG.CANVAS_HEIGHT;
+  }
+
+  init(data) {
+    // Store passed data
+    this.sceneData = data || {};
+    this.selectedSkill = this.registry.get('selectedSkill') || 'react';
+    this.reactCallbacks = this.registry.get('reactCallbacks') || {};
   }
 
   // Common background setup
@@ -118,6 +128,100 @@ export default class BaseScene extends Phaser.Scene {
       repeat: text.length - 1
     });
 
-    return textObject;
+    return { textObject, timer };
+  }
+
+  /**
+   * Get responsive dimensions based on canvas size
+   */
+  getResponsiveDimensions() {
+    const width = this.scale.width;
+    const height = this.scale.height;
+    
+    let deviceType = 'desktop';
+    if (width < GAME_CONFIG.BREAKPOINTS.MOBILE) {
+      deviceType = 'mobile';
+    } else if (width < GAME_CONFIG.BREAKPOINTS.TABLET) {
+      deviceType = 'tablet';
+    }
+
+    return {
+      width,
+      height,
+      centerX: width / 2,
+      centerY: height / 2,
+      deviceType,
+      isMobile: deviceType === 'mobile',
+      isTablet: deviceType === 'tablet',
+      isDesktop: deviceType === 'desktop'
+    };
+  }
+
+  /**
+   * Handle skill change from React
+   */
+  onSkillChange(newSkill) {
+    this.selectedSkill = newSkill;
+    // Override in child scenes if needed
+  }
+
+  /**
+   * Safe callback to React
+   */
+  callReact(callbackName, ...args) {
+    try {
+      const callback = this.reactCallbacks[callbackName];
+      if (callback && typeof callback === 'function') {
+        callback(...args);
+      }
+    } catch (error) {
+      console.error(`Error calling React callback ${callbackName}:`, error);
+    }
+  }
+
+  /**
+   * Common resize handler
+   */
+  handleResize() {
+    const { width, height } = this.getResponsiveDimensions();
+    this.gameWidth = width;
+    this.gameHeight = height;
+    
+    // Override in child scenes for specific resize behavior
+  }
+
+  /**
+   * Create a dialog box with background and text
+   */
+  createDialogBox(x, y, width, height, text, style = {}) {
+    const defaultStyle = {
+      backgroundColor: 0x2c3e50,
+      borderColor: 0x34495e,
+      textColor: '#ffffff',
+      padding: 20,
+      ...style
+    };
+
+    // Create dialog background
+    const dialogBg = this.add.rectangle(x, y, width, height, defaultStyle.backgroundColor);
+    dialogBg.setStrokeStyle(3, defaultStyle.borderColor);
+    dialogBg.setDepth(GAME_CONFIG.DIALOG_DEPTH);
+
+    // Create dialog text
+    const dialogText = this.add.text(
+      x - width/2 + defaultStyle.padding, 
+      y - height/2 + defaultStyle.padding, 
+      text, 
+      {
+        fontSize: '16px',
+        fill: defaultStyle.textColor,
+        fontFamily: 'Arial',
+        wordWrap: { width: width - (defaultStyle.padding * 2), useAdvancedWrap: true }
+      }
+    );
+    dialogText.setOrigin(0);
+    dialogText.setDepth(GAME_CONFIG.DIALOG_DEPTH + 1);
+
+    return { background: dialogBg, text: dialogText };
   }
 }

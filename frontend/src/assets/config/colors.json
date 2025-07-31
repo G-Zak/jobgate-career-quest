@@ -1,0 +1,45 @@
+{
+  "palette": {
+    "primary": {
+      "blue": "#1E40AF",
+      "lightBlue": "#3B82F6",
+      "darkBlue": "#1E3A8A"
+    },
+    "secondary": {
+      "green": "#10B981",
+      "orange": "#F59E0B", 
+      "red": "#EF4444"
+    },
+    "neutral": {
+      "darkGray": "#1F2937",
+      "gray": "#6B7280",
+      "lightGray": "#E5E7EB",
+      "white": "#FFFFFF"
+    },
+    "office": {
+      "warmBeige": "#F5E6D3",
+      "cream": "#FEF7ED",
+      "lightBrown": "#D2B48C",
+      "woodBrown": "#8B4513"
+    },
+    "badges": {
+      "bronze": "#CD7F32",
+      "silver": "#C0C0C0", 
+      "gold": "#FFD700"
+    },
+    "skills": {
+      "react": "#61DAFB",
+      "javascript": "#F7DF1E",
+      "python": "#3776AB",
+      "node": "#339933",
+      "css": "#1572B6",
+      "git": "#F05032"
+    }
+  },
+  "hexCodes": [
+    "#1E40AF", "#3B82F6", "#10B981", "#F59E0B", 
+    "#EF4444", "#1F2937", "#6B7280", "#E5E7EB",
+    "#FFFFFF", "#F5E6D3", "#D2B48C", "#CD7F32",
+    "#C0C0C0", "#FFD700", "#61DAFB", "#F7DF1E"
+  ]
+}

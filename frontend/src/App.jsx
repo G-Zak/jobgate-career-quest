@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import GameComponent from './game/Game';
+import GameContainer from './game/GameContainer';
 
 export default function App() {
   const [showGame, setShowGame] = useState(false);
@@ -9,11 +9,39 @@ export default function App() {
     { id: 'react', name: 'React Development', icon: '⚛️' },
     { id: 'javascript', name: 'JavaScript', icon: '🟨' },
     { id: 'python', name: 'Python', icon: '🐍' },
-    { id: 'django', name: 'Django', icon: '🎸' }
+    { id: 'django', name: 'Django', icon: '🎸' },
+    { id: 'nodejs', name: 'Node.js', icon: '🟢' },
+    { id: 'typescript', name: 'TypeScript', icon: '🔷' }
   ];
 
+  // Handler when user exits the game
+  const handleGameExit = () => {
+    console.log('👋 User exited the game');
+    setShowGame(false);
+  };
+
+  // Handler when user starts quiz from game
+  const handleQuizStart = (skill) => {
+    console.log(`🎯 Quiz started for skill: ${skill}`);
+    
+    // For now, show an alert. Later this will navigate to quiz interface
+    alert(`Quiz for ${skill} would start here!\n\nThis will be implemented in F4 - Quiz Interface task.`);
+    
+    // Optionally exit game to show React quiz interface
+    // setShowGame(false);
+  };
+
   if (showGame) {
-    return <GameComponent selectedSkill={selectedSkill} />;
+    return (
+      <div className="min-h-screen bg-gray-900">
+        <GameContainer 
+          selectedSkill={selectedSkill}
+          onGameExit={handleGameExit}
+          onQuizStart={handleQuizStart}
+          className="w-full h-screen"
+        />
+      </div>
+    );
   }
 
   return (
