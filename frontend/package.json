@@ -12,6 +12,8 @@
     "test": "echo 'Tests not configured yet' && exit 0"
   },
   "dependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "phaser": "^3.90.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
