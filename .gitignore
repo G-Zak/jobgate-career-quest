@@ -27,18 +27,28 @@ F2_IMPLEMENTATION_SUMMARY.md
 F1_TASK_COMPLETE.md
 FIX_SUMMARY.md
 
+# Chat Exports & Development Notes
+CHAT_EXPORT.txt
+*_export*.txt
+*_Export*.txt
+
+# Empty Documentation Files
+IMPLEMENTATION_GUIDE.md
+GIT_COLLABORATION_GUIDE.md
+GIT_PRACTICAL_EXAMPLE.md
+HOW_I_LEARNED.md
+LEARNING_NOTES.md
+PERSONAL_GUIDE.md
+REPOSITORY_OWNER_GUIDE.md
+*_clean.md
+
 # Asset Optimization & Generation Scripts (Development Tools)
 scripts/optimize-assets.sh
 scripts/generate-atlas.js
 scripts/f2-quick-start.sh
 scripts/package.json
 
-# Asset Creation Working Files
-frontend/src/assets/images/optimized/
-frontend/src/assets/images/webp/
-frontend/src/assets/asset-manifest.json
-
-# Development Scripts (Not for Production)
+# Development-Only Scripts (Not for Production)
 scripts/batch-convert-pdf.sh
 scripts/clean-emojis.py
 scripts/comprehensive-fix.py
@@ -47,6 +57,17 @@ scripts/create-pdf-optimized.py
 scripts/fix-formatting.py
 scripts/fix-task-formatting.py
 scripts/pandoc-aliases.sh
+
+# Keep Essential Team Scripts:
+# scripts/team-setup.sh (Linux/macOS)
+# scripts/team-setup.ps1 (Windows PowerShell)  
+# scripts/team-setup.bat (Windows cmd)
+# scripts/README.md (Setup guide)
+
+# Asset Creation Working Files
+frontend/src/assets/images/optimized/
+frontend/src/assets/images/webp/
+frontend/src/assets/asset-manifest.json
 
 # Build Tools
 .vite/
