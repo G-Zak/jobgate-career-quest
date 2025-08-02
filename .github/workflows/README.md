@@ -7,11 +7,14 @@ This directory contains GitHub Actions workflows for the JobGate Career Quest pr
 ### 1. Backend CI/CD (`backend.yml`)
 
 **Triggers:**
+
 - Push to `main` or `develop` branches (when backend files change)
 - Pull requests to `main` or `develop` branches (when backend files change)
 
 **Jobs:**
+
 - **Test**: Runs Django tests with PostgreSQL database
+
   - Python 3.12 setup
   - PostgreSQL 15 service
   - Dependency installation
@@ -21,6 +24,7 @@ This directory contains GitHub Actions workflows for the JobGate Career Quest pr
   - Coverage upload to Codecov
 
 - **Build & Push**: Builds and pushes Docker image to Docker Hub
+
   - Only runs on main branch pushes
   - Multi-platform support (amd64, arm64)
   - Docker Hub integration
@@ -32,11 +36,14 @@ This directory contains GitHub Actions workflows for the JobGate Career Quest pr
 ### 2. Frontend CI/CD (`frontend.yml`)
 
 **Triggers:**
+
 - Push to `main` or `develop` branches (when frontend files change)
 - Pull requests to `main` or `develop` branches (when frontend files change)
 
 **Jobs:**
+
 - **Test**: Frontend testing and building
+
   - Node.js 20 setup
   - Dependency installation with npm ci
   - ESLint code linting
@@ -46,10 +53,12 @@ This directory contains GitHub Actions workflows for the JobGate Career Quest pr
   - Artifact upload
 
 - **Lighthouse**: Performance testing (PR only)
+
   - Lighthouse CI for performance metrics
   - Accessibility, SEO, and best practices checks
 
 - **Build & Push**: Docker image building and pushing
+
   - Only runs on main branch pushes
   - Multi-platform support
   - Build args for API URL configuration
@@ -61,21 +70,26 @@ This directory contains GitHub Actions workflows for the JobGate Career Quest pr
 ### 3. Docker Multi-Platform (`docker-publish.yml`)
 
 **Triggers:**
+
 - Push to `main` branch
 - Git tags with `v*` pattern
 - GitHub releases
 
 **Jobs:**
+
 - **Build Backend**: Multi-platform backend image
+
   - Docker Buildx setup
   - Cross-platform builds (linux/amd64, linux/arm64)
   - Semantic versioning tags
 
 - **Build Frontend**: Multi-platform frontend image
+
   - Environment-specific build args
   - Production-ready configurations
 
 - **Deploy**: Deployment automation
+
   - Production environment targeting
   - Deployment status notifications
 
@@ -103,22 +117,26 @@ VITE_API_URL       # Production API URL for frontend builds
 ## 📊 Features
 
 ### Code Quality
+
 - **Linting**: ESLint for frontend, flake8 for backend
 - **Type Checking**: TypeScript validation
 - **Testing**: Comprehensive test suites with coverage
 - **Security**: Trivy vulnerability scanning
 
 ### Performance
+
 - **Lighthouse CI**: Performance, accessibility, and SEO metrics
 - **Caching**: Aggressive Docker layer caching
 - **Parallel Jobs**: Concurrent execution for faster builds
 
 ### Deployment
+
 - **Multi-Platform**: Support for AMD64 and ARM64 architectures
 - **Semantic Versioning**: Automatic tag generation
 - **Environment Isolation**: Separate production deployments
 
 ### Monitoring
+
 - **Coverage Reports**: Codecov integration
 - **Security Alerts**: GitHub Security tab integration
 - **Build Artifacts**: Downloadable build outputs
@@ -133,15 +151,18 @@ VITE_API_URL       # Production API URL for frontend builds
 ## 📝 Customization
 
 ### Adding New Tests
+
 - Backend: Add to existing Django test files
 - Frontend: Configure Jest or Vitest (currently placeholder)
 
 ### Modifying Build Process
+
 - Update Dockerfile configurations
 - Adjust workflow environment variables
 - Customize deployment steps
 
 ### Security Configuration
+
 - Adjust Trivy scan configurations
 - Configure additional security tools
 - Set up custom security policies
