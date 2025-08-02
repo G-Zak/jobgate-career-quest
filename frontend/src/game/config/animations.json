@@ -1,91 +1,147 @@
 {
-  "character": {
+  "player": {
     "idle": {
-      "frames": 4,
-      "duration": 800,
-      "loop": true
+      "key": "player-idle",
+      "frames": {
+        "start": 0,
+        "end": 3
+      },
+      "frameRate": 8,
+      "repeat": -1
     },
     "walk": {
-      "frames": 8,
-      "duration": 600,
-      "loop": true
+      "key": "player-walk",
+      "frames": {
+        "start": 0,
+        "end": 7
+      },
+      "frameRate": 12,
+      "repeat": -1
     },
-    "work": {
-      "frames": 6,
-      "duration": 1000,
-      "loop": true
+    "jump": {
+      "key": "player-jump",
+      "frames": {
+        "start": 0,
+        "end": 5
+      },
+      "frameRate": 15,
+      "repeat": 0
     },
-    "celebrate": {
-      "frames": 12,
-      "duration": 1500,
-      "loop": false
+    "attack": {
+      "key": "player-attack",
+      "frames": {
+        "start": 0,
+        "end": 4
+      },
+      "frameRate": 20,
+      "repeat": 0
+    }
+  },
+  "enemy": {
+    "patrol": {
+      "key": "enemy-patrol",
+      "frames": {
+        "start": 0,
+        "end": 3
+      },
+      "frameRate": 6,
+      "repeat": -1
     },
-    "think": {
-      "frames": 4,
-      "duration": 1200,
-      "loop": true
+    "alert": {
+      "key": "enemy-alert",
+      "frames": {
+        "start": 0,
+        "end": 5
+      },
+      "frameRate": 10,
+      "repeat": -1
+    },
+    "attack": {
+      "key": "enemy-attack",
+      "frames": {
+        "start": 0,
+        "end": 3
+      },
+      "frameRate": 15,
+      "repeat": 0
+    }
+  },
+  "collectibles": {
+    "coin": {
+      "key": "coin-spin",
+      "frames": {
+        "start": 0,
+        "end": 7
+      },
+      "frameRate": 12,
+      "repeat": -1
+    },
+    "powerup": {
+      "key": "powerup-glow",
+      "frames": {
+        "start": 0,
+        "end": 3
+      },
+      "frameRate": 8,
+      "repeat": -1
+    },
+    "badge": {
+      "key": "badge-shine",
+      "frames": {
+        "start": 0,
+        "end": 5
+      },
+      "frameRate": 6,
+      "repeat": -1
     }
   },
   "ui": {
-    "fadeIn": {
-      "duration": 300,
-      "easing": "ease-out"
+    "button": {
+      "key": "button-hover",
+      "frames": {
+        "start": 0,
+        "end": 1
+      },
+      "frameRate": 4,
+      "repeat": -1
     },
-    "fadeOut": {
-      "duration": 200,
-      "easing": "ease-in"
-    },
-    "slideUp": {
-      "duration": 400,
-      "easing": "ease-out"
-    },
-    "slideDown": {
-      "duration": 300,
-      "easing": "ease-in"
-    },
-    "bounce": {
-      "duration": 600,
-      "easing": "bounce-out"
-    },
-    "pulse": {
-      "duration": 1000,
-      "easing": "ease-in-out",
-      "loop": true
+    "loading": {
+      "key": "loading-spinner",
+      "frames": {
+        "start": 0,
+        "end": 11
+      },
+      "frameRate": 24,
+      "repeat": -1
     }
   },
   "effects": {
+    "explosion": {
+      "key": "explosion",
+      "frames": {
+        "start": 0,
+        "end": 8
+      },
+      "frameRate": 20,
+      "repeat": 0
+    },
     "sparkle": {
-      "frames": 16,
-      "duration": 800,
-      "loop": false
+      "key": "sparkle",
+      "frames": {
+        "start": 0,
+        "end": 4
+      },
+      "frameRate": 15,
+      "repeat": 0
     },
-    "glow": {
-      "duration": 2000,
-      "easing": "ease-in-out",
-      "loop": true
-    },
-    "typewriter": {
-      "charDelay": 50,
-      "lineDelay": 300
-    },
-    "particles": {
-      "lifetime": 2000,
-      "count": 20,
-      "spread": 45
-    }
-  },
-  "transitions": {
-    "sceneChange": {
-      "duration": 500,
-      "easing": "ease-in-out"
-    },
-    "levelUp": {
-      "duration": 1500,
-      "easing": "bounce-out"
-    },
-    "achievement": {
-      "duration": 2000,
-      "easing": "ease-out"
+    "smoke": {
+      "key": "smoke",
+      "frames": {
+        "start": 0,
+        "end": 6
+      },
+      "frameRate": 12,
+      "repeat": 0
     }
   }
 }

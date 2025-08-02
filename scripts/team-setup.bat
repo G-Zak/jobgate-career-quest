@@ -46,13 +46,7 @@ if not exist "docker-compose.yaml" (
     exit /b 1
 )
 
-REM Pull latest changes
-echo 📥 Pulling latest changes from main branch...
-git checkout main
-git pull origin main
-if %ERRORLEVEL% NEQ 0 (
-    echo ⚠️ Warning: Could not pull latest changes. Continue anyway.
-)
+
 
 REM Check Docker
 echo 🐳 Checking Docker...
