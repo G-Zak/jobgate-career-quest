@@ -79,4 +79,4 @@ exports/
 frontend/phaser-test.html
 
 #Yassine
-scripts\check-disk-space.bat
+scripts/check-disk-space.bat
