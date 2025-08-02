@@ -1,4 +1,4 @@
-# 👥 Team Collaboration Setup Guide
+# 👥 Team Collaboration Setup Guide 
 *How to set up jobgate-career-quest for 3-person development team*
 
 ## 🎯 Quick Start for Team Members
