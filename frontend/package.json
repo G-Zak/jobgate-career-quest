@@ -3,21 +3,31 @@
   "version": "1.0.0",
   "description": "Career Quest - Gamified Skills Assessment",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "type-check": "echo 'Type checking not configured yet'",
+    "test": "echo 'Tests not configured yet' && exit 0"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^4.7.0",
-    "phaser": "^3.90.0",
+    "chart.js": "^4.4.0",
     "react": "^18.2.0",
+    "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
     "autoprefixer": "^10.4.0",
     "eslint": "^8.56.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.0",
     "postcss": "^8.4.0",
     "tailwindcss": "^3.4.0",
+    "typescript": "^5.0.0",
     "vite": "^7.0.6",
     "vite-plugin-svgr": "^4.0.0"
   }

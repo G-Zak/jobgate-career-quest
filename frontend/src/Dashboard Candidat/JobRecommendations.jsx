@@ -1,0 +1,82 @@
+import React from 'react';
+
+const JobRecommendations = ({ jobs }) => {
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold text-gray-900">💼 Recommended Jobs</h2>
+        <a href="#" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+          View all jobs →
+        </a>
+      </div>
+      
+      <div className="space-y-4">
+        {jobs.map(job => (
+          <div
+            key={job.id}
+            className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 hover:border-blue-200 cursor-pointer group"
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center space-x-3 mb-2">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                    {job.company.charAt(0)}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      {job.title}
+                    </h3>
+                    <p className="text-sm text-gray-600">{job.company}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                  <span className="flex items-center">
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {job.location}
+                  </span>
+                  <span className="flex items-center">
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                    {job.salary}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-gray-700">Match:</span>
+                    <div className="w-20 h-2 bg-gray-200 rounded-full">
+                      <div 
+                        className={`h-2 rounded-full ${
+                          job.match >= 80 ? 'bg-green-500' : 
+                          job.match >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${job.match}%` }}
+                      ></div>
+                    </div>
+                    <span className={`text-sm font-semibold ${
+                      job.match >= 80 ? 'text-green-600' : 
+                      job.match >= 60 ? 'text-yellow-600' : 'text-red-600'
+                    }`}>
+                      {job.match}%
+                    </span>
+                  </div>
+                  
+                  <button className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors">
+                    Apply Now
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default JobRecommendations;

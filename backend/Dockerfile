@@ -6,8 +6,9 @@ WORKDIR /app
 # Copy requirements first (better caching)
 COPY requirements.txt .
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies with increased timeout and retries
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir --timeout=300 --retries=3 -r requirements.txt
 
 # Copy the entire backend folder
 COPY . .
