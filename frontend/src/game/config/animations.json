@@ -1,0 +1,91 @@
+{
+  "character": {
+    "idle": {
+      "frames": 4,
+      "duration": 800,
+      "loop": true
+    },
+    "walk": {
+      "frames": 8,
+      "duration": 600,
+      "loop": true
+    },
+    "work": {
+      "frames": 6,
+      "duration": 1000,
+      "loop": true
+    },
+    "celebrate": {
+      "frames": 12,
+      "duration": 1500,
+      "loop": false
+    },
+    "think": {
+      "frames": 4,
+      "duration": 1200,
+      "loop": true
+    }
+  },
+  "ui": {
+    "fadeIn": {
+      "duration": 300,
+      "easing": "ease-out"
+    },
+    "fadeOut": {
+      "duration": 200,
+      "easing": "ease-in"
+    },
+    "slideUp": {
+      "duration": 400,
+      "easing": "ease-out"
+    },
+    "slideDown": {
+      "duration": 300,
+      "easing": "ease-in"
+    },
+    "bounce": {
+      "duration": 600,
+      "easing": "bounce-out"
+    },
+    "pulse": {
+      "duration": 1000,
+      "easing": "ease-in-out",
+      "loop": true
+    }
+  },
+  "effects": {
+    "sparkle": {
+      "frames": 16,
+      "duration": 800,
+      "loop": false
+    },
+    "glow": {
+      "duration": 2000,
+      "easing": "ease-in-out",
+      "loop": true
+    },
+    "typewriter": {
+      "charDelay": 50,
+      "lineDelay": 300
+    },
+    "particles": {
+      "lifetime": 2000,
+      "count": 20,
+      "spread": 45
+    }
+  },
+  "transitions": {
+    "sceneChange": {
+      "duration": 500,
+      "easing": "ease-in-out"
+    },
+    "levelUp": {
+      "duration": 1500,
+      "easing": "bounce-out"
+    },
+    "achievement": {
+      "duration": 2000,
+      "easing": "ease-out"
+    }
+  }
+}
