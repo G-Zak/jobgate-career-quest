@@ -1,7 +1,7 @@
 {
   "name": "frontend",
   "version": "1.0.0",
-  "description": "Career Quest - Gamified Skills Assessment",
+  "description": "JobGate Career Quest - Skills Assessment Platform",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "vite build",
@@ -12,6 +12,8 @@
     "test": "echo 'Tests not configured yet' && exit 0"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "axios": "^1.11.0",
     "chart.js": "^4.4.0",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",

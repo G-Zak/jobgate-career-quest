@@ -5,13 +5,13 @@
 ```
 main (production-ready)
 ├── feature/user-authentication    (Person 1)
-├── feature/game-scoring          (Person 2)  
+├── feature/skills-assessment     (Person 2)  
 ├── feature/job-recommendations   (Person 3)
 └── fix/urgent-bug               (Hotfix)
 
 After development:
 main ← merge ← feature/user-authentication
-main ← merge ← feature/game-scoring  
+main ← merge ← feature/skills-assessment  
 main ← merge ← feature/job-recommendations
 ```
 
@@ -43,13 +43,13 @@ git push  # Make sure work is saved
 ```bash
 # Features
 feature/user-login-ui
-feature/phaser-game-engine
+feature/skills-assessment-ui
 feature/django-user-api
 feature/job-recommendation-algorithm
 
 # Bug Fixes
 fix/login-validation-error
-fix/phaser-scene-transition
+fix/component-styling-issue
 fix/docker-compose-networking
 
 # Hotfixes (urgent)
@@ -61,7 +61,7 @@ hotfix/database-connection
 
 | Developer | Primary Focus | Directories |
 |-----------|---------------|-------------|
-| **Frontend Dev** | UI/UX, Game | `frontend/src/` |
+| **Frontend Dev** | UI/UX, SaaS Platform | `frontend/src/` |
 | **Backend Dev** | API, Database | `backend/` |
 | **Full-Stack** | Integration | Both + `devops/` |
 

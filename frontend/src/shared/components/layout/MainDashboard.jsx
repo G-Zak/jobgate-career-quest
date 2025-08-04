@@ -5,11 +5,11 @@ import {
   ChevronRightIcon,
   UserCircleIcon
 } from '@heroicons/react/24/outline';
-import Dashboard from '../Dashboard Candidat/DashboardCandidat';
-import jobgateLogo from '../assets/images/ui/JOBGATE LOGO.png';
-import formationEnLigne from '../assets/images/ui/formation_en_ligne.avif';
-import formationTechnique from '../assets/images/ui/formation_technique.avif';
-import betterImpressions from '../assets/images/ui/better_impressions.avif';
+import Dashboard from '../../../features/candidate-dashboard/components/DashboardCandidat';
+import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
+import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
+import formationTechnique from '../../../assets/images/ui/formation_technique.avif';
+import betterImpressions from '../../../assets/images/ui/better_impressions.avif';
 
 const MainDashboard = () => {
   const [activeSection, setActiveSection] = useState('applications');

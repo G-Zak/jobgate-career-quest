@@ -1,10 +1,10 @@
 # JobGate Career Quest
 
-A gamified skills assessment platform that helps users evaluate their professional skills through interactive testing and provides personalized career recommendations.
+A professional skills assessment platform that helps users evaluate their abilities through comprehensive testing and provides personalized career recommendations.
 
 ## 🚀 Features
 
-- **Gamified Skills Assessment**: Interactive tests across multiple domains
+- **Professional Skills Assessment**: Comprehensive tests across multiple domains
 - **Personalized Recommendations**: AI-powered career path suggestions
 - **Achievement System**: Badges and rewards for skill progression
 - **Dashboard Analytics**: Comprehensive progress tracking
