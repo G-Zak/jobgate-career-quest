@@ -246,6 +246,28 @@ Frontend (React + Phaser) <-> Backend (Django REST) <-> Database (PostgreSQL)
 - [ ] **F8.8** - Tester les performances avec Lighthouse
 
 ---
+#### **F9 – Test Page Development**
+**Task List:**
+ - [ ] **F9.1** – Concevoir la structure de la page de test (layout & sections)
+
+ - [ ] **F9.2** – Intégrer les questions dynamiquement (JSON/API)
+
+ - [ ] **F9.3** – Gérer la sélection des réponses et la navigation (Suivant/Précédent)
+
+ - [ ] **F9.4** – Ajouter un système de progression (barre ou compteur)
+
+ - [ ] **F9.5** – Implémenter un timer avec gestion du temps écoulé
+
+ - [ ] **F9.6** – Ajouter un bouton de soumission avec validation
+
+ - [ ] **F9.7** – Afficher le score/résultat après la soumission
+
+ - [ ] **F9.8** – Appliquer les composants UI réutilisables (depuis F7)
+
+ - [ ] **F9.9** – Tester l’expérience utilisateur sur différentes tailles d’écran
+
+
+
 
 ### **BACKEND - Django REST (Développeur Backend)**
 
