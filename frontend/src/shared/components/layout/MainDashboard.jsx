@@ -256,7 +256,7 @@ const MainDashboard = () => {
               />
             )
           ) : activeSection.startsWith('skill-') ? (
-            // Legacy Skills Practice Content (fallback)
+            // Skills Practice Content
             <div className="skills-practice-content space-y-6">
               <div className="skills-header text-center py-12">
                 <h1 className="page-title text-3xl font-bold text-gray-800 mb-4">
