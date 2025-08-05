@@ -6,14 +6,31 @@ module.exports = {
   ],
   theme: {
     extend: {
+      textShadow: {
+        'sm': '0 1px 2px rgba(0, 0, 0, 0.5)',
+        'md': '0 2px 4px rgba(0, 0, 0, 0.6)',
+        'lg': '0 4px 8px rgba(0, 0, 0, 0.7)',
+        'xl': '0 6px 12px rgba(0, 0, 0, 0.8)',
+      },
+      dropShadow: {
+        'text': '0 2px 4px rgba(0, 0, 0, 0.6)',
+        'text-lg': '0 4px 8px rgba(0, 0, 0, 0.7)',
+      },
       colors: {
+        // JobGate Brand Colors
+        jobgate: {
+          light: '#c9e4f4',
+          primary: '#244872',
+          accent: '#719318',
+          yellow: '#ffc436',
+        },
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          900: '#1e3a8a',
+          50: '#c9e4f4',
+          100: '#b3daf0',
+          500: '#244872',
+          600: '#1e3a5b',
+          700: '#182e47',
+          900: '#0f1f30',
         },
         secondary: {
           50: '#f8fafc',
@@ -34,6 +51,9 @@ module.exports = {
           100: '#fef3c7',
           500: '#f59e0b',
           600: '#d97706',
+        },
+        coral: {
+          500: '#ff6b6b',
         },
         gamification: {
           gold: '#ffd700',
@@ -73,6 +93,24 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    function({ addUtilities }) {
+      const newUtilities = {
+        '.text-shadow-sm': {
+          textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)',
+        },
+        '.text-shadow-md': {
+          textShadow: '0 2px 4px rgba(0, 0, 0, 0.6)',
+        },
+        '.text-shadow-lg': {
+          textShadow: '0 4px 8px rgba(0, 0, 0, 0.7)',
+        },
+        '.text-shadow-xl': {
+          textShadow: '0 6px 12px rgba(0, 0, 0, 0.8)',
+        },
+      }
+      addUtilities(newUtilities)
+    }
+  ],
 }
 

@@ -8,9 +8,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
-      '@game': resolve(__dirname, 'src/game'),
-      '@assets': resolve(__dirname, 'src/game/assets'),
-      '@scenes': resolve(__dirname, 'src/game/scenes'),
+      '@app': resolve(__dirname, 'src/app'),
+      '@features': resolve(__dirname, 'src/features'),
+      '@shared': resolve(__dirname, 'src/shared'),
+      '@config': resolve(__dirname, 'src/config'),
       '@components': resolve(__dirname, 'src/components'),
     }
   },

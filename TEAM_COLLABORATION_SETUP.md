@@ -38,7 +38,7 @@ git config --global user.email "your.email@example.com"
 
 ```
 jobgate-career-quest/
-├── frontend/          # React + Vite + Phaser game
+├── frontend/          # React + Vite SaaS Platform
 ├── backend/           # Django REST API
 ├── devops/           # Nginx configuration
 ├── docs/             # Documentation
@@ -46,7 +46,7 @@ jobgate-career-quest/
 ```
 
 **Who Works Where:**
-- **Frontend Developer**: `frontend/` directory (React, Phaser, UI/UX)
+- **Frontend Developer**: `frontend/` directory (React, UI/UX, SaaS Interface)
 - **Backend Developer**: `backend/` directory (Django, APIs, database)
 - **Full-Stack/DevOps**: Both directories + `devops/`, `scripts/`
 
@@ -103,7 +103,7 @@ main                    # Production-ready code
 ```bash
 # Features
 feature/user-authentication
-feature/game-scoring-system
+feature/skills-assessment-system
 feature/job-recommendations
 
 # Bug fixes
@@ -273,7 +273,7 @@ chore(deps): update dependencies
 ### Examples for Our Project:
 ```bash
 # Frontend commits
-git commit -m "feat(game): add Phaser scene transitions"
+git commit -m "feat(ui): add skills assessment interface"
 git commit -m "fix(ui): resolve responsive design issues"
 git commit -m "style(components): update button styling"
 

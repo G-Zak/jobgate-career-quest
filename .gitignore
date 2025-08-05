@@ -75,9 +75,6 @@ frontend/src/assets/asset-manifest.json
 # Documentation Exports
 exports/
 
-# Test Files
-frontend/phaser-test.html
-
 #Yassine
 scripts/check-disk-space.bat
 .github/workflows/backend.yml
