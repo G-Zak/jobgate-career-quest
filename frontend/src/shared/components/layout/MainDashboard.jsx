@@ -6,6 +6,9 @@ import {
   UserCircleIcon
 } from '@heroicons/react/24/outline';
 import Dashboard from '../../../features/candidate-dashboard/components/DashboardCandidat';
+import AvailableTests from '../../../features/skills-assessment/components/AvailableTests';
+import TechnicalTests from '../../../features/skills-assessment/components/TechnicalTests';
+import TestLayout from '../../../features/skills-assessment/components/TestLayout';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import formationTechnique from '../../../assets/images/ui/formation_technique.avif';
@@ -15,6 +18,21 @@ const MainDashboard = () => {
   const [activeSection, setActiveSection] = useState('applications');
   const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
+
+  // Map skill categories to test types
+  const skillToTestMap = {
+    'numerical': 'numerical-tests',
+    'verbal': 'verbal-tests', 
+    'logical': 'logical-tests',
+    'abstract': 'abstract-tests',
+    'diagrammatic': 'diagrammatic-tests',
+    'spatial': 'spatial-tests',
+    'cognitive assessment': 'cognitive-tests',
+    'personality': 'personality-tests',
+    'situational': 'situational-tests',
+    'technical': 'technical-tests',
+    'accelerated learning': 'learning-tests'
+  };
 
   const skillCategories = [
     'Accelerated Learning',
@@ -37,7 +55,10 @@ const MainDashboard = () => {
   ];
 
   const handleSkillCategoryClick = (skillName) => {
-    setActiveSection(`skill-${skillName.toLowerCase().replace(/\s+/g, '-')}`);
+    const normalizedSkill = skillName.toLowerCase();
+    const testType = skillToTestMap[normalizedSkill] || 'available-tests';
+    
+    setActiveSection(testType);
     // Keep dropdown open - don't close it automatically
   };
 
@@ -165,7 +186,7 @@ const MainDashboard = () => {
                       key={index}
                       onClick={() => handleSkillCategoryClick(skill)}
                       className={`skill-category-item block w-full text-left pl-4 pr-2 py-2 text-xs transition-colors rounded ${
-                        activeSection === `skill-${skill.toLowerCase().replace(/\s+/g, '-')}`
+                        activeSection === skillToTestMap[skill.toLowerCase()] || activeSection === `skill-${skill.toLowerCase().replace(/\s+/g, '-')}`
                           ? 'bg-blue-50 text-blue-500 font-semibold border-l-2 border-blue-500'
                           : 'text-gray-700 hover:bg-blue-50 hover:text-blue-500'
                       }`}
@@ -222,8 +243,20 @@ const MainDashboard = () => {
         <div className="main-content-area flex-1 max-w-4xl">
           {activeSection === 'dashboard' ? (
             <Dashboard />
+          ) : activeSection === 'test-session' ? (
+            <TestLayout />
+          ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
+            // Show AvailableTests for most test categories
+            activeSection === 'technical-tests' ? (
+              <TechnicalTests onBackToDashboard={() => setActiveSection('applications')} />
+            ) : (
+              <AvailableTests 
+                onBackToDashboard={() => setActiveSection('applications')} 
+                onStartTest={() => setActiveSection('test-session')}
+              />
+            )
           ) : activeSection.startsWith('skill-') ? (
-            // Skills Practice Content
+            // Legacy Skills Practice Content (fallback)
             <div className="skills-practice-content space-y-6">
               <div className="skills-header text-center py-12">
                 <h1 className="page-title text-3xl font-bold text-gray-800 mb-4">
@@ -241,7 +274,10 @@ const MainDashboard = () => {
                 <p className="card-description text-gray-600 mb-6">
                   Les exercices d'évaluation et de pratique interactifs seront disponibles ici. Cette évaluation de catégorie de compétences est prête à commencer.
                 </p>
-                <button className="start-assessment-btn bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-sm transition-colors">
+                <button 
+                  onClick={() => setActiveSection('available-tests')}
+                  className="start-assessment-btn bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-sm transition-colors"
+                >
                   Commencer l'évaluation
                 </button>
               </div>
