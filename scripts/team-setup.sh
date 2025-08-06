@@ -34,9 +34,9 @@ if [ ! -f "docker-compose.yaml" ]; then
 fi
 
 # Pull latest changes
-echo "📥 Pulling latest changes from main branch..."
-git checkout main
-git pull origin main
+#echo "📥 Pulling latest changes from main branch..."
+#git checkout main
+#git pull origin main
 
 # Check Docker
 echo "🐳 Checking Docker..."

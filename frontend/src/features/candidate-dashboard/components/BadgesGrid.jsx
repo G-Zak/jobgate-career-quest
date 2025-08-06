@@ -10,7 +10,7 @@ const BadgesGrid = ({ badges }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-900">🏆 Achievements</h2>
+        <h2 className="text-xl font-bold text-gray-900">Achievements</h2>
         <div className="text-sm text-gray-500">
           {badges.filter(b => b.earned).length} of {badges.length} earned
         </div>

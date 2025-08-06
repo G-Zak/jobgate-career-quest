@@ -4,7 +4,7 @@ const JobRecommendations = ({ jobs }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-900">💼 Recommended Jobs</h2>
+        <h2 className="text-xl font-bold text-gray-900">Recommended Jobs</h2>
         <a href="#" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
           View all jobs →
         </a>
