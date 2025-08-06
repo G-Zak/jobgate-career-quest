@@ -2,7 +2,6 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -19,6 +18,12 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 3000,
     strictPort: true,
+    watch: {
+      usePolling: true, // 👈 required in Docker
+    },
+    hmr: {
+      clientPort: 3000, // 👈 this allows hot reload to work correctly from outside the container
+    }
   },
   build: {
     rollupOptions: {
@@ -29,6 +34,5 @@ export default defineConfig({
       }
     }
   },
-  // Optimize for Phaser assets
   assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg', '**/*.webp', '**/*.mp3', '**/*.wav', '**/*.ogg']
 })
