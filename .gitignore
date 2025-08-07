@@ -17,6 +17,7 @@ __pycache__/
 
 # Dependencies
 node_modules/
+frontend/node_modules
 
 # Build
 dist/
