@@ -5,7 +5,7 @@ import SkillsChart from './SkillsChart';
 import TestTimeline from './TestTimeline';
 import JobRecommendations from './JobRecommendations';
 
-const Dashboard = () => {
+const Dashboard = ({ isDarkMode = false }) => {
   // Mock data - replace with API calls
   const userData = {
     name: "zakaria",
@@ -44,29 +44,47 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6">
           {/* Left Column - Profile & Stats */}
           <div className="xl:col-span-4 space-y-4 lg:space-y-6">
-            <ProfileHeader user={userData} />
+            <ProfileHeader user={userData} isDarkMode={isDarkMode} />
             
             {/* Quick Stats */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
-              <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">Quick Stats</h3>
+            <div className={`rounded-xl shadow-sm border p-4 lg:p-6 transition-colors duration-300 ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-white border-gray-200'
+            }`}>
+              <h3 className={`text-base lg:text-lg font-semibold mb-3 lg:mb-4 transition-colors ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>Quick Stats</h3>
               <div className="space-y-3 lg:space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600 text-sm lg:text-base">Tests Completed</span>
-                  <span className="font-semibold text-gray-900 text-sm lg:text-base">12</span>
+                  <span className={`text-sm lg:text-base transition-colors ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                  }`}>Tests Completed</span>
+                  <span className={`font-semibold text-sm lg:text-base transition-colors ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}>12</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600 text-sm lg:text-base">Average Score</span>
+                  <span className={`text-sm lg:text-base transition-colors ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                  }`}>Average Score</span>
                   <span className="font-semibold text-green-600 text-sm lg:text-base">{userData.overallScore}%</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600 text-sm lg:text-base">Job Matches</span>
+                  <span className={`text-sm lg:text-base transition-colors ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                  }`}>Job Matches</span>
                   <span className="font-semibold text-blue-600 text-sm lg:text-base">{userData.jobRecommendations.length}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600 text-sm lg:text-base">XP Points</span>
+                  <span className={`text-sm lg:text-base transition-colors ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                  }`}>XP Points</span>
                   <div className="flex items-center space-x-2">
                     <span className="font-semibold text-purple-600 text-sm lg:text-base">{userData.xpPoints}</span>
-                    <div className="w-12 lg:w-16 h-2 bg-gray-200 rounded-full">
+                    <div className={`w-12 lg:w-16 h-2 rounded-full ${
+                      isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
+                    }`}>
                       <div 
                         className="h-2 bg-purple-500 rounded-full" 
                         style={{ width: `${(userData.xpPoints / userData.nextLevelXP) * 100}%` }}
@@ -78,8 +96,14 @@ const Dashboard = () => {
             </div>
 
             {/* Recent Activity */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
-              <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">Recent Activity</h3>
+            <div className={`rounded-xl shadow-sm border p-4 lg:p-6 transition-colors duration-300 ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-white border-gray-200'
+            }`}>
+              <h3 className={`text-base lg:text-lg font-semibold mb-3 lg:mb-4 transition-colors ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>Recent Activity</h3>
               <div className="space-y-3">
                 {userData.recentActivity.map((activity, index) => (
                   <div key={index} className="flex items-start space-x-3">
@@ -88,9 +112,13 @@ const Dashboard = () => {
                       activity.type === 'badge_earned' ? 'bg-yellow-500' :
                       'bg-green-500'
                     }`}></div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900">{activity.content}</p>
-                      <p className="text-xs text-gray-500">{activity.date}</p>
+                    <div>
+                      <p className={`text-sm transition-colors ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>{activity.description}</p>
+                      <p className={`text-xs transition-colors ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                      }`}>{activity.date}</p>
                     </div>
                   </div>
                 ))}
@@ -101,16 +129,16 @@ const Dashboard = () => {
           {/* Right Column - Main Content */}
           <div className="xl:col-span-8 space-y-4 lg:space-y-6">
             {/* Badges Grid */}
-            <BadgesGrid badges={userData.badges} />
+            <BadgesGrid badges={userData.badges} isDarkMode={isDarkMode} />
             
             {/* Skills Chart */}
-            <SkillsChart testResults={userData.testResults} />
+            <SkillsChart testResults={userData.testResults} isDarkMode={isDarkMode} />
             
             {/* Job Recommendations */}
-            <JobRecommendations jobs={userData.jobRecommendations} />
+            <JobRecommendations jobs={userData.jobRecommendations} isDarkMode={isDarkMode} />
             
             {/* Test Timeline */}
-            <TestTimeline tests={userData.testResults} />
+            <TestTimeline tests={userData.testResults} isDarkMode={isDarkMode} />
           </div>
         </div>
       </div>

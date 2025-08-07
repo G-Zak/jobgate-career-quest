@@ -1,0 +1,81 @@
+{
+  "welcome": "Welcome to JobGate Career Quest",
+  "login": "Login",
+  "register": "Register",
+  "dashboard": {
+    "title": "Dashboard",
+    "profile": {
+      "level": "Level",
+      "careerExplorer": "Career Explorer",
+      "careerProgress": "Career Progress"
+    },
+    "achievements": {
+      "title": "Achievements",
+      "of": "of",
+      "earned": "earned",
+      "locked": "Locked",
+      "rarity": {
+        "gold": "Gold",
+        "silver": "Silver",
+        "bronze": "Bronze"
+      }
+    },
+    "jobs": {
+      "recommendedJobs": "Recommended Jobs",
+      "viewAllJobs": "View all jobs",
+      "match": "Match",
+      "applyNow": "Apply Now"
+    },
+    "skills": {
+      "skillsPerformance": "Skills Performance",
+      "average": "Average",
+      "score": "Score"
+    },
+    "tests": {
+      "testHistory": "Test History",
+      "viewAllTests": "View all tests",
+      "assessment": "Assessment"
+    }
+  },
+  "jobs": "Job Offers",
+  "career": "Career Advice",
+  "profile": "Profile",
+  "settings": "Settings",
+  "notifications": "Notifications",
+  "language": "Language",
+  "appearance": "Appearance",
+  "help": "Help & Support",
+  "logout": "Sign Out",
+  "lightMode": "Light Mode",
+  "darkMode": "Dark Mode",
+  "exploreOffers": "Explore Offers",
+  "savedOffers": "Saved Offers",
+  "myApplications": "My Applications",
+  "skillsValidation": "Skills Assessment",
+  "mySpace": "My Space",
+  "recommendedOffers": "Recommended Offers",
+  "testHistory": "Test History",
+  "developPotential": "Develop your professional potential",
+  "expertAdvice": "Discover our expert advice, market trends and practical recommendations to adjust your career path.",
+  "offers": "Offers",
+  "viewAll": "View All",
+  "backendDeveloper": "Backend Developer",
+  "viewMore": "View More",
+  "quickStats": "Quick Stats",
+  "testsCompleted": "Tests Completed",
+  "averageScore": "Average Score",
+  "jobMatches": "Job Matches",
+  "xpPoints": "XP Points",
+  "recentActivity": "Recent Activity",
+  "badges": "Badges & Achievements",
+  "skillsChart": "Skills Progress",
+  "jobRecommendations": "Job Recommendations",
+  "testTimeline": "Test Timeline",
+  "completedJavaAssessment": "Completed Java Assessment",
+  "earnedPythonBadge": "Earned Python Pro badge",
+  "skillImproved": "Teamwork skill improved",
+  "french": "French",
+  "english": "English",
+  "switchToEnglish": "Switch to English",
+  "switchToFrench": "Switch to French"
+}

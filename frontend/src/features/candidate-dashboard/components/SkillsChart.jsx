@@ -19,7 +19,7 @@ ChartJS.register(
   Legend
 );
 
-const SkillsChart = ({ testResults }) => {
+const SkillsChart = ({ testResults, isDarkMode }) => {
   const data = {
     labels: testResults.map(test => test.test_type),
     datasets: [{
@@ -53,10 +53,10 @@ const SkillsChart = ({ testResults }) => {
         display: false,
       },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundColor: isDarkMode ? 'rgba(17, 24, 39, 0.95)' : 'rgba(0, 0, 0, 0.8)',
         titleColor: 'white',
         bodyColor: 'white',
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: isDarkMode ? 'rgba(75, 85, 99, 0.5)' : 'rgba(255, 255, 255, 0.1)',
         borderWidth: 1,
         cornerRadius: 8,
         displayColors: false,
@@ -73,7 +73,7 @@ const SkillsChart = ({ testResults }) => {
           display: false,
         },
         ticks: {
-          color: '#6b7280',
+          color: isDarkMode ? '#9ca3af' : '#6b7280',
           font: {
             size: 12,
           }
@@ -83,10 +83,10 @@ const SkillsChart = ({ testResults }) => {
         beginAtZero: true,
         max: 100,
         grid: {
-          color: 'rgba(107, 114, 128, 0.1)',
+          color: isDarkMode ? 'rgba(75, 85, 99, 0.3)' : 'rgba(107, 114, 128, 0.1)',
         },
         ticks: {
-          color: '#6b7280',
+          color: isDarkMode ? '#9ca3af' : '#6b7280',
           font: {
             size: 12,
           },
@@ -99,10 +99,18 @@ const SkillsChart = ({ testResults }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className={`rounded-xl shadow-sm border p-6 transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gray-800 border-gray-700' 
+        : 'bg-white border-gray-200'
+    }`}>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Skills Performance</h2>
-        <div className="text-sm text-gray-500">
+        <h2 className={`text-xl font-bold transition-colors ${
+          isDarkMode ? 'text-white' : 'text-gray-900'
+        }`}>Skills Performance</h2>
+        <div className={`text-sm transition-colors ${
+          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+        }`}>
           Average: {Math.round(testResults.reduce((acc, test) => acc + test.score, 0) / testResults.length)}%
         </div>
       </div>

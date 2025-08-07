@@ -1,0 +1,81 @@
+{
+  "welcome": "Bienvenue sur JobGate Career Quest",
+  "login": "Connexion",
+  "register": "S'inscrire",
+  "dashboard": {
+    "title": "Tableau de bord",
+    "profile": {
+      "level": "Niveau",
+      "careerExplorer": "Explorateur de carrière",
+      "careerProgress": "Progression de carrière"
+    },
+    "achievements": {
+      "title": "Réalisations",
+      "of": "sur",
+      "earned": "obtenues",
+      "locked": "Verrouillé",
+      "rarity": {
+        "gold": "Or",
+        "silver": "Argent",
+        "bronze": "Bronze"
+      }
+    },
+    "jobs": {
+      "recommendedJobs": "Emplois recommandés",
+      "viewAllJobs": "Voir tous les emplois",
+      "match": "Correspondance",
+      "applyNow": "Postuler maintenant"
+    },
+    "skills": {
+      "skillsPerformance": "Performance des compétences",
+      "average": "Moyenne",
+      "score": "Score"
+    },
+    "tests": {
+      "testHistory": "Historique des tests",
+      "viewAllTests": "Voir tous les tests",
+      "assessment": "Évaluation"
+    }
+  },
+  "jobs": "Offres d'emploi",
+  "career": "Conseils de carrière",
+  "profile": "Profil",
+  "settings": "Paramètres",
+  "notifications": "Notifications",
+  "language": "Langue",
+  "appearance": "Apparence",
+  "help": "Aide & Support",
+  "logout": "Se déconnecter",
+  "lightMode": "Mode Clair",
+  "darkMode": "Mode Sombre",
+  "exploreOffers": "Explorer les offres",
+  "savedOffers": "Offres sauvegardées",
+  "myApplications": "Mes candidatures",
+  "skillsValidation": "Validation des compétences",
+  "mySpace": "Mon espace",
+  "recommendedOffers": "Offres recommandées",
+  "testHistory": "Historique des tests",
+  "developPotential": "Développez votre potentiel professionnel",
+  "expertAdvice": "Découvrez nos conseils d'experts, les tendances du marché et des recommandations pratiques pour ajuster votre parcours professionnel.",
+  "offers": "Offres",
+  "viewAll": "Voir tout",
+  "backendDeveloper": "Développeur Backend",
+  "viewMore": "Voir plus",
+  "quickStats": "Statistiques rapides",
+  "testsCompleted": "Tests terminés",
+  "averageScore": "Score moyen",
+  "jobMatches": "Correspondances d'emploi",
+  "xpPoints": "Points XP",
+  "recentActivity": "Activité récente",
+  "badges": "Badges & Réalisations",
+  "skillsChart": "Progression des compétences",
+  "jobRecommendations": "Recommandations d'emploi",
+  "testTimeline": "Chronologie des tests",
+  "completedJavaAssessment": "Évaluation Java terminée",
+  "earnedPythonBadge": "Badge Python Pro obtenu",
+  "skillImproved": "Compétence Travail d'équipe améliorée",
+  "french": "Français",
+  "english": "Anglais",
+  "switchToEnglish": "Passer à l'anglais",
+  "switchToFrench": "Passer au français"
+}
