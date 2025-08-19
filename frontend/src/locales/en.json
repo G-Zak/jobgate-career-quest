@@ -2,41 +2,7 @@
   "welcome": "Welcome to JobGate Career Quest",
   "login": "Login",
   "register": "Register",
-  "dashboard": {
-    "title": "Dashboard",
-    "profile": {
-      "level": "Level",
-      "careerExplorer": "Career Explorer",
-      "careerProgress": "Career Progress"
-    },
-    "achievements": {
-      "title": "Achievements",
-      "of": "of",
-      "earned": "earned",
-      "locked": "Locked",
-      "rarity": {
-        "gold": "Gold",
-        "silver": "Silver",
-        "bronze": "Bronze"
-      }
-    },
-    "jobs": {
-      "recommendedJobs": "Recommended Jobs",
-      "viewAllJobs": "View all jobs",
-      "match": "Match",
-      "applyNow": "Apply Now"
-    },
-    "skills": {
-      "skillsPerformance": "Skills Performance",
-      "average": "Average",
-      "score": "Score"
-    },
-    "tests": {
-      "testHistory": "Test History",
-      "viewAllTests": "View all tests",
-      "assessment": "Assessment"
-    }
-  },
+  "dashboard": "Dashboard",
   "jobs": "Job Offers",
   "career": "Career Advice",
   "profile": "Profile",
@@ -77,5 +43,39 @@
   "french": "French",
   "english": "English",
   "switchToEnglish": "Switch to English",
-  "switchToFrench": "Switch to French"
+  "switchToFrench": "Switch to French",
+  "personalSpace": "Personal Space",
+  "personalizedRecommendations": "Personalized Recommendations",
+  "completeHistory": "Complete History",
+  "developer": "Developer",
+  "level": "Level",
+  "personalInformation": "Personal Information",
+  "email": "Email",
+  "location": "Location",
+  "morocco": "Morocco",
+  "skills": "Skills",
+  "experience": "Experience",
+  "years": "years",
+  "editProfile": "Edit Profile",
+  "changePassword": "Change Password",
+  "generalSettings": "General Settings",
+  "recentNotifications": "Recent Notifications",
+  "newJobOffer": "New job offer",
+    "hoursAgo": "hours ago",
+  "helpCenter": "Help Center",
+  "manageProfile": "Manage your personal profile, information, and preferences.",
+  "configureSettings": "Configure your application preferences and settings.",
+  "viewNotifications": "View your notifications and messages.",
+  "findHelp": "Find help and support for using the platform.",
+  "appSettingsImplemented": "Application settings will be implemented here.",
+  "helpCenterImplemented": "Help center will be implemented here with documentation and support.",
+  "personalSpaceImplemented": "Your personal space will be implemented here with profile management and settings.",
+  "recommendationSystemImplemented": "The job recommendation system will be implemented here with suggestions based on your profile.",
+  "testHistoryImplemented": "The detailed history of your tests and assessments will be displayed here with results and progress.",
+  "improveSkills": "Improve your skills through comprehensive practice sessions and track your progress in this skill category.",
+  "interactiveAssessments": "Interactive assessment and practice exercises will be available here. This skill category assessment is ready to begin.",
+  "startAssessment": "Start Assessment",
+  "practiceTitle": "Practice",
+  "personalizedJobOffers": "Discover personalized job offers based on your profile and skills.",
+  "reviewTestHistory": "Review the history of all your tests and skill assessments."
 }

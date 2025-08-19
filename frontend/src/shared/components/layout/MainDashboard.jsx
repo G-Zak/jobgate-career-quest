@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -23,39 +24,24 @@ import formationTechnique from '../../../assets/images/ui/formation_technique.av
 import betterImpressions from '../../../assets/images/ui/better_impressions.avif';
 
 const MainDashboard = () => {
+  const { t, i18n } = useTranslation();
   const [activeSection, setActiveSection] = useState('applications');
   const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [language, setLanguage] = useState('fr'); // 'fr' or 'en'
   
   const profileDropdownRef = useRef(null);
 
+  // Ensure i18n is initialized
+  const currentLanguage = i18n?.language || 'en';
+
   // Language change handler
   const changeLanguage = (lng) => {
-    setLanguage(lng);
-    localStorage.setItem('language', lng);
+    if (i18n && i18n.changeLanguage) {
+      i18n.changeLanguage(lng);
+    }
   };
-
-  // Load saved preferences on mount
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem('language');
-    const savedTheme = localStorage.getItem('theme');
-    
-    if (savedLanguage) {
-      setLanguage(savedLanguage);
-    }
-    
-    if (savedTheme === 'dark') {
-      setIsDarkMode(true);
-    }
-  }, []);
-
-  // Save theme preference
-  useEffect(() => {
-    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-  }, [isDarkMode]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -120,81 +106,6 @@ const MainDashboard = () => {
 
   const prevSlide = () => {
     setCurrentCarouselIndex((prev) => (prev - 1 + carouselImages.length) % carouselImages.length);
-  };
-
-  // Translation helper function
-  const t = (key) => {
-    const translations = {
-      fr: {
-        dashboard: 'Tableau de bord',
-        jobs: 'Offres d\'emploi', 
-        career: 'Conseils de carrière',
-        profile: 'Profil',
-        settings: 'Paramètres',
-        notifications: 'Notifications',
-        language: 'Langue',
-        appearance: 'Apparence',
-        help: 'Aide & Support',
-        logout: 'Se déconnecter',
-        lightMode: 'Mode Clair',
-        darkMode: 'Mode Sombre',
-        french: 'Français',
-        english: 'Anglais',
-        exploreOffers: 'Explorer les offres',
-        savedOffers: 'Offres sauvegardées',
-        myApplications: 'Mes candidatures',
-        skillsValidation: 'Validation des compétences',
-        mySpace: 'Mon espace',
-        recommendedOffers: 'Offres recommandées',
-        testHistory: 'Historique des tests',
-        developPotential: 'Développez votre potentiel professionnel',
-        expertAdvice: 'Découvrez nos conseils d\'experts, les tendances du marché et des recommandations pratiques pour ajuster votre parcours professionnel.',
-        offers: 'Offres',
-        viewAll: 'Voir tout',
-        backendDeveloper: 'Développeur Backend',
-        jobLocation: 'Casablanca, Maroc',
-        internship: 'Stage',
-        remote: 'Télétravail',
-        threeMonths: '3 mois',
-        jobDescription: 'À propos JOBGATE: JOBGATE est une plateforme de recrutement en ligne leader qui connecte les professionnels talentueux avec les meilleurs employeurs...',
-        viewMore: 'Voir plus'
-      },
-      en: {
-        dashboard: 'Dashboard',
-        jobs: 'Job Offers',
-        career: 'Career Advice',
-        profile: 'Profile',
-        settings: 'Settings',
-        notifications: 'Notifications',
-        language: 'Language',
-        appearance: 'Appearance',
-        help: 'Help & Support',
-        logout: 'Sign Out',
-        lightMode: 'Light Mode',
-        darkMode: 'Dark Mode',
-        french: 'French',
-        english: 'English',
-        exploreOffers: 'Explore Offers',
-        savedOffers: 'Saved Offers',
-        myApplications: 'My Applications',
-        skillsValidation: 'Skills Assessment',
-        mySpace: 'My Space',
-        recommendedOffers: 'Recommended Offers',
-        testHistory: 'Test History',
-        developPotential: 'Develop your professional potential',
-        expertAdvice: 'Discover our expert advice, market trends and practical recommendations to adjust your career path.',
-        offers: 'Offers',
-        viewAll: 'View All',
-        backendDeveloper: 'Backend Developer',
-        jobLocation: 'Casablanca, Morocco',
-        internship: 'Internship',
-        remote: 'Remote',
-        threeMonths: '3 months',
-        jobDescription: 'About JOBGATE: JOBGATE is a leading online recruitment platform that connects talented professionals with the best employers...',
-        viewMore: 'View More'
-      }
-    };
-    return translations[language][key] || key;
   };
 
   return (
@@ -337,7 +248,7 @@ const MainDashboard = () => {
                     }`}>{t('language')}</p>
                   </div>
                   <button 
-                    onClick={() => changeLanguage(language === 'fr' ? 'en' : 'fr')}
+                    onClick={() => changeLanguage(currentLanguage === 'fr' ? 'en' : 'fr')}
                     className={`w-full px-4 py-2 text-left text-sm flex items-center justify-between transition-colors ${
                       isDarkMode 
                         ? 'text-gray-300 hover:bg-gray-700' 
@@ -346,10 +257,10 @@ const MainDashboard = () => {
                   >
                     <div className="flex items-center space-x-3">
                       <LanguageIcon className="w-4 h-4" />
-                      <span>{language === 'fr' ? t('french') : t('english')}</span>
+                      <span>{currentLanguage === 'fr' ? t('french') : t('english')}</span>
                     </div>
                     <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {language.toUpperCase()}
+                      {currentLanguage ? currentLanguage.toUpperCase() : 'EN'}
                     </span>
                   </button>
                 </div>
@@ -375,7 +286,10 @@ const MainDashboard = () => {
                       ) : (
                         <MoonIcon className="w-4 h-4" />
                       )}
-                      <span>{isDarkMode ? t('lightMode') : t('darkMode')}</span>
+                      <span>{isDarkMode 
+                        ? t('lightMode')
+                        : t('darkMode')
+                      }</span>
                     </div>
                     <div className={`w-8 h-4 rounded-full transition-colors ${isDarkMode ? 'bg-blue-500' : 'bg-gray-300'} relative`}>
                       <div className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-transform ${isDarkMode ? 'translate-x-4' : 'translate-x-0.5'}`}></div>
@@ -406,7 +320,6 @@ const MainDashboard = () => {
                   <button 
                     onClick={() => {
                       // Handle logout logic
-                      console.log('Logout clicked');
                       setShowProfileDropdown(false);
                     }}
                     className={`w-full px-4 py-2 text-left text-sm flex items-center space-x-3 transition-colors ${
@@ -569,7 +482,7 @@ const MainDashboard = () => {
         {/* Central Content Zone */}
         <div className="main-content-area flex-1 max-w-4xl">
           {activeSection === 'dashboard' ? (
-            <Dashboard isDarkMode={isDarkMode} />
+            <Dashboard />
           ) : activeSection === 'test-session' ? (
             <TestLayout />
           ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
@@ -586,83 +499,366 @@ const MainDashboard = () => {
             // Skills Practice Content
             <div className="skills-practice-content space-y-6">
               <div className="skills-header text-center py-12">
-                <h1 className="page-title text-3xl font-bold text-gray-800 mb-4">
-                  {activeSection.split('skill-')[1].split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} - Pratique
+                <h1 className={`page-title text-3xl font-bold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
+                  {activeSection.split('skill-')[1].split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} - {t('practiceTitle')}
                 </h1>
-                <p className="page-description text-lg text-gray-600 max-w-3xl mx-auto">
-                  Améliorez vos compétences grâce à des sessions de pratique complètes et suivez vos progrès dans cette catégorie de compétences.
+                <p className={`page-description text-lg max-w-3xl mx-auto transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {t('improveSkills')}
                 </p>
               </div>
               
-              <div className="skills-card bg-white rounded-xl shadow-sm p-8">
-                <h2 className="card-title text-xl font-semibold text-gray-800 mb-4">
+              <div className={`skills-card rounded-xl shadow-sm p-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <h2 className={`card-title text-xl font-semibold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
                   {activeSection.split('skill-')[1].split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                 </h2>
-                <p className="card-description text-gray-600 mb-6">
-                  Les exercices d'évaluation et de pratique interactifs seront disponibles ici. Cette évaluation de catégorie de compétences est prête à commencer.
+                <p className={`card-description mb-6 transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {t('interactiveAssessments')}
                 </p>
                 <button 
                   onClick={() => setActiveSection('available-tests')}
                   className="start-assessment-btn bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-sm transition-colors"
                 >
-                  Commencer l'évaluation
+                  {t('startAssessment')}
                 </button>
               </div>
             </div>
           ) : activeSection === 'mon-espace' ? (
             <div className="space-y-6">
               <div className="text-center py-12">
-                <h1 className="text-3xl font-bold text-[#4A5869] mb-4">Mon Espace</h1>
-                <p className="text-lg text-[#4A5869]/70 max-w-3xl mx-auto">
-                  Gérez votre profil, vos préférences et vos paramètres personnels.
+                <h1 className={`text-3xl font-bold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-[#4A5869]'
+                }`}>{t('mySpace')}</h1>
+                <p className={`text-lg max-w-3xl mx-auto transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-[#4A5869]/70'
+                }`}>
+                  {currentLanguage === 'fr' 
+                    ? 'Gérez votre profil, vos préférences et vos paramètres personnels.'
+                    : 'Manage your profile, preferences and personal settings.'
+                  }
                 </p>
               </div>
-              <div className="bg-white rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8">
-                <h2 className="text-xl font-semibold text-[#4A5869] mb-4">Espace Personnel</h2>
-                <p className="text-[#4A5869]/70">
-                  Votre espace personnel sera implémenté ici avec la gestion du profil et les paramètres.
+              <div className={`rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <h2 className={`text-xl font-semibold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-[#4A5869]'
+                }`}>
+                  {t('personalSpace')}
+                </h2>
+                <p className={`transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-[#4A5869]/70'
+                }`}>
+                  {t('personalSpaceImplemented')}
                 </p>
               </div>
             </div>
           ) : activeSection === 'offres-recommandees' ? (
             <div className="space-y-6">
               <div className="text-center py-12">
-                <h1 className="text-3xl font-bold text-[#4A5869] mb-4">Offres Recommandées</h1>
-                <p className="text-lg text-[#4A5869]/70 max-w-3xl mx-auto">
-                  Découvrez les offres d'emploi personnalisées en fonction de votre profil et de vos compétences.
+                <h1 className={`text-3xl font-bold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-[#4A5869]'
+                }`}>{t('recommendedOffers')}</h1>
+                <p className={`text-lg max-w-3xl mx-auto transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-[#4A5869]/70'
+                }`}>
+                  {t('personalizedJobOffers')}
                 </p>
               </div>
-              <div className="bg-white rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8">
-                <h2 className="text-xl font-semibold text-[#4A5869] mb-4">Recommandations Personnalisées</h2>
-                <p className="text-[#4A5869]/70">
-                  Le système de recommandations d'offres sera implémenté ici avec des suggestions basées sur votre profil.
+              <div className={`rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <h2 className={`text-xl font-semibold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-[#4A5869]'
+                }`}>
+                  {t('personalizedRecommendations')}
+                </h2>
+                <p className={`transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-[#4A5869]/70'
+                }`}>
+                  {t('recommendationSystemImplemented')}
                 </p>
               </div>
             </div>
           ) : activeSection === 'historique-tests' ? (
             <div className="space-y-6">
               <div className="text-center py-12">
-                <h1 className="text-3xl font-bold text-[#4A5869] mb-4">Historique des Tests</h1>
-                <p className="text-lg text-[#4A5869]/70 max-w-3xl mx-auto">
-                  Consultez l'historique de tous vos tests et évaluations de compétences.
+                <h1 className={`text-3xl font-bold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-[#4A5869]'
+                }`}>{t('testHistory')}</h1>
+                <p className={`text-lg max-w-3xl mx-auto transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-[#4A5869]/70'
+                }`}>
+                  {t('reviewTestHistory')}
                 </p>
               </div>
-              <div className="bg-white rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8">
-                <h2 className="text-xl font-semibold text-[#4A5869] mb-4">Historique Complet</h2>
-                <p className="text-[#4A5869]/70">
-                  L'historique détaillé de vos tests et évaluations sera affiché ici avec les résultats et les progrès.
+              <div className={`rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <h2 className={`text-xl font-semibold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-[#4A5869]'
+                }`}>
+                  {t('completeHistory')}
+                </h2>
+                <p className={`transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-[#4A5869]/70'
+                }`}>
+                  {t('testHistoryImplemented')}
+                </p>
+              </div>
+            </div>
+          ) : activeSection === 'profile' ? (
+            <div className="space-y-6">
+              <div className="text-center py-12">
+                <h1 className={`text-3xl font-bold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
+                  {t('profile')}
+                </h1>
+                <p className={`text-lg max-w-3xl mx-auto transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {t('manageProfile')}
+                </p>
+              </div>
+              
+              {/* Profile Information Card */}
+              <div className={`rounded-xl shadow-sm p-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <div className="flex items-center space-x-6 mb-8">
+                  <div className="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-xl">YA</span>
+                  </div>
+                  <div>
+                    <h2 className={`text-2xl font-bold mb-2 transition-colors ${
+                      isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                    }`}>Yassine</h2>
+                    <p className={`text-lg transition-colors ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                    }`}>yassine@jobgate.com</p>
+                    <p className={`text-sm transition-colors ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      {t('developer')} • {t('level')} 3
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Personal Information */}
+                  <div className={`p-6 rounded-lg transition-colors duration-300 ${
+                    isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                  }`}>
+                    <h3 className={`text-lg font-semibold mb-4 transition-colors ${
+                      isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                    }`}>
+                      {t('personalInformation')}
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className={`text-sm font-medium transition-colors ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                        }`}>
+                          {t('fullName')}
+                        </label>
+                        <p className={`mt-1 transition-colors ${
+                          isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                        }`}>Yassine</p>
+                      </div>
+                      <div>
+                        <label className={`text-sm font-medium transition-colors ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                        }`}>{t('email')}</label>
+                        <p className={`mt-1 transition-colors ${
+                          isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                        }`}>yassine@jobgate.com</p>
+                      </div>
+                      <div>
+                        <label className={`text-sm font-medium transition-colors ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                        }`}>
+                          {t('location')}
+                        </label>
+                        <p className={`mt-1 transition-colors ${
+                          isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                        }`}>Casablanca, {t('morocco')}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Skills & Experience */}
+                  <div className={`p-6 rounded-lg transition-colors duration-300 ${
+                    isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                  }`}>
+                    <h3 className={`text-lg font-semibold mb-4 transition-colors ${
+                      isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                    }`}>
+                      {t('skills')}
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {['Java', 'Python', 'React', 'Node.js', 'Docker'].map((skill) => (
+                        <span key={skill} className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                          isDarkMode 
+                            ? 'bg-blue-900/30 text-blue-300' 
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-4">
+                      <label className={`text-sm font-medium transition-colors ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                      }`}>
+                        {t('experience')}
+                      </label>
+                      <p className={`mt-1 transition-colors ${
+                        isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                      }`}>
+                        2+ {t('years')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-8 flex space-x-4">
+                  <button className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors">
+                    {t('editProfile')}
+                  </button>
+                  <button className={`px-6 py-2 rounded-lg transition-colors ${
+                    isDarkMode 
+                      ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                  }`}>
+                    {t('changePassword')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : activeSection === 'settings' ? (
+            <div className="space-y-6">
+              <div className="text-center py-12">
+                <h1 className={`text-3xl font-bold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
+                  {t('settings')}
+                </h1>
+                <p className={`text-lg max-w-3xl mx-auto transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {t('configureSettings')}
+                </p>
+              </div>
+              <div className={`rounded-xl shadow-sm p-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <h2 className={`text-xl font-semibold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
+                  {t('generalSettings')}
+                </h2>
+                <p className={`transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {t('appSettingsImplemented')}
+                </p>
+              </div>
+            </div>
+          ) : activeSection === 'notifications' ? (
+            <div className="space-y-6">
+              <div className="text-center py-12">
+                <h1 className={`text-3xl font-bold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
+                  {t('notifications')}
+                </h1>
+                <p className={`text-lg max-w-3xl mx-auto transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {t('viewNotifications')}
+                </p>
+              </div>
+              <div className={`rounded-xl shadow-sm p-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <h2 className={`text-xl font-semibold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
+                  {t('recentNotifications')}
+                </h2>
+                <div className="space-y-4">
+                  {[1, 2, 3].map((notif) => (
+                    <div key={notif} className={`p-4 rounded-lg border transition-colors ${
+                      isDarkMode ? 'border-gray-700 bg-gray-700/50' : 'border-gray-200 bg-gray-50'
+                    }`}>
+                      <p className={`font-medium transition-colors ${
+                        isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                      }`}>
+                        {t('newJobOffer')}
+                      </p>
+                      <p className={`text-sm transition-colors ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                      }`}>
+                        {t('hoursAgo')}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : activeSection === 'help' ? (
+            <div className="space-y-6">
+              <div className="text-center py-12">
+                <h1 className={`text-3xl font-bold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
+                  {t('help')}
+                </h1>
+                <p className={`text-lg max-w-3xl mx-auto transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {t('findHelp')}
+                </p>
+              </div>
+              <div className={`rounded-xl shadow-sm p-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <h2 className={`text-xl font-semibold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
+                  {t('helpCenter')}
+                </h2>
+                <p className={`transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {t('helpCenterImplemented')}
                 </p>
               </div>
             </div>
           ) : (
             <>
               {/* Blue Banner Header */}
-              <div className="career-banner bg-slate-800 rounded-lg p-8 mb-6 relative overflow-hidden">
+              <div className={`career-banner rounded-lg p-8 mb-6 relative overflow-hidden transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-slate-800'
+              }`}>
                 <div className="banner-content flex items-center justify-between">
                   <div className="banner-text flex-1 pr-8">
-                    <h1 className="banner-title text-white text-2xl font-medium mb-6 leading-tight">Développez votre potentiel professionnel</h1>
+                    <h1 className="banner-title text-white text-2xl font-medium mb-6 leading-tight">
+                      {t('developPotential')}
+                    </h1>
                     <p className="banner-description text-white/80 text-sm leading-relaxed max-w-lg">
-                      Découvrez nos conseils d'experts, les tendances du marché et des recommandations pratiques pour ajuster votre parcours professionnel.
+                      {t('expertAdvice')}
                     </p>
                   </div>
                   
@@ -727,26 +923,20 @@ const MainDashboard = () => {
 
               {/* Offers Card */}
               <div className={`job-offers-card rounded-xl shadow-sm p-6 transition-colors duration-300 ${
-                isDarkMode 
-                  ? 'bg-gray-800 border border-gray-700' 
-                  : 'bg-white'
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
               }`}>
                 <div className="offers-header flex items-center justify-between mb-4">
-                  <h2 className={`offers-title font-medium text-lg transition-colors ${
-                    isDarkMode ? 'text-white' : 'text-gray-800'
+                  <h2 className={`offers-title font-medium text-lg ${
+                    isDarkMode ? 'text-gray-100' : 'text-gray-800'
                   }`}>{t('offers')}</h2>
                   <button className={`view-all-btn text-sm hover:underline transition-colors ${
-                    isDarkMode 
-                      ? 'text-blue-400 hover:text-blue-300' 
-                      : 'text-blue-500 hover:text-blue-600'
+                    isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-500 hover:text-blue-600'
                   }`}>{t('viewAll')}</button>
                 </div>
                 
                 {/* Job Offer Card */}
-                <div className={`job-offer-item border rounded-lg p-4 transition-colors ${
-                  isDarkMode 
-                    ? 'border-gray-600 hover:border-gray-500' 
-                    : 'border-gray-200 hover:border-gray-300'
+                <div className={`job-offer-item border rounded-lg p-4 transition-colors duration-300 ${
+                  isDarkMode ? 'border-gray-700' : 'border-gray-200'
                 }`}>
                   <div className="offer-content flex items-start space-x-4">
                     {/* Company Logo */}
@@ -756,39 +946,33 @@ const MainDashboard = () => {
                     
                     {/* Job Details */}
                     <div className="job-details flex-1">
-                      <h3 className={`job-title font-medium mb-1 transition-colors ${
-                        isDarkMode ? 'text-white' : 'text-gray-800'
+                      <h3 className={`job-title font-medium mb-1 ${
+                        isDarkMode ? 'text-gray-100' : 'text-gray-800'
                       }`}>{t('backendDeveloper')}</h3>
-                      <p className={`company-name text-sm mb-2 transition-colors ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-800'
+                      <p className={`company-name text-sm mb-2 ${
+                        isDarkMode ? 'text-gray-200' : 'text-gray-800'
                       }`}>JOBGATE</p>
-                      <p className={`job-location text-sm mb-3 transition-colors ${
-                        isDarkMode ? 'text-gray-400' : 'text-gray-800'
-                      }`}>📍 {t('jobLocation')}</p>
+                      <p className={`job-location text-sm mb-3 ${
+                        isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                      }`}>📍 Casablanca, Maroc</p>
                       
                       {/* Tags */}
                       <div className="job-tags flex space-x-2 mb-3">
                         <span className={`job-tag px-2 py-1 rounded text-xs transition-colors ${
-                          isDarkMode 
-                            ? 'bg-blue-900/30 text-blue-300' 
-                            : 'bg-blue-50 text-blue-500'
-                        }`}>{t('internship')}</span>
+                          isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-50 text-blue-500'
+                        }`}>Stage</span>
                         <span className={`job-tag px-2 py-1 rounded text-xs transition-colors ${
-                          isDarkMode 
-                            ? 'bg-blue-900/30 text-blue-300' 
-                            : 'bg-blue-50 text-blue-500'
-                        }`}>{t('remote')}</span>
+                          isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-50 text-blue-500'
+                        }`}>Télétravail</span>
                         <span className={`job-tag px-2 py-1 rounded text-xs transition-colors ${
-                          isDarkMode 
-                            ? 'bg-blue-900/30 text-blue-300' 
-                            : 'bg-blue-50 text-blue-500'
-                        }`}>{t('threeMonths')}</span>
+                          isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-50 text-blue-500'
+                        }`}>3 mois</span>
                       </div>
                       
-                      <p className={`job-description text-sm mb-4 transition-colors ${
+                      <p className={`job-description text-sm mb-4 ${
                         isDarkMode ? 'text-gray-300' : 'text-gray-800'
                       }`}>
-                        {t('jobDescription')}
+                        À propos JOBGATE: JOBGATE est une plateforme de recrutement en ligne leader qui connecte les professionnels talentueux avec les meilleurs employeurs...
                       </p>
                       
                       <button className={`view-more-btn px-4 py-2 rounded text-sm transition-colors ${
@@ -808,7 +992,11 @@ const MainDashboard = () => {
 
         {/* Right Side Strip */}
         <div className="right-sidebar w-18 flex justify-center">
-          <button className="floating-action-btn w-12 h-12 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center transition-colors sticky top-32">
+          <button className={`floating-action-btn w-12 h-12 rounded-full flex items-center justify-center transition-colors sticky top-32 ${
+            isDarkMode 
+              ? 'bg-blue-600 hover:bg-blue-700' 
+              : 'bg-blue-500 hover:bg-blue-600'
+          }`}>
             <span className="btn-icon text-white font-bold text-xs">J</span>
           </button>
         </div>

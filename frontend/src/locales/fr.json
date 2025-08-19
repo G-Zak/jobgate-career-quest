@@ -2,41 +2,7 @@
   "welcome": "Bienvenue sur JobGate Career Quest",
   "login": "Connexion",
   "register": "S'inscrire",
-  "dashboard": {
-    "title": "Tableau de bord",
-    "profile": {
-      "level": "Niveau",
-      "careerExplorer": "Explorateur de carrière",
-      "careerProgress": "Progression de carrière"
-    },
-    "achievements": {
-      "title": "Réalisations",
-      "of": "sur",
-      "earned": "obtenues",
-      "locked": "Verrouillé",
-      "rarity": {
-        "gold": "Or",
-        "silver": "Argent",
-        "bronze": "Bronze"
-      }
-    },
-    "jobs": {
-      "recommendedJobs": "Emplois recommandés",
-      "viewAllJobs": "Voir tous les emplois",
-      "match": "Correspondance",
-      "applyNow": "Postuler maintenant"
-    },
-    "skills": {
-      "skillsPerformance": "Performance des compétences",
-      "average": "Moyenne",
-      "score": "Score"
-    },
-    "tests": {
-      "testHistory": "Historique des tests",
-      "viewAllTests": "Voir tous les tests",
-      "assessment": "Évaluation"
-    }
-  },
+  "dashboard": "Tableau de bord",
   "jobs": "Offres d'emploi",
   "career": "Conseils de carrière",
   "profile": "Profil",
@@ -77,5 +43,39 @@
   "french": "Français",
   "english": "Anglais",
   "switchToEnglish": "Passer à l'anglais",
-  "switchToFrench": "Passer au français"
+  "switchToFrench": "Passer au français",
+  "personalSpace": "Espace Personnel",
+  "personalizedRecommendations": "Recommandations Personnalisées",
+  "completeHistory": "Historique Complet",
+  "developer": "Développeur",
+  "level": "Niveau",
+  "personalInformation": "Informations personnelles",
+  "email": "Email",
+  "location": "Localisation",
+  "morocco": "Maroc",
+  "skills": "Compétences",
+  "experience": "Expérience",
+  "years": "années",
+  "editProfile": "Modifier le profil",
+  "changePassword": "Changer mot de passe",
+  "generalSettings": "Paramètres généraux",
+  "recentNotifications": "Notifications récentes",
+  "newJobOffer": "Nouvelle offre d'emploi",
+  "hoursAgo": "il y a 2 heures",
+  "helpCenter": "Centre d'aide",
+  "manageProfile": "Gérez votre profil personnel, vos informations et vos préférences.",
+  "configureSettings": "Configurez vos préférences et paramètres de l'application.",
+  "viewNotifications": "Consultez vos notifications et messages.",
+  "findHelp": "Trouvez de l'aide et du support pour utiliser la plateforme.",
+  "appSettingsImplemented": "Les paramètres de l'application seront implémentés ici.",
+  "helpCenterImplemented": "Le centre d'aide sera implémenté ici avec la documentation et le support.",
+  "personalSpaceImplemented": "Votre espace personnel sera implémenté ici avec la gestion du profil et les paramètres.",
+  "recommendationSystemImplemented": "Le système de recommandations d'offres sera implémenté ici avec des suggestions basées sur votre profil.",
+  "testHistoryImplemented": "L'historique détaillé de vos tests et évaluations sera affiché ici avec les résultats et les progrès.",
+  "improveSkills": "Améliorez vos compétences grâce à des sessions de pratique complètes et suivez vos progrès dans cette catégorie de compétences.",
+  "interactiveAssessments": "Les exercices d'évaluation et de pratique interactifs seront disponibles ici. Cette évaluation de catégorie de compétences est prête à commencer.",
+  "startAssessment": "Commencer l'évaluation",
+  "practiceTitle": "Pratique",
+  "personalizedJobOffers": "Découvrez les offres d'emploi personnalisées en fonction de votre profil et de vos compétences.",
+  "reviewTestHistory": "Consultez l'historique de tous vos tests et évaluations de compétences."
 }
