@@ -25,7 +25,7 @@ import betterImpressions from '../../../assets/images/ui/better_impressions.avif
 
 const MainDashboard = () => {
   const { t, i18n } = useTranslation();
-  const [activeSection, setActiveSection] = useState('applications');
+  const [activeSection, setActiveSection] = useState('dashboard');
   const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
