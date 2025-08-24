@@ -13,7 +13,6 @@ const TestContent = ({ step, setStep, currentQuestion, setCurrentQuestion }) => 
   };
 
   const handleAnswer = (answer) => {
-    console.log("Réponse sélectionnée :", answer);
     // tu peux stocker la réponse plus tard
   };
 

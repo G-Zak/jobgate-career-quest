@@ -1,6 +1,6 @@
 import React from 'react';
 
-const JobRecommendations = ({ jobs }) => {
+const JobRecommendations = ({ jobs, isDarkMode = false }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
