@@ -1,6 +1,6 @@
 import React from 'react';
 
-const BadgesGrid = ({ badges }) => {
+const BadgesGrid = ({ badges, isDarkMode = false }) => {
   const rarityColors = {
     gold: 'from-yellow-400 to-yellow-600',
     silver: 'from-gray-300 to-gray-500', 
@@ -8,10 +8,16 @@ const BadgesGrid = ({ badges }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className={`rounded-xl shadow-sm border p-6 transition-colors duration-300 ${
+      isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+    }`}>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Achievements</h2>
-        <div className="text-sm text-gray-500">
+        <h2 className={`text-xl font-bold transition-colors ${
+          isDarkMode ? 'text-gray-100' : 'text-gray-900'
+        }`}>Achievements</h2>
+        <div className={`text-sm transition-colors ${
+          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+        }`}>
           {badges.filter(b => b.earned).length} of {badges.length} earned
         </div>
       </div>
@@ -22,8 +28,12 @@ const BadgesGrid = ({ badges }) => {
             key={badge.id} 
             className={`relative p-4 rounded-lg border-2 transition-all duration-200 ${
               badge.earned 
-                ? 'border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:shadow-md' 
-                : 'border-gray-100 bg-gray-50 opacity-60'
+                ? isDarkMode
+                  ? 'border-gray-600 bg-gradient-to-br from-gray-700 to-gray-800 hover:shadow-md' 
+                  : 'border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:shadow-md'
+                : isDarkMode
+                  ? 'border-gray-700 bg-gray-800 opacity-60'
+                  : 'border-gray-100 bg-gray-50 opacity-60'
             }`}
           >
             <div className="flex flex-col items-center text-center">
@@ -37,8 +47,10 @@ const BadgesGrid = ({ badges }) => {
                 </span>
               </div>
               
-              <h3 className={`font-semibold text-sm ${
-                badge.earned ? 'text-gray-900' : 'text-gray-500'
+              <h3 className={`font-semibold text-sm transition-colors ${
+                badge.earned 
+                  ? isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                  : isDarkMode ? 'text-gray-400' : 'text-gray-500'
               }`}>
                 {badge.name}
               </h3>

@@ -19,7 +19,7 @@ ChartJS.register(
   Legend
 );
 
-const SkillsChart = ({ testResults }) => {
+const SkillsChart = ({ testResults, isDarkMode = false }) => {
   const data = {
     labels: testResults.map(test => test.test_type),
     datasets: [{

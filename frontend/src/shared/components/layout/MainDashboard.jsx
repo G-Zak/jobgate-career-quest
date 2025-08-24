@@ -482,7 +482,7 @@ const MainDashboard = () => {
         {/* Central Content Zone */}
         <div className="main-content-area flex-1 max-w-4xl">
           {activeSection === 'dashboard' ? (
-            <Dashboard />
+            <Dashboard isDarkMode={isDarkMode} />
           ) : activeSection === 'test-session' ? (
             <TestLayout />
           ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
