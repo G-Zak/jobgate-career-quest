@@ -1,14 +1,16 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Instructions from './Instructions';
 import QuestionCard from './QuestionCard';
 
 const TestContent = ({ step, setStep, currentQuestion, setCurrentQuestion }) => {
+  const { t } = useTranslation();
   const handleNext = () => {
     if (currentQuestion < 20) {
       setCurrentQuestion(prev => prev + 1);
     } else {
       // Tu peux afficher une page de fin ici
-      alert("Test terminé !");
+      alert(t('testsCompleted'));
     }
   };
 

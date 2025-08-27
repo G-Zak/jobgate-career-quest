@@ -1,12 +1,14 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
-const JobRecommendations = ({ jobs, isDarkMode = false }) => {
+const JobRecommendations = ({ jobs }) => {
+  const { t } = useTranslation();
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl shadow-sm border p-6 transition-colors duration-300">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Recommended Jobs</h2>
-        <a href="#" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-          View all jobs →
+        <h2 className="text-gray-900 dark:text-gray-100 text-xl font-bold transition-colors">{t('recommendedJobs')}</h2>
+        <a href="#" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium transition-colors">
+          {t('viewAllJobs')} →
         </a>
       </div>
       
@@ -14,7 +16,7 @@ const JobRecommendations = ({ jobs, isDarkMode = false }) => {
         {jobs.map(job => (
           <div
             key={job.id}
-            className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 hover:border-blue-200 cursor-pointer group"
+            className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-blue-200 dark:hover:border-blue-500 p-4 border rounded-lg transition-all duration-200 cursor-pointer group hover:shadow-md dark:hover:shadow-lg"
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -23,14 +25,14 @@ const JobRecommendations = ({ jobs, isDarkMode = false }) => {
                     {job.company.charAt(0)}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                    <h3 className="text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 font-semibold transition-colors">
                       {job.title}
                     </h3>
-                    <p className="text-sm text-gray-600">{job.company}</p>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm transition-colors">{job.company}</p>
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                <div className="text-gray-500 dark:text-gray-400 flex items-center space-x-4 text-sm mb-3 transition-colors">
                   <span className="flex items-center">
                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -48,8 +50,8 @@ const JobRecommendations = ({ jobs, isDarkMode = false }) => {
                 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-gray-700">Match:</span>
-                    <div className="w-20 h-2 bg-gray-200 rounded-full">
+                    <span className="text-gray-700 dark:text-gray-300 text-sm font-medium transition-colors">{t('match')}:</span>
+                    <div className="bg-gray-200 dark:bg-gray-600 w-20 h-2 rounded-full transition-colors">
                       <div 
                         className={`h-2 rounded-full ${
                           job.match >= 80 ? 'bg-green-500' : 
@@ -66,8 +68,8 @@ const JobRecommendations = ({ jobs, isDarkMode = false }) => {
                     </span>
                   </div>
                   
-                  <button className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors">
-                    Apply Now
+                  <button className="bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    {t('applyNow')}
                   </button>
                 </div>
               </div>

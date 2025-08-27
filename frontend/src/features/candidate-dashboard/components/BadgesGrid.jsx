@@ -1,6 +1,8 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
-const BadgesGrid = ({ badges, isDarkMode = false }) => {
+const BadgesGrid = ({ badges }) => {
+  const { t } = useTranslation();
   const rarityColors = {
     gold: 'from-yellow-400 to-yellow-600',
     silver: 'from-gray-300 to-gray-500', 
@@ -8,17 +10,11 @@ const BadgesGrid = ({ badges, isDarkMode = false }) => {
   };
 
   return (
-    <div className={`rounded-xl shadow-sm border p-6 transition-colors duration-300 ${
-      isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-    }`}>
+    <div className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl shadow-sm border p-6 transition-colors duration-300">
       <div className="flex items-center justify-between mb-6">
-        <h2 className={`text-xl font-bold transition-colors ${
-          isDarkMode ? 'text-gray-100' : 'text-gray-900'
-        }`}>Achievements</h2>
-        <div className={`text-sm transition-colors ${
-          isDarkMode ? 'text-gray-400' : 'text-gray-500'
-        }`}>
-          {badges.filter(b => b.earned).length} of {badges.length} earned
+        <h2 className="text-gray-900 dark:text-gray-100 text-xl font-bold transition-colors">{t('achievements')}</h2>
+        <div className="text-gray-500 dark:text-gray-400 text-sm transition-colors">
+          {badges.filter(b => b.earned).length} {t('of')} {badges.length} {t('earned')}
         </div>
       </div>
       
@@ -28,12 +24,8 @@ const BadgesGrid = ({ badges, isDarkMode = false }) => {
             key={badge.id} 
             className={`relative p-4 rounded-lg border-2 transition-all duration-200 ${
               badge.earned 
-                ? isDarkMode
-                  ? 'border-gray-600 bg-gradient-to-br from-gray-700 to-gray-800 hover:shadow-md' 
-                  : 'border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:shadow-md'
-                : isDarkMode
-                  ? 'border-gray-700 bg-gray-800 opacity-60'
-                  : 'border-gray-100 bg-gray-50 opacity-60'
+                ? 'border-gray-200 dark:border-gray-600 bg-gradient-to-br from-white to-gray-50 dark:from-gray-700 dark:to-gray-800 hover:shadow-md'
+                : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 opacity-60'
             }`}
           >
             <div className="flex flex-col items-center text-center">
@@ -49,8 +41,8 @@ const BadgesGrid = ({ badges, isDarkMode = false }) => {
               
               <h3 className={`font-semibold text-sm transition-colors ${
                 badge.earned 
-                  ? isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                  : isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  ? 'text-gray-900 dark:text-gray-100'
+                  : 'text-gray-500 dark:text-gray-400'
               }`}>
                 {badge.name}
               </h3>
@@ -61,7 +53,7 @@ const BadgesGrid = ({ badges, isDarkMode = false }) => {
                   badge.rarity === 'silver' ? 'bg-gray-100 text-gray-800' :
                   'bg-orange-100 text-orange-800'
                 }`}>
-                  {badge.rarity.charAt(0).toUpperCase() + badge.rarity.slice(1)}
+                  {t(badge.rarity)}
                 </div>
               )}
             </div>
@@ -70,7 +62,7 @@ const BadgesGrid = ({ badges, isDarkMode = false }) => {
               <div className="absolute inset-0 flex items-center justify-center bg-gray-50 bg-opacity-80 rounded-lg">
                 <div className="text-center">
                   <div className="text-2xl mb-1">🔒</div>
-                  <div className="text-xs text-gray-500">Locked</div>
+                  <div className="text-xs text-gray-500">{t('locked')}</div>
                 </div>
               </div>
             )}

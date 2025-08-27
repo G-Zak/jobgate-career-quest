@@ -1,5 +1,7 @@
 import React from 'react';
 import { Bar } from 'react-chartjs-2';
+import { useTranslation } from 'react-i18next';
+import { useDarkMode } from '../../../contexts/DarkModeContext';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -19,7 +21,9 @@ ChartJS.register(
   Legend
 );
 
-const SkillsChart = ({ testResults, isDarkMode = false }) => {
+const SkillsChart = ({ testResults }) => {
+  const { t } = useTranslation();
+  const { isDarkMode } = useDarkMode();
   const data = {
     labels: testResults.map(test => test.test_type),
     datasets: [{
@@ -53,10 +57,10 @@ const SkillsChart = ({ testResults, isDarkMode = false }) => {
         display: false,
       },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.9)' : 'rgba(0, 0, 0, 0.8)',
         titleColor: 'white',
         bodyColor: 'white',
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: isDarkMode ? 'rgba(75, 85, 99, 0.3)' : 'rgba(255, 255, 255, 0.1)',
         borderWidth: 1,
         cornerRadius: 8,
         displayColors: false,
@@ -70,10 +74,10 @@ const SkillsChart = ({ testResults, isDarkMode = false }) => {
     scales: {
       x: {
         grid: {
-          display: false,
+          color: isDarkMode ? 'rgba(75, 85, 99, 0.3)' : 'rgba(107, 114, 128, 0.1)',
         },
         ticks: {
-          color: '#6b7280',
+          color: isDarkMode ? '#d1d5db' : '#6b7280',
           font: {
             size: 12,
           }
@@ -83,10 +87,10 @@ const SkillsChart = ({ testResults, isDarkMode = false }) => {
         beginAtZero: true,
         max: 100,
         grid: {
-          color: 'rgba(107, 114, 128, 0.1)',
+          color: isDarkMode ? 'rgba(75, 85, 99, 0.3)' : 'rgba(107, 114, 128, 0.1)',
         },
         ticks: {
-          color: '#6b7280',
+          color: isDarkMode ? '#d1d5db' : '#6b7280',
           font: {
             size: 12,
           },
@@ -99,11 +103,11 @@ const SkillsChart = ({ testResults, isDarkMode = false }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl shadow-sm border p-6 transition-colors duration-300">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Skills Performance</h2>
-        <div className="text-sm text-gray-500">
-          Average: {Math.round(testResults.reduce((acc, test) => acc + test.score, 0) / testResults.length)}%
+        <h2 className="text-gray-900 dark:text-gray-100 text-xl font-bold transition-colors">{t('skillsPerformance')}</h2>
+        <div className="text-gray-500 dark:text-gray-400 text-sm transition-colors">
+          {t('average')}: {Math.round(testResults.reduce((acc, test) => acc + test.score, 0) / testResults.length)}%
         </div>
       </div>
       

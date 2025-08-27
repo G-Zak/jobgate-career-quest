@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import HeaderBar from './HeaderBar'; // ✅ Important
 import TestHeader from './TestHeader';
 import TestContent from './TestContent';
 
 const TestLayout = () => {
+  const { t } = useTranslation();
   const [step, setStep] = useState('instructions');
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [timer, setTimer] = useState(18 * 60); // 18 minutes
@@ -25,7 +27,7 @@ const TestLayout = () => {
   }, [step]);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
       {/* 🌐 Barre de navigation principale */}
       <HeaderBar />
 
@@ -35,7 +37,7 @@ const TestLayout = () => {
           currentQuestion={currentQuestion}
           totalQuestions={20}
           timer={timer}
-          onAbort={() => alert('Test aborted')}
+          onAbort={() => alert(t('submit'))}
         />
       )}
 

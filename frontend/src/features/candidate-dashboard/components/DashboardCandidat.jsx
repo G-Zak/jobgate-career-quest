@@ -6,7 +6,7 @@ import SkillsChart from './SkillsChart';
 import TestTimeline from './TestTimeline';
 import JobRecommendations from './JobRecommendations';
 
-const Dashboard = ({ isDarkMode = false }) => {
+const Dashboard = () => {
   const { t } = useTranslation();
   // Mock data - replace with API calls
   const userData = {
@@ -38,7 +38,7 @@ const Dashboard = ({ isDarkMode = false }) => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8">
         {/* Main Dashboard Content */}
 
@@ -46,45 +46,33 @@ const Dashboard = ({ isDarkMode = false }) => {
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6">
           {/* Left Column - Profile & Stats */}
           <div className="xl:col-span-4 space-y-4 lg:space-y-6">
-            <ProfileHeader user={userData} isDarkMode={isDarkMode} />
+            <ProfileHeader user={userData} />
             
             {/* Quick Stats */}
-            <div className={`rounded-xl shadow-sm border p-4 lg:p-6 transition-colors duration-300 ${
-              isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}>
-              <h3 className={`text-base lg:text-lg font-semibold mb-3 lg:mb-4 transition-colors ${
-                isDarkMode ? 'text-gray-100' : 'text-gray-900'
-              }`}>{t('quickStats')}</h3>
+            <div className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl shadow-sm border p-4 lg:p-6 transition-colors duration-300">
+              <h3 className="text-gray-900 dark:text-gray-100 text-base lg:text-lg font-semibold mb-3 lg:mb-4 transition-colors">{t('quickStats')}</h3>
               <div className="space-y-3 lg:space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className={`text-sm lg:text-base transition-colors ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                  }`}>{t('testsCompleted')}</span>
-                  <span className={`font-semibold text-sm lg:text-base transition-colors ${
-                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                  }`}>12</span>
+                  <span className="text-sm lg:text-base text-gray-600 dark:text-gray-300 transition-colors">{t('testsCompleted')}</span>
+                  <span className="font-semibold text-sm lg:text-base text-gray-900 dark:text-gray-100 transition-colors">12</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className={`text-sm lg:text-base transition-colors ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                  }`}>{t('averageScore')}</span>
+                  <span className="text-sm lg:text-base text-gray-600 dark:text-gray-300 transition-colors">{t('averageScore')}</span>
                   <span className="font-semibold text-green-600 text-sm lg:text-base">{userData.overallScore}%</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className={`text-sm lg:text-base transition-colors ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                  }`}>{t('jobMatches')}</span>
+                  <span className="text-sm lg:text-base text-gray-600 dark:text-gray-300 transition-colors">{t('rank')}</span>
+                  <span className="font-semibold text-orange-600 text-sm lg:text-base">#{userData.level}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm lg:text-base text-gray-600 dark:text-gray-300 transition-colors">{t('jobMatches')}</span>
                   <span className="font-semibold text-blue-600 text-sm lg:text-base">{userData.jobRecommendations.length}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className={`text-sm lg:text-base transition-colors ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                  }`}>{t('xpPoints')}</span>
+                  <span className="text-sm lg:text-base text-gray-600 dark:text-gray-300 transition-colors">{t('xpPoints')}</span>
                   <div className="flex items-center space-x-2">
                     <span className="font-semibold text-purple-600 text-sm lg:text-base">{userData.xpPoints}</span>
-                    <div className={`w-12 lg:w-16 h-2 rounded-full transition-colors ${
-                      isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
-                    }`}>
+                    <div className="w-12 lg:w-16 h-2 bg-gray-200 dark:bg-gray-700 rounded-full transition-colors">
                       <div 
                         className="h-2 bg-purple-500 rounded-full" 
                         style={{ width: `${(userData.xpPoints / userData.nextLevelXP) * 100}%` }}
@@ -96,12 +84,8 @@ const Dashboard = ({ isDarkMode = false }) => {
             </div>
 
             {/* Recent Activity */}
-            <div className={`rounded-xl shadow-sm border p-4 lg:p-6 transition-colors duration-300 ${
-              isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}>
-              <h3 className={`text-base lg:text-lg font-semibold mb-3 lg:mb-4 transition-colors ${
-                isDarkMode ? 'text-gray-100' : 'text-gray-900'
-              }`}>{t('recentActivity')}</h3>
+            <div className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl shadow-sm border p-4 lg:p-6 transition-colors duration-300">
+              <h3 className="text-gray-900 dark:text-gray-100 text-base lg:text-lg font-semibold mb-3 lg:mb-4 transition-colors">{t('recentActivity')}</h3>
               <div className="space-y-3">
                 {userData.recentActivity.map((activity, index) => (
                   <div key={index} className="flex items-start space-x-3">
@@ -111,14 +95,10 @@ const Dashboard = ({ isDarkMode = false }) => {
                       'bg-green-500'
                     }`}></div>
                     <div className="flex-1">
-                      <p className={`text-sm transition-colors ${
-                        isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                      }`}>
+                      <p className="text-sm text-gray-900 dark:text-gray-100 transition-colors">
                         {activity.content}
                       </p>
-                      <p className={`text-xs transition-colors ${
-                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                      }`}>{activity.date}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 transition-colors">{activity.date}</p>
                     </div>
                   </div>
                 ))}
@@ -126,34 +106,20 @@ const Dashboard = ({ isDarkMode = false }) => {
             </div>
 
             {/* Recommended Jobs */}
-            <div className={`rounded-xl shadow-sm border p-4 lg:p-6 transition-colors duration-300 ${
-              isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}>
-              <h3 className={`text-base lg:text-lg font-semibold mb-3 lg:mb-4 transition-colors ${
-                isDarkMode ? 'text-gray-100' : 'text-gray-900'
-              }`}>{t('recommendedJobs')}</h3>
+            <div className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl shadow-sm border p-4 lg:p-6 transition-colors duration-300">
+              <h3 className="text-gray-900 dark:text-gray-100 text-base lg:text-lg font-semibold mb-3 lg:mb-4 transition-colors">{t('recommendedJobs')}</h3>
               <div className="space-y-3 lg:space-y-4">
                 {userData.jobRecommendations.map((job, index) => (
-                  <div key={index} className={`p-3 lg:p-4 rounded-lg border transition-colors duration-300 ${
-                    isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
-                  }`}>
-                    <h4 className={`text-sm lg:text-base font-medium mb-1 transition-colors ${
-                      isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                    }`}>
+                  <div key={index} className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 p-3 lg:p-4 rounded-lg border transition-colors duration-300">
+                    <h4 className="text-gray-900 dark:text-gray-100 text-sm lg:text-base font-medium mb-1 transition-colors">
                       {job.title}
                     </h4>
-                    <p className={`text-xs transition-colors ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                    }`}>{job.company}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 transition-colors">{job.company}</p>
                     <div className="mt-2 flex justify-between items-center">
-                      <span className={`text-xs px-2 py-1 rounded-full transition-colors ${
-                        isDarkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'
-                      }`}>
+                      <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 transition-colors">
                         {job.match}% {t('match')}
                       </span>
-                      <button className={`text-xs font-medium transition-colors hover:underline ${
-                        isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'
-                      }`}>
+                      <button className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors hover:underline">
                         {t('viewDetails')}
                       </button>
                     </div>
@@ -166,16 +132,16 @@ const Dashboard = ({ isDarkMode = false }) => {
           {/* Right Column - Main Content */}
           <div className="xl:col-span-8 space-y-4 lg:space-y-6">
             {/* Badges Grid */}
-            <BadgesGrid badges={userData.badges} isDarkMode={isDarkMode} />
+            <BadgesGrid badges={userData.badges} />
             
             {/* Skills Chart */}
-            <SkillsChart testResults={userData.testResults} isDarkMode={isDarkMode} />
+            <SkillsChart testResults={userData.testResults} />
             
             {/* Job Recommendations */}
-            <JobRecommendations jobs={userData.jobRecommendations} isDarkMode={isDarkMode} />
+            <JobRecommendations jobs={userData.jobRecommendations} />
             
             {/* Test Timeline */}
-            <TestTimeline tests={userData.testResults} isDarkMode={isDarkMode} />
+            <TestTimeline tests={userData.testResults} />
           </div>
         </div>
       </div>

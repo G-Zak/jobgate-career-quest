@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDarkMode } from '../../../contexts/DarkModeContext';
 import { 
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -25,11 +26,11 @@ import betterImpressions from '../../../assets/images/ui/better_impressions.avif
 
 const MainDashboard = () => {
   const { t, i18n } = useTranslation();
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
   const [activeSection, setActiveSection] = useState('dashboard');
   const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   
   const profileDropdownRef = useRef(null);
 
@@ -43,7 +44,7 @@ const MainDashboard = () => {
     }
   };
 
-  // Close dropdown when clicking outside
+    // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
@@ -52,9 +53,7 @@ const MainDashboard = () => {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Map skill categories to test types
@@ -109,11 +108,9 @@ const MainDashboard = () => {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       {/* Top Header Bar */}
-      <div className={`header-bar h-16 border-b px-12 transition-colors duration-300 ${
-        isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-      }`}>
+      <div className="header-bar h-16 border-b px-12 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 transition-colors duration-300">
         <div className="header-content h-full flex items-center justify-between max-w-screen-2xl mx-auto">
           {/* Logo */}
           <div className="logo-container flex items-center">
@@ -273,7 +270,7 @@ const MainDashboard = () => {
                     }`}>{t('appearance')}</p>
                   </div>
                   <button 
-                    onClick={() => setIsDarkMode(!isDarkMode)}
+                    onClick={() => toggleDarkMode()}
                     className={`w-full px-4 py-2 text-left text-sm flex items-center justify-between transition-colors ${
                       isDarkMode 
                         ? 'text-gray-300 hover:bg-gray-700' 
@@ -482,17 +479,18 @@ const MainDashboard = () => {
         {/* Central Content Zone */}
         <div className="main-content-area flex-1 max-w-4xl">
           {activeSection === 'dashboard' ? (
-            <Dashboard isDarkMode={isDarkMode} />
+            <Dashboard />
           ) : activeSection === 'test-session' ? (
-            <TestLayout />
+            <TestLayout isDarkMode={isDarkMode} />
           ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
             // Show AvailableTests for most test categories
             activeSection === 'technical-tests' ? (
-              <TechnicalTests onBackToDashboard={() => setActiveSection('applications')} />
+              <TechnicalTests onBackToDashboard={() => setActiveSection('dashboard')} isDarkMode={isDarkMode} />
             ) : (
               <AvailableTests 
-                onBackToDashboard={() => setActiveSection('applications')} 
+                onBackToDashboard={() => setActiveSection('dashboard')} 
                 onStartTest={() => setActiveSection('test-session')}
+                isDarkMode={isDarkMode}
               />
             )
           ) : activeSection.startsWith('skill-') ? (
