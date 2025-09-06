@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "badges",
     "recommendation",
     "dashboard",
+    "skills_tests",
 ]
 
 

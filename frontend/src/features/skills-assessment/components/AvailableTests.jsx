@@ -52,11 +52,22 @@ const AvailableTests = ({ onBackToDashboard, onStartTest }) => {
   };
 
   const handleTestStart = (testId) => {
+    // Map test IDs to specific test types
+    let targetTest = testId;
+    
+    if (testId.startsWith('NRT')) {
+      targetTest = 'numerical-reasoning';
+    } else if (testId.startsWith('LRT')) {
+      targetTest = 'abstract-reasoning';
+    } else if (testId.startsWith('VRT')) {
+      targetTest = 'verbal-reasoning';
+    }
+    
     // Use callback if provided, otherwise use navigate as fallback
     if (onStartTest) {
-      onStartTest(testId);
+      onStartTest(targetTest);
     } else {
-      navigate("/test-session", { state: { testId } });
+      navigate("/test-session", { state: { testId: targetTest } });
     }
   };
 

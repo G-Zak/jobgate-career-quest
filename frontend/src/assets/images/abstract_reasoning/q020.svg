@@ -1,0 +1,1 @@
+<svg viewBox='0 0 500 100'><rect x='20' y='25' width='50' height='50' fill='black'/><circle cx='125' cy='50' r='25' fill='black'/><polygon points='200,25 230,75 170,75' fill='black'/><rect x='270' y='25' width='50' height='50' fill='black' transform='rotate(45 295 50)'/><rect x='350' y='25' width='50' height='50' fill='black'/></svg>

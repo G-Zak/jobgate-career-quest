@@ -1,0 +1,101 @@
+{
+  "session_info": {
+    "session_id": "demo_session_001",
+    "user_id": "demo_user",
+    "test_type": "numerical_reasoning"
+  },
+  "test_results": {
+    "raw_score": 2,
+    "total_questions": 4,
+    "percentage": 50.0,
+    "time_taken": 240,
+    "time_bonus": 0,
+    "final_score": 9,
+    "percentile": 30
+  },
+  "detailed_responses": [
+    {
+      "question_id": "NRT_004",
+      "user_answer": "B",
+      "correct_answer": "B",
+      "time_taken": 45,
+      "is_correct": true
+    },
+    {
+      "question_id": "NRT_005",
+      "user_answer": "A",
+      "correct_answer": "C",
+      "time_taken": 55,
+      "is_correct": false
+    },
+    {
+      "question_id": "NRT_002",
+      "user_answer": "B",
+      "correct_answer": "B",
+      "time_taken": 65,
+      "is_correct": true
+    },
+    {
+      "question_id": "NRT_001",
+      "user_answer": "A",
+      "correct_answer": "B",
+      "time_taken": 75,
+      "is_correct": false
+    }
+  ],
+  "analytics": {
+    "category_performance": {
+      "ratio_proportion": {
+        "total": 1,
+        "correct": 1,
+        "total_time": 45,
+        "percentage": 100.0,
+        "average_time": 45.0
+      },
+      "statistical_reasoning": {
+        "total": 1,
+        "correct": 0,
+        "total_time": 55,
+        "percentage": 0.0,
+        "average_time": 55.0
+      },
+      "data_interpretation": {
+        "total": 1,
+        "correct": 1,
+        "total_time": 65,
+        "percentage": 100.0,
+        "average_time": 65.0
+      },
+      "arithmetic_percentages": {
+        "total": 1,
+        "correct": 0,
+        "total_time": 75,
+        "percentage": 0.0,
+        "average_time": 75.0
+      }
+    },
+    "difficulty_performance": {
+      "easy": {
+        "total": 2,
+        "correct": 1,
+        "total_time": 120,
+        "percentage": 50.0,
+        "average_time": 60.0
+      },
+      "medium": {
+        "total": 2,
+        "correct": 1,
+        "total_time": 120,
+        "percentage": 50.0,
+        "average_time": 60.0
+      }
+    },
+    "recommendations": [
+      "Focus on fundamental concepts to improve your reasoning skills.",
+      "Focus on improving in: statistical_reasoning, arithmetic_percentages",
+      "Review fundamental concepts - focus on easier problems first",
+      "Work on time management - practice solving problems more quickly"
+    ]
+  },
+  "export_timestamp": "2025-08-27T12:51:08.291100"
+}

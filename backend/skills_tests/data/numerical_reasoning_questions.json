@@ -1,0 +1,538 @@
+[
+  {
+    "question_id": "NUM_001",
+    "test_type": "numerical_reasoning",
+    "difficulty": "easy",
+    "category": "basic_arithmetic",
+    "question_content": {
+      "type": "text",
+      "question": "A product originally costs $120. After a 15% discount, what is the new price?"
+    },
+    "options": [
+      { "option_id": "A", "content": "$102" },
+      { "option_id": "B", "content": "$108" },
+      { "option_id": "C", "content": "$105" },
+      { "option_id": "D", "content": "$110" }
+    ],
+    "correct_answer": "A",
+    "explanation": "15% of 120 = 18. New price = 120 - 18 = 102.",
+    "time_limit": 45,
+    "points": 1,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 2.0, "average_time": 25, "success_rate": 0.85 }
+  },
+  {
+    "question_id": "NUM_002",
+    "test_type": "numerical_reasoning",
+    "difficulty": "easy",
+    "category": "basic_arithmetic",
+    "question_content": {
+      "type": "text",
+      "question": "A car travels 240 km in 4 hours. What is its average speed?"
+    },
+    "options": [
+      { "option_id": "A", "content": "50 km/h" },
+      { "option_id": "B", "content": "55 km/h" },
+      { "option_id": "C", "content": "60 km/h" },
+      { "option_id": "D", "content": "65 km/h" }
+    ],
+    "correct_answer": "C",
+    "explanation": "Speed = distance/time = 240/4 = 60 km/h.",
+    "time_limit": 45,
+    "points": 1,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 2.2, "average_time": 28, "success_rate": 0.82 }
+  },
+  {
+    "question_id": "NUM_003",
+    "test_type": "numerical_reasoning",
+    "difficulty": "medium",
+    "category": "basic_arithmetic",
+    "question_content": {
+      "type": "text",
+      "question": "A factory increases production from 800 units to 1,000 units. What is the percentage increase?"
+    },
+    "options": [
+      { "option_id": "A", "content": "20%" },
+      { "option_id": "B", "content": "25%" },
+      { "option_id": "C", "content": "15%" },
+      { "option_id": "D", "content": "10%" }
+    ],
+    "correct_answer": "B",
+    "explanation": "Increase = (1000-800)/800 × 100 = 200/800 × 100 = 25%.",
+    "time_limit": 60,
+    "points": 2,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 3.8, "average_time": 45, "success_rate": 0.70 }
+  },
+  {
+    "question_id": "NUM_004",
+    "test_type": "numerical_reasoning",
+    "difficulty": "medium",
+    "category": "basic_arithmetic",
+    "question_content": {
+      "type": "text",
+      "question": "A student scored 72 out of 90 on a test. What percentage is this?"
+    },
+    "options": [
+      { "option_id": "A", "content": "75%" },
+      { "option_id": "B", "content": "78%" },
+      { "option_id": "C", "content": "80%" },
+      { "option_id": "D", "content": "82%" }
+    ],
+    "correct_answer": "C",
+    "explanation": "72/90 = 0.8 → 80%.",
+    "time_limit": 45,
+    "points": 2,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 3.5, "average_time": 35, "success_rate": 0.73 }
+  },
+  {
+    "question_id": "NUM_005",
+    "test_type": "numerical_reasoning",
+    "difficulty": "hard",
+    "category": "basic_arithmetic",
+    "question_content": {
+      "type": "text",
+      "question": "If a company's profit margin is 12% on revenue of $250,000, what is the profit?"
+    },
+    "options": [
+      { "option_id": "A", "content": "$25,000" },
+      { "option_id": "B", "content": "$28,000" },
+      { "option_id": "C", "content": "$30,000" },
+      { "option_id": "D", "content": "$32,000" }
+    ],
+    "correct_answer": "C",
+    "explanation": "12% of 250,000 = 30,000.",
+    "time_limit": 60,
+    "points": 3,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 5.0, "average_time": 55, "success_rate": 0.6 }
+  },
+  {
+    "question_id": "NUM_006",
+    "test_type": "numerical_reasoning",
+    "difficulty": "easy",
+    "category": "ratio_proportion",
+    "question_content": {
+      "type": "text",
+      "question": "If 3 pencils cost $6, how much will 7 pencils cost at the same rate?"
+    },
+    "options": [
+      { "option_id": "A", "content": "$12" },
+      { "option_id": "B", "content": "$13" },
+      { "option_id": "C", "content": "$14" },
+      { "option_id": "D", "content": "$15" }
+    ],
+    "correct_answer": "C",
+    "explanation": "1 pencil = $2. 7 pencils = 14.",
+    "time_limit": 45,
+    "points": 1,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 2.5, "average_time": 30, "success_rate": 0.82 }
+  },
+  {
+    "question_id": "NUM_007",
+    "test_type": "numerical_reasoning",
+    "difficulty": "easy",
+    "category": "ratio_proportion",
+    "question_content": {
+      "type": "text",
+      "question": "Divide $120 between Alice and Bob in the ratio 2:3. How much does Bob get?"
+    },
+    "options": [
+      { "option_id": "A", "content": "$48" },
+      { "option_id": "B", "content": "$60" },
+      { "option_id": "C", "content": "$72" },
+      { "option_id": "D", "content": "$80" }
+    ],
+    "correct_answer": "C",
+    "explanation": "2+3=5 parts. Bob gets 3/5 × 120 = 72.",
+    "time_limit": 45,
+    "points": 1,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 2.2, "average_time": 28, "success_rate": 0.84 }
+  },
+  {
+    "question_id": "NUM_008",
+    "test_type": "numerical_reasoning",
+    "difficulty": "medium",
+    "category": "ratio_proportion",
+    "question_content": {
+      "type": "text",
+      "question": "A map uses a scale of 1:50,000. What distance on the map represents 25 km in reality? (Note: 1 km = 100,000 cm)"
+    },
+    "options": [
+      { "option_id": "A", "content": "40 cm" },
+      { "option_id": "B", "content": "45 cm" },
+      { "option_id": "C", "content": "50 cm" },
+      { "option_id": "D", "content": "55 cm" }
+    ],
+    "correct_answer": "C",
+    "explanation": "25 km = 25 × 100,000 cm = 2,500,000 cm. Divide by scale 50,000 = 50 cm on the map.",
+    "time_limit": 60,
+    "points": 2,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 4.0, "average_time": 50, "success_rate": 0.68 }
+  },
+  {
+    "question_id": "NUM_009",
+    "test_type": "numerical_reasoning",
+    "difficulty": "medium",
+    "category": "ratio_proportion",
+    "question_content": {
+      "type": "text",
+      "question": "In a recipe, flour and sugar are in the ratio 5:3. If 400 g of flour is used, how much sugar is required?"
+    },
+    "options": [
+      { "option_id": "A", "content": "220 g" },
+      { "option_id": "B", "content": "230 g" },
+      { "option_id": "C", "content": "240 g" },
+      { "option_id": "D", "content": "250 g" }
+    ],
+    "correct_answer": "C",
+    "explanation": "Flour : sugar = 5 : 3. If flour = 400 → sugar = (3/5)×400 = 240.",
+    "time_limit": 60,
+    "points": 2,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 4.2, "average_time": 55, "success_rate": 0.64 }
+  },
+  {
+    "question_id": "NUM_010",
+    "test_type": "numerical_reasoning",
+    "difficulty": "hard",
+    "category": "ratio_proportion",
+    "question_content": {
+      "type": "text",
+      "question": "The ratio of men to women in a company is 7:5. If there are 360 employees, how many are women?"
+    },
+    "options": [
+      { "option_id": "A", "content": "140" },
+      { "option_id": "B", "content": "150" },
+      { "option_id": "C", "content": "160" },
+      { "option_id": "D", "content": "170" }
+    ],
+    "correct_answer": "B",
+    "explanation": "7+5=12 parts. Women = 5/12 × 360 = 150.",
+    "time_limit": 75,
+    "points": 3,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 6.8, "average_time": 80, "success_rate": 0.42 }
+  },
+  {
+    "question_id": "NUM_011",
+    "test_type": "numerical_reasoning",
+    "difficulty": "easy",
+    "category": "data_interpretation",
+    "question_content": {
+      "type": "chart",
+      "chart_data": {
+        "type": "bar_chart",
+        "title": "Quarterly Sales (USD)",
+        "data": { "Q1": 15000, "Q2": 18000, "Q3": 22000, "Q4": 19000 }
+      },
+      "question": "What was the percentage increase in sales from Q1 to Q2?"
+    },
+    "options": [
+      { "option_id": "A", "content": "15%" },
+      { "option_id": "B", "content": "20%" },
+      { "option_id": "C", "content": "25%" },
+      { "option_id": "D", "content": "30%" }
+    ],
+    "correct_answer": "B",
+    "explanation": "Increase = (18000-15000)/15000 × 100 = 20%.",
+    "time_limit": 60,
+    "points": 2,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 4.0, "average_time": 50, "success_rate": 0.68 }
+  },
+  {
+    "question_id": "NUM_012",
+    "test_type": "numerical_reasoning",
+    "difficulty": "easy",
+    "category": "data_interpretation",
+    "question_content": {
+      "type": "table",
+      "table_data": {
+        "title": "Population of Cities",
+        "data": [
+          { "city": "A", "population": 500000 },
+          { "city": "B", "population": 750000 },
+          { "city": "C", "population": 1000000 }
+        ]
+      },
+      "question": "What is the average population across the three cities?"
+    },
+    "options": [
+      { "option_id": "A", "content": "700,000" },
+      { "option_id": "B", "content": "750,000" },
+      { "option_id": "C", "content": "800,000" },
+      { "option_id": "D", "content": "850,000" }
+    ],
+    "correct_answer": "B",
+    "explanation": "(500,000 + 750,000 + 1,000,000)/3 = 2,250,000/3 = 750,000.",
+    "time_limit": 60,
+    "points": 2,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 3.5, "average_time": 40, "success_rate": 0.74 }
+  },
+  {
+    "question_id": "NUM_013",
+    "test_type": "numerical_reasoning",
+    "difficulty": "medium",
+    "category": "data_interpretation",
+    "question_content": {
+      "type": "chart",
+      "chart_data": {
+        "type": "pie_chart",
+        "title": "Market Share",
+        "data": { "Brand A": 30, "Brand B": 25, "Brand C": 20, "Others": 25 }
+      },
+      "question": "If total sales are $1,000,000, how much is Brand B's sales?"
+    },
+    "options": [
+      { "option_id": "A", "content": "$200,000" },
+      { "option_id": "B", "content": "$220,000" },
+      { "option_id": "C", "content": "$250,000" },
+      { "option_id": "D", "content": "$300,000" }
+    ],
+    "correct_answer": "C",
+    "explanation": "25% of 1,000,000 = 250,000.",
+    "time_limit": 75,
+    "points": 2,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 4.5, "average_time": 65, "success_rate": 0.64 }
+  },
+  {
+    "question_id": "NUM_014",
+    "test_type": "numerical_reasoning",
+    "difficulty": "medium",
+    "category": "data_interpretation",
+    "question_content": {
+      "type": "table",
+      "table_data": {
+        "title": "Student Grades",
+        "data": [
+          { "subject": "Math", "score": 85 },
+          { "subject": "English", "score": 78 },
+          { "subject": "Science", "score": 92 },
+          { "subject": "History", "score": 75 }
+        ]
+      },
+      "question": "What is the median score?"
+    },
+    "options": [
+      { "option_id": "A", "content": "75" },
+      { "option_id": "B", "content": "81.5" },
+      { "option_id": "C", "content": "85" },
+      { "option_id": "D", "content": "92" }
+    ],
+    "correct_answer": "B",
+    "explanation": "Ordered scores: 75, 78, 85, 92. Median = (78+85)/2 = 81.5.",
+    "time_limit": 75,
+    "points": 2,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 5.0, "average_time": 70, "success_rate": 0.56 }
+  },
+  {
+    "question_id": "NUM_015",
+    "test_type": "numerical_reasoning",
+    "difficulty": "medium",
+    "category": "data_interpretation",
+    "question_content": {
+      "type": "chart",
+      "chart_data": {
+        "type": "line_chart",
+        "title": "Monthly Website Visitors",
+        "data": { "Jan": 5000, "Feb": 6000, "Mar": 8000, "Apr": 7000 }
+      },
+      "question": "What is the percentage increase from Jan to Mar?"
+    },
+    "options": [
+      { "option_id": "A", "content": "40%" },
+      { "option_id": "B", "content": "50%" },
+      { "option_id": "C", "content": "60%" },
+      { "option_id": "D", "content": "70%" }
+    ],
+    "correct_answer": "C",
+    "explanation": "(8000-5000)/5000 × 100 = 3000/5000 × 100 = 0.6 × 100 = 60%.",
+    "time_limit": 75,
+    "points": 2,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 5.2, "average_time": 70, "success_rate": 0.55 }
+  },
+  {
+    "question_id": "NUM_016",
+    "test_type": "numerical_reasoning",
+    "difficulty": "hard",
+    "category": "data_interpretation",
+    "question_content": {
+      "type": "table",
+      "table_data": {
+        "title": "Company Expenses ($)",
+        "data": [
+          { "category": "Salaries", "amount": 50000 },
+          { "category": "Rent", "amount": 20000 },
+          { "category": "Utilities", "amount": 10000 },
+          { "category": "Marketing", "amount": 15000 },
+          { "category": "Other", "amount": 5000 }
+        ]
+      },
+      "question": "What percentage of total expenses is spent on salaries?"
+    },
+    "options": [
+      { "option_id": "A", "content": "45%" },
+      { "option_id": "B", "content": "50%" },
+      { "option_id": "C", "content": "55%" },
+      { "option_id": "D", "content": "60%" }
+    ],
+    "correct_answer": "B",
+    "explanation": "Total = 100,000. Salaries = 50,000 → 50%.",
+    "time_limit": 90,
+    "points": 3,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 6.8, "average_time": 85, "success_rate": 0.42 }
+  },
+  {
+    "question_id": "NUM_017",
+    "test_type": "numerical_reasoning",
+    "difficulty": "medium",
+    "category": "data_interpretation",
+    "question_content": {
+      "type": "chart",
+      "chart_data": {
+        "type": "bar_chart",
+        "title": "Book Sales",
+        "data": { "Fiction": 400, "Non-Fiction": 300, "Science": 250, "History": 200 }
+      },
+      "question": "What fraction of total sales were Fiction books?"
+    },
+    "options": [
+      { "option_id": "A", "content": "2/5" },
+      { "option_id": "B", "content": "4/11" },
+      { "option_id": "C", "content": "1/2" },
+      { "option_id": "D", "content": "5/12" }
+    ],
+    "correct_answer": "B",
+    "explanation": "Total=1150. Fiction=400. Fraction=400/1150=4/11.",
+    "time_limit": 75,
+    "points": 2,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 5.5, "average_time": 65, "success_rate": 0.5 }
+  },
+  {
+    "question_id": "NUM_018",
+    "test_type": "numerical_reasoning",
+    "difficulty": "hard",
+    "category": "data_interpretation",
+    "question_content": {
+      "type": "chart",
+      "chart_data": {
+        "type": "line_chart",
+        "title": "Stock Prices",
+        "data": { "Day1": 100, "Day2": 110, "Day3": 105, "Day4": 120, "Day5": 115 }
+      },
+      "question": "What is the overall percentage increase from Day1 to Day5?"
+    },
+    "options": [
+      { "option_id": "A", "content": "10%" },
+      { "option_id": "B", "content": "12%" },
+      { "option_id": "C", "content": "15%" },
+      { "option_id": "D", "content": "20%" }
+    ],
+    "correct_answer": "C",
+    "explanation": "(115-100)/100=15/100=15%.",
+    "time_limit": 90,
+    "points": 3,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 7.0, "average_time": 85, "success_rate": 0.38 }
+  },
+
+  {
+    "question_id": "NUM_019",
+    "test_type": "numerical_reasoning",
+    "difficulty": "easy",
+    "category": "financial_calculations",
+    "question_content": {
+      "type": "text",
+      "question": "If you invest $1000 at 10% simple interest for 2 years, how much interest do you earn?"
+    },
+    "options": [
+      { "option_id": "A", "content": "$100" },
+      { "option_id": "B", "content": "$150" },
+      { "option_id": "C", "content": "$200" },
+      { "option_id": "D", "content": "$250" }
+    ],
+    "correct_answer": "C",
+    "explanation": "SI = P×R×T = 1000×0.1×2=200.",
+    "time_limit": 45,
+    "points": 1,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 2.5, "average_time": 35, "success_rate": 0.82 }
+  },
+  {
+    "question_id": "NUM_020",
+    "test_type": "numerical_reasoning",
+    "difficulty": "medium",
+    "category": "financial_calculations",
+    "question_content": {
+      "type": "text",
+      "question": "If you invest $2000 at an annual interest rate of 5% compounded yearly, what will the investment be worth after 2 years?"
+    },
+    "options": [
+      { "option_id": "A", "content": "$2100" },
+      { "option_id": "B", "content": "$2205" },
+      { "option_id": "C", "content": "$2200" },
+      { "option_id": "D", "content": "$2250" }
+    ],
+    "correct_answer": "B",
+    "explanation": "CI=2000×(1.05)^2=2205.",
+    "time_limit": 75,
+    "points": 2,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 4.5, "average_time": 65, "success_rate": 0.62 }
+  },
+  {
+    "question_id": "NUM_021",
+    "test_type": "numerical_reasoning",
+    "difficulty": "medium",
+    "category": "financial_calculations",
+    "question_content": {
+      "type": "text",
+      "question": "A bond of $5000 earns 8% annual interest compounded quarterly. What is the value after 1 year?"
+    },
+    "options": [
+      { "option_id": "A", "content": "$5400" },
+      { "option_id": "B", "content": "$5416" },
+      { "option_id": "C", "content": "$5420" },
+      { "option_id": "D", "content": "$5440" }
+    ],
+    "correct_answer": "B",
+    "explanation": "CI=5000×(1+0.08/4)^4=5416 approx.",
+    "time_limit": 90,
+    "points": 2,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 5.5, "average_time": 75, "success_rate": 0.52 }
+  },
+  {
+    "question_id": "NUM_022",
+    "test_type": "numerical_reasoning",
+    "difficulty": "hard",
+    "category": "financial_calculations",
+    "question_content": {
+      "type": "text",
+      "question": "A machine costs $12,000 and depreciates by $1,200 per year (straight-line depreciation). What is its value after 3 years?"
+    },
+    "options": [
+      { "option_id": "A", "content": "$9000" },
+      { "option_id": "B", "content": "$8400" },
+      { "option_id": "C", "content": "$8000" },
+      { "option_id": "D", "content": "$7800" }
+    ],
+    "correct_answer": "B",
+    "explanation": "Yearly depreciation = $1,200. After 3 years: $12,000 - (3 × $1,200) = $12,000 - $3,600 = $8,400.",
+    "time_limit": 90,
+    "points": 3,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 7.0, "average_time": 85, "success_rate": 0.4 }
+  },
+  {
+    "question_id": "NUM_023",
+    "test_type": "numerical_reasoning",
+    "difficulty": "medium",
+    "category": "financial_calculations",
+    "question_content": {
+      "type": "text",
+      "question": "If you buy 200 shares at $15 each and sell at $18 each, what is your profit?"
+    },
+    "options": [
+      { "option_id": "A", "content": "$400" },
+      { "option_id": "B", "content": "$500" },
+      { "option_id": "C", "content": "$600" },
+      { "option_id": "D", "content": "$700" }
+    ],
+    "correct_answer": "C",
+    "explanation": "Profit=(18-15)×200=600.",
+    "time_limit": 60,
+    "points": 2,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 5.0, "average_time": 55, "success_rate": 0.6 }
+  }
+]

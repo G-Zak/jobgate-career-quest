@@ -19,6 +19,8 @@ import Dashboard from '../../../features/candidate-dashboard/components/Dashboar
 import AvailableTests from '../../../features/skills-assessment/components/AvailableTests';
 import TechnicalTests from '../../../features/skills-assessment/components/TechnicalTests';
 import TestLayout from '../../../features/skills-assessment/components/TestLayout';
+import NumericalReasoningTest from '../../../features/skills-assessment/components/NumericalReasoningTest';
+import AbstractReasoningTest from '../../../features/skills-assessment/components/AbstractReasoningTest';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import formationTechnique from '../../../assets/images/ui/formation_technique.avif';
@@ -483,13 +485,37 @@ const MainDashboard = () => {
           ) : activeSection === 'test-session' ? (
             <TestLayout isDarkMode={isDarkMode} />
           ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
-            // Show AvailableTests for most test categories
+            // Show specific test components or AvailableTests for most test categories
             activeSection === 'technical-tests' ? (
               <TechnicalTests onBackToDashboard={() => setActiveSection('dashboard')} isDarkMode={isDarkMode} />
+            ) : activeSection === 'numerical-tests' ? (
+              <NumericalReasoningTest 
+                onBackToDashboard={() => setActiveSection('dashboard')}
+                onTestComplete={(results) => {
+                  console.log('Test completed:', results);
+                  setActiveSection('dashboard');
+                }}
+              />
+            ) : activeSection === 'abstract-tests' ? (
+              <AbstractReasoningTest 
+                onBackToDashboard={() => setActiveSection('dashboard')}
+                onTestComplete={(results) => {
+                  console.log('Test completed:', results);
+                  setActiveSection('dashboard');
+                }}
+              />
             ) : (
               <AvailableTests 
                 onBackToDashboard={() => setActiveSection('dashboard')} 
-                onStartTest={() => setActiveSection('test-session')}
+                onStartTest={(testId) => {
+                  if (testId === 'numerical-reasoning') {
+                    setActiveSection('numerical-tests');
+                  } else if (testId === 'abstract-reasoning') {
+                    setActiveSection('abstract-tests');
+                  } else {
+                    setActiveSection('test-session');
+                  }
+                }}
                 isDarkMode={isDarkMode}
               />
             )

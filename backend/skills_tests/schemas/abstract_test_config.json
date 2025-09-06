@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Abstract Reasoning Test Configuration",
+  "type": "object",
+  "properties": {
+    "test_info": {
+      "type": "object",
+      "properties": {
+        "test_id": { "const": "ART_001" },
+        "name": { "const": "Abstract Reasoning Test" },
+        "total_questions": { "const": 20 },
+        "time_limit_minutes": { "const": 15 },
+        "description": { "type": "string" }
+      }
+    },
+    "categories": {
+      "type": "object",
+      "properties": {
+        "pattern_matrices": {
+          "type": "object",
+          "properties": {
+            "name": { "const": "Pattern Matrices" },
+            "question_count": { "type": "integer", "minimum": 6, "maximum": 8 },
+            "description": { "type": "string" }
+          }
+        },
+        "shape_sequences": {
+          "type": "object",
+          "properties": {
+            "name": { "const": "Shape Sequences" },
+            "question_count": { "type": "integer", "minimum": 5, "maximum": 7 },
+            "description": { "type": "string" }
+          }
+        },
+        "transformation_rules": {
+          "type": "object",
+          "properties": {
+            "name": { "const": "Transformation Rules" },
+            "question_count": { "type": "integer", "minimum": 4, "maximum": 6 },
+            "description": { "type": "string" }
+          }
+        },
+        "odd_one_out": {
+          "type": "object",
+          "properties": {
+            "name": { "const": "Odd One Out" },
+            "question_count": { "type": "integer", "minimum": 3, "maximum": 5 },
+            "description": { "type": "string" }
+          }
+        }
+      }
+    },
+    "difficulty_distribution": {
+      "type": "object",
+      "properties": {
+        "easy": { "const": 0.35 },
+        "medium": { "const": 0.50 },
+        "hard": { "const": 0.15 }
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "properties": {
+        "base_points_per_question": { "const": 5 },
+        "time_bonus_enabled": { "const": false },
+        "difficulty_multipliers": {
+          "type": "object",
+          "properties": {
+            "easy": { "const": 1.0 },
+            "medium": { "const": 1.0 },
+            "hard": { "const": 1.0 }
+          }
+        }
+      }
+    }
+  }
+}
