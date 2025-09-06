@@ -158,7 +158,6 @@
   "minutes": "minutes",
   "seconds": "seconds",
   "timeLimit": "time limit",
-  "forEntireTest": "for the Entire Test",
   "useCalculationsCarefully": "Use calculations and work carefully through each problem",
   "lookForPatterns": "Look for patterns and logical relationships in visual sequences",
   "useLogicalThinking": "Use logical thinking to identify the next element in the pattern",
@@ -184,5 +183,5 @@
   "patternRecognition": "Pattern Recognition",
   "viewDetailedResults": "View Detailed Results",
   "patternSequence": "Pattern Sequence",
-  "selectCorrectOption": "Select your answer"
+  "selectCorrectOption": "Select the correct option that completes the pattern"
 }

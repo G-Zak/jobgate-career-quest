@@ -158,7 +158,6 @@
   "minutes": "minutes",
   "seconds": "secondes",
   "timeLimit": "limite de temps",
-  "forEntireTest": "pour l'Ensemble du Test",
   "useCalculationsCarefully": "Utilisez les calculs et travaillez soigneusement chaque problème",
   "lookForPatterns": "Recherchez des motifs et des relations logiques dans les séquences visuelles",
   "useLogicalThinking": "Utilisez la pensée logique pour identifier l'élément suivant dans le motif",
@@ -184,7 +183,7 @@
   "patternRecognition": "Reconnaissance de motifs",
   "viewDetailedResults": "Voir les résultats détaillés",
   "patternSequence": "Séquence de motifs",
-  "selectCorrectOption": "Sélectionnez votre réponse",
+  "selectCorrectOption": "Sélectionnez l'option correcte qui complète le motif",
   "rank": "Rang",
   "viewDetails": "Voir les détails"
 }
