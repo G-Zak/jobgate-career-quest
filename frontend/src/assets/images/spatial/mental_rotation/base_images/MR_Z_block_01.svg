@@ -1,0 +1,50 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Z-shaped 3D block made of 6 unit cubes in isometric view -->
+  <!-- Top horizontal segment (left side) - 2 cubes -->
+  <g id="top-segment">
+    <!-- Cube 1: Top-left -->
+    <g id="cube1">
+      <path d="M86 160 L156 130 L226 160 L156 190 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M86 160 L156 190 L156 260 L86 230 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+      <path d="M156 190 L226 160 L226 230 L156 260 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+    </g>
+    <!-- Cube 2: Top-center -->
+    <g id="cube2">
+      <path d="M226 160 L296 130 L366 160 L296 190 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M226 160 L296 190 L296 260 L226 230 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+      <path d="M296 190 L366 160 L366 230 L296 260 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+    </g>
+  </g>
+  
+  <!-- Middle diagonal connection - 2 cubes -->
+  <g id="middle-segment">
+    <!-- Cube 3: Middle-left (step down) -->
+    <g id="cube3">
+      <path d="M156 230 L226 200 L296 230 L226 260 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M156 230 L226 260 L226 330 L156 300 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+      <path d="M226 260 L296 230 L296 300 L226 330 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+    </g>
+    <!-- Cube 4: Middle-right (step down and right) -->
+    <g id="cube4">
+      <path d="M296 230 L366 200 L436 230 L366 260 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M296 230 L366 260 L366 330 L296 300 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+      <path d="M366 260 L436 230 L436 300 L366 330 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+    </g>
+  </g>
+  
+  <!-- Bottom horizontal segment (right side) - 2 cubes -->
+  <g id="bottom-segment">
+    <!-- Cube 5: Bottom-center -->
+    <g id="cube5">
+      <path d="M366 300 L436 270 L506 300 L436 330 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M366 300 L436 330 L436 400 L366 370 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+      <path d="M436 330 L506 300 L506 370 L436 400 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+    </g>
+    <!-- Cube 6: Bottom-right -->
+    <g id="cube6">
+      <path d="M436 300 L506 270 L576 300 L506 330 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M436 300 L506 330 L506 400 L436 370 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+      <path d="M506 330 L576 300 L576 370 L506 400 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+    </g>
+  </g>
+</svg>

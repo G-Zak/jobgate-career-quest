@@ -1,0 +1,22 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- 90 degree clockwise rotation arrow -->
+  <g id="rotation-arrow-90cw" opacity="0.8">
+    <!-- Curved arrow path for 90 degrees clockwise -->
+    <path d="M256 150 A100 100 0 0 1 356 250" 
+          fill="none" 
+          stroke="#fbbf24" 
+          stroke-width="8" 
+          stroke-linecap="round"
+          marker-end="url(#arrowhead)"/>
+    
+    <!-- Arrow head -->
+    <defs>
+      <marker id="arrowhead" markerWidth="15" markerHeight="15" refX="12" refY="3" orient="auto">
+        <polygon points="0 0, 15 3, 0 6" fill="#fbbf24"/>
+      </marker>
+    </defs>
+    
+    <!-- Label -->
+    <text x="320" y="180" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#fbbf24" text-anchor="middle">90°</text>
+  </g>
+</svg>

@@ -1,0 +1,42 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- T-shaped 3D block: rotated 180° - horizontal bottom bar, vertical stem pointing up -->
+  <!-- Cube 1: Left cube of horizontal bottom bar -->
+  <g id="cube1">
+    <!-- Top face -->
+    <path d="M156 320 L226 290 L296 320 L226 350 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+    <!-- Left face -->
+    <path d="M156 320 L226 350 L226 420 L156 390 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+    <!-- Right face -->
+    <path d="M226 350 L296 320 L296 390 L226 420 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+  </g>
+  
+  <!-- Cube 2: Center cube of horizontal bottom bar -->
+  <g id="cube2">
+    <!-- Top face -->
+    <path d="M296 320 L366 290 L436 320 L366 350 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+    <!-- Left face -->
+    <path d="M296 320 L366 350 L366 420 L296 390 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+    <!-- Right face -->
+    <path d="M366 350 L436 320 L436 390 L366 420 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+  </g>
+  
+  <!-- Cube 3: Right cube of horizontal bottom bar -->
+  <g id="cube3">
+    <!-- Top face -->
+    <path d="M436 320 L506 290 L576 320 L506 350 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+    <!-- Left face -->
+    <path d="M436 320 L506 350 L506 420 L436 390 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+    <!-- Right face -->
+    <path d="M506 350 L576 320 L576 390 L506 420 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+  </g>
+  
+  <!-- Cube 4: Vertical stem extending up from center -->
+  <g id="cube4">
+    <!-- Top face -->
+    <path d="M296 250 L366 220 L436 250 L366 280 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+    <!-- Left face -->
+    <path d="M296 250 L366 280 L366 350 L296 320 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+    <!-- Right face -->
+    <path d="M366 280 L436 250 L436 320 L366 350 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+  </g>
+</svg>

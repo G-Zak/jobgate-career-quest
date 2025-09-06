@@ -1,0 +1,12 @@
+INSTRUCTION IMAGE PLACEHOLDER
+
+This file represents where the Section 1 instruction image should be placed.
+
+The image should show:
+- Title: "SPATIAL REASONING TESTS SECTION 1"
+- 3 shapes with letters: hexagon with 'a', triangle with 'a' and 'b', square with 'b'  
+- Target assembled shape showing how they connect
+- Full instructions for joining shapes by corresponding letters
+- Test timing: 45 minutes for 40 questions
+
+Please save the provided screenshot as: section_1_intro.png

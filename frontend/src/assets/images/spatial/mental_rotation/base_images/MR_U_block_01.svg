@@ -1,0 +1,68 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- U-shaped 3D structure made of 7 unit cubes opening upward -->
+  <!-- Left vertical arm (3 cubes) -->
+  <g id="left-arm">
+    <!-- Bottom cube of left arm -->
+    <g id="left-cube1">
+      <path d="M86 300 L156 270 L226 300 L156 330 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M86 300 L156 330 L156 400 L86 370 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+      <path d="M156 330 L226 300 L226 370 L156 400 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+    </g>
+    <!-- Middle cube of left arm -->
+    <g id="left-cube2">
+      <path d="M86 230 L156 200 L226 230 L156 260 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M86 230 L156 260 L156 330 L86 300 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+      <path d="M156 260 L226 230 L226 300 L156 330 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+    </g>
+    <!-- Top cube of left arm -->
+    <g id="left-cube3">
+      <path d="M86 160 L156 130 L226 160 L156 190 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M86 160 L156 190 L156 260 L86 230 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+      <path d="M156 190 L226 160 L226 230 L156 260 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+    </g>
+  </g>
+  
+  <!-- Bottom horizontal connector (3 cubes) -->
+  <g id="bottom-connector">
+    <!-- Left connector cube -->
+    <g id="bottom-cube1">
+      <path d="M226 300 L296 270 L366 300 L296 330 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M226 300 L296 330 L296 400 L226 370 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+      <path d="M296 330 L366 300 L366 370 L296 400 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+    </g>
+    <!-- Center connector cube -->
+    <g id="bottom-cube2">
+      <path d="M366 300 L436 270 L506 300 L436 330 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M366 300 L436 330 L436 400 L366 370 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+      <path d="M436 330 L506 300 L506 370 L436 400 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+    </g>
+    <!-- Right connector cube -->
+    <g id="bottom-cube3">
+      <path d="M506 300 L576 270 L646 300 L576 330 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M506 300 L576 330 L576 400 L506 370 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+      <path d="M576 330 L646 300 L646 370 L576 400 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+    </g>
+  </g>
+  
+  <!-- Right vertical arm (3 cubes) -->
+  <g id="right-arm">
+    <!-- Bottom cube of right arm -->
+    <g id="right-cube1">
+      <path d="M646 300 L716 270 L786 300 L716 330 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M646 300 L716 330 L716 400 L646 370 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+      <path d="M716 330 L786 300 L786 370 L716 400 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+    </g>
+    <!-- Middle cube of right arm -->
+    <g id="right-cube2">
+      <path d="M646 230 L716 200 L786 230 L716 260 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M646 230 L716 260 L716 330 L646 300 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+      <path d="M716 260 L786 230 L786 300 L716 330 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+    </g>
+    <!-- Top cube of right arm -->
+    <g id="right-cube3">
+      <path d="M646 160 L716 130 L786 160 L716 190 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M646 160 L716 190 L716 260 L646 230 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+      <path d="M716 190 L786 160 L786 230 L716 260 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+    </g>
+  </g>
+</svg>

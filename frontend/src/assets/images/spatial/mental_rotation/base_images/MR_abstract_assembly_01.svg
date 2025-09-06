@@ -1,0 +1,111 @@
+<svg width="260" height="200" viewBox="0 0 260 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Abstract spatial assembly - 12 cubes in complex 3D arrangement -->
+  
+  <!-- Base cluster - 4 cubes in irregular foundation -->
+  <!-- Cube 1: Base anchor -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="60,140 90,125 120,140 90,155" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="60,140 60,160 90,175 90,155" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="90,155 90,175 120,160 120,140" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 2: Base offset right -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="150,130 180,115 210,130 180,145" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="150,130 150,150 180,165 180,145" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="180,145 180,165 210,150 210,130" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 3: Base diagonal front -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="105,120 135,105 165,120 135,135" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="105,120 105,140 135,155 135,135" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="135,135 135,155 165,140 165,120" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 4: Base back connector -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="90,125 120,110 150,125 120,140" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="90,125 90,145 120,160 120,140" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="120,140 120,160 150,145 150,125" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Mid-level floating elements - 4 cubes -->
+  <!-- Cube 5: Floating left wing -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="30,100 60,85 90,100 60,115" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="30,100 30,120 60,135 60,115" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="60,115 60,135 90,120 90,100" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 6: Mid-level bridge -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="120,95 150,80 180,95 150,110" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="120,95 120,115 150,130 150,110" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="150,110 150,130 180,115 180,95" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 7: Floating right extension -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="195,105 225,90 255,105 225,120" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="195,105 195,125 225,140 225,120" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="225,120 225,140 255,125 255,105" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 8: Mid-level diagonal -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="165,85 195,70 225,85 195,100" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="165,85 165,105 195,120 195,100" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="195,100 195,120 225,105 225,85" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Upper abstract formations - 4 cubes -->
+  <!-- Cube 9: Upper left spiral -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="75,70 105,55 135,70 105,85" fill="#ed8936" opacity="0.9"/> <!-- top face -->
+    <polygon points="75,70 75,90 105,105 105,85" fill="#dd6b20" opacity="0.9"/> <!-- left face -->
+    <polygon points="105,85 105,105 135,90 135,70" fill="#c05621" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 10: Upper central node -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="135,65 165,50 195,65 165,80" fill="#ed8936" opacity="0.9"/> <!-- top face -->
+    <polygon points="135,65 135,85 165,100 165,80" fill="#dd6b20" opacity="0.9"/> <!-- left face -->
+    <polygon points="165,80 165,100 195,85 195,65" fill="#c05621" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 11: Upper right cantilever -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="180,50 210,35 240,50 210,65" fill="#ed8936" opacity="0.9"/> <!-- top face -->
+    <polygon points="180,50 180,70 210,85 210,65" fill="#dd6b20" opacity="0.9"/> <!-- left face -->
+    <polygon points="210,65 210,85 240,70 240,50" fill="#c05621" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 12: Peak abstract element -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="120,40 150,25 180,40 150,55" fill="#9f7aea" opacity="0.9"/> <!-- top face -->
+    <polygon points="120,40 120,60 150,75 150,55" fill="#805ad5" opacity="0.9"/> <!-- left face -->
+    <polygon points="150,55 150,75 180,60 180,40" fill="#6b46c1" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Abstract connection patterns -->
+  <!-- Flowing curves -->
+  <path d="M 60,140 Q 120,100 195,105 Q 225,70 150,55" stroke="#1a202c" stroke-width="1.5" opacity="0.3" fill="none"/>
+  <path d="M 30,100 Q 90,80 165,85 Q 210,50 180,40" stroke="#1a202c" stroke-width="1.2" opacity="0.3" fill="none"/>
+  
+  <!-- Geometric accent lines -->
+  <line x1="60" y1="140" x2="180" y2="50" stroke="#1a202c" stroke-width="0.8" opacity="0.2"/>
+  <line x1="30" y1="100" x2="225" y2="85" stroke="#1a202c" stroke-width="0.8" opacity="0.2"/>
+  <line x1="105" y1="120" x2="150" y2="25" stroke="#1a202c" stroke-width="0.8" opacity="0.2"/>
+  
+  <!-- Abstract spatial markers -->
+  <circle cx="90" cy="125" r="3" fill="#3182ce" opacity="0.4"/>
+  <circle cx="150" cy="95" r="3" fill="#48bb78" opacity="0.4"/>
+  <circle cx="195" cy="65" r="3" fill="#ed8936" opacity="0.4"/>
+  <circle cx="150" cy="40" r="3" fill="#9f7aea" opacity="0.4"/>
+  
+  <!-- Spatial flow indicators -->
+  <polygon points="90,120 95,125 85,125" fill="#1a202c" opacity="0.3"/>
+  <polygon points="150,90 155,95 145,95" fill="#1a202c" opacity="0.3"/>
+  <polygon points="195,60 200,65 190,65" fill="#1a202c" opacity="0.3"/>
+</svg>

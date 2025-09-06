@@ -13,6 +13,7 @@ import VerbalReasoningTest from '../../../features/skills-assessment/components/
 import SpatialReasoningTest from '../../../features/skills-assessment/components/SpatialReasoningTest';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
+import { useScrollOnChange } from '../../utils/scrollUtils';
 import formationTechnique from '../../../assets/images/ui/formation_technique.avif';
 import betterImpressions from '../../../assets/images/ui/better_impressions.avif';
 
@@ -23,15 +24,9 @@ const MainDashboard = () => {
   const [currentTestFilter, setCurrentTestFilter] = useState(null);
   const [currentTestId, setCurrentTestId] = useState(null);
 
-  // Scroll to top when activeSection changes
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [activeSection]);
-
-  // Scroll to top when currentTestId changes (for test navigation)
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [currentTestId]);
+  // Universal scroll management using scroll utilities
+  useScrollOnChange(activeSection, { smooth: true, attempts: 3 });
+  useScrollOnChange(currentTestId, { smooth: true, attempts: 3 });
 
   // Lock body scroll on test views so only the test area scrolls
   useEffect(() => {
@@ -148,9 +143,9 @@ const MainDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div id="dashboard-root" className="min-h-screen bg-gray-50">
       {/* Top Header Bar */}
-      <div className="header-bar h-16 bg-white border-b border-gray-200 px-12 fixed top-0 left-0 right-0 z-20">
+      <div id="app-header" className="header-bar h-16 bg-white border-b border-gray-200 px-12 fixed top-0 left-0 right-0 z-20">
         <div className="header-content h-full flex items-center justify-between max-w-screen-2xl mx-auto">
           {/* Logo */}
           <div className="logo-container flex items-center">
@@ -162,7 +157,7 @@ const MainDashboard = () => {
           </div>
           
           {/* Center Navigation */}
-          <nav className="main-navigation flex items-center space-x-8">
+          <nav id="main-nav" className="main-navigation flex items-center space-x-8">
             <button 
               onClick={() => setActiveSection('dashboard')}
               className={`nav-button text-base font-medium transition-colors pb-1 ${
@@ -202,9 +197,9 @@ const MainDashboard = () => {
         </div>
       </div>
 
-      <div className="main-layout flex max-w-screen-2xl mx-auto px-12 pt-28 gap-8 items-start">
+      <div id="dashboard-layout" className="main-layout flex max-w-screen-2xl mx-auto px-12 pt-28 gap-8 items-start">
         {/* Left Navigation Strip */}
-        <div className="sidebar-navigation w-72">
+        <div id="sidebar" className="sidebar-navigation w-72">
           <div className="sidebar-card w-72 bg-white rounded-xl shadow-sm fixed top-28 h-[calc(100vh-8rem)] overflow-y-auto z-10">
             {/* Primary Navigation */}
             <div className="primary-nav-section p-6 space-y-3">
@@ -246,7 +241,7 @@ const MainDashboard = () => {
             <div className="nav-separator border-t border-gray-200 mx-6"></div>
 
             {/* Skills Validation Dropdown */}
-            <div className="skills-validation-section p-6">
+            <div id="skills-validation" className="skills-validation-section p-6">
               <button 
                 onClick={() => setShowSkillsDropdown(!showSkillsDropdown)}
                 className="skills-dropdown-trigger w-full flex items-center justify-between px-4 py-3 rounded-lg text-left text-gray-700 text-sm font-semibold transition-colors hover:bg-blue-50"
@@ -257,7 +252,7 @@ const MainDashboard = () => {
 
               {/* Skills Categories Sub-options */}
               {showSkillsDropdown && (
-                <div className="skills-dropdown-menu mt-3 pl-4 space-y-2 max-h-48 overflow-y-auto">
+                <div id="skills-dropdown" className="skills-dropdown-menu mt-3 pl-4 space-y-2 max-h-48 overflow-y-auto">
                   {skillCategories.map((skill, index) => (
                     <button
                       key={index}
@@ -317,13 +312,17 @@ const MainDashboard = () => {
         </div>
 
         {/* Central Content Zone */}
-        <div className="main-content-area flex-1 max-w-4xl">
-          {/* Debug info */}
-          <div style={{position: 'fixed', top: 0, right: 0, background: 'yellow', padding: '10px', zIndex: 9999, fontSize: '12px'}}>
-            ActiveSection: {activeSection}<br/>
-            CurrentTestId: {currentTestId}<br/>
-            CurrentTestFilter: {currentTestFilter}
-          </div>
+        <div id="main-content" className="main-content-area flex-1 max-w-4xl">
+          {/* Scrollable Content Container */}
+          <div className="h-[calc(100vh-7rem)] overflow-y-auto overflow-x-hidden">
+            {/* Debug info (hidden by default) */}
+            {false && (
+              <div style={{position: 'fixed', top: 0, right: 0, background: 'yellow', padding: '10px', zIndex: 9999, fontSize: '12px'}}>
+                ActiveSection: {activeSection}<br/>
+                CurrentTestId: {currentTestId}<br/>
+                CurrentTestFilter: {currentTestFilter}
+              </div>
+            )}
           
           {activeSection === 'dashboard' ? (
             <Dashboard />
@@ -535,6 +534,7 @@ const MainDashboard = () => {
               </div>
             </>
           )}
+          </div>
         </div>
 
         {/* Right Side Strip */}

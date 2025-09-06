@@ -1,0 +1,55 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- L-shaped 3D block rotated 270° (90° counter-clockwise): long arm points UP, short arm points LEFT -->
+  <!-- Precise isometric projection with 30° angles -->
+  
+  <!-- Cube 1: Corner cube (junction point) -->
+  <g id="corner-cube">
+    <!-- Top face (diamond shape in isometric) -->
+    <path d="M200 180 L230 160 L260 180 L230 200 Z" 
+          fill="#4f46e5" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Left face (parallelogram) -->
+    <path d="M200 180 L230 200 L230 240 L200 220 Z" 
+          fill="#3730a3" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Right face (parallelogram) -->
+    <path d="M230 200 L260 180 L260 220 L230 240 Z" 
+          fill="#312e81" stroke="#1e1b4b" stroke-width="2"/>
+  </g>
+  
+  <!-- Cube 2: Long arm extending UP -->
+  <g id="up-cube">
+    <!-- Top face -->
+    <path d="M200 120 L230 100 L260 120 L230 140 Z" 
+          fill="#4f46e5" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Left face -->
+    <path d="M200 120 L230 140 L230 180 L200 160 Z" 
+          fill="#3730a3" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Right face -->
+    <path d="M230 140 L260 120 L260 160 L230 180 Z" 
+          fill="#312e81" stroke="#1e1b4b" stroke-width="2"/>
+  </g>
+  
+  <!-- Cube 3: Short arm extending LEFT -->
+  <g id="left-cube">
+    <!-- Top face -->
+    <path d="M140 180 L170 160 L200 180 L170 200 Z" 
+          fill="#4f46e5" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Left face -->
+    <path d="M140 180 L170 200 L170 240 L140 220 Z" 
+          fill="#3730a3" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Right face -->
+    <path d="M170 200 L200 180 L200 220 L170 240 Z" 
+          fill="#312e81" stroke="#1e1b4b" stroke-width="2"/>
+  </g>
+  
+  <!-- Reference grid lines (subtle) -->
+  <defs>
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#e5e7eb" stroke-width="0.5" opacity="0.3"/>
+    </pattern>
+  </defs>
+  <rect width="400" height="400" fill="url(#grid)" opacity="0.1"/>
+  
+  <!-- Orientation labels -->
+  <text x="215" y="90" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">↑ UP</text>
+  <text x="80" y="190" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">← LEFT</text>
+</svg>

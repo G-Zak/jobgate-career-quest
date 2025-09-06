@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaPlay, FaLock, FaCode, FaServer, FaCogs } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { useScrollToTop } from '../../../shared/utils/scrollUtils';
 
 const stacks = [
   {
@@ -33,10 +34,8 @@ const stacks = [
 const TechnicalTests = ({ onBackToDashboard }) => {
   const navigate = useNavigate();
 
-  // Scroll to top when component mounts
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  // Universal scroll management
+  useScrollToTop([], { smooth: true }); // Scroll on component mount
 
   return (
     <div className="min-h-screen bg-gray-50">

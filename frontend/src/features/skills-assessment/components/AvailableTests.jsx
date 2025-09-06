@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaLock, FaPlay, FaChartLine, FaBrain, FaSearch, FaFilter, FaGlobe, FaClock, FaQuestionCircle, FaStar, FaCheckCircle, FaCube } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
+import { useScrollToTop } from '../../../shared/utils/scrollUtils';
 
 const defaultTestsData = [
   {
@@ -43,10 +44,8 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
   const [testsData, setTestsData] = useState(defaultTestsData);
   const [loading, setLoading] = useState(true);
 
-  // Scroll to top when component mounts
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  // Universal scroll management
+  useScrollToTop([], { smooth: true }); // Scroll on component mount
 
   // Language options
   const languages = [

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaBookOpen, FaBrain, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, FaFlag } from 'react-icons/fa';
+import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
 
 const VerbalReasoningTest = ({ onBackToDashboard, language = 'english', testId = 1 }) => {
   const [testStep, setTestStep] = useState('instructions'); // instructions, test, results
@@ -9,6 +10,11 @@ const VerbalReasoningTest = ({ onBackToDashboard, language = 'english', testId =
   const [answers, setAnswers] = useState({});
   const [testData, setTestData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Universal scroll management using scroll utilities
+  useScrollToTop([], { smooth: true }); // Scroll on component mount
+  useTestScrollToTop(testStep, 'verbal-test-scroll', { smooth: true, attempts: 5 }); // Scroll on test step changes
+  useQuestionScrollToTop(currentQuestion, testStep, 'verbal-test-scroll'); // Scroll on question changes
 
   // Fetch test data from API
   useEffect(() => {
@@ -294,11 +300,6 @@ const VerbalReasoningTest = ({ onBackToDashboard, language = 'english', testId =
     }
   }, [testStep, timeRemaining]);
 
-  // Scroll to top when testStep changes (for smooth navigation between test phases)
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [testStep]);
-
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -307,6 +308,16 @@ const VerbalReasoningTest = ({ onBackToDashboard, language = 'english', testId =
 
   const handleStartTest = () => {
     setTestStep('test');
+    
+    // Use scroll utility for immediate scroll on test start
+    setTimeout(() => {
+      scrollToTop({
+        container: 'verbal-test-scroll',
+        forceImmediate: true,
+        attempts: 3,
+        delay: 50
+      });
+    }, 100);
   };
 
   const handleAnswerSelect = (questionId, answer) => {
@@ -367,7 +378,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, language = 'english', testId =
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="w-full bg-gray-50 flex items-center justify-center py-20">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading test...</p>
@@ -378,7 +389,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, language = 'english', testId =
 
   if (!testData) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="w-full bg-gray-50 flex items-center justify-center py-20">
         <div className="text-center">
           <div className="text-red-600 text-6xl mb-4">⚠️</div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Test Not Available</h2>
@@ -395,12 +406,18 @@ const VerbalReasoningTest = ({ onBackToDashboard, language = 'english', testId =
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 relative">
-      {/* Local scroll container: restrict scrolling to test area */}
-      <div className="relative h-[calc(100vh-7rem)] overflow-y-auto overflow-x-hidden">
-        {/* Sticky Header inside the local scroll container */}
-        <div className="bg-white shadow-sm border-b border-gray-200 p-4 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <div id="verbal-test-root" className="relative min-h-screen">
+      {/* Fixed gradient background */}
+      <div id="verbal-bg" className="fixed inset-0 -z-10 bg-gradient-to-br from-gray-50 to-gray-100" aria-hidden="true" />
+      {/* Local scroll container: only test area scrolls */}
+      <div 
+        id="verbal-test-scroll" 
+        className="test-scroll-container relative h-[calc(100vh-7rem)] overflow-y-auto overflow-x-hidden"
+        data-scroll-container="verbal-test"
+      >
+      {/* Test Header - Sticky within local container */}
+      <div id="verbal-test-header" className="bg-white shadow-sm border-b border-gray-200 p-4 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
             <button
               onClick={onBackToDashboard}
               className="flex items-center text-gray-600 hover:text-blue-600 transition-colors"
@@ -433,11 +450,13 @@ const VerbalReasoningTest = ({ onBackToDashboard, language = 'english', testId =
           </div>
         </div>
 
-      {/* Instructions Step */}
-      {testStep === 'instructions' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+      {/* Content within local scroll container */}
+      <div>
+        {/* Instructions Step */}
+        {testStep === 'instructions' && (
+          <motion.div id="verbal-instructions"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto px-6 py-12"
         >
           <div className="bg-white rounded-lg shadow-sm p-8 border border-gray-200">
@@ -504,7 +523,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, language = 'english', testId =
       {/* Test Step */}
       {testStep === 'test' && (
         // Extra top margin so the sticky header never overlaps the question card
-        <div className="max-w-5xl mx-auto px-6 py-8 mt-8 md:mt-10">
+        <div id="verbal-test-content" className="max-w-5xl mx-auto px-6 py-8 mt-8 md:mt-10">
           {/* Progress Bar */}
           <div className="mb-6">
             <div className="flex justify-between text-sm text-gray-600 mb-2">
@@ -520,7 +539,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, language = 'english', testId =
           </div>
 
           <AnimatePresence mode="wait">
-            <motion.div
+            <motion.div id="verbal-question-card"
               key={currentQuestion}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -650,7 +669,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, language = 'english', testId =
 
       {/* Results Step */}
       {testStep === 'results' && (
-        <motion.div
+        <motion.div id="verbal-results"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto px-6 py-12"
@@ -696,6 +715,8 @@ const VerbalReasoningTest = ({ onBackToDashboard, language = 'english', testId =
           </div>
         </motion.div>
       )}
+      </div>
+      </div>
     </div>
   );
 };

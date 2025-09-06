@@ -1,0 +1,68 @@
+<svg width="200" height="160" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+  <!-- Asymmetric 3D structure with 8 cubes arranged in a unique pattern -->
+  
+  <!-- Base cluster - 3 cubes forming an L -->
+  <!-- Cube 1: Bottom back left -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="30,110 60,95 90,110 60,125" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="30,110 30,130 60,145 60,125" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="60,125 60,145 90,130 90,110" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 2: Bottom front right -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="90,110 120,95 150,110 120,125" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="90,110 90,130 120,145 120,125" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="120,125 120,145 150,130 150,110" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 3: Bottom center connecting -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="60,90 90,75 120,90 90,105" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="60,90 60,110 90,125 90,105" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="90,105 90,125 120,110 120,90" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Upper level - asymmetric placement -->
+  <!-- Cube 4: Elevated back left -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="30,80 60,65 90,80 60,95" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="30,80 30,100 60,115 60,95" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="60,95 60,115 90,100 90,80" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 5: Elevated center-right -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="105,75 135,60 165,75 135,90" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="105,75 105,95 135,110 135,90" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="135,90 135,110 165,95 165,75" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Top level asymmetric extensions -->
+  <!-- Cube 6: Top left extension -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="45,55 75,40 105,55 75,70" fill="#ed8936" opacity="0.9"/> <!-- top face -->
+    <polygon points="45,55 45,75 75,90 75,70" fill="#dd6b20" opacity="0.9"/> <!-- left face -->
+    <polygon points="75,70 75,90 105,75 105,55" fill="#c05621" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 7: Top right jutting out -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="135,60 165,45 195,60 165,75" fill="#ed8936" opacity="0.9"/> <!-- top face -->
+    <polygon points="135,60 135,80 165,95 165,75" fill="#dd6b20" opacity="0.9"/> <!-- left face -->
+    <polygon points="165,75 165,95 195,80 195,60" fill="#c05621" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 8: Top center asymmetric placement -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="75,45 105,30 135,45 105,60" fill="#9f7aea" opacity="0.9"/> <!-- top face -->
+    <polygon points="75,45 75,65 105,80 105,60" fill="#805ad5" opacity="0.9"/> <!-- left face -->
+    <polygon points="105,60 105,80 135,65 135,45" fill="#6b46c1" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Accent lines for depth and definition -->
+  <line x1="30" y1="110" x2="90" y2="110" stroke="#1a202c" stroke-width="1" opacity="0.6"/>
+  <line x1="90" y1="110" x2="150" y2="110" stroke="#1a202c" stroke-width="1" opacity="0.6"/>
+  <line x1="60" y1="90" x2="120" y2="90" stroke="#1a202c" stroke-width="1" opacity="0.6"/>
+  <line x1="45" y1="55" x2="135" y2="45" stroke="#1a202c" stroke-width="1" opacity="0.4"/>
+</svg>

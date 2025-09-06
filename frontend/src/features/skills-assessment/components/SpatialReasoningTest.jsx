@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaCube, FaStop, FaArrowRight, FaFlag, FaSync, FaSearchPlus, FaExpand, FaEye, FaImage, FaLayerGroup } from 'react-icons/fa';
 import { getSpatialTestSections, getSpatialSection1, getSpatialSection2 } from '../data/spatialTestSections';
+import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
 
 const SpatialReasoningTest = ({ onBackToDashboard, testId = null }) => {
   // Determine starting section based on testId
@@ -29,6 +30,15 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = null }) => {
   const [testData, setTestData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Ref for test scroll container
+  const testContainerRef = useRef(null);
+
+  // Universal scroll management using scroll utilities
+  useScrollToTop([], { smooth: true }); // Scroll on component mount
+  useTestScrollToTop(testStep, testContainerRef, { smooth: true, attempts: 5 }); // Scroll on test step changes
+  useTestScrollToTop(currentSection, testContainerRef, { smooth: true, attempts: 3 }); // Scroll on section changes
+  useQuestionScrollToTop(currentQuestion, testStep, testContainerRef); // Scroll on question changes
 
   // Load spatial reasoning test data
   useEffect(() => {
@@ -92,11 +102,6 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = null }) => {
       return () => clearInterval(timer);
     }
   }, [testStep, timeRemaining]);
-
-  // Scroll to top when testStep changes (for smooth navigation between test phases)
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [testStep]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -175,6 +180,16 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = null }) => {
   const handleStartSection = () => {
     setTestStep('test');
     setCurrentQuestion(1);
+    
+    // Use scroll utility for immediate scroll on test start
+    setTimeout(() => {
+      scrollToTop({
+        container: testContainerRef,
+        forceImmediate: true,
+        attempts: 3,
+        delay: 50
+      });
+    }, 100);
   };
 
   const handleFinishTest = () => {
@@ -248,13 +263,13 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = null }) => {
   const currentQuestionData = testData?.questions?.[currentQuestion - 1];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="w-full">
       {/* Test Instructions */}
       {testStep === 'instructions' && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="min-h-screen flex items-center justify-center p-6"
+          className="flex items-center justify-center p-6"
         >
           <div className="bg-white rounded-xl shadow-lg p-8 max-w-4xl w-full border border-gray-200">
             <div className="text-center mb-8">
@@ -377,7 +392,7 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = null }) => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="min-h-screen flex items-center justify-center p-6"
+          className="flex items-center justify-center p-6"
         >
           <div className="bg-white rounded-xl shadow-lg p-8 max-w-5xl w-full">
             <div className="text-center mb-8">
@@ -620,9 +635,14 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = null }) => {
 
       {/* Test Questions */}
       {testStep === 'test' && getCurrentQuestion() && (
-        <div className="min-h-screen flex flex-col relative">
-          {/* Fixed Header within content area */}
-          <div className="bg-white shadow-sm border-b border-gray-200 p-4 sticky top-28 z-30">
+        <div 
+          ref={testContainerRef}
+          className="test-scroll-container relative h-[calc(100vh-7rem)] overflow-y-auto overflow-x-hidden"
+          data-scroll-container="spatial-test"
+          id="spatial-test-scroll"
+        >
+          {/* Sticky Header within local scroll container */}
+          <div className="bg-white shadow-sm border-b border-gray-200 p-4 sticky top-0 z-50">
             <div className="max-w-6xl mx-auto flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
@@ -653,8 +673,7 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = null }) => {
 
           {/* Question Content */}
           <div className="flex-1 p-6">
-            {/* Extra top margin ensures content doesn't sit under the sticky header */}
-            <div className="max-w-6xl mx-auto mt-8 md:mt-10">
+            <div className="max-w-6xl mx-auto">
               <motion.div
                 key={currentQuestion}
                 initial={{ opacity: 0, x: 20 }}

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Rotation SVG Preview</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .svg-container {
+            display: inline-block;
+            margin: 20px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .svg-container svg {
+            width: 200px;
+            height: 200px;
+            border: 1px solid #ddd;
+        }
+        .svg-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .svg-description {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+        h1 {
+            text-align: center;
+            color: #2563eb;
+        }
+        .phase-section {
+            margin: 40px 0;
+            border-top: 2px solid #2563eb;
+            padding-top: 20px;
+        }
+        .phase-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1d4ed8;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mental Rotation SVG Images Preview</h1>
+    
+    <div class="phase-section">
+        <div class="phase-title">Phase 1: Easy Level Base Images</div>
+        
+        <div class="svg-container">
+            <div class="svg-title">MR_L_block_01.svg</div>
+            <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+              <!-- L-shaped 3D block made of 3 unit cubes in isometric view -->
+              <!-- Cube 1: Corner cube at origin -->
+              <g id="cube1">
+                <!-- Top face -->
+                <path d="M156 200 L226 170 L296 200 L226 230 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+                <!-- Left face -->
+                <path d="M156 200 L226 230 L226 300 L156 270 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+                <!-- Right face -->
+                <path d="M226 230 L296 200 L296 270 L226 300 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+              </g>
+              
+              <!-- Cube 2: Right cube (horizontal arm) -->
+              <g id="cube2">
+                <!-- Top face -->
+                <path d="M296 200 L366 170 L436 200 L366 230 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+                <!-- Left face -->
+                <path d="M296 200 L366 230 L366 300 L296 270 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+                <!-- Right face -->
+                <path d="M366 230 L436 200 L436 270 L366 300 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+              </g>
+              
+              <!-- Cube 3: Top cube (vertical arm) -->
+              <g id="cube3">
+                <!-- Top face -->
+                <path d="M156 130 L226 100 L296 130 L226 160 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+                <!-- Left face -->
+                <path d="M156 130 L226 160 L226 230 L156 200 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+                <!-- Right face -->
+                <path d="M226 160 L296 130 L296 200 L226 230 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+              </g>
+            </svg>
+            <div class="svg-description">L-shaped block (3 cubes)<br/>Questions: 302, 303, 304</div>
+        </div>
+        
+        <div class="svg-container">
+            <div class="svg-title">MR_T_block_01.svg</div>
+            <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+              <!-- T-shaped 3D block made of 4 unit cubes in isometric view -->
+              <!-- Cube 1: Left cube of horizontal base -->
+              <g id="cube1">
+                <!-- Top face -->
+                <path d="M86 230 L156 200 L226 230 L156 260 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+                <!-- Left face -->
+                <path d="M86 230 L156 260 L156 330 L86 300 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+                <!-- Right face -->
+                <path d="M156 260 L226 230 L226 300 L156 330 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+              </g>
+              
+              <!-- Cube 2: Center cube of horizontal base -->
+              <g id="cube2">
+                <!-- Top face -->
+                <path d="M226 230 L296 200 L366 230 L296 260 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+                <!-- Left face -->
+                <path d="M226 230 L296 260 L296 330 L226 300 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+                <!-- Right face -->
+                <path d="M296 260 L366 230 L366 300 L296 330 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+              </g>
+              
+              <!-- Cube 3: Right cube of horizontal base -->
+              <g id="cube3">
+                <!-- Top face -->
+                <path d="M366 230 L436 200 L506 230 L436 260 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+                <!-- Left face -->
+                <path d="M366 230 L436 260 L436 330 L366 300 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+                <!-- Right face -->
+                <path d="M436 260 L506 230 L506 300 L436 330 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+              </g>
+              
+              <!-- Cube 4: Vertical stem cube on top of center -->
+              <g id="cube4">
+                <!-- Top face -->
+                <path d="M226 160 L296 130 L366 160 L296 190 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+                <!-- Left face -->
+                <path d="M226 160 L296 190 L296 260 L226 230 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+                <!-- Right face -->
+                <path d="M296 190 L366 160 L366 230 L296 260 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+              </g>
+            </svg>
+            <div class="svg-description">T-shaped block (4 cubes)<br/>Questions: 305, 306, 307</div>
+        </div>
+        
+        <div class="svg-container">
+            <div class="svg-title">MR_step_block_01.svg</div>
+            <object data="base_images/MR_step_block_01.svg" type="image/svg+xml" width="200" height="200">
+                <img src="base_images/MR_step_block_01.svg" alt="Step Block" width="200" height="200"/>
+            </object>
+            <div class="svg-description">3-level staircase<br/>Questions: 310, 311</div>
+        </div>
+        
+        <div class="svg-container">
+            <div class="svg-title">MR_U_block_01.svg</div>
+            <object data="base_images/MR_U_block_01.svg" type="image/svg+xml" width="200" height="200">
+                <img src="base_images/MR_U_block_01.svg" alt="U Block" width="200" height="200"/>
+            </object>
+            <div class="svg-description">U-shaped structure (7 cubes)<br/>Questions: 312, 313</div>
+        </div>
+    </div>
+    
+    <div class="phase-section">
+        <div class="phase-title">Phase 2: Medium Level Base Images</div>
+        
+        <div class="svg-container">
+            <div class="svg-title">MR_complex_L_01.svg</div>
+            <object data="base_images/MR_complex_L_01.svg" type="image/svg+xml" width="200" height="200">
+                <img src="base_images/MR_complex_L_01.svg" alt="Complex L Block" width="200" height="200"/>
+            </object>
+            <div class="svg-description">Complex L with extensions<br/>Questions: 314, 315, 316</div>
+        </div>
+    </div>
+    
+    <div class="phase-section">
+        <div class="phase-title">Rotation Arrow Overlays</div>
+        
+        <div class="svg-container">
+            <div class="svg-title">90° Clockwise</div>
+            <object data="overlays/rotation_arrows/overlay_rotation_90cw.svg" type="image/svg+xml" width="200" height="200">
+                <img src="overlays/rotation_arrows/overlay_rotation_90cw.svg" alt="90 CW Arrow" width="200" height="200"/>
+            </object>
+            <div class="svg-description">90° clockwise rotation indicator</div>
+        </div>
+        
+        <div class="svg-container">
+            <div class="svg-title">180° Rotation</div>
+            <object data="overlays/rotation_arrows/overlay_rotation_180.svg" type="image/svg+xml" width="200" height="200">
+                <img src="overlays/rotation_arrows/overlay_rotation_180.svg" alt="180 Arrow" width="200" height="200"/>
+            </object>
+            <div class="svg-description">180° rotation indicator</div>
+        </div>
+        
+        <div class="svg-container">
+            <div class="svg-title">90° Counter-Clockwise</div>
+            <object data="overlays/rotation_arrows/overlay_rotation_90ccw.svg" type="image/svg+xml" width="200" height="200">
+                <img src="overlays/rotation_arrows/overlay_rotation_90ccw.svg" alt="90 CCW Arrow" width="200" height="200"/>
+            </object>
+            <div class="svg-description">90° counter-clockwise rotation indicator</div>
+        </div>
+    </div>
+    
+</body>
+</html>

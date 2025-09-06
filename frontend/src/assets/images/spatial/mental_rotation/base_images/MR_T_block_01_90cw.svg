@@ -1,0 +1,68 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- T-shaped 3D block rotated 90° clockwise: vertical bar on LEFT, horizontal stem pointing RIGHT -->
+  <!-- Precise isometric projection with 30° angles -->
+  
+  <!-- Cube 1: Top cube of vertical bar -->
+  <g id="top-cube">
+    <!-- Top face (diamond shape in isometric) -->
+    <path d="M140 120 L170 100 L200 120 L170 140 Z" 
+          fill="#4f46e5" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Left face (parallelogram) -->
+    <path d="M140 120 L170 140 L170 180 L140 160 Z" 
+          fill="#3730a3" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Right face (parallelogram) -->
+    <path d="M170 140 L200 120 L200 160 L170 180 Z" 
+          fill="#312e81" stroke="#1e1b4b" stroke-width="2"/>
+  </g>
+  
+  <!-- Cube 2: Middle cube of vertical bar (junction point) -->
+  <g id="middle-cube">
+    <!-- Top face -->
+    <path d="M140 180 L170 160 L200 180 L170 200 Z" 
+          fill="#4f46e5" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Left face -->
+    <path d="M140 180 L170 200 L170 240 L140 220 Z" 
+          fill="#3730a3" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Right face -->
+    <path d="M170 200 L200 180 L200 220 L170 240 Z" 
+          fill="#312e81" stroke="#1e1b4b" stroke-width="2"/>
+  </g>
+  
+  <!-- Cube 3: Bottom cube of vertical bar -->
+  <g id="bottom-cube">
+    <!-- Top face -->
+    <path d="M140 240 L170 220 L200 240 L170 260 Z" 
+          fill="#4f46e5" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Left face -->
+    <path d="M140 240 L170 260 L170 300 L140 280 Z" 
+          fill="#3730a3" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Right face -->
+    <path d="M170 260 L200 240 L200 280 L170 300 Z" 
+          fill="#312e81" stroke="#1e1b4b" stroke-width="2"/>
+  </g>
+  
+  <!-- Cube 4: Horizontal stem extending RIGHT from middle -->
+  <g id="stem-cube">
+    <!-- Top face -->
+    <path d="M200 180 L230 160 L260 180 L230 200 Z" 
+          fill="#4f46e5" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Left face -->
+    <path d="M200 180 L230 200 L230 240 L200 220 Z" 
+          fill="#3730a3" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Right face -->
+    <path d="M230 200 L260 180 L260 220 L230 240 Z" 
+          fill="#312e81" stroke="#1e1b4b" stroke-width="2"/>
+  </g>
+  
+  <!-- Reference grid lines (subtle) -->
+  <defs>
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#e5e7eb" stroke-width="0.5" opacity="0.3"/>
+    </pattern>
+  </defs>
+  <rect width="400" height="400" fill="url(#grid)" opacity="0.1"/>
+  
+  <!-- Orientation labels -->
+  <text x="110" y="205" font-family="Arial, sans-serif" font-size="10" fill="#6b7280" transform="rotate(-90 110 205)">Bar</text>
+  <text x="270" y="190" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">→ Stem</text>
+</svg>

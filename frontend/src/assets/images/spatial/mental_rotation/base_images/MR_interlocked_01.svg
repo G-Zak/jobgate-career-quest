@@ -1,0 +1,79 @@
+<svg width="220" height="160" viewBox="0 0 220 160" xmlns="http://www.w3.org/2000/svg">
+  <!-- Interlocked structures - 8 cubes forming two interlocking parts -->
+  
+  <!-- First interlocking component - L-shaped (4 cubes) -->
+  <!-- Component A: Base horizontal arm -->
+  <!-- Cube 1: A-base left -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="20,110 50,95 80,110 50,125" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="20,110 20,130 50,145 50,125" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="50,125 50,145 80,130 80,110" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 2: A-base center -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="80,110 110,95 140,110 110,125" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="80,110 80,130 110,145 110,125" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="110,125 110,145 140,130 140,110" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 3: A-vertical arm up -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="80,80 110,65 140,80 110,95" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="80,80 80,100 110,115 110,95" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="110,95 110,115 140,100 140,80" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 4: A-vertical arm top -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="80,50 110,35 140,50 110,65" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="80,50 80,70 110,85 110,65" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="110,65 110,85 140,70 140,50" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Second interlocking component - reverse L-shaped (4 cubes) -->
+  <!-- Component B: Base horizontal arm (offset and interlocked) -->
+  <!-- Cube 5: B-base right -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="140,95 170,80 200,95 170,110" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="140,95 140,115 170,130 170,110" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="170,110 170,130 200,115 200,95" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 6: B-base center (interlocks through A's vertical arm) -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="110,95 140,80 170,95 140,110" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="110,95 110,115 140,130 140,110" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="140,110 140,130 170,115 170,95" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 7: B-vertical arm down -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="140,125 170,110 200,125 170,140" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="140,125 140,145 170,160 170,140" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="170,140 170,160 200,145 200,125" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 8: B-vertical arm bottom -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="140,155 170,140 200,155 170,170" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="140,155 140,175 170,190 170,170" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="170,170 170,190 200,175 200,155" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Interlocking visual indicators -->
+  <!-- Connection lines showing interlock -->
+  <line x1="110" y1="95" x2="140" y2="80" stroke="#e53e3e" stroke-width="2" opacity="0.7"/>
+  <line x1="140" y1="110" x2="110" y2="125" stroke="#e53e3e" stroke-width="2" opacity="0.7"/>
+  
+  <!-- Interlock emphasis -->
+  <ellipse cx="125" cy="97.5" rx="8" ry="4" fill="#e53e3e" opacity="0.3" transform="rotate(30 125 97.5)"/>
+  
+  <!-- Component separation lines -->
+  <line x1="20" y1="110" x2="140" y2="50" stroke="#3182ce" stroke-width="1" opacity="0.4"/>
+  <line x1="140" y1="95" x2="200" y2="155" stroke="#48bb78" stroke-width="1" opacity="0.4"/>
+  
+  <!-- Depth indicators -->
+  <circle cx="80" cy="80" r="2" fill="#2c5282" opacity="0.5"/>
+  <circle cx="170" cy="125" r="2" fill="#38a169" opacity="0.5"/>
+</svg>
