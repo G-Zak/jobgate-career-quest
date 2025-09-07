@@ -13,6 +13,9 @@ import VerbalReasoningTest from '../../../features/skills-assessment/components/
 import SpatialReasoningTest from '../../../features/skills-assessment/components/SpatialReasoningTest';
 import DiagrammaticReasoningTest from '../../../features/skills-assessment/components/DiagrammaticReasoningTest';
 import AbstractReasoningTest from '../../../features/skills-assessment/components/AbstractReasoningTest';
+import LogicalReasoningTest from '../../../features/skills-assessment/components/LogicalReasoningTest';
+import LRT2Test from '../../../features/skills-assessment/components/LRT2Test';
+import LRT3Test from '../../../features/skills-assessment/components/LRT3Test';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import { useScrollOnChange } from '../../utils/scrollUtils';
@@ -36,6 +39,9 @@ const MainDashboard = () => {
       activeSection === 'spatial-reasoning-test' ||
       activeSection === 'diagrammatic-reasoning-test' ||
       activeSection === 'abstract-reasoning-test' ||
+      activeSection === 'logical-reasoning-test' ||
+      activeSection === 'lrt2-test' ||
+      activeSection === 'lrt3-test' ||
       activeSection === 'test-session' ||
       (typeof activeSection === 'string' && activeSection.startsWith('verbal-reasoning-test'))
     );
@@ -118,6 +124,12 @@ const MainDashboard = () => {
     const isStringWithAbstract = (typeof testId === 'string' && testId.toLowerCase().includes('abstract'));
     const isARTString = (typeof testId === 'string' && testId.startsWith('ART'));
     
+    const isLogicalFilterAndNumber = (currentTestFilter === 'logical' && typeof testId === 'number');
+    const isStringWithLogical = (typeof testId === 'string' && testId.toLowerCase().includes('logical'));
+    const isLRTString = (typeof testId === 'string' && testId.startsWith('LRT') && !testId.startsWith('LRT2') && !testId.startsWith('LRT3'));
+    const isLRT2String = (typeof testId === 'string' && testId.startsWith('LRT2'));
+    const isLRT3String = (typeof testId === 'string' && testId.startsWith('LRT3'));
+    
     console.log('isVerbalComprehensive:', isVerbalComprehensive);
     console.log('isVerbalFilterAndNumber:', isVerbalFilterAndNumber);
     console.log('isStringWithVerbal:', isStringWithVerbal);
@@ -131,6 +143,11 @@ const MainDashboard = () => {
     console.log('isAbstractFilterAndNumber:', isAbstractFilterAndNumber);
     console.log('isStringWithAbstract:', isStringWithAbstract);
     console.log('isARTString:', isARTString);
+    console.log('isLogicalFilterAndNumber:', isLogicalFilterAndNumber);
+    console.log('isStringWithLogical:', isStringWithLogical);
+    console.log('isLRTString:', isLRTString);
+    console.log('isLRT2String:', isLRT2String);
+    console.log('isLRT3String:', isLRT3String);
     
     // Set the current test ID
     setCurrentTestId(testId);
@@ -153,8 +170,20 @@ const MainDashboard = () => {
       // Handle abstract reasoning tests
       console.log('✅ Routing to abstract reasoning test');
       setActiveSection('abstract-reasoning-test');
+    } else if (isLogicalFilterAndNumber || isStringWithLogical || isLRTString) {
+      // Handle logical reasoning tests (Section 1)
+      console.log('✅ Routing to logical reasoning test');
+      setActiveSection('logical-reasoning-test');
+    } else if (isLRT2String) {
+      // Handle LRT2 tests (Section 2)
+      console.log('✅ Routing to LRT2 test');
+      setActiveSection('lrt2-test');
+    } else if (isLRT3String) {
+      // Handle LRT3 tests (Section 3)
+      console.log('✅ Routing to LRT3 test');
+      setActiveSection('lrt3-test');
     } else {
-      // Handle other test types (numerical, logical, etc.)
+      // Handle other test types (numerical, etc.)
       console.log('❌ Routing to test-session for testId:', testId);
       setActiveSection('test-session');
     }
@@ -372,6 +401,21 @@ const MainDashboard = () => {
             />
           ) : activeSection === 'abstract-reasoning-test' ? (
             <AbstractReasoningTest 
+              onBackToDashboard={() => setActiveSection('available-tests')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'logical-reasoning-test' ? (
+            <LogicalReasoningTest 
+              onBackToDashboard={() => setActiveSection('available-tests')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'lrt2-test' ? (
+            <LRT2Test 
+              onBackToDashboard={() => setActiveSection('available-tests')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'lrt3-test' ? (
+            <LRT3Test 
               onBackToDashboard={() => setActiveSection('available-tests')} 
               testId={currentTestId}
             />

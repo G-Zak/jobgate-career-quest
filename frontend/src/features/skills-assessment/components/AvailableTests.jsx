@@ -18,9 +18,9 @@ const defaultTestsData = [
     category: "Logical Reasoning Tests",
     prefix: "LRT",
     total: 10,
-    unlocked: [1],
+    unlocked: [1, 2, 3],
     icon: <FaChartLine className="text-purple-600" />,
-    progress: 10,
+    progress: 30,
     testType: "logical"
   },
   {
