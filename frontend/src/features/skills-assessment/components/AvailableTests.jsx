@@ -40,6 +40,15 @@ const defaultTestsData = [
     icon: <FaSitemap className="text-green-600" />,
     progress: 25,
     testType: "diagrammatic"
+  },
+  {
+    category: "Abstract Reasoning Tests",
+    prefix: "ART",
+    total: 6,
+    unlocked: [1],
+    icon: <FaBrain className="text-indigo-600" />,
+    progress: 16,
+    testType: "abstract"
   }
 ];
 

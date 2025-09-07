@@ -94,8 +94,7 @@ export const getDiagrammaticTestSections = () => ({
               { id: "A", text: "Option A" },
               { id: "B", text: "Option B" },
               { id: "C", text: "Option C" },
-              { id: "D", text: "Option D" },
-              { id: "E", text: "Option E" }
+              { id: "D", text: "Option D" }
             ],
             correct_answer: "A", // TODO: Update with actual correct answers
             order: questionId,
@@ -148,8 +147,7 @@ export const getDiagrammaticSection1 = () => ({
               { id: "A", text: "Option A" },
               { id: "B", text: "Option B" },
               { id: "C", text: "Option C" },
-              { id: "D", text: "Option D" },
-              { id: "E", text: "Option E" }
+              { id: "D", text: "Option D" }
             ],
             correct_answer: correctAnswers[index],
             order: questionId,
@@ -216,8 +214,7 @@ export const getDiagrammaticSection2 = () => ({
               { id: "A", text: "Option A" },
               { id: "B", text: "Option B" },
               { id: "C", text: "Option C" },
-              { id: "D", text: "Option D" },
-              { id: "E", text: "Option E" }
+              { id: "D", text: "Option D" }
             ],
             correct_answer: "A", // TODO: Update with actual correct answers
             order: questionId,

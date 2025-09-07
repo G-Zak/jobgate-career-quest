@@ -1,0 +1,61 @@
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f8fafc"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="800" height="80" fill="#1e40af"/>
+  <text x="400" y="45" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="28" font-weight="bold">
+    ABSTRACT REASONING TEST
+  </text>
+  
+  <!-- Main Content Area -->
+  <rect x="50" y="120" width="700" height="420" fill="white" stroke="#e2e8f0" stroke-width="2" rx="10"/>
+  
+  <!-- Title -->
+  <text x="400" y="180" text-anchor="middle" fill="#1e40af" font-family="Arial, sans-serif" font-size="24" font-weight="bold">
+    Pattern Recognition &amp; Logical Sequences
+  </text>
+  
+  <!-- Instructions -->
+  <text x="400" y="220" text-anchor="middle" fill="#374151" font-family="Arial, sans-serif" font-size="16">
+    In this test, you will analyze abstract patterns and identify logical relationships.
+  </text>
+  <text x="400" y="245" text-anchor="middle" fill="#374151" font-family="Arial, sans-serif" font-size="16">
+    Look for patterns in shape, color, rotation, and position.
+  </text>
+  <text x="400" y="270" text-anchor="middle" fill="#374151" font-family="Arial, sans-serif" font-size="16">
+    Select the option that best completes each sequence.
+  </text>
+  
+  <!-- Example Pattern -->
+  <g transform="translate(250, 320)">
+    <!-- Pattern boxes -->
+    <rect x="0" y="0" width="60" height="60" fill="white" stroke="#374151" stroke-width="2"/>
+    <circle cx="30" cy="30" r="15" fill="#3b82f6"/>
+    
+    <rect x="80" y="0" width="60" height="60" fill="white" stroke="#374151" stroke-width="2"/>
+    <circle cx="110" cy="30" r="15" fill="#3b82f6"/>
+    <circle cx="110" cy="30" r="8" fill="white"/>
+    
+    <rect x="160" y="0" width="60" height="60" fill="white" stroke="#374151" stroke-width="2"/>
+    <circle cx="190" cy="30" r="15" fill="#3b82f6"/>
+    <circle cx="190" cy="30" r="8" fill="white"/>
+    <circle cx="190" cy="30" r="4" fill="#3b82f6"/>
+    
+    <text x="240" y="35" fill="#374151" font-family="Arial, sans-serif" font-size="20">?</text>
+  </g>
+  
+  <!-- Arrow -->
+  <path d="M 220 350 L 240 350 M 235 345 L 240 350 L 235 355" stroke="#374151" stroke-width="2" fill="none"/>
+  
+  <!-- Instructions text -->
+  <text x="400" y="420" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="14">
+    24 Questions • 45 Minutes • Choose the best answer
+  </text>
+  
+  <!-- Footer -->
+  <rect x="0" y="560" width="800" height="40" fill="#f1f5f9"/>
+  <text x="400" y="580" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="12">
+    Abstract Reasoning Assessment - Ready to begin
+  </text>
+</svg>

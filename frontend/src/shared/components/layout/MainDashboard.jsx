@@ -12,6 +12,7 @@ import TestLayout from '../../../features/skills-assessment/components/TestLayou
 import VerbalReasoningTest from '../../../features/skills-assessment/components/VerbalReasoningTest';
 import SpatialReasoningTest from '../../../features/skills-assessment/components/SpatialReasoningTest';
 import DiagrammaticReasoningTest from '../../../features/skills-assessment/components/DiagrammaticReasoningTest';
+import AbstractReasoningTest from '../../../features/skills-assessment/components/AbstractReasoningTest';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import { useScrollOnChange } from '../../utils/scrollUtils';
@@ -34,6 +35,7 @@ const MainDashboard = () => {
     const isTestView = (
       activeSection === 'spatial-reasoning-test' ||
       activeSection === 'diagrammatic-reasoning-test' ||
+      activeSection === 'abstract-reasoning-test' ||
       activeSection === 'test-session' ||
       (typeof activeSection === 'string' && activeSection.startsWith('verbal-reasoning-test'))
     );
@@ -112,6 +114,10 @@ const MainDashboard = () => {
     const isStringWithDiagrammatic = (typeof testId === 'string' && testId.toLowerCase().includes('diagrammatic'));
     const isDRTString = (typeof testId === 'string' && testId.startsWith('DRT'));
     
+    const isAbstractFilterAndNumber = (currentTestFilter === 'abstract' && typeof testId === 'number');
+    const isStringWithAbstract = (typeof testId === 'string' && testId.toLowerCase().includes('abstract'));
+    const isARTString = (typeof testId === 'string' && testId.startsWith('ART'));
+    
     console.log('isVerbalComprehensive:', isVerbalComprehensive);
     console.log('isVerbalFilterAndNumber:', isVerbalFilterAndNumber);
     console.log('isStringWithVerbal:', isStringWithVerbal);
@@ -122,6 +128,9 @@ const MainDashboard = () => {
     console.log('isDiagrammaticFilterAndNumber:', isDiagrammaticFilterAndNumber);
     console.log('isStringWithDiagrammatic:', isStringWithDiagrammatic);
     console.log('isDRTString:', isDRTString);
+    console.log('isAbstractFilterAndNumber:', isAbstractFilterAndNumber);
+    console.log('isStringWithAbstract:', isStringWithAbstract);
+    console.log('isARTString:', isARTString);
     
     // Set the current test ID
     setCurrentTestId(testId);
@@ -140,6 +149,10 @@ const MainDashboard = () => {
       // Handle diagrammatic reasoning tests
       console.log('✅ Routing to diagrammatic reasoning test');
       setActiveSection('diagrammatic-reasoning-test');
+    } else if (isAbstractFilterAndNumber || isStringWithAbstract || isARTString) {
+      // Handle abstract reasoning tests
+      console.log('✅ Routing to abstract reasoning test');
+      setActiveSection('abstract-reasoning-test');
     } else {
       // Handle other test types (numerical, logical, etc.)
       console.log('❌ Routing to test-session for testId:', testId);
@@ -354,6 +367,11 @@ const MainDashboard = () => {
             />
           ) : activeSection === 'diagrammatic-reasoning-test' ? (
             <DiagrammaticReasoningTest 
+              onBackToDashboard={() => setActiveSection('available-tests')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'abstract-reasoning-test' ? (
+            <AbstractReasoningTest 
               onBackToDashboard={() => setActiveSection('available-tests')} 
               testId={currentTestId}
             />
