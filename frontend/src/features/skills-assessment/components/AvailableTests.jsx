@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaLock, FaPlay, FaChartLine, FaBrain, FaSearch, FaFilter, FaGlobe, FaClock, FaQuestionCircle, FaStar, FaCheckCircle, FaCube } from "react-icons/fa";
+import { FaLock, FaPlay, FaChartLine, FaBrain, FaSearch, FaFilter, FaGlobe, FaClock, FaQuestionCircle, FaStar, FaCheckCircle, FaCube, FaSitemap } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { useScrollToTop } from '../../../shared/utils/scrollUtils';
 
@@ -31,6 +31,15 @@ const defaultTestsData = [
     icon: <FaCube className="text-orange-600" />,
     progress: 17,
     testType: "spatial"
+  },
+  {
+    category: "Diagrammatic Reasoning Tests",
+    prefix: "DRT",
+    total: 8,
+    unlocked: [1, 2],
+    icon: <FaSitemap className="text-green-600" />,
+    progress: 25,
+    testType: "diagrammatic"
   }
 ];
 

@@ -1,0 +1,88 @@
+<!-- Section 1 Intro Placeholder -->
+<svg width="800" height="500" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="500" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="400" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#2c3e50">
+    DIAGRAMMATIC REASONING - SECTION 1: LOGICAL SEQUENCES
+  </text>
+  
+  <!-- Instruction text -->
+  <text x="50" y="100" font-family="Arial, sans-serif" font-size="16" fill="#34495e">
+    Look at the following sequence of diagrams. Each sequence follows a logical pattern.
+  </text>
+  
+  <!-- Example sequence -->
+  <g transform="translate(50, 150)">
+    <!-- Box 1 -->
+    <rect x="0" y="0" width="100" height="80" fill="white" stroke="#3498db" stroke-width="2"/>
+    <circle cx="50" cy="40" r="15" fill="#3498db"/>
+    <text x="50" y="75" text-anchor="middle" font-size="12" fill="#2c3e50">Step 1</text>
+    
+    <!-- Arrow -->
+    <path d="M 110 40 L 140 40" stroke="#7f8c8d" stroke-width="2" marker-end="url(#arrowhead)"/>
+    
+    <!-- Box 2 -->
+    <rect x="150" y="0" width="100" height="80" fill="white" stroke="#3498db" stroke-width="2"/>
+    <circle cx="175" cy="40" r="15" fill="#3498db"/>
+    <circle cx="225" cy="40" r="15" fill="#e74c3c"/>
+    <text x="200" y="75" text-anchor="middle" font-size="12" fill="#2c3e50">Step 2</text>
+    
+    <!-- Arrow -->
+    <path d="M 260 40 L 290 40" stroke="#7f8c8d" stroke-width="2" marker-end="url(#arrowhead)"/>
+    
+    <!-- Box 3 -->
+    <rect x="300" y="0" width="100" height="80" fill="white" stroke="#3498db" stroke-width="2"/>
+    <circle cx="325" cy="25" r="15" fill="#3498db"/>
+    <circle cx="350" cy="40" r="15" fill="#e74c3c"/>
+    <circle cx="375" cy="55" r="15" fill="#f39c12"/>
+    <text x="350" y="75" text-anchor="middle" font-size="12" fill="#2c3e50">Step 3</text>
+    
+    <!-- Question mark -->
+    <path d="M 410 40 L 440 40" stroke="#7f8c8d" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <rect x="450" y="0" width="100" height="80" fill="white" stroke="#95a5a6" stroke-width="2" stroke-dasharray="5,5"/>
+    <text x="500" y="45" text-anchor="middle" font-size="30" fill="#95a5a6">?</text>
+    <text x="500" y="75" text-anchor="middle" font-size="12" fill="#2c3e50">What's next?</text>
+  </g>
+  
+  <!-- Instructions -->
+  <text x="50" y="280" font-family="Arial, sans-serif" font-size="16" fill="#34495e">
+    Study the pattern carefully and determine what comes next in the sequence.
+  </text>
+  
+  <text x="50" y="320" font-family="Arial, sans-serif" font-size="16" fill="#34495e">
+    During this exercise, look at the given sequences and decide which option completes the pattern.
+  </text>
+  
+  <text x="50" y="360" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#e74c3c">
+    You have 45 minutes to answer 30 questions.
+  </text>
+  
+  <!-- Answer options example -->
+  <g transform="translate(50, 400)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="14" fill="#2c3e50">Select your answer from options A, B, C, D, or E</text>
+    
+    <rect x="0" y="10" width="40" height="30" fill="#3498db" stroke="#2c3e50" stroke-width="1"/>
+    <text x="20" y="28" text-anchor="middle" font-size="16" font-weight="bold" fill="white">A</text>
+    
+    <rect x="50" y="10" width="40" height="30" fill="white" stroke="#2c3e50" stroke-width="1"/>
+    <text x="70" y="28" text-anchor="middle" font-size="16" fill="#2c3e50">B</text>
+    
+    <rect x="100" y="10" width="40" height="30" fill="white" stroke="#2c3e50" stroke-width="1"/>
+    <text x="120" y="28" text-anchor="middle" font-size="16" fill="#2c3e50">C</text>
+    
+    <rect x="150" y="10" width="40" height="30" fill="white" stroke="#2c3e50" stroke-width="1"/>
+    <text x="170" y="28" text-anchor="middle" font-size="16" fill="#2c3e50">D</text>
+    
+    <rect x="200" y="10" width="40" height="30" fill="white" stroke="#2c3e50" stroke-width="1"/>
+    <text x="220" y="28" text-anchor="middle" font-size="16" fill="#2c3e50">E</text>
+  </g>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7f8c8d"/>
+    </marker>
+  </defs>
+</svg>
