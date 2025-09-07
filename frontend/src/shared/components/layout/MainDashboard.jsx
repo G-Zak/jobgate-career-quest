@@ -16,6 +16,7 @@ import AbstractReasoningTest from '../../../features/skills-assessment/component
 import LogicalReasoningTest from '../../../features/skills-assessment/components/LogicalReasoningTest';
 import LRT2Test from '../../../features/skills-assessment/components/LRT2Test';
 import LRT3Test from '../../../features/skills-assessment/components/LRT3Test';
+import NumericalReasoningTest from '../../../features/skills-assessment/components/NumericalReasoningTest';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import { useScrollOnChange } from '../../utils/scrollUtils';
@@ -182,8 +183,12 @@ const MainDashboard = () => {
       // Handle LRT3 tests (Section 3)
       console.log('✅ Routing to LRT3 test');
       setActiveSection('lrt3-test');
+    } else if (currentTestFilter === 'numerical' || testId.startsWith('NRT')) {
+      // Handle numerical reasoning tests
+      console.log('✅ Routing to numerical reasoning test');
+      setActiveSection('numerical-reasoning-test');
     } else {
-      // Handle other test types (numerical, etc.)
+      // Handle other test types
       console.log('❌ Routing to test-session for testId:', testId);
       setActiveSection('test-session');
     }
@@ -417,6 +422,15 @@ const MainDashboard = () => {
           ) : activeSection === 'lrt3-test' ? (
             <LRT3Test 
               onBackToDashboard={() => setActiveSection('available-tests')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'numerical-reasoning-test' ? (
+            <NumericalReasoningTest 
+              onBackToDashboard={() => setActiveSection('available-tests')}
+              onComplete={(results) => {
+                console.log('Numerical test completed with results:', results);
+                setActiveSection('available-tests');
+              }}
               testId={currentTestId}
             />
           ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
