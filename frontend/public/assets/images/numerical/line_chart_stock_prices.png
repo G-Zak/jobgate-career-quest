@@ -1,0 +1,97 @@
+<svg width="800" height="500" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f0f9ff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="500" fill="url(#bg-gradient)" />
+  
+  <!-- Title -->
+  <text x="400" y="50" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#1e3a8a">Stock Prices</text>
+  
+  <!-- X and Y Axis -->
+  <line x1="100" y1="400" x2="700" y2="400" stroke="#64748b" stroke-width="2" />
+  <line x1="100" y1="400" x2="100" y2="100" stroke="#64748b" stroke-width="2" />
+  
+  <!-- X Axis Labels -->
+  <text x="100" y="425" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#334155">Jan</text>
+  <text x="200" y="425" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#334155">Feb</text>
+  <text x="300" y="425" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#334155">Mar</text>
+  <text x="400" y="425" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#334155">Apr</text>
+  <text x="500" y="425" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#334155">May</text>
+  <text x="600" y="425" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#334155">Jun</text>
+  <text x="700" y="425" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#334155">Jul</text>
+  
+  <!-- Y Axis Labels -->
+  <text x="85" y="400" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$30</text>
+  <text x="85" y="350" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$35</text>
+  <text x="85" y="300" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$40</text>
+  <text x="85" y="250" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$45</text>
+  <text x="85" y="200" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$50</text>
+  <text x="85" y="150" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$55</text>
+  <text x="85" y="100" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$60</text>
+  
+  <!-- Grid Lines -->
+  <line x1="100" y1="350" x2="700" y2="350" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" />
+  <line x1="100" y1="300" x2="700" y2="300" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" />
+  <line x1="100" y1="250" x2="700" y2="250" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" />
+  <line x1="100" y1="200" x2="700" y2="200" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" />
+  <line x1="100" y1="150" x2="700" y2="150" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" />
+  <line x1="100" y1="100" x2="700" y2="100" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" />
+  
+  <!-- Company X Data Line -->
+  <polyline points="100,280 200,250 300,270 400,230 500,250 600,220 700,190" 
+            fill="none" stroke="#2563eb" stroke-width="3" />
+  
+  <!-- Company Y Data Line -->
+  <polyline points="100,300 200,320 300,290 400,270 500,240 600,260 700,210" 
+            fill="none" stroke="#16a34a" stroke-width="3" />
+  
+  <!-- Company Z Data Line -->
+  <polyline points="100,350 200,330 300,310 400,320 500,290 600,270 700,250" 
+            fill="none" stroke="#dc2626" stroke-width="3" />
+  
+  <!-- Data Points -->
+  <!-- Company X -->
+  <circle cx="100" cy="280" r="5" fill="#2563eb" />
+  <circle cx="200" cy="250" r="5" fill="#2563eb" />
+  <circle cx="300" cy="270" r="5" fill="#2563eb" />
+  <circle cx="400" cy="230" r="5" fill="#2563eb" />
+  <circle cx="500" cy="250" r="5" fill="#2563eb" />
+  <circle cx="600" cy="220" r="5" fill="#2563eb" />
+  <circle cx="700" cy="190" r="5" fill="#2563eb" />
+  
+  <!-- Company Y -->
+  <circle cx="100" cy="300" r="5" fill="#16a34a" />
+  <circle cx="200" cy="320" r="5" fill="#16a34a" />
+  <circle cx="300" cy="290" r="5" fill="#16a34a" />
+  <circle cx="400" cy="270" r="5" fill="#16a34a" />
+  <circle cx="500" cy="240" r="5" fill="#16a34a" />
+  <circle cx="600" cy="260" r="5" fill="#16a34a" />
+  <circle cx="700" cy="210" r="5" fill="#16a34a" />
+  
+  <!-- Company Z -->
+  <circle cx="100" cy="350" r="5" fill="#dc2626" />
+  <circle cx="200" cy="330" r="5" fill="#dc2626" />
+  <circle cx="300" cy="310" r="5" fill="#dc2626" />
+  <circle cx="400" cy="320" r="5" fill="#dc2626" />
+  <circle cx="500" cy="290" r="5" fill="#dc2626" />
+  <circle cx="600" cy="270" r="5" fill="#dc2626" />
+  <circle cx="700" cy="250" r="5" fill="#dc2626" />
+  
+  <!-- Legend -->
+  <rect x="550" y="60" width="15" height="3" fill="#2563eb" />
+  <text x="575" y="65" font-family="Arial, sans-serif" font-size="14" fill="#334155">Company X</text>
+  
+  <rect x="550" y="85" width="15" height="3" fill="#16a34a" />
+  <text x="575" y="90" font-family="Arial, sans-serif" font-size="14" fill="#334155">Company Y</text>
+  
+  <rect x="550" y="110" width="15" height="3" fill="#dc2626" />
+  <text x="575" y="115" font-family="Arial, sans-serif" font-size="14" fill="#334155">Company Z</text>
+  
+  <!-- Note -->
+  <text x="400" y="460" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#64748b">Monthly Stock Prices in Dollars</text>
+</svg>
