@@ -6,7 +6,7 @@ export const getNumericalTestData = () => {
     title: 'Numerical Reasoning Test',
     description: 'Assess your ability to interpret and analyze numerical data',
     duration_minutes: 25,
-    total_questions: 23,
+    total_questions: 25,
     sections: [
       {
         id: 1,
@@ -15,7 +15,7 @@ export const getNumericalTestData = () => {
         intro_text: {
           title: 'Numerical Reasoning Test',
           instructions: [
-            'You will be presented with 23 numerical reasoning questions that test your ability to interpret data and perform calculations.',
+            'You will be presented with 25 numerical reasoning questions that test your ability to interpret data and perform calculations.',
             'Each question includes numerical information presented as tables, charts, or text.',
             'Analyze the data carefully before selecting your answer.',
             'You have 25 minutes to complete all questions.',
@@ -418,6 +418,51 @@ export const getNumericalTestData = () => {
             ],
             correct_answer: "A",
             explanation: "Using the formula for equal loan payments: PMT = P × r × (1+r)^n/((1+r)^n-1), where P = $15,000, r = 0.08, n = 3. PMT = $15,000 × 0.08 × (1.08)^3/((1.08)^3-1) ≈ $5,786."
+          },
+          {
+            question_id: 24,
+            category: "Financial Calculations",
+            complexity_score: 3,
+            question: "A company had $50,000 in cash reserves on January 1st. It earns $8,000 monthly and spends $6,500 monthly. What will be the cash reserves on December 31st?",
+            options: [
+              { option_id: "A", text: "$65,500" },
+              { option_id: "B", text: "$68,000" },
+              { option_id: "C", text: "$68,500" },
+              { option_id: "D", text: "$70,000" }
+            ],
+            correct_answer: "B",
+            explanation: "Monthly net gain = $8,000 - $6,500 = $1,500. Over 12 months: $1,500 × 12 = $18,000. Final reserves = $50,000 + $18,000 = $68,000.",
+            time_limit: 90,
+            points: 3,
+            metadata: { created_date: "2025-08-27", difficulty_rating: 7.0, average_time: 85, success_rate: 0.38 }
+          },
+          {
+            question_id: 25,
+            category: "Data Interpretation",
+            complexity_score: 3,
+            data_type: "table",
+            table_data: {
+              title: "Monthly Sales by Region ($000s)",
+              headers: ["Region", "January", "February", "March"],
+              rows: [
+                ["North", 120, 130, 145],
+                ["South", 95, 105, 110],
+                ["East", 105, 100, 115],
+                ["West", 130, 135, 140]
+              ]
+            },
+            question: "What was the percentage increase in total sales from January to March?",
+            options: [
+              { option_id: "A", text: "11.1%" },
+              { option_id: "B", text: "12.5%" },
+              { option_id: "C", text: "13.3%" },
+              { option_id: "D", text: "15.0%" }
+            ],
+            correct_answer: "C",
+            explanation: "January total: 120+95+105+130=450. March total: 145+110+115+140=510. Percentage increase: (510-450)/450×100=13.3%",
+            time_limit: 75,
+            points: 2,
+            metadata: { created_date: "2025-08-27", difficulty_rating: 5.5, average_time: 65, success_rate: 0.53 }
           }
         ]
       }

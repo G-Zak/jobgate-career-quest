@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaArrowLeft, FaArrowRight, FaClock, FaCheckCircle, FaFlag } from 'react-icons/fa';
 import { getAbstractTestWithAnswers } from '../data/abstractTestSections';
 import { scrollToTop } from '../../../shared/utils/scrollUtils';
+import { Button } from '@mui/material';
 
 const AbstractReasoningTest = ({ onComplete, onBack }) => {
   const [testData, setTestData] = useState(null);
@@ -282,17 +283,21 @@ const AbstractReasoningTest = ({ onComplete, onBack }) => {
                 Your results will be processed and added to your profile.
               </p>
             </div>
-            <button
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              className="action-button"
               onClick={() => {
-                // Only call onBack if it's a function
                 if (typeof onBack === 'function') {
                   onBack();
+                } else {
+                  console.warn("onBack function was not provided to AbstractReasoningTest");
                 }
               }}
-              className="px-8 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold"
             >
               Return to Dashboard
-            </button>
+            </Button>
           </div>
         </div>
       </motion.div>
