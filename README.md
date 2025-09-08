@@ -13,14 +13,18 @@ A professional skills assessment platform that helps users evaluate their abilit
 ## 🏗️ Architecture
 
 ### Tech Stack
+
 - **Frontend**: React 18 + Vite + Tailwind CSS
 - **Backend**: Django 4.2 + Django REST Framework
 - **Authentication**: JWT (JSON Web Tokens)
-- **Database**: PostgreSQL 15
+- **Databases**:
+  - PostgreSQL 15 (main application data)
+  - SQLite (abstract reasoning tests)
 - **API Documentation**: DRF Spectacular (Swagger/OpenAPI)
 - **Deployment**: Docker + Docker Compose
 
 ### Project Structure
+
 ```
 jobgate-career-quest/
 ├── backend/                    # Django REST API
@@ -44,18 +48,21 @@ jobgate-career-quest/
 ## 🛠️ Development Setup
 
 ### Prerequisites
+
 - Docker Desktop
 - Git
 
 ### Quick Start
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/G-Zak/jobgate-career-quest.git
    cd jobgate-career-quest
    ```
 
 2. **Start the application**
+
    ```bash
    docker-compose up -d
    ```
@@ -109,21 +116,23 @@ docker-compose exec frontend npm test
 ## 📊 API Documentation
 
 The API is fully documented using DRF Spectacular:
+
 - **Swagger UI**: http://localhost:8000/api/schema/swagger-ui/
 - **ReDoc**: http://localhost:8000/api/schema/redoc/
 - **OpenAPI Schema**: http://localhost:8000/api/schema/
 
 ## 🐳 Docker Services
 
-| Service | Port | Description |
-|---------|------|-------------|
-| frontend | 3000 | React development server |
-| backend | 8000 | Django REST API |
-| db | 5432 | PostgreSQL database (internal) |
+| Service  | Port | Description                    |
+| -------- | ---- | ------------------------------ |
+| frontend | 3000 | React development server       |
+| backend  | 8000 | Django REST API                |
+| db       | 5432 | PostgreSQL database (internal) |
 
 ## 🔧 Environment Variables
 
 ### Backend (.env)
+
 ```env
 DATABASE_URL=postgres://jobgate:securepass@db:5432/careerquest
 ENV=development
@@ -132,33 +141,44 @@ DEBUG=True
 ```
 
 ### Frontend (.env)
+
 ```env
 VITE_API_URL=http://localhost:8000
 ```
 
 ## 📁 Django Apps
 
-| App | Purpose |
-|-----|---------|
-| **accounts** | User authentication and profile management |
-| **skills** | Skill definitions and categorization |
-| **testsengine** | Assessment creation and execution |
-| **badges** | Achievement and gamification system |
-| **recommendation** | Career path recommendation engine |
-| **dashboard** | Analytics and progress tracking |
+| App                | Purpose                                    |
+| ------------------ | ------------------------------------------ |
+| **accounts**       | User authentication and profile management |
+| **skills**         | Skill definitions and categorization       |
+| **testsengine**    | Assessment creation and execution          |
+| **badges**         | Achievement and gamification system        |
+| **recommendation** | Career path recommendation engine          |
+| **dashboard**      | Analytics and progress tracking            |
 
 ## 🔐 Authentication
 
 The application uses JWT-based authentication:
+
 - Access tokens for API requests
 - Refresh tokens for seamless user experience
 - Token-based session management
 
-## 🐛 Troubleshooting
+## � Documentation
+
+- [Setup Guide](SETUP.md) - Initial project setup instructions
+- [Changelog](CHANGELOG.md) - Version history and feature additions
+- [Team Workflow](SIMPLE_TEAM_WORKFLOW.md) - Collaboration guidelines
+- [Skills Tests Database](docs/SKILLS_TESTS_DATABASE.md) - Guide for the SQLite integration
+- [Skills Tests Integration](SKILLS_TESTS_INTEGRATION.md) - How to integrate skills assessments
+
+## �🐛 Troubleshooting
 
 If you encounter issues, check the [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) file for common problems and solutions.
 
 ### Common Issues
+
 - **Container not starting**: Check logs with `docker-compose logs [service-name]`
 - **Port conflicts**: Ensure ports 3000 and 8000 are available
 - **Database connection**: Verify PostgreSQL container is healthy

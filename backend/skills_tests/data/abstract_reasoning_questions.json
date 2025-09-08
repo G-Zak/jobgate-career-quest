@@ -1,0 +1,601 @@
+[
+  {
+    "question_id": "ART_001",
+    "test_type": "abstract_reasoning",
+    "difficulty": "easy",
+    "category": "pattern_matrices",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "matrix",
+      "svg_data": "<svg viewBox='0 0 300 300'><rect x='50' y='50' width='40' height='40' fill='blue'/><rect x='110' y='50' width='40' height='40' fill='red'/><rect x='50' y='110' width='40' height='40' fill='red'/><text x='120' y='125' font-size='20'>?</text></svg>",
+      "description": "Complete the 2x2 matrix pattern. The pattern shows alternating colors in each position."
+    },
+    "options": [
+      { "option_id": "A", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 40 40'><rect width='40' height='40' fill='blue'/></svg>" } },
+      { "option_id": "B", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 40 40'><rect width='40' height='40' fill='red'/></svg>" } },
+      { "option_id": "C", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 40 40'><rect width='40' height='40' fill='green'/></svg>" } },
+      { "option_id": "D", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 40 40'><rect width='40' height='40' fill='yellow'/></svg>" } }
+    ],
+    "correct_answer": "A",
+    "explanation": "Colors alternate diagonally; missing should be blue.",
+    "time_limit": 60,
+    "points": 5,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 3.5, "average_time": 35, "success_rate": 0.72 }
+  },
+  {
+    "question_id": "ART_002",
+    "test_type": "abstract_reasoning",
+    "difficulty": "medium",
+    "category": "shape_sequences",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "sequence",
+      "svg_data": "<svg viewBox='0 0 400 100'><circle cx='50' cy='50' r='20' fill='black'/><polygon points='120,30 140,70 100,70' fill='black'/><rect x='170' y='30' width='40' height='40' fill='black'/><circle cx='250' cy='50' r='20' fill='none' stroke='black' stroke-width='2'/><text x='320' y='55' font-size='20'>?</text></svg>",
+      "description": "What comes next in this sequence? Shapes alternate between filled and outlined."
+    },
+    "options": [
+      { "option_id": "A", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 80 80'><polygon points='40,20 60,60 20,60' fill='none' stroke='black' stroke-width='2'/></svg>" } },
+      { "option_id": "B", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 80 80'><rect x='20' y='20' width='40' height='40' fill='none' stroke='black' stroke-width='2'/></svg>" } },
+      { "option_id": "C", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 80 80'><circle cx='40' cy='40' r='20' fill='black'/></svg>" } },
+      { "option_id": "D", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 80 80'><polygon points='40,20 60,60 20,60' fill='black'/></svg>" } }
+    ],
+    "correct_answer": "A",
+    "explanation": "Filled → outlined → filled → outlined. Next is outlined triangle.",
+    "time_limit": 90,
+    "points": 5,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 5.8, "average_time": 65, "success_rate": 0.56 }
+  },
+  {
+    "question_id": "ART_003",
+    "test_type": "abstract_reasoning",
+    "difficulty": "hard",
+    "category": "transformation_rules",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "transformation",
+      "svg_data": "<svg viewBox='0 0 500 200'><g transform='translate(50,50)'><rect width='30' height='30' fill='blue'/><circle cx='45' cy='15' r='10' fill='red'/></g><text x='150' y='70'>→</text><g transform='translate(200,50)'><rect width='30' height='30' fill='red'/><circle cx='45' cy='15' r='10' fill='blue'/></g><text x='300' y='70'>::</text><g transform='translate(350,50)'><polygon points='15,0 30,30 0,30' fill='green'/><rect x='35' y='10' width='20' height='10' fill='yellow'/></g><text x='450' y='70'>→ ?</text></svg>",
+      "description": "Apply the same color-swap transformation to the second pair."
+    },
+    "options": [
+      { "option_id": "A", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 80 80'><polygon points='40,20 60,60 20,60' fill='yellow'/><rect x='20' y='30' width='20' height='10' fill='green'/></svg>" } },
+      { "option_id": "B", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 80 80'><polygon points='40,20 60,60 20,60' fill='green'/><rect x='45' y='30' width='20' height='10' fill='yellow'/></svg>" } },
+      { "option_id": "C", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 80 80'><rect x='20' y='30' width='20' height='10' fill='green'/><polygon points='40,20 60,60 20,60' fill='yellow'/></svg>" } },
+      { "option_id": "D", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 80 80'><polygon points='40,20 60,60 20,60' fill='yellow'/><rect x='45' y='30' width='20' height='10' fill='green'/></svg>" } }
+    ],
+    "correct_answer": "A",
+    "explanation": "Rule swaps colors: triangle becomes yellow, rectangle becomes green.",
+    "time_limit": 120,
+    "points": 5,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 7.2, "average_time": 95, "success_rate": 0.38 }
+  },
+  {
+    "question_id": "ART_004",
+    "test_type": "abstract_reasoning",
+    "difficulty": "easy",
+    "category": "odd_one_out",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "odd_one_out",
+      "svg_data": "<svg viewBox='0 0 400 100'><g transform='translate(20,25)'><circle cx='25' cy='25' r='20' fill='blue'/></g><g transform='translate(100,25)'><rect width='40' height='40' fill='blue'/></g><g transform='translate(180,25)'><polygon points='25,5 45,45 5,45' fill='blue'/></g><g transform='translate(260,25)'><circle cx='25' cy='25' r='20' fill='red'/></g><g transform='translate(340,25)'><rect width='40' height='40' fill='blue'/></g></svg>",
+      "description": "Which shape is the odd one out?"
+    },
+    "options": [
+      { "option_id": "A", "content": "Shape 1 (Blue Circle)" },
+      { "option_id": "B", "content": "Shape 2 (Blue Square)" },
+      { "option_id": "C", "content": "Shape 3 (Blue Triangle)" },
+      { "option_id": "D", "content": "Shape 4 (Red Circle)" },
+      { "option_id": "E", "content": "Shape 5 (Blue Square)" }
+    ],
+    "correct_answer": "D",
+    "explanation": "All are blue except the red circle.",
+    "time_limit": 45,
+    "points": 5,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 2.8, "average_time": 25, "success_rate": 0.89 }
+  },
+
+  {
+    "question_id": "ART_005",
+    "test_type": "abstract_reasoning",
+    "difficulty": "easy",
+    "category": "pattern_matrices",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "matrix",
+      "svg_data": "<svg viewBox='0 0 300 300'><circle cx='50' cy='50' r='20' fill='black'/><rect x='110' y='30' width='40' height='40' fill='black'/><polygon points='180,30 200,70 160,70' fill='black'/><circle cx='50' cy='130' r='20' fill='black'/><rect x='110' y='110' width='40' height='40' fill='black'/><polygon points='180,110 200,150 160,150' fill='black'/><circle cx='50' cy='210' r='20' fill='black'/><rect x='110' y='190' width='40' height='40' fill='black'/><text x='180' y='210' font-size='30' fill='black'>?</text></svg>",
+      "description": "Each row has circle, square, triangle in order. Which shape completes the matrix?"
+    },
+    "options": [
+      { "option_id": "A", "content": "Circle" },
+      { "option_id": "B", "content": "Square" },
+      { "option_id": "C", "content": "Triangle" },
+      { "option_id": "D", "content": "Hexagon" }
+    ],
+    "correct_answer": "C",
+    "explanation": "Each row must contain all three shapes.",
+    "time_limit": 60,
+    "points": 5,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 3.2, "average_time": 40, "success_rate": 0.7 }
+  },
+
+  {
+    "question_id": "ART_006",
+    "test_type": "abstract_reasoning",
+    "difficulty": "medium",
+    "category": "pattern_matrices",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "matrix",
+      "svg_data": "<svg viewBox='0 0 400 250'><polygon points='50,50 80,50 65,80' fill='black'/><polygon points='150,35 150,65 120,50' fill='black'/><polygon points='220,50 250,50 235,20' fill='black'/><polygon points='50,150 80,150 65,120' fill='black'/><polygon points='150,135 150,165 180,150' fill='black'/><text x='235' y='150' font-size='30' fill='black'>?</text></svg>",
+      "description": "Shapes rotate 90° each step across rows."
+    },
+    "options": [
+      { "option_id": "A", "content": "0° rotation" },
+      { "option_id": "B", "content": "90° rotation" },
+      { "option_id": "C", "content": "180° rotation" },
+      { "option_id": "D", "content": "270° rotation" }
+    ],
+    "correct_answer": "C",
+    "explanation": "The missing shape must continue the 180° rotation sequence.",
+    "time_limit": 70,
+    "points": 6,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 5.0, "average_time": 60, "success_rate": 0.55 }
+  },
+
+  {
+    "question_id": "ART_007",
+    "test_type": "abstract_reasoning",
+    "difficulty": "hard",
+    "category": "pattern_matrices",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "matrix",
+      "svg_data": "<svg viewBox='0 0 300 300'><rect x='20' y='20' width='40' height='40' fill='blue'/><circle cx='130' cy='40' r='20' fill='red'/><rect x='220' y='20' width='40' height='40' fill='blue'/><circle cx='40' cy='130' r='20' fill='red'/><rect x='110' y='110' width='40' height='40' fill='blue'/><circle cx='230' cy='130' r='20' fill='red'/><rect x='20' y='200' width='40' height='40' fill='blue'/><circle cx='130' cy='220' r='20' fill='red'/><text x='230' y='220' font-size='25' fill='black'>?</text></svg>",
+      "description": "Each row alternates shape and color. Find the missing one."
+    },
+    "options": [
+      { "option_id": "A", "content": "Blue Square" },
+      { "option_id": "B", "content": "Red Circle" },
+      { "option_id": "C", "content": "Blue Triangle" },
+      { "option_id": "D", "content": "Red Square" }
+    ],
+    "correct_answer": "B",
+    "explanation": "Color alternates across columns; missing one must be red circle.",
+    "time_limit": 90,
+    "points": 8,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 7.0, "average_time": 85, "success_rate": 0.35 }
+  },
+
+  {
+    "question_id": "ART_008",
+    "test_type": "abstract_reasoning",
+    "difficulty": "medium",
+    "category": "pattern_matrices",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "matrix",
+      "svg_data": "<svg viewBox='0 0 200 200'><circle cx='50' cy='50' r='20' fill='black'/><rect x='110' y='30' width='40' height='40' fill='black'/><polygon points='50,130 70,170 30,170' fill='black'/><text x='130' y='150' font-size='30' fill='black'>?</text></svg>",
+      "description": "Matrix follows symmetry across diagonal."
+    },
+    "options": [
+      { "option_id": "A", "content": "Circle" },
+      { "option_id": "B", "content": "Triangle" },
+      { "option_id": "C", "content": "Square" },
+      { "option_id": "D", "content": "Pentagon" }
+    ],
+    "correct_answer": "A",
+    "explanation": "Diagonal symmetry requires circle in missing spot.",
+    "time_limit": 70,
+    "points": 6,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 5.5, "average_time": 55, "success_rate": 0.5 }
+  },
+
+  {
+    "question_id": "ART_009",
+    "test_type": "abstract_reasoning",
+    "difficulty": "easy",
+    "category": "shape_sequences",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "sequence",
+      "svg_data": "<svg viewBox='0 0 400 100'><polygon points='50,20 80,70 20,70' fill='black'/><rect x='120' y='20' width='50' height='50' fill='black'/><polygon points='235,20 255,40 245,70 225,70 215,40' fill='black'/><text x='320' y='50' font-size='30' fill='black'>?</text></svg>",
+      "description": "Number of sides increases each step."
+    },
+    "options": [
+      { "option_id": "A", "content": "Hexagon" },
+      { "option_id": "B", "content": "Octagon" },
+      { "option_id": "C", "content": "Circle" },
+      { "option_id": "D", "content": "Square" }
+    ],
+    "correct_answer": "A",
+    "explanation": "Sides increase by +1 each step.",
+    "time_limit": 60,
+    "points": 4,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 2.9, "average_time": 30, "success_rate": 0.8 }
+  },
+
+  {
+    "question_id": "ART_010",
+    "test_type": "abstract_reasoning",
+    "difficulty": "medium",
+    "category": "shape_sequences",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "sequence",
+      "svg_data": "<svg viewBox='0 0 400 100'><rect x='20' y='20' width='40' height='40' fill='black'/><rect x='90' y='10' width='40' height='40' fill='none' stroke='black' stroke-width='3' transform='rotate(90 110 30)'/><rect x='160' y='20' width='40' height='40' fill='black' transform='rotate(180 180 40)'/><rect x='230' y='10' width='40' height='40' fill='none' stroke='black' stroke-width='3' transform='rotate(270 250 30)'/><text x='320' y='45' font-size='30' fill='black'>?</text></svg>",
+      "description": "Shapes rotate 90° and alternate between black and white."
+    },
+    "options": [
+      { "option_id": "A", "content": "Black rotated square" },
+      { "option_id": "B", "content": "White rotated square" },
+      { "option_id": "C", "content": "Black rotated triangle" },
+      { "option_id": "D", "content": "White rotated triangle" }
+    ],
+    "correct_answer": "B",
+    "explanation": "Color alternates and rotation continues. Answer is white rotated square.",
+    "time_limit": 75,
+    "points": 5,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 5.2, "average_time": 60, "success_rate": 0.55 }
+  },
+
+  {
+    "question_id": "ART_011",
+    "test_type": "abstract_reasoning",
+    "difficulty": "medium",
+    "category": "shape_sequences",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "sequence",
+      "svg_data": "<svg viewBox='0 0 400 100'><circle cx='30' cy='50' r='10' fill='black'/><rect x='80' y='40' width='20' height='20' fill='black'/><circle cx='180' cy='50' r='20' fill='black'/><rect x='240' y='30' width='40' height='40' fill='black'/><text x='320' y='50' font-size='30' fill='black'>?</text></svg>",
+      "description": "Each shape doubles in size."
+    },
+    "options": [
+      { "option_id": "A", "content": "Largest circle" },
+      { "option_id": "B", "content": "Largest square" },
+      { "option_id": "C", "content": "Largest triangle" },
+      { "option_id": "D", "content": "Largest hexagon" }
+    ],
+    "correct_answer": "B",
+    "explanation": "Square comes next in doubling sequence.",
+    "time_limit": 75,
+    "points": 5,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 5.5, "average_time": 65, "success_rate": 0.52 }
+  },
+
+  {
+    "question_id": "ART_012",
+    "test_type": "abstract_reasoning",
+    "difficulty": "hard",
+    "category": "shape_sequences",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "sequence",
+      "svg_data": "<svg viewBox='0 0 400 100'><circle cx='50' cy='50' r='30' fill='black'/><circle cx='130' cy='50' r='30' fill='black' stroke='white' stroke-width='4' stroke-dasharray='4 2'/><circle cx='210' cy='50' r='30' fill='none' stroke='black' stroke-width='3'/><circle cx='290' cy='50' r='30' fill='black'/><text x='350' y='55' font-size='30' fill='black'>?</text></svg>",
+      "description": "Pattern cycles through fill styles."
+    },
+    "options": [
+      { "option_id": "A", "content": "Filled triangle" },
+      { "option_id": "B", "content": "Striped square" },
+      { "option_id": "C", "content": "Outline pentagon" },
+      { "option_id": "D", "content": "Filled circle" }
+    ],
+    "correct_answer": "D",
+    "explanation": "After outline comes filled again.",
+    "time_limit": 90,
+    "points": 7,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 7.0, "average_time": 85, "success_rate": 0.34 }
+  },
+
+  {
+    "question_id": "ART_013",
+    "test_type": "abstract_reasoning",
+    "difficulty": "medium",
+    "category": "shape_sequences",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "sequence",
+      "svg_data": "<svg viewBox='0 0 400 100'><circle cx='50' cy='50' r='30' fill='black'/><circle cx='130' cy='50' r='15' fill='black'/><circle cx='210' cy='50' r='8' fill='black'/><text x='280' y='55' font-size='30' fill='black'>?</text></svg>",
+      "description": "Shape size reduces by 50% each step."
+    },
+    "options": [
+      { "option_id": "A", "content": "Small circle" },
+      { "option_id": "B", "content": "Small square" },
+      { "option_id": "C", "content": "Small triangle" },
+      { "option_id": "D", "content": "Small hexagon" }
+    ],
+    "correct_answer": "A",
+    "explanation": "Next is small circle in cycle.",
+    "time_limit": 75,
+    "points": 5,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 5.0, "average_time": 55, "success_rate": 0.58 }
+  },
+
+  {
+    "question_id": "ART_014",
+    "test_type": "abstract_reasoning",
+    "difficulty": "easy",
+    "category": "shape_sequences",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "sequence",
+      "svg_data": "<svg viewBox='0 0 400 100'><polygon points='50,20 80,70 20,70' fill='black'/><polygon points='130,70 160,20 100,20' fill='black'/><polygon points='210,20 240,70 180,70' fill='black'/><text x='290' y='50' font-size='30' fill='black'>?</text></svg>",
+      "description": "Shapes alternate orientation each step."
+    },
+    "options": [
+      { "option_id": "A", "content": "Upright triangle" },
+      { "option_id": "B", "content": "Upside-down triangle" },
+      { "option_id": "C", "content": "Upright square" },
+      { "option_id": "D", "content": "Upside-down square" }
+    ],
+    "correct_answer": "B",
+    "explanation": "Alternates upright → upside-down. Missing is upside-down triangle.",
+    "time_limit": 60,
+    "points": 4,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 3.5, "average_time": 40, "success_rate": 0.72 }
+  },
+
+  {
+    "question_id": "ART_015",
+    "test_type": "abstract_reasoning",
+    "difficulty": "medium",
+    "category": "transformation_rules",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "transformation",
+      "svg_data": "<svg viewBox='0 0 400 150'><rect x='30' y='30' width='40' height='40' fill='black'/><text x='100' y='60' font-size='30' fill='black'>→</text><rect x='140' y='30' width='40' height='40' fill='black' transform='rotate(45 160 50)'/><text x='210' y='60' font-size='30' fill='black'>::</text><polygon points='250,30 280,80 220,80' fill='black'/><text x='320' y='60' font-size='30' fill='black'>→</text><text x='370' y='60' font-size='30' fill='black'>?</text></svg>",
+      "description": "Rule: shapes rotate 45° clockwise."
+    },
+    "options": [
+      { "option_id": "A", "content": "Rotated square" },
+      { "option_id": "B", "content": "Rotated triangle" },
+      { "option_id": "C", "content": "Rotated circle" },
+      { "option_id": "D", "content": "Non-rotated triangle" }
+    ],
+    "correct_answer": "B",
+    "explanation": "Triangle must rotate 45° clockwise.",
+    "time_limit": 90,
+    "points": 6,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 6.0, "average_time": 70, "success_rate": 0.45 }
+  },
+
+  {
+    "question_id": "ART_016",
+    "test_type": "abstract_reasoning",
+    "difficulty": "hard",
+    "category": "transformation_rules",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "transformation",
+      "svg_data": "<svg viewBox='0 0 400 150'><rect x='30' y='30' width='40' height='40' fill='black'/><text x='100' y='60' font-size='30' fill='black'>→</text><rect x='140' y='30' width='40' height='40' fill='white' stroke='black' stroke-width='2'/><text x='210' y='60' font-size='30' fill='black'>::</text><polygon points='250,30 280,80 220,80' fill='black'/><text x='320' y='60' font-size='30' fill='black'>→</text><text x='370' y='60' font-size='30' fill='black'>?</text></svg>",
+      "description": "Rule: invert colors + flip horizontally."
+    },
+    "options": [
+      { "option_id": "A", "content": "Black flipped triangle" },
+      { "option_id": "B", "content": "White flipped triangle" },
+      { "option_id": "C", "content": "Black upright triangle" },
+      { "option_id": "D", "content": "White upright triangle" }
+    ],
+    "correct_answer": "B",
+    "explanation": "Flip + color invert → white flipped triangle.",
+    "time_limit": 120,
+    "points": 8,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 7.5, "average_time": 100, "success_rate": 0.3 }
+  },
+
+  {
+    "question_id": "ART_017",
+    "test_type": "abstract_reasoning",
+    "difficulty": "medium",
+    "category": "transformation_rules",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "transformation",
+      "svg_data": "<svg viewBox='0 0 400 100'><rect x='20' y='30' width='40' height='40' fill='none' stroke='black' stroke-width='2'/><rect x='100' y='30' width='40' height='40' fill='none' stroke='black' stroke-width='2'><circle cx='120' cy='50' r='5' fill='black'/></rect><rect x='180' y='30' width='40' height='40' fill='none' stroke='black' stroke-width='2'><circle cx='190' cy='40' r='5' fill='black'/><circle cx='210' cy='60' r='5' fill='black'/></rect><rect x='260' y='30' width='40' height='40' fill='none' stroke='black' stroke-width='2'><circle cx='270' cy='40' r='5' fill='black'/><circle cx='290' cy='40' r='5' fill='black'/><circle cx='280' cy='60' r='5' fill='black'/></rect><text x='350' y='50' font-size='30' fill='black'>?</text></svg>",
+      "description": "Rule: add one new dot inside the shape each step."
+    },
+    "options": [
+      { "option_id": "A", "content": "Shape with 2 dots" },
+      { "option_id": "B", "content": "Shape with 3 dots" },
+      { "option_id": "C", "content": "Shape with 4 dots" },
+      { "option_id": "D", "content": "Shape with 5 dots" }
+    ],
+    "correct_answer": "C",
+    "explanation": "Dots increase sequentially, so next has 4 dots.",
+    "time_limit": 80,
+    "points": 6,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 5.8, "average_time": 70, "success_rate": 0.5 }
+  },
+
+  {
+    "question_id": "ART_018",
+    "test_type": "abstract_reasoning",
+    "difficulty": "hard",
+    "category": "transformation_rules",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "transformation",
+      "svg_data": "<svg viewBox='0 0 450 150'><rect x='20' y='40' width='40' height='20' fill='black'/><text x='80' y='55' font-size='25' fill='black'>→</text><rect x='110' y='35' width='20' height='40' fill='white' stroke='black' stroke-width='2'><circle cx='120' cy='55' r='5' fill='black'/></rect><text x='160' y='55' font-size='25' fill='black'>::</text><polygon points='190,35 230,35 210,70' fill='black'/><text x='250' y='55' font-size='25' fill='black'>→</text><text x='300' y='55' font-size='25' fill='black'>?</text></svg>",
+      "description": "Rule: rotate 90°, invert colors, then add a new small circle."
+    },
+    "options": [
+      { "option_id": "A", "content": "Rotated + inverted only" },
+      { "option_id": "B", "content": "Rotated + inverted + new circle" },
+      { "option_id": "C", "content": "Inverted only" },
+      { "option_id": "D", "content": "Rotated only" }
+    ],
+    "correct_answer": "B",
+    "explanation": "All three transformations applied.",
+    "time_limit": 120,
+    "points": 9,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 8.0, "average_time": 110, "success_rate": 0.25 }
+  },
+
+  {
+    "question_id": "ART_019",
+    "test_type": "abstract_reasoning",
+    "difficulty": "easy",
+    "category": "odd_one_out",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "odd_one_out",
+      "svg_data": "<svg viewBox='0 0 500 100'><circle cx='50' cy='50' r='25' fill='black'/><rect x='95' y='25' width='50' height='50' fill='black'/><polygon points='225,25 255,75 195,75' fill='black'/><rect x='295' y='25' width='50' height='50' fill='black' transform='rotate(45 320 50)'/><polygon points='375,25 425,50 375,75 350,50' fill='black'/></svg>",
+      "description": "Which is the odd one out?"
+    },
+    "options": [
+      { "option_id": "A", "content": "Circle" },
+      { "option_id": "B", "content": "Square" },
+      { "option_id": "C", "content": "Triangle" },
+      { "option_id": "D", "content": "Pentagon" }
+    ],
+    "correct_answer": "A",
+    "explanation": "All others are polygons, circle is not.",
+    "time_limit": 50,
+    "points": 4,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 3.0, "average_time": 30, "success_rate": 0.78 }
+  },
+
+  {
+    "question_id": "ART_020",
+    "test_type": "abstract_reasoning",
+    "difficulty": "medium",
+    "category": "odd_one_out",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "odd_one_out",
+      "svg_data": "<svg viewBox='0 0 500 100'><rect x='20' y='25' width='50' height='50' fill='black'/><circle cx='125' cy='50' r='25' fill='black'/><polygon points='200,25 230,75 170,75' fill='black'/><rect x='270' y='25' width='50' height='50' fill='black' transform='rotate(45 295 50)'/><rect x='350' y='25' width='50' height='50' fill='black'/></svg>",
+      "description": "Find the odd one out."
+    },
+    "options": [
+      { "option_id": "A", "content": "Upright square" },
+      { "option_id": "B", "content": "Upright circle" },
+      { "option_id": "C", "content": "Upright triangle" },
+      { "option_id": "D", "content": "Rotated square" }
+    ],
+    "correct_answer": "D",
+    "explanation": "One rotated shape among upright shapes.",
+    "time_limit": 60,
+    "points": 5,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 4.5, "average_time": 50, "success_rate": 0.65 }
+  },
+
+  {
+    "question_id": "ART_021",
+    "test_type": "abstract_reasoning",
+    "difficulty": "medium",
+    "category": "odd_one_out",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "odd_one_out",
+      "svg_data": "<svg viewBox='0 0 500 100'><g transform='translate(20,20)'><circle cx='10' cy='10' r='10' fill='black'/><circle cx='40' cy='10' r='10' fill='black'/><circle cx='40' cy='40' r='10' fill='black'/><circle cx='10' cy='40' r='10' fill='black'/></g><g transform='translate(120,20)'><circle cx='10' cy='10' r='10' fill='black'/><circle cx='40' cy='10' r='10' fill='black'/><circle cx='40' cy='40' r='10' fill='black'/><circle cx='10' cy='40' r='10' fill='black'/></g><g transform='translate(220,20)'><circle cx='10' cy='10' r='10' fill='black'/><circle cx='40' cy='10' r='10' fill='black'/><circle cx='40' cy='40' r='10' fill='black'/><circle cx='10' cy='60' r='10' fill='black'/></g><g transform='translate(320,20)'><circle cx='10' cy='10' r='10' fill='black'/><circle cx='40' cy='10' r='10' fill='black'/><circle cx='40' cy='40' r='10' fill='black'/><circle cx='10' cy='40' r='10' fill='black'/></g><g transform='translate(420,20)'><circle cx='10' cy='10' r='10' fill='black'/><circle cx='40' cy='10' r='10' fill='black'/><circle cx='40' cy='40' r='10' fill='black'/><circle cx='10' cy='40' r='10' fill='black'/></g></svg>",
+      "description": "Find the odd one out."
+    },
+    "options": [
+      { "option_id": "A", "content": "Pattern 1" },
+      { "option_id": "B", "content": "Pattern 2" },
+      { "option_id": "C", "content": "Pattern 3" },
+      { "option_id": "D", "content": "Pattern 4" },
+      { "option_id": "E", "content": "Pattern 5" }
+    ],
+    "correct_answer": "C",
+    "explanation": "All patterns have 4 dots in a square except pattern 3, where one dot is misplaced.",
+    "time_limit": 70,
+    "points": 5,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 5.0, "average_time": 55, "success_rate": 0.60 }
+  },
+
+  {
+    "question_id": "ART_022",
+    "test_type": "abstract_reasoning",
+    "difficulty": "hard",
+    "category": "odd_one_out",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "odd_one_out",
+      "svg_data": "<svg viewBox='0 0 500 100'><g transform='translate(20,20)'><rect x='0' y='0' width='40' height='40' fill='none' stroke='black' stroke-width='2'/><line x1='0' y1='0' x2='40' y2='40' stroke='black' stroke-width='2'/></g><g transform='translate(120,20)'><rect x='0' y='0' width='40' height='40' fill='none' stroke='black' stroke-width='2'/><line x1='40' y1='0' x2='0' y2='40' stroke='black' stroke-width='2'/></g><g transform='translate(220,20)'><rect x='0' y='0' width='40' height='40' fill='none' stroke='black' stroke-width='2'/><line x1='0' y1='0' x2='40' y2='40' stroke='black' stroke-width='2'/><line x1='40' y1='0' x2='0' y2='40' stroke='black' stroke-width='2'/></g><g transform='translate(320,20)'><rect x='0' y='0' width='40' height='40' fill='none' stroke='black' stroke-width='2'/><line x1='0' y1='20' x2='40' y2='20' stroke='black' stroke-width='2'/></g><g transform='translate(420,20)'><rect x='0' y='0' width='40' height='40' fill='none' stroke='black' stroke-width='2'/><line x1='20' y1='0' x2='20' y2='40' stroke='black' stroke-width='2'/></g></svg>",
+      "description": "Find the odd one out."
+    },
+    "options": [
+      { "option_id": "A", "content": "Square with diagonal (top-left to bottom-right)" },
+      { "option_id": "B", "content": "Square with diagonal (top-right to bottom-left)" },
+      { "option_id": "C", "content": "Square with cross (X)" },
+      { "option_id": "D", "content": "Square with horizontal line" },
+      { "option_id": "E", "content": "Square with vertical line" }
+    ],
+    "correct_answer": "C",
+    "explanation": "All others have a single line, while pattern C has two lines making an X.",
+    "time_limit": 90,
+    "points": 7,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 6.5, "average_time": 75, "success_rate": 0.45 }
+  },
+
+  {
+    "question_id": "ART_023",
+    "test_type": "abstract_reasoning",
+    "difficulty": "hard",
+    "category": "pattern_matrices",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "matrix",
+      "svg_data": "<svg viewBox='0 0 300 300'><circle cx='50' cy='50' r='20' fill='none' stroke='black' stroke-width='2'/><rect x='110' y='30' width='40' height='40' fill='none' stroke='black' stroke-width='2'/><polygon points='230,30 250,70 210,70' fill='none' stroke='black' stroke-width='2'/><rect x='30' y='110' width='40' height='40' fill='none' stroke='black' stroke-width='2'/><polygon points='130,110 150,150 110,150' fill='none' stroke='black' stroke-width='2'/><circle cx='230' cy='130' r='20' fill='none' stroke='black' stroke-width='2'/><polygon points='50,210 70,250 30,250' fill='none' stroke='black' stroke-width='2'/><circle cx='130' cy='230' r='20' fill='none' stroke='black' stroke-width='2'/><text x='230' y='230' font-size='20' fill='black'>?</text></svg>",
+      "description": "What shape should replace the question mark to complete the pattern?"
+    },
+    "options": [
+      { "option_id": "A", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 80 80'><circle cx='40' cy='40' r='20' fill='none' stroke='black' stroke-width='2'/></svg>" } },
+      { "option_id": "B", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 80 80'><rect x='20' y='20' width='40' height='40' fill='none' stroke='black' stroke-width='2'/></svg>" } },
+      { "option_id": "C", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 80 80'><polygon points='40,20 60,60 20,60' fill='none' stroke='black' stroke-width='2'/></svg>" } },
+      { "option_id": "D", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 80 80'><polygon points='20,20 60,20 60,60 20,60' fill='none' stroke='black' stroke-width='2'/></svg>" } }
+    ],
+    "correct_answer": "B",
+    "explanation": "The pattern is a 3x3 matrix where each row and column contains all three shapes (circle, square, triangle) exactly once. The missing shape must be a square.",
+    "time_limit": 120,
+    "points": 8,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 7.8, "average_time": 100, "success_rate": 0.35 }
+  },
+
+  {
+    "question_id": "ART_024",
+    "test_type": "abstract_reasoning",
+    "difficulty": "medium",
+    "category": "pattern_matrices",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "matrix",
+      "svg_data": "<svg viewBox='0 0 300 300'><g transform='translate(30,30)'><circle cx='0' cy='0' r='10' fill='black'/><circle cx='40' cy='0' r='10' fill='black'/></g><g transform='translate(130,30)'><circle cx='0' cy='0' r='10' fill='black'/><circle cx='40' cy='0' r='10' fill='black'/><circle cx='20' cy='40' r='10' fill='black'/></g><g transform='translate(230,30)'><circle cx='0' cy='0' r='10' fill='black'/><circle cx='40' cy='0' r='10' fill='black'/><circle cx='0' cy='40' r='10' fill='black'/><circle cx='40' cy='40' r='10' fill='black'/></g><g transform='translate(30,130)'><circle cx='0' cy='0' r='10' fill='black'/><circle cx='40' cy='0' r='10' fill='black'/><circle cx='20' cy='40' r='10' fill='black'/></g><g transform='translate(130,130)'><circle cx='0' cy='0' r='10' fill='black'/><circle cx='40' cy='0' r='10' fill='black'/><circle cx='0' cy='40' r='10' fill='black'/><circle cx='40' cy='40' r='10' fill='black'/></g><g transform='translate(230,130)'><circle cx='0' cy='0' r='10' fill='black'/><circle cx='40' cy='0' r='10' fill='black'/><circle cx='0' cy='40' r='10' fill='black'/><circle cx='40' cy='40' r='10' fill='black'/><circle cx='20' cy='20' r='10' fill='black'/></g><g transform='translate(30,230)'><circle cx='0' cy='0' r='10' fill='black'/><circle cx='40' cy='0' r='10' fill='black'/><circle cx='0' cy='40' r='10' fill='black'/><circle cx='40' cy='40' r='10' fill='black'/></g><g transform='translate(130,230)'><circle cx='0' cy='0' r='10' fill='black'/><circle cx='40' cy='0' r='10' fill='black'/><circle cx='0' cy='40' r='10' fill='black'/><circle cx='40' cy='40' r='10' fill='black'/><circle cx='20' cy='20' r='10' fill='black'/></g><text x='240' y='240' font-size='20' fill='black'>?</text></svg>",
+      "description": "How many dots should be in the final square to complete the pattern?"
+    },
+    "options": [
+      { "option_id": "A", "content": "5 dots" },
+      { "option_id": "B", "content": "6 dots" },
+      { "option_id": "C", "content": "7 dots" },
+      { "option_id": "D", "content": "8 dots" }
+    ],
+    "correct_answer": "B",
+    "explanation": "The pattern adds one dot each step, moving left to right, top to bottom. Starting with 2 dots, the final square should contain 6 dots.",
+    "time_limit": 90,
+    "points": 6,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 6.0, "average_time": 70, "success_rate": 0.50 }
+  },
+
+  {
+    "question_id": "ART_025",
+    "test_type": "abstract_reasoning",
+    "difficulty": "easy",
+    "category": "shape_sequences",
+    "question_content": {
+      "type": "visual",
+      "pattern_type": "sequence",
+      "svg_data": "<svg viewBox='0 0 400 100'><rect x='20' y='30' width='40' height='40' fill='black'/><circle cx='110' cy='50' r='20' fill='black'/><polygon points='170,30 190,70 150,70' fill='black'/><rect x='230' y='30' width='40' height='40' fill='black'/><circle cx='320' cy='50' r='20' fill='black'/><text x='370' y='55' font-size='20' fill='black'>?</text></svg>",
+      "description": "What comes next in this sequence of shapes?"
+    },
+    "options": [
+      { "option_id": "A", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 80 80'><polygon points='40,20 60,60 20,60' fill='black'/></svg>" } },
+      { "option_id": "B", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 80 80'><rect x='20' y='20' width='40' height='40' fill='black'/></svg>" } },
+      { "option_id": "C", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 80 80'><circle cx='40' cy='40' r='20' fill='black'/></svg>" } },
+      { "option_id": "D", "content": { "type": "svg", "svg_data": "<svg viewBox='0 0 80 80'><polygon points='20,20 60,20 60,60 20,60' fill='black'/></svg>" } }
+    ],
+    "correct_answer": "A",
+    "explanation": "The pattern repeats: square, circle, triangle, square, circle, triangle...",
+    "time_limit": 60,
+    "points": 4,
+    "metadata": { "created_date": "2025-08-27", "difficulty_rating": 3.5, "average_time": 35, "success_rate": 0.75 }
+  }
+]

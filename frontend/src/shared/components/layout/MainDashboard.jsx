@@ -1,23 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useDarkMode } from '../../../contexts/DarkModeContext';
 import { 
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  UserIcon,
+  Cog6ToothIcon,
+  LanguageIcon,
+  MoonIcon,
+  SunIcon,
+  ArrowRightOnRectangleIcon,
+  BellIcon,
+  QuestionMarkCircleIcon
 } from '@heroicons/react/24/outline';
 import Dashboard from '../../../features/candidate-dashboard/components/DashboardCandidat';
 import AvailableTests from '../../../features/skills-assessment/components/AvailableTests';
 import TechnicalTests from '../../../features/skills-assessment/components/TechnicalTests';
 import TestLayout from '../../../features/skills-assessment/components/TestLayout';
+import NumericalReasoningTest from '../../../features/skills-assessment/components/NumericalReasoningTest';
+import AbstractReasoningTest from '../../../features/skills-assessment/components/AbstractReasoningTest';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import formationTechnique from '../../../assets/images/ui/formation_technique.avif';
 import betterImpressions from '../../../assets/images/ui/better_impressions.avif';
 
 const MainDashboard = () => {
-  const [activeSection, setActiveSection] = useState('applications');
+  const { t, i18n } = useTranslation();
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const [activeSection, setActiveSection] = useState('dashboard');
   const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
+  
+  const profileDropdownRef = useRef(null);
+
+  // Ensure i18n is initialized
+  const currentLanguage = i18n?.language || 'en';
+
+  // Language change handler
+  const changeLanguage = (lng) => {
+    if (i18n && i18n.changeLanguage) {
+      i18n.changeLanguage(lng);
+    }
+  };
+
+    // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Map skill categories to test types
   const skillToTestMap = {
@@ -71,9 +110,9 @@ const MainDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       {/* Top Header Bar */}
-      <div className="header-bar h-16 bg-white border-b border-gray-200 px-12">
+      <div className="header-bar h-16 border-b px-12 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 transition-colors duration-300">
         <div className="header-content h-full flex items-center justify-between max-w-screen-2xl mx-auto">
           {/* Logo */}
           <div className="logo-container flex items-center">
@@ -91,10 +130,10 @@ const MainDashboard = () => {
               className={`nav-button text-base font-medium transition-colors pb-1 ${
                 activeSection === 'dashboard' 
                   ? 'text-blue-500 border-b-2 border-blue-500' 
-                  : 'text-gray-700 hover:text-blue-500'
+                  : `${isDarkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-700 hover:text-blue-500'}`
               }`}
             >
-              Tableau de bord
+              {t('dashboard')}
             </button>
             
             <button 
@@ -102,10 +141,10 @@ const MainDashboard = () => {
               className={`nav-button text-base font-medium transition-colors pb-1 ${
                 activeSection === 'jobs' 
                   ? 'text-blue-500 border-b-2 border-blue-500' 
-                  : 'text-gray-700 hover:text-blue-500'
+                  : `${isDarkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-700 hover:text-blue-500'}`
               }`}
             >
-              Offres d'emploi
+              {t('jobs')}
             </button>
             
             <button 
@@ -113,22 +152,197 @@ const MainDashboard = () => {
               className={`nav-button text-base font-medium transition-colors pb-1 ${
                 activeSection === 'career' 
                   ? 'text-blue-500 border-b-2 border-blue-500' 
-                  : 'text-gray-700 hover:text-blue-500'
+                  : `${isDarkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-700 hover:text-blue-500'}`
               }`}
             >
-              Conseils de carrière
+              {t('career')}
             </button>
           </nav>
 
-          {/* Right Avatar */}
-          <div className="user-avatar w-8 h-8 bg-gray-300 rounded-full"></div>
+          {/* Right Profile Dropdown */}
+          <div className="relative" ref={profileDropdownRef}>
+            <button 
+              onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+              className={`user-avatar w-8 h-8 rounded-full transition-colors flex items-center justify-center group ${
+                isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-300 hover:bg-gray-400'
+              }`}
+            >
+              <UserIcon className={`w-5 h-5 transition-colors ${
+                isDarkMode ? 'text-gray-300 group-hover:text-gray-200' : 'text-gray-600 group-hover:text-gray-700'
+              }`} />
+            </button>
+
+            {/* Professional Dropdown Menu */}
+            {showProfileDropdown && (
+              <div className={`absolute right-0 mt-2 w-64 rounded-lg shadow-lg border py-2 z-50 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+              }`}>
+                {/* User Info Section */}
+                <div className={`px-4 py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold text-sm">YA</span>
+                    </div>
+                    <div>
+                      <p className={`text-sm font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Yassine</p>
+                      <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>yassine@jobgate.com</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Main Menu Items */}
+                <div className="py-2">
+                  <button 
+                    onClick={() => {
+                      setActiveSection('profile');
+                      setShowProfileDropdown(false);
+                    }}
+                    className={`w-full px-4 py-2 text-left text-sm flex items-center space-x-3 transition-colors ${
+                      isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-700' 
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <UserIcon className="w-4 h-4" />
+                    <span>{t('profile')}</span>
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      setActiveSection('settings');
+                      setShowProfileDropdown(false);
+                    }}
+                    className={`w-full px-4 py-2 text-left text-sm flex items-center space-x-3 transition-colors ${
+                      isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-700' 
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Cog6ToothIcon className="w-4 h-4" />
+                    <span>{t('settings')}</span>
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      setActiveSection('notifications');
+                      setShowProfileDropdown(false);
+                    }}
+                    className={`w-full px-4 py-2 text-left text-sm flex items-center space-x-3 transition-colors ${
+                      isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-700' 
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <BellIcon className="w-4 h-4" />
+                    <span>{t('notifications')}</span>
+                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5">3</span>
+                  </button>
+                </div>
+
+                {/* Language Selector */}
+                <div className={`border-t py-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                  <div className="px-4 py-1">
+                    <p className={`text-xs font-semibold uppercase tracking-wide ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>{t('language')}</p>
+                  </div>
+                  <button 
+                    onClick={() => changeLanguage(currentLanguage === 'fr' ? 'en' : 'fr')}
+                    className={`w-full px-4 py-2 text-left text-sm flex items-center justify-between transition-colors ${
+                      isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-700' 
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <LanguageIcon className="w-4 h-4" />
+                      <span>{currentLanguage === 'fr' ? t('french') : t('english')}</span>
+                    </div>
+                    <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {currentLanguage ? currentLanguage.toUpperCase() : 'EN'}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Theme Toggle */}
+                <div className={`border-t py-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                  <div className="px-4 py-1">
+                    <p className={`text-xs font-semibold uppercase tracking-wide ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>{t('appearance')}</p>
+                  </div>
+                  <button 
+                    onClick={() => toggleDarkMode()}
+                    className={`w-full px-4 py-2 text-left text-sm flex items-center justify-between transition-colors ${
+                      isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-700' 
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      {isDarkMode ? (
+                        <SunIcon className="w-4 h-4" />
+                      ) : (
+                        <MoonIcon className="w-4 h-4" />
+                      )}
+                      <span>{isDarkMode 
+                        ? t('lightMode')
+                        : t('darkMode')
+                      }</span>
+                    </div>
+                    <div className={`w-8 h-4 rounded-full transition-colors ${isDarkMode ? 'bg-blue-500' : 'bg-gray-300'} relative`}>
+                      <div className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-transform ${isDarkMode ? 'translate-x-4' : 'translate-x-0.5'}`}></div>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Help & Support */}
+                <div className={`border-t py-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                  <button 
+                    onClick={() => {
+                      setActiveSection('help');
+                      setShowProfileDropdown(false);
+                    }}
+                    className={`w-full px-4 py-2 text-left text-sm flex items-center space-x-3 transition-colors ${
+                      isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-700' 
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <QuestionMarkCircleIcon className="w-4 h-4" />
+                    <span>{t('help')}</span>
+                  </button>
+                </div>
+
+                {/* Logout */}
+                <div className={`border-t py-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                  <button 
+                    onClick={() => {
+                      // Handle logout logic
+                      setShowProfileDropdown(false);
+                    }}
+                    className={`w-full px-4 py-2 text-left text-sm flex items-center space-x-3 transition-colors ${
+                      isDarkMode 
+                        ? 'text-red-400 hover:bg-red-900/20' 
+                        : 'text-red-600 hover:bg-red-50'
+                    }`}
+                  >
+                    <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                    <span>{t('logout')}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       <div className="main-layout flex max-w-screen-2xl mx-auto px-12 pt-12 gap-8 items-start">
         {/* Left Navigation Strip */}
         <div className="sidebar-navigation w-72">
-          <div className="sidebar-card w-full bg-white rounded-xl shadow-sm sticky top-28">
+          <div className={`sidebar-card w-full rounded-xl shadow-sm sticky top-28 transition-colors duration-300 ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
             {/* Primary Navigation */}
             <div className="primary-nav-section p-6 space-y-3">
               <button 
@@ -136,10 +350,13 @@ const MainDashboard = () => {
                 className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
                   activeSection === 'explore'
                     ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                    : 'text-gray-700 hover:bg-blue-50'
+                    : `${isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' 
+                        : 'text-gray-700 hover:bg-blue-50'
+                      }`
                 }`}
               >
-                Explorer les offres
+                {t('exploreOffers')}
               </button>
               
               <button 
@@ -147,10 +364,13 @@ const MainDashboard = () => {
                 className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
                   activeSection === 'saved'
                     ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                    : 'text-gray-700 hover:bg-blue-50'
+                    : `${isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' 
+                        : 'text-gray-700 hover:bg-blue-50'
+                      }`
                 }`}
               >
-                Offres sauvegardées
+                {t('savedOffers')}
               </button>
               
               <button 
@@ -158,23 +378,30 @@ const MainDashboard = () => {
                 className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
                   activeSection === 'applications'
                     ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                    : 'text-gray-700 hover:bg-blue-50'
+                    : `${isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' 
+                        : 'text-gray-700 hover:bg-blue-50'
+                      }`
                 }`}
               >
-                Mes candidatures
+                {t('myApplications')}
               </button>
             </div>
 
             {/* Separator */}
-            <div className="nav-separator border-t border-gray-200 mx-6"></div>
+            <div className={`nav-separator border-t mx-6 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}></div>
 
             {/* Skills Validation Dropdown */}
             <div className="skills-validation-section p-6">
               <button 
                 onClick={() => setShowSkillsDropdown(!showSkillsDropdown)}
-                className="skills-dropdown-trigger w-full flex items-center justify-between px-4 py-3 rounded-lg text-left text-gray-700 text-sm font-semibold transition-colors hover:bg-blue-50"
+                className={`skills-dropdown-trigger w-full flex items-center justify-between px-4 py-3 rounded-lg text-left text-sm font-semibold transition-colors ${
+                  isDarkMode 
+                    ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' 
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
               >
-                <span>Validation des compétences</span>
+                <span>{t('skillsValidation')}</span>
                 <ChevronDownIcon className={`dropdown-icon w-4 h-4 ml-2 transition-transform ${showSkillsDropdown ? 'rotate-180' : ''}`} />
               </button>
 
@@ -188,7 +415,10 @@ const MainDashboard = () => {
                       className={`skill-category-item block w-full text-left pl-4 pr-2 py-2 text-xs transition-colors rounded ${
                         activeSection === skillToTestMap[skill.toLowerCase()] || activeSection === `skill-${skill.toLowerCase().replace(/\s+/g, '-')}`
                           ? 'bg-blue-50 text-blue-500 font-semibold border-l-2 border-blue-500'
-                          : 'text-gray-700 hover:bg-blue-50 hover:text-blue-500'
+                          : `${isDarkMode 
+                              ? 'text-gray-400 hover:bg-gray-700 hover:text-blue-400' 
+                              : 'text-gray-700 hover:bg-blue-50 hover:text-blue-500'
+                            }`
                       }`}
                     >
                       {skill}
@@ -199,7 +429,7 @@ const MainDashboard = () => {
             </div>
 
             {/* Separator */}
-            <div className="nav-separator border-t border-gray-200 mx-6"></div>
+            <div className={`nav-separator border-t mx-6 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}></div>
 
             {/* Additional Navigation Items */}
             <div className="secondary-nav-section p-6 space-y-3">
@@ -208,10 +438,13 @@ const MainDashboard = () => {
                 className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
                   activeSection === 'mon-espace'
                     ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                    : 'text-gray-700 hover:bg-blue-50'
+                    : `${isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' 
+                        : 'text-gray-700 hover:bg-blue-50'
+                      }`
                 }`}
               >
-                Mon espace
+                {t('mySpace')}
               </button>
               
               <button 
@@ -219,10 +452,13 @@ const MainDashboard = () => {
                 className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
                   activeSection === 'offres-recommandees'
                     ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                    : 'text-gray-700 hover:bg-blue-50'
+                    : `${isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' 
+                        : 'text-gray-700 hover:bg-blue-50'
+                      }`
                 }`}
               >
-                Offres recommandées
+                {t('recommendedOffers')}
               </button>
               
               <button 
@@ -230,10 +466,13 @@ const MainDashboard = () => {
                 className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
                   activeSection === 'historique-tests'
                     ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                    : 'text-gray-700 hover:bg-blue-50'
+                    : `${isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' 
+                        : 'text-gray-700 hover:bg-blue-50'
+                      }`
                 }`}
               >
-                Historique des tests
+                {t('testHistory')}
               </button>
             </div>
           </div>
@@ -244,98 +483,406 @@ const MainDashboard = () => {
           {activeSection === 'dashboard' ? (
             <Dashboard />
           ) : activeSection === 'test-session' ? (
-            <TestLayout />
+            <TestLayout isDarkMode={isDarkMode} />
           ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
-            // Show AvailableTests for most test categories
+            // Show specific test components or AvailableTests for most test categories
             activeSection === 'technical-tests' ? (
-              <TechnicalTests onBackToDashboard={() => setActiveSection('applications')} />
+              <TechnicalTests onBackToDashboard={() => setActiveSection('dashboard')} isDarkMode={isDarkMode} />
+            ) : activeSection === 'numerical-tests' ? (
+              <NumericalReasoningTest 
+                onBackToDashboard={() => setActiveSection('dashboard')}
+                onTestComplete={(results) => {
+                  console.log('Test completed:', results);
+                  setActiveSection('dashboard');
+                }}
+              />
+            ) : activeSection === 'abstract-tests' ? (
+              <AbstractReasoningTest 
+                onBackToDashboard={() => setActiveSection('dashboard')}
+                onTestComplete={(results) => {
+                  console.log('Test completed:', results);
+                  setActiveSection('dashboard');
+                }}
+              />
             ) : (
               <AvailableTests 
-                onBackToDashboard={() => setActiveSection('applications')} 
-                onStartTest={() => setActiveSection('test-session')}
+                onBackToDashboard={() => setActiveSection('dashboard')} 
+                onStartTest={(testId) => {
+                  if (testId === 'numerical-reasoning') {
+                    setActiveSection('numerical-tests');
+                  } else if (testId === 'abstract-reasoning') {
+                    setActiveSection('abstract-tests');
+                  } else {
+                    setActiveSection('test-session');
+                  }
+                }}
+                isDarkMode={isDarkMode}
               />
             )
           ) : activeSection.startsWith('skill-') ? (
             // Skills Practice Content
             <div className="skills-practice-content space-y-6">
               <div className="skills-header text-center py-12">
-                <h1 className="page-title text-3xl font-bold text-gray-800 mb-4">
-                  {activeSection.split('skill-')[1].split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} - Pratique
+                <h1 className={`page-title text-3xl font-bold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
+                  {activeSection.split('skill-')[1].split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} - {t('practiceTitle')}
                 </h1>
-                <p className="page-description text-lg text-gray-600 max-w-3xl mx-auto">
-                  Améliorez vos compétences grâce à des sessions de pratique complètes et suivez vos progrès dans cette catégorie de compétences.
+                <p className={`page-description text-lg max-w-3xl mx-auto transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {t('improveSkills')}
                 </p>
               </div>
               
-              <div className="skills-card bg-white rounded-xl shadow-sm p-8">
-                <h2 className="card-title text-xl font-semibold text-gray-800 mb-4">
+              <div className={`skills-card rounded-xl shadow-sm p-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <h2 className={`card-title text-xl font-semibold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
                   {activeSection.split('skill-')[1].split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                 </h2>
-                <p className="card-description text-gray-600 mb-6">
-                  Les exercices d'évaluation et de pratique interactifs seront disponibles ici. Cette évaluation de catégorie de compétences est prête à commencer.
+                <p className={`card-description mb-6 transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {t('interactiveAssessments')}
                 </p>
                 <button 
                   onClick={() => setActiveSection('available-tests')}
                   className="start-assessment-btn bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-sm transition-colors"
                 >
-                  Commencer l'évaluation
+                  {t('startAssessment')}
                 </button>
               </div>
             </div>
           ) : activeSection === 'mon-espace' ? (
             <div className="space-y-6">
               <div className="text-center py-12">
-                <h1 className="text-3xl font-bold text-[#4A5869] mb-4">Mon Espace</h1>
-                <p className="text-lg text-[#4A5869]/70 max-w-3xl mx-auto">
-                  Gérez votre profil, vos préférences et vos paramètres personnels.
+                <h1 className={`text-3xl font-bold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-[#4A5869]'
+                }`}>{t('mySpace')}</h1>
+                <p className={`text-lg max-w-3xl mx-auto transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-[#4A5869]/70'
+                }`}>
+                  {currentLanguage === 'fr' 
+                    ? 'Gérez votre profil, vos préférences et vos paramètres personnels.'
+                    : 'Manage your profile, preferences and personal settings.'
+                  }
                 </p>
               </div>
-              <div className="bg-white rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8">
-                <h2 className="text-xl font-semibold text-[#4A5869] mb-4">Espace Personnel</h2>
-                <p className="text-[#4A5869]/70">
-                  Votre espace personnel sera implémenté ici avec la gestion du profil et les paramètres.
+              <div className={`rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <h2 className={`text-xl font-semibold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-[#4A5869]'
+                }`}>
+                  {t('personalSpace')}
+                </h2>
+                <p className={`transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-[#4A5869]/70'
+                }`}>
+                  {t('personalSpaceImplemented')}
                 </p>
               </div>
             </div>
           ) : activeSection === 'offres-recommandees' ? (
             <div className="space-y-6">
               <div className="text-center py-12">
-                <h1 className="text-3xl font-bold text-[#4A5869] mb-4">Offres Recommandées</h1>
-                <p className="text-lg text-[#4A5869]/70 max-w-3xl mx-auto">
-                  Découvrez les offres d'emploi personnalisées en fonction de votre profil et de vos compétences.
+                <h1 className={`text-3xl font-bold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-[#4A5869]'
+                }`}>{t('recommendedOffers')}</h1>
+                <p className={`text-lg max-w-3xl mx-auto transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-[#4A5869]/70'
+                }`}>
+                  {t('personalizedJobOffers')}
                 </p>
               </div>
-              <div className="bg-white rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8">
-                <h2 className="text-xl font-semibold text-[#4A5869] mb-4">Recommandations Personnalisées</h2>
-                <p className="text-[#4A5869]/70">
-                  Le système de recommandations d'offres sera implémenté ici avec des suggestions basées sur votre profil.
+              <div className={`rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <h2 className={`text-xl font-semibold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-[#4A5869]'
+                }`}>
+                  {t('personalizedRecommendations')}
+                </h2>
+                <p className={`transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-[#4A5869]/70'
+                }`}>
+                  {t('recommendationSystemImplemented')}
                 </p>
               </div>
             </div>
           ) : activeSection === 'historique-tests' ? (
             <div className="space-y-6">
               <div className="text-center py-12">
-                <h1 className="text-3xl font-bold text-[#4A5869] mb-4">Historique des Tests</h1>
-                <p className="text-lg text-[#4A5869]/70 max-w-3xl mx-auto">
-                  Consultez l'historique de tous vos tests et évaluations de compétences.
+                <h1 className={`text-3xl font-bold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-[#4A5869]'
+                }`}>{t('testHistory')}</h1>
+                <p className={`text-lg max-w-3xl mx-auto transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-[#4A5869]/70'
+                }`}>
+                  {t('reviewTestHistory')}
                 </p>
               </div>
-              <div className="bg-white rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8">
-                <h2 className="text-xl font-semibold text-[#4A5869] mb-4">Historique Complet</h2>
-                <p className="text-[#4A5869]/70">
-                  L'historique détaillé de vos tests et évaluations sera affiché ici avec les résultats et les progrès.
+              <div className={`rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <h2 className={`text-xl font-semibold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-[#4A5869]'
+                }`}>
+                  {t('completeHistory')}
+                </h2>
+                <p className={`transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-[#4A5869]/70'
+                }`}>
+                  {t('testHistoryImplemented')}
+                </p>
+              </div>
+            </div>
+          ) : activeSection === 'profile' ? (
+            <div className="space-y-6">
+              <div className="text-center py-12">
+                <h1 className={`text-3xl font-bold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
+                  {t('profile')}
+                </h1>
+                <p className={`text-lg max-w-3xl mx-auto transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {t('manageProfile')}
+                </p>
+              </div>
+              
+              {/* Profile Information Card */}
+              <div className={`rounded-xl shadow-sm p-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <div className="flex items-center space-x-6 mb-8">
+                  <div className="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-xl">YA</span>
+                  </div>
+                  <div>
+                    <h2 className={`text-2xl font-bold mb-2 transition-colors ${
+                      isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                    }`}>Yassine</h2>
+                    <p className={`text-lg transition-colors ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                    }`}>yassine@jobgate.com</p>
+                    <p className={`text-sm transition-colors ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      {t('developer')} • {t('level')} 3
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Personal Information */}
+                  <div className={`p-6 rounded-lg transition-colors duration-300 ${
+                    isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                  }`}>
+                    <h3 className={`text-lg font-semibold mb-4 transition-colors ${
+                      isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                    }`}>
+                      {t('personalInformation')}
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className={`text-sm font-medium transition-colors ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                        }`}>
+                          {t('fullName')}
+                        </label>
+                        <p className={`mt-1 transition-colors ${
+                          isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                        }`}>Yassine</p>
+                      </div>
+                      <div>
+                        <label className={`text-sm font-medium transition-colors ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                        }`}>{t('email')}</label>
+                        <p className={`mt-1 transition-colors ${
+                          isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                        }`}>yassine@jobgate.com</p>
+                      </div>
+                      <div>
+                        <label className={`text-sm font-medium transition-colors ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                        }`}>
+                          {t('location')}
+                        </label>
+                        <p className={`mt-1 transition-colors ${
+                          isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                        }`}>Casablanca, {t('morocco')}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Skills & Experience */}
+                  <div className={`p-6 rounded-lg transition-colors duration-300 ${
+                    isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                  }`}>
+                    <h3 className={`text-lg font-semibold mb-4 transition-colors ${
+                      isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                    }`}>
+                      {t('skills')}
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {['Java', 'Python', 'React', 'Node.js', 'Docker'].map((skill) => (
+                        <span key={skill} className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                          isDarkMode 
+                            ? 'bg-blue-900/30 text-blue-300' 
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-4">
+                      <label className={`text-sm font-medium transition-colors ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                      }`}>
+                        {t('experience')}
+                      </label>
+                      <p className={`mt-1 transition-colors ${
+                        isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                      }`}>
+                        2+ {t('years')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-8 flex space-x-4">
+                  <button className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors">
+                    {t('editProfile')}
+                  </button>
+                  <button className={`px-6 py-2 rounded-lg transition-colors ${
+                    isDarkMode 
+                      ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                  }`}>
+                    {t('changePassword')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : activeSection === 'settings' ? (
+            <div className="space-y-6">
+              <div className="text-center py-12">
+                <h1 className={`text-3xl font-bold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
+                  {t('settings')}
+                </h1>
+                <p className={`text-lg max-w-3xl mx-auto transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {t('configureSettings')}
+                </p>
+              </div>
+              <div className={`rounded-xl shadow-sm p-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <h2 className={`text-xl font-semibold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
+                  {t('generalSettings')}
+                </h2>
+                <p className={`transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {t('appSettingsImplemented')}
+                </p>
+              </div>
+            </div>
+          ) : activeSection === 'notifications' ? (
+            <div className="space-y-6">
+              <div className="text-center py-12">
+                <h1 className={`text-3xl font-bold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
+                  {t('notifications')}
+                </h1>
+                <p className={`text-lg max-w-3xl mx-auto transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {t('viewNotifications')}
+                </p>
+              </div>
+              <div className={`rounded-xl shadow-sm p-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <h2 className={`text-xl font-semibold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
+                  {t('recentNotifications')}
+                </h2>
+                <div className="space-y-4">
+                  {[1, 2, 3].map((notif) => (
+                    <div key={notif} className={`p-4 rounded-lg border transition-colors ${
+                      isDarkMode ? 'border-gray-700 bg-gray-700/50' : 'border-gray-200 bg-gray-50'
+                    }`}>
+                      <p className={`font-medium transition-colors ${
+                        isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                      }`}>
+                        {t('newJobOffer')}
+                      </p>
+                      <p className={`text-sm transition-colors ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                      }`}>
+                        {t('hoursAgo')}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : activeSection === 'help' ? (
+            <div className="space-y-6">
+              <div className="text-center py-12">
+                <h1 className={`text-3xl font-bold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
+                  {t('help')}
+                </h1>
+                <p className={`text-lg max-w-3xl mx-auto transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {t('findHelp')}
+                </p>
+              </div>
+              <div className={`rounded-xl shadow-sm p-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <h2 className={`text-xl font-semibold mb-4 transition-colors ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                }`}>
+                  {t('helpCenter')}
+                </h2>
+                <p className={`transition-colors ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {t('helpCenterImplemented')}
                 </p>
               </div>
             </div>
           ) : (
             <>
               {/* Blue Banner Header */}
-              <div className="career-banner bg-slate-800 rounded-lg p-8 mb-6 relative overflow-hidden">
+              <div className={`career-banner rounded-lg p-8 mb-6 relative overflow-hidden transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-slate-800'
+              }`}>
                 <div className="banner-content flex items-center justify-between">
                   <div className="banner-text flex-1 pr-8">
-                    <h1 className="banner-title text-white text-2xl font-medium mb-6 leading-tight">Développez votre potentiel professionnel</h1>
+                    <h1 className="banner-title text-white text-2xl font-medium mb-6 leading-tight">
+                      {t('developPotential')}
+                    </h1>
                     <p className="banner-description text-white/80 text-sm leading-relaxed max-w-lg">
-                      Découvrez nos conseils d'experts, les tendances du marché et des recommandations pratiques pour ajuster votre parcours professionnel.
+                      {t('expertAdvice')}
                     </p>
                   </div>
                   
@@ -399,14 +946,22 @@ const MainDashboard = () => {
               </div>
 
               {/* Offers Card */}
-              <div className="job-offers-card bg-white rounded-xl shadow-sm p-6">
+              <div className={`job-offers-card rounded-xl shadow-sm p-6 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
                 <div className="offers-header flex items-center justify-between mb-4">
-                  <h2 className="offers-title text-gray-800 font-medium text-lg">Offres</h2>
-                  <button className="view-all-btn text-blue-500 text-sm hover:underline">Voir tout</button>
+                  <h2 className={`offers-title font-medium text-lg ${
+                    isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                  }`}>{t('offers')}</h2>
+                  <button className={`view-all-btn text-sm hover:underline transition-colors ${
+                    isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-500 hover:text-blue-600'
+                  }`}>{t('viewAll')}</button>
                 </div>
                 
                 {/* Job Offer Card */}
-                <div className="job-offer-item border border-gray-200 rounded-lg p-4">
+                <div className={`job-offer-item border rounded-lg p-4 transition-colors duration-300 ${
+                  isDarkMode ? 'border-gray-700' : 'border-gray-200'
+                }`}>
                   <div className="offer-content flex items-start space-x-4">
                     {/* Company Logo */}
                     <div className="company-logo w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
@@ -415,23 +970,41 @@ const MainDashboard = () => {
                     
                     {/* Job Details */}
                     <div className="job-details flex-1">
-                      <h3 className="job-title font-medium text-gray-800 mb-1">Développeur Backend</h3>
-                      <p className="company-name text-gray-800 text-sm mb-2">JOBGATE</p>
-                      <p className="job-location text-gray-800 text-sm mb-3">📍 Casablanca, Maroc</p>
+                      <h3 className={`job-title font-medium mb-1 ${
+                        isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                      }`}>{t('backendDeveloper')}</h3>
+                      <p className={`company-name text-sm mb-2 ${
+                        isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                      }`}>JOBGATE</p>
+                      <p className={`job-location text-sm mb-3 ${
+                        isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                      }`}>📍 Casablanca, Maroc</p>
                       
                       {/* Tags */}
                       <div className="job-tags flex space-x-2 mb-3">
-                        <span className="job-tag bg-blue-50 text-blue-500 px-2 py-1 rounded text-xs">Stage</span>
-                        <span className="job-tag bg-blue-50 text-blue-500 px-2 py-1 rounded text-xs">Télétravail</span>
-                        <span className="job-tag bg-blue-50 text-blue-500 px-2 py-1 rounded text-xs">3 mois</span>
+                        <span className={`job-tag px-2 py-1 rounded text-xs transition-colors ${
+                          isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-50 text-blue-500'
+                        }`}>Stage</span>
+                        <span className={`job-tag px-2 py-1 rounded text-xs transition-colors ${
+                          isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-50 text-blue-500'
+                        }`}>Télétravail</span>
+                        <span className={`job-tag px-2 py-1 rounded text-xs transition-colors ${
+                          isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-50 text-blue-500'
+                        }`}>3 mois</span>
                       </div>
                       
-                      <p className="job-description text-gray-800 text-sm mb-4">
+                      <p className={`job-description text-sm mb-4 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-800'
+                      }`}>
                         À propos JOBGATE: JOBGATE est une plateforme de recrutement en ligne leader qui connecte les professionnels talentueux avec les meilleurs employeurs...
                       </p>
                       
-                      <button className="view-more-btn bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded text-sm transition-colors">
-                        Voir plus
+                      <button className={`view-more-btn px-4 py-2 rounded text-sm transition-colors ${
+                        isDarkMode 
+                          ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
+                          : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                      }`}>
+                        {t('viewMore')}
                       </button>
                     </div>
                   </div>
@@ -443,7 +1016,11 @@ const MainDashboard = () => {
 
         {/* Right Side Strip */}
         <div className="right-sidebar w-18 flex justify-center">
-          <button className="floating-action-btn w-12 h-12 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center transition-colors sticky top-32">
+          <button className={`floating-action-btn w-12 h-12 rounded-full flex items-center justify-center transition-colors sticky top-32 ${
+            isDarkMode 
+              ? 'bg-blue-600 hover:bg-blue-700' 
+              : 'bg-blue-500 hover:bg-blue-600'
+          }`}>
             <span className="btn-icon text-white font-bold text-xs">J</span>
           </button>
         </div>

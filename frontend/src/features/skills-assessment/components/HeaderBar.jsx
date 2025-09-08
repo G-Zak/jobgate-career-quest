@@ -1,9 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 
 const HeaderBar = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleBackToDashboard = () => {
     // Navigate back to dashboard - you can customize this based on your routing setup
@@ -11,7 +13,7 @@ const HeaderBar = () => {
   };
 
   return (
-    <div className="header-bar h-16 bg-white border-b border-gray-200 px-12">
+    <div className="header-bar h-16 border-b px-12 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 transition-colors duration-300">
       <div className="header-content h-full flex items-center justify-between max-w-screen-2xl mx-auto">
         {/* Logo */}
         <div className="logo-container flex items-center">
@@ -26,18 +28,18 @@ const HeaderBar = () => {
         <nav className="main-navigation flex items-center space-x-8">
           <button 
             onClick={handleBackToDashboard}
-            className="nav-button text-base font-medium transition-colors pb-1 text-gray-700 hover:text-blue-500"
+            className="nav-button text-base font-medium text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors pb-1"
           >
-            Tableau de bord
+            {t('dashboard')}
           </button>
           
           <span className="nav-button text-base font-medium text-blue-500 border-b-2 border-blue-500 pb-1">
-            Évaluation des compétences
+            {t('skillsAssessment')}
           </span>
         </nav>
 
         {/* Right Avatar */}
-        <div className="user-avatar w-8 h-8 bg-gray-300 rounded-full"></div>
+        <div className="user-avatar w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full transition-colors"></div>
       </div>
     </div>
   );

@@ -1,0 +1,39 @@
+# Skills Tests Module Requirements
+# Core dependencies for the numerical and abstract reasoning tests
+
+# Python standard library modules used:
+# - json (built-in)
+# - os (built-in) 
+# - time (built-in)
+# - datetime (built-in)
+# - uuid (built-in)
+# - random (built-in)
+# - math (built-in)
+# - typing (built-in, Python 3.5+)
+# - dataclasses (built-in, Python 3.7+)
+
+# For Django integration (if using Django):
+# Django>=3.2,<5.0
+
+# For data validation (optional):
+# jsonschema>=4.0.0
+
+# For enhanced random number generation (optional):
+# numpy>=1.20.0
+
+# For future PDF export functionality (optional):
+# reportlab>=3.6.0
+
+# For future SVG rendering (optional):
+# svglib>=1.4.0
+# cairosvg>=2.5.0
+
+# For future database storage (optional):
+# SQLAlchemy>=1.4.0
+
+# Development and testing dependencies:
+# pytest>=7.0.0
+# pytest-django>=4.5.0  # if using Django
+# black>=22.0.0
+# flake8>=4.0.0
+# mypy>=0.950

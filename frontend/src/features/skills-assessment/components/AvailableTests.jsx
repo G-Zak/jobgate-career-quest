@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { FaLock, FaPlay, FaChartLine, FaBrain, FaSearch, FaFilter } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
 const testsData = [
   {
-    category: "Numerical Reasoning Tests",
+    categoryKey: "numericalReasoningTests",
     prefix: "NRT",
     total: 15,
     unlocked: [1, 2, 3],
@@ -13,7 +14,7 @@ const testsData = [
     progress: 20
   },
   {
-    category: "Verbal Reasoning Tests",
+    categoryKey: "verbalReasoningTests",
     prefix: "VRT",
     total: 8,
     unlocked: [1, 2],
@@ -21,7 +22,7 @@ const testsData = [
     progress: 25
   },
   {
-    category: "Logical Reasoning Tests",
+    categoryKey: "abstractReasoningTests",
     prefix: "LRT",
     total: 10,
     unlocked: [1],
@@ -32,12 +33,14 @@ const testsData = [
 
 const AvailableTests = ({ onBackToDashboard, onStartTest }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
   const [expandedCategory, setExpandedCategory] = useState(null);
 
   const filteredTests = testsData.filter(test => {
-    const matchesSearch = test.category.toLowerCase().includes(searchTerm.toLowerCase());
+    const categoryText = t(test.categoryKey);
+    const matchesSearch = categoryText.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filter === "all" || 
                          (filter === "unlocked" && test.unlocked.length > 0) ||
                          (filter === "inprogress" && test.progress > 0 && test.progress < 100);
@@ -49,29 +52,40 @@ const AvailableTests = ({ onBackToDashboard, onStartTest }) => {
   };
 
   const handleTestStart = (testId) => {
+    // Map test IDs to specific test types
+    let targetTest = testId;
+    
+    if (testId.startsWith('NRT')) {
+      targetTest = 'numerical-reasoning';
+    } else if (testId.startsWith('LRT')) {
+      targetTest = 'abstract-reasoning';
+    } else if (testId.startsWith('VRT')) {
+      targetTest = 'verbal-reasoning';
+    }
+    
     // Use callback if provided, otherwise use navigate as fallback
     if (onStartTest) {
-      onStartTest(testId);
+      onStartTest(targetTest);
     } else {
-      navigate("/test-session", { state: { testId } });
+      navigate("/test-session", { state: { testId: targetTest } });
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
       {/* Header with back button */}
-      <div className="bg-white shadow-sm border-b border-gray-200 p-4">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 p-4 transition-colors duration-300">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button
             onClick={onBackToDashboard}
-            className="flex items-center text-gray-600 hover:text-blue-600 transition-colors"
+            className="flex items-center text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Retour au tableau de bord
+            {t('backToDashboard')}
           </button>
-          <h1 className="text-xl font-semibold text-gray-800">Évaluation des compétences</h1>
+          <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-200 transition-colors">{t('skillsAssessment')}</h1>
         </div>
       </div>
 
@@ -82,11 +96,11 @@ const AvailableTests = ({ onBackToDashboard, onStartTest }) => {
           transition={{ duration: 0.6 }}
           className="mb-12"
         >
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
+          <h1 className="text-4xl font-extrabold mb-4 tracking-tight text-gray-900 dark:text-gray-100 transition-colors">
             Assessment Dashboard
           </h1>
-          <p className="text-lg text-gray-600">
-            Select a test to evaluate your skills and track your progress
+          <p className="text-lg text-gray-600 dark:text-gray-300 transition-colors">
+            {t('skillsTestDescription')}
           </p>
         </motion.div>
 
@@ -95,32 +109,32 @@ const AvailableTests = ({ onBackToDashboard, onStartTest }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-xl shadow-sm p-4 mb-8 border border-gray-200"
+          className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-4 mb-8 border transition-colors duration-300"
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="relative flex-grow">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaSearch className="text-gray-400" />
+                <FaSearch className="text-gray-400 dark:text-gray-500 transition-colors" />
               </div>
               <input
                 type="text"
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Search tests..."
+                className="block w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
+                placeholder={t('searchTests')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
-                <FaFilter className="text-gray-400 mr-2" />
+                <FaFilter className="mr-2 text-gray-400 dark:text-gray-500 transition-colors" />
                 <select
-                  className="border border-gray-300 rounded-lg bg-gray-50 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="border rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
                 >
-                  <option value="all">All Tests</option>
-                  <option value="unlocked">Unlocked</option>
-                  <option value="inprogress">In Progress</option>
+                  <option value="all">{t('allTests')}</option>
+                  <option value="unlocked">{t('unlocked')}</option>
+                  <option value="inprogress">{t('inProgress')}</option>
                 </select>
               </div>
             </div>
@@ -135,32 +149,32 @@ const AvailableTests = ({ onBackToDashboard, onStartTest }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 * index }}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+              className={`rounded-xl shadow-sm border overflow-hidden transition-colors duration-300 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700`}
             >
               <div 
                 className="p-6 cursor-pointer flex justify-between items-center"
                 onClick={() => toggleCategory(index)}
               >
                 <div className="flex items-center">
-                  <div className="mr-4 p-3 bg-gray-100 rounded-lg">
+                  <div className="mr-4 p-3 rounded-lg bg-gray-100 dark:bg-gray-700 transition-colors">
                     {section.icon}
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-800">{section.category}</h2>
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 transition-colors">{t(section.categoryKey)}</h2>
                     <div className="flex items-center mt-1">
-                      <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                      <div className="w-32 rounded-full h-2 mr-3 bg-gray-200 dark:bg-gray-600 transition-colors">
                         <div 
                           className="bg-blue-600 h-2 rounded-full" 
                           style={{ width: `${section.progress}%` }}
                         ></div>
                       </div>
-                      <span className="text-sm text-gray-500">
-                        {section.unlocked.length} of {section.total} unlocked
+                      <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors">
+                        {section.unlocked.length} {t('of')} {section.total} {t('unlocked')}
                       </span>
                     </div>
                   </div>
                 </div>
-                <div className="text-gray-400">
+                <div className="text-gray-400 dark:text-gray-500 transition-colors">
                   <motion.div
                     animate={{ rotate: expandedCategory === index ? 180 : 0 }}
                   >
@@ -193,25 +207,25 @@ const AvailableTests = ({ onBackToDashboard, onStartTest }) => {
                             whileTap={{ scale: 0.98 }}
                             className={`p-4 rounded-lg border text-center font-medium cursor-pointer transition-all duration-200
                               ${unlocked
-                                ? "bg-white hover:bg-blue-50 border-blue-200 text-gray-800 hover:shadow-md"
-                                : "bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed"}
+                                ? "bg-white dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-gray-600 border-blue-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 hover:shadow-md"
+                                : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"}
                             `}
                             onClick={(e) => {
                               e.stopPropagation();
                               unlocked && handleTestStart(testId);
                             }}
                           >
-                            <div className="text-lg mb-2 font-semibold">{testId}</div>
+                            <div className="text-lg mb-2 font-semibold text-gray-800 dark:text-gray-200">{testId}</div>
                             <div className="text-xl">
                               {unlocked ? (
-                                <FaPlay className="text-blue-600 mx-auto" />
+                                <FaPlay className="text-blue-600 dark:text-blue-400 mx-auto" />
                               ) : (
-                                <FaLock className="text-gray-400 mx-auto" />
+                                <FaLock className="text-gray-400 dark:text-gray-500 mx-auto" />
                               )}
                             </div>
                             {unlocked && (
-                              <div className="mt-2 text-xs text-blue-600 font-medium">
-                                Available
+                              <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                {t('available')}
                               </div>
                             )}
                           </motion.div>
@@ -226,15 +240,15 @@ const AvailableTests = ({ onBackToDashboard, onStartTest }) => {
         </div>
 
         <div className="mt-12 text-center">
-          <h3 className="text-lg font-medium mb-4">Passage aux tests techniques</h3>
+          <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-gray-100 transition-colors">{t('startTechnicalTests')}</h3>
           <button
             onClick={() => navigate('/technical-tests')}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+            className="px-6 py-3 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-md"
           >
-            Commencer les tests techniques maintenant
+            {t('startTechnicalTests')}
           </button>
-          <p className="text-sm text-gray-500 mt-2">
-            Vous allez être testé sur les compétences de votre CV
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 transition-colors">
+            {t('skillsTestsDescription')}
           </p>
         </div>
 
@@ -242,16 +256,16 @@ const AvailableTests = ({ onBackToDashboard, onStartTest }) => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-200"
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center border border-gray-200 dark:border-gray-700 transition-colors duration-300"
           >
-            <div className="text-gray-400 mb-4">
+            <div className="text-gray-400 dark:text-gray-500 mb-4 transition-colors">
               <FaSearch className="mx-auto text-4xl" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-1">
-              No tests found
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1 transition-colors">
+              {t('noTestsFound')}
             </h3>
-            <p className="text-gray-500">
-              Try adjusting your search or filter criteria
+            <p className="text-gray-500 dark:text-gray-400 transition-colors">
+              {t('adjustSearchCriteria')}
             </p>
           </motion.div>
         )}

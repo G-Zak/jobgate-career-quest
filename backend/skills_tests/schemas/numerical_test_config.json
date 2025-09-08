@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Numerical Reasoning Test Configuration",
+  "type": "object",
+  "properties": {
+    "test_info": {
+      "type": "object",
+      "properties": {
+        "test_id": { "const": "NRT_001" },
+        "name": { "const": "Numerical Reasoning Test" },
+        "total_questions": { "const": 25 },
+        "time_limit_minutes": { "const": 20 },
+        "description": { "type": "string" }
+      }
+    },
+    "categories": {
+      "type": "object",
+      "properties": {
+        "arithmetic_percentages": {
+          "type": "object",
+          "properties": {
+            "name": { "const": "Arithmetic & Percentages" },
+            "question_count": { "type": "integer", "minimum": 5, "maximum": 7 },
+            "description": { "type": "string" }
+          }
+        },
+        "ratio_proportion": {
+          "type": "object",
+          "properties": {
+            "name": { "const": "Ratio & Proportion" },
+            "question_count": { "type": "integer", "minimum": 4, "maximum": 6 },
+            "description": { "type": "string" }
+          }
+        },
+        "data_interpretation": {
+          "type": "object",
+          "properties": {
+            "name": { "const": "Data Interpretation" },
+            "question_count": { "type": "integer", "minimum": 6, "maximum": 8 },
+            "description": { "type": "string" }
+          }
+        },
+        "financial_calculations": {
+          "type": "object",
+          "properties": {
+            "name": { "const": "Financial Calculations" },
+            "question_count": { "type": "integer", "minimum": 3, "maximum": 5 },
+            "description": { "type": "string" }
+          }
+        },
+        "statistical_reasoning": {
+          "type": "object",
+          "properties": {
+            "name": { "const": "Statistical Reasoning" },
+            "question_count": { "type": "integer", "minimum": 3, "maximum": 5 },
+            "description": { "type": "string" }
+          }
+        }
+      }
+    },
+    "difficulty_distribution": {
+      "type": "object",
+      "properties": {
+        "easy": { "const": 0.40 },
+        "medium": { "const": 0.45 },
+        "hard": { "const": 0.15 }
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "properties": {
+        "base_points_per_question": { "const": 4 },
+        "time_bonus_enabled": { "const": true },
+        "time_bonus_threshold_minutes": { "const": 15 },
+        "max_time_bonus_points": { "const": 20 },
+        "difficulty_multipliers": {
+          "type": "object",
+          "properties": {
+            "easy": { "const": 1.0 },
+            "medium": { "const": 1.2 },
+            "hard": { "const": 1.5 }
+          }
+        }
+      }
+    }
+  }
+}

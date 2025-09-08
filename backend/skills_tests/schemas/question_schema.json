@@ -1,0 +1,122 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Skills Test Question Schema",
+  "type": "object",
+  "properties": {
+    "question_id": {
+      "type": "string",
+      "description": "Unique identifier for the question",
+      "pattern": "^(NRT|ART)_\\d{3}$",
+      "examples": ["NRT_001", "ART_015"]
+    },
+    "test_type": {
+      "type": "string",
+      "enum": ["numerical_reasoning", "abstract_reasoning"],
+      "description": "Type of reasoning test"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": ["easy", "medium", "hard"],
+      "description": "Difficulty level of the question"
+    },
+    "category": {
+      "type": "string",
+      "description": "Specific category within the test type"
+    },
+    "question_content": {
+      "type": "object",
+      "description": "The main question content (text, images, or patterns)",
+      "anyOf": [
+        {
+          "properties": {
+            "type": { "const": "text" },
+            "text": { "type": "string" },
+            "data": {
+              "type": "object",
+              "description": "Additional data like charts, tables, or financial info"
+            }
+          },
+          "required": ["type", "text"]
+        },
+        {
+          "properties": {
+            "type": { "const": "visual" },
+            "pattern_type": { 
+              "type": "string",
+              "enum": ["matrix", "sequence", "transformation", "odd_one_out"]
+            },
+            "svg_data": { "type": "string", "description": "SVG content for visual patterns" },
+            "description": { "type": "string", "description": "Text description of the pattern" }
+          },
+          "required": ["type", "pattern_type", "svg_data"]
+        }
+      ]
+    },
+    "options": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "option_id": { "type": "string", "pattern": "^[A-E]$" },
+          "content": {
+            "anyOf": [
+              { "type": "string" },
+              { 
+                "type": "object",
+                "properties": {
+                  "type": { "const": "svg" },
+                  "svg_data": { "type": "string" }
+                }
+              }
+            ]
+          }
+        },
+        "required": ["option_id", "content"]
+      },
+      "minItems": 4,
+      "maxItems": 5
+    },
+    "correct_answer": {
+      "type": "string",
+      "pattern": "^[A-E]$",
+      "description": "The correct option ID"
+    },
+    "explanation": {
+      "type": "string",
+      "description": "Detailed explanation of the correct answer"
+    },
+    "time_limit": {
+      "type": "integer",
+      "description": "Time limit for this question in seconds",
+      "minimum": 30,
+      "maximum": 300
+    },
+    "points": {
+      "type": "integer",
+      "description": "Points awarded for correct answer",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "created_date": { "type": "string", "format": "date" },
+        "difficulty_rating": { "type": "number", "minimum": 1, "maximum": 10 },
+        "average_time": { "type": "number", "description": "Average time taken by test takers" },
+        "success_rate": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  },
+  "required": [
+    "question_id", 
+    "test_type", 
+    "difficulty", 
+    "category", 
+    "question_content", 
+    "options", 
+    "correct_answer", 
+    "explanation", 
+    "time_limit", 
+    "points"
+  ]
+}
