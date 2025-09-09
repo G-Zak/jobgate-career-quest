@@ -11,6 +11,8 @@ import TechnicalTests from '../../../features/skills-assessment/components/Techn
 import TestLayout from '../../../features/skills-assessment/components/TestLayout';
 import VerbalReasoningTest from '../../../features/skills-assessment/components/VerbalReasoningTest';
 import SpatialReasoningTest from '../../../features/skills-assessment/components/SpatialReasoningTest';
+import SituationalJudgmentTest from '../../../features/skills-assessment/components/SituationalJudgmentTest';
+import MasterSJTTest from '../../../features/skills-assessment/components/MasterSJTTest';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import { useScrollOnChange } from '../../utils/scrollUtils';
@@ -32,6 +34,8 @@ const MainDashboard = () => {
   useEffect(() => {
     const isTestView = (
       activeSection === 'spatial-reasoning-test' ||
+      activeSection === 'situational-judgment-test' ||
+      activeSection === 'master-sjt-test' ||
       activeSection === 'test-session' ||
       (typeof activeSection === 'string' && activeSection.startsWith('verbal-reasoning-test'))
     );
@@ -93,9 +97,13 @@ const MainDashboard = () => {
   };
 
   const handleStartTest = (testId) => {
-    console.log('=== HANDLE START TEST ===');
-    console.log('testId:', testId, 'Type:', typeof testId);
-    console.log('currentTestFilter:', currentTestFilter);
+    console.log('Starting test:', testId);
+    
+    // Handle Master SJT specially
+    if (testId === 'MASTER-SJT') {
+      setActiveSection('master-sjt-test');
+      return;
+    }
     
     const isVerbalComprehensive = testId === 'VERBAL_COMPREHENSIVE';
     const isVerbalFilterAndNumber = (currentTestFilter === 'verbal' && typeof testId === 'number');
@@ -106,13 +114,9 @@ const MainDashboard = () => {
     const isStringWithSpatial = (typeof testId === 'string' && testId.toLowerCase().includes('spatial'));
     const isSRTString = (typeof testId === 'string' && testId.startsWith('SRT'));
     
-    console.log('isVerbalComprehensive:', isVerbalComprehensive);
-    console.log('isVerbalFilterAndNumber:', isVerbalFilterAndNumber);
-    console.log('isStringWithVerbal:', isStringWithVerbal);
-    console.log('isVRTString:', isVRTString);
-    console.log('isSpatialFilterAndNumber:', isSpatialFilterAndNumber);
-    console.log('isStringWithSpatial:', isStringWithSpatial);
-    console.log('isSRTString:', isSRTString);
+    const isSituationalFilterAndNumber = (currentTestFilter === 'situational' && typeof testId === 'number');
+    const isStringWithSituational = (typeof testId === 'string' && testId.toLowerCase().includes('situational'));
+    const isSJTString = (typeof testId === 'string' && testId.startsWith('SJT'));
     
     // Set the current test ID
     setCurrentTestId(testId);
@@ -121,15 +125,15 @@ const MainDashboard = () => {
     if (isVerbalComprehensive || isVerbalFilterAndNumber || isStringWithVerbal || isVRTString) {
       // Extract language from test ID if it's comprehensive
       const language = testId.toString().includes('_FRENCH') ? 'french' : 'english';
-      console.log('✅ Routing to verbal reasoning test with language:', language);
       setActiveSection(`verbal-reasoning-test-${language}`);
     } else if (isSpatialFilterAndNumber || isStringWithSpatial || isSRTString) {
       // Handle spatial reasoning tests
-      console.log('✅ Routing to spatial reasoning test');
       setActiveSection('spatial-reasoning-test');
+    } else if (isSituationalFilterAndNumber || isStringWithSituational || isSJTString) {
+      // Handle situational judgment tests
+      setActiveSection('situational-judgment-test');
     } else {
       // Handle other test types (numerical, logical, etc.)
-      console.log('❌ Routing to test-session for testId:', testId);
       setActiveSection('test-session');
     }
   };
@@ -338,6 +342,17 @@ const MainDashboard = () => {
             <SpatialReasoningTest 
               onBackToDashboard={() => setActiveSection('available-tests')} 
               testId={currentTestId}
+            />
+          ) : activeSection === 'situational-judgment-test' ? (
+            <SituationalJudgmentTest 
+              onBackToDashboard={() => setActiveSection('available-tests')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'master-sjt-test' ? (
+            <MasterSJTTest 
+              onClose={() => {
+                setActiveSection('available-tests');
+              }}
             />
           ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
             // Show AvailableTests for most test categories

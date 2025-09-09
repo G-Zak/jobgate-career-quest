@@ -28,11 +28,14 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'phaser': ['phaser']
+        // Only create a separate chunk for Phaser if it actually exists in the graph
+        manualChunks(id) {
+          if (id && id.includes('node_modules/phaser')) {
+            return 'phaser';
+          }
         }
       }
     }
   },
-  assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg', '**/*.webp', '**/*.mp3', '**/*.wav', '**/*.ogg']
+  assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg', '**/*.webp', '**/*.mp3', '**/*.wav', '**/*.ogg', '**/*.jsonl']
 })
