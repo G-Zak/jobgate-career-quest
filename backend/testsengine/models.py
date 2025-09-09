@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 import json
 
 # Create your models here.
@@ -135,3 +136,162 @@ class TestAnswer(models.Model):
     class Meta:
         unique_together = ['session', 'question']
         ordering = ['question__order']
+
+
+# ======= CODING CHALLENGES MODELS =======
+
+class CodingChallenge(models.Model):
+    DIFFICULTY_CHOICES = [
+        ('beginner', 'Beginner'),
+        ('intermediate', 'Intermediate'),
+        ('advanced', 'Advanced'),
+        ('expert', 'Expert'),
+    ]
+    
+    LANGUAGE_CHOICES = [
+        ('python', 'Python'),
+        ('javascript', 'JavaScript'),
+        ('java', 'Java'),
+        ('cpp', 'C++'),
+        ('csharp', 'C#'),
+        ('go', 'Go'),
+        ('rust', 'Rust'),
+    ]
+    
+    CATEGORY_CHOICES = [
+        ('algorithms', 'Algorithms'),
+        ('data_structures', 'Data Structures'),
+        ('string_manipulation', 'String Manipulation'),
+        ('mathematics', 'Mathematics'),
+        ('dynamic_programming', 'Dynamic Programming'),
+        ('recursion', 'Recursion'),
+        ('sorting_searching', 'Sorting & Searching'),
+        ('graph_theory', 'Graph Theory'),
+        ('web_development', 'Web Development'),
+        ('database', 'Database'),
+    ]
+    
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True)
+    description = models.TextField()
+    difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES)
+    category = models.CharField(max_length=30, choices=CATEGORY_CHOICES)
+    language = models.CharField(max_length=20, choices=LANGUAGE_CHOICES)
+    
+    # Problem Statement
+    problem_statement = models.TextField()
+    input_format = models.TextField(blank=True, null=True)
+    output_format = models.TextField(blank=True, null=True)
+    constraints = models.TextField(blank=True, null=True)
+    
+    # Code Templates
+    starter_code = models.TextField(blank=True, null=True)  # Template code for users
+    solution_code = models.TextField(blank=True, null=True)  # Reference solution
+    
+    # Test Cases
+    test_cases = models.JSONField(default=list)  # List of {input, expected_output, is_hidden}
+    
+    # Scoring
+    max_points = models.IntegerField(default=100)
+    time_limit_seconds = models.IntegerField(default=2)  # Execution time limit
+    memory_limit_mb = models.IntegerField(default=128)  # Memory limit
+    
+    # Metadata
+    tags = models.JSONField(default=list)  # Additional tags for filtering
+    estimated_time_minutes = models.IntegerField(default=30)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.title} ({self.language} - {self.difficulty})"
+    
+    class Meta:
+        ordering = ['difficulty', 'title']
+
+
+class CodingSubmission(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('running', 'Running'),
+        ('accepted', 'Accepted'),
+        ('wrong_answer', 'Wrong Answer'),
+        ('compilation_error', 'Compilation Error'),
+        ('runtime_error', 'Runtime Error'),
+        ('time_limit_exceeded', 'Time Limit Exceeded'),
+        ('memory_limit_exceeded', 'Memory Limit Exceeded'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)  # Allow anonymous submissions
+    challenge = models.ForeignKey(CodingChallenge, on_delete=models.CASCADE)
+    code = models.TextField()
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='pending')
+    
+    # Results
+    score = models.IntegerField(default=0)  # Points earned
+    tests_passed = models.IntegerField(default=0)
+    total_tests = models.IntegerField(default=0)
+    execution_time_ms = models.IntegerField(default=0)
+    memory_used_mb = models.FloatField(default=0.0)
+    
+    # Detailed Results
+    test_results = models.JSONField(default=list)  # Detailed test case results
+    error_message = models.TextField(blank=True, null=True)
+    compilation_output = models.TextField(blank=True, null=True)
+    
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        user_display = self.user.username if self.user else "Anonymous"
+        return f"{user_display} - {self.challenge.title} ({self.status})"
+    
+    @property
+    def success_rate(self):
+        if self.total_tests == 0:
+            return 0
+        return round((self.tests_passed / self.total_tests) * 100, 1)
+    
+    class Meta:
+        ordering = ['-submitted_at']
+
+
+class CodingSession(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('completed', 'Completed'),
+        ('abandoned', 'Abandoned'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    challenge = models.ForeignKey(CodingChallenge, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    
+    # Session data
+    current_code = models.TextField(blank=True, null=True)  # Auto-save user's code
+    start_time = models.DateTimeField(auto_now_add=True)
+    last_activity = models.DateTimeField(auto_now=True)
+    completion_time = models.DateTimeField(null=True, blank=True)
+    
+    # Best submission reference
+    best_submission = models.ForeignKey(
+        CodingSubmission, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='best_for_session'
+    )
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.challenge.title} Session"
+    
+    @property
+    def time_spent_minutes(self):
+        if self.completion_time:
+            duration = self.completion_time - self.start_time
+        else:
+            duration = timezone.now() - self.start_time
+        return round(duration.total_seconds() / 60, 1)
+    
+    class Meta:
+        unique_together = ['user', 'challenge']
+        ordering = ['-last_activity']

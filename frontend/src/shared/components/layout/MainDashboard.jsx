@@ -23,6 +23,10 @@ import SkillBasedTests from '../../../features/skills-assessment/components/Skil
 import TestAdministration from '../../../features/skills-assessment/components/TestAdministration';
 import TestDebugPage from '../../../features/skills-assessment/components/TestDebugPage';
 import TestHistoryDashboard from '../../../features/candidate-dashboard/components/TestHistoryDashboard';
+import { ChallengesList, ChallengeDetail, CodingDashboard } from '../../../features/coding-challenges/components';
+import DebugChallenges from '../../../features/coding-challenges/components/DebugChallenges';
+import SkillTestsOverview from '../../../features/skills-assessment/components/SkillTestsOverview';
+import PracticalTests from '../../../features/coding-challenges/components/PracticalTests';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import { useScrollOnChange } from '../../utils/scrollUtils';
@@ -35,6 +39,7 @@ const MainDashboard = () => {
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [currentTestFilter, setCurrentTestFilter] = useState(null);
   const [currentTestId, setCurrentTestId] = useState(null);
+  const [selectedChallenge, setSelectedChallenge] = useState(null);
 
   // Universal scroll management using scroll utilities
   useScrollOnChange(activeSection, { smooth: true, attempts: 3 });
@@ -196,6 +201,16 @@ const MainDashboard = () => {
     }
   };
 
+  const handleSelectChallenge = (challenge) => {
+    setSelectedChallenge(challenge);
+    setActiveSection(`challenge-${challenge.id}`);
+  };
+
+  const handleBackFromChallenge = () => {
+    setSelectedChallenge(null);
+    setActiveSection('coding-challenges');
+  };
+
   const nextSlide = () => {
     setCurrentCarouselIndex((prev) => (prev + 1) % carouselImages.length);
   };
@@ -349,6 +364,39 @@ const MainDashboard = () => {
               </button>
               
               <button 
+                onClick={() => setActiveSection('tests-by-competencies')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'tests-by-competencies'
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                📝 Tests par Compétences
+              </button>
+              
+              <button 
+                onClick={() => setActiveSection('practical-tests')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'practical-tests'
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                💻 Tests Pratiques
+              </button>
+              
+              <button 
+                onClick={() => setActiveSection('coding-challenges')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'coding-challenges' || activeSection === 'coding-dashboard' || activeSection.startsWith('challenge-')
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                � Debug: Défis
+              </button>
+              
+              <button 
                 onClick={() => setActiveSection('technical-assessment')}
                 className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
                   activeSection === 'technical-assessment'
@@ -356,7 +404,7 @@ const MainDashboard = () => {
                     : 'text-gray-700 hover:bg-blue-50'
                 }`}
               >
-                📝 Tests par compétence
+                � Debug: QCM Skills
               </button>
               
               {/* Test adaptatif supprimé - tests créés par l'admin */}
@@ -468,6 +516,10 @@ const MainDashboard = () => {
               userId={1} 
               onSkillsUpdated={() => console.log('Skills updated')}
             />
+          ) : activeSection === 'tests-by-competencies' ? (
+            <SkillTestsOverview onBackToDashboard={() => setActiveSection('applications')} userId={1} />
+          ) : activeSection === 'practical-tests' ? (
+            <PracticalTests onBackToDashboard={() => setActiveSection('applications')} />
           ) : activeSection === 'technical-assessment' ? (
             <SkillBasedTests 
               userId={1}
@@ -549,6 +601,15 @@ const MainDashboard = () => {
             </div>
           ) : activeSection === 'historique-tests' ? (
             <TestHistoryDashboard />
+          ) : activeSection === 'coding-challenges' ? (
+            <ChallengesList onSelectChallenge={handleSelectChallenge} />
+          ) : activeSection === 'coding-dashboard' ? (
+            <CodingDashboard />
+          ) : activeSection.startsWith('challenge-') ? (
+            <ChallengeDetail 
+              challenge={selectedChallenge} 
+              onBack={handleBackFromChallenge}
+            />
           ) : (
             <>
               {/* Blue Banner Header */}

@@ -13,10 +13,13 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@monaco-editor/react": "^4.7.0",
     "@vitejs/plugin-react": "^5.0.2",
     "axios": "^1.11.0",
     "chart.js": "^4.4.0",
     "framer-motion": "^12.23.12",
+    "lucide-react": "^0.542.0",
+    "monaco-editor": "^0.53.0",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",

@@ -29,7 +29,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'phaser': ['phaser']
+          'phaser': ['phaser'],
+          'monaco': ['monaco-editor']
         }
       }
     }
