@@ -17,6 +17,7 @@ import LogicalReasoningTest from '../../../features/skills-assessment/components
 import LRT2Test from '../../../features/skills-assessment/components/LRT2Test';
 import LRT3Test from '../../../features/skills-assessment/components/LRT3Test';
 import NumericalReasoningTest from '../../../features/skills-assessment/components/NumericalReasoningTest';
+import SituationalJudgmentTest from '../../../features/skills-assessment/components/SituationalJudgmentTest';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import { useScrollOnChange } from '../../utils/scrollUtils';
@@ -135,6 +136,10 @@ const MainDashboard = () => {
     const isLRT2String = (typeof testId === 'string' && testId.startsWith('LRT2'));
     const isLRT3String = (typeof testId === 'string' && testId.startsWith('LRT3'));
     
+    const isSituationalFilterAndNumber = (currentTestFilter === 'situational' && typeof testId === 'number');
+    const isStringWithSituational = (typeof testId === 'string' && testId.toLowerCase().includes('situational'));
+    const isSJTString = (typeof testId === 'string' && testId.startsWith('SJT'));
+    
     console.log('isVerbalComprehensive:', isVerbalComprehensive);
     console.log('isVerbalFilterAndNumber:', isVerbalFilterAndNumber);
     console.log('isStringWithVerbal:', isStringWithVerbal);
@@ -153,6 +158,9 @@ const MainDashboard = () => {
     console.log('isLRTString:', isLRTString);
     console.log('isLRT2String:', isLRT2String);
     console.log('isLRT3String:', isLRT3String);
+    console.log('isSituationalFilterAndNumber:', isSituationalFilterAndNumber);
+    console.log('isStringWithSituational:', isStringWithSituational);
+    console.log('isSJTString:', isSJTString);
     
     // Set the current test ID
     setCurrentTestId(testId);
@@ -185,6 +193,10 @@ const MainDashboard = () => {
       // Handle LRT3 tests (Section 3)
       console.log('✅ Routing to LRT3 test');
       setActiveSection('lrt3-test');
+    } else if (isSituationalFilterAndNumber || isStringWithSituational || isSJTString) {
+      // Handle situational judgment tests
+      console.log('✅ Routing to situational judgment test');
+      setActiveSection('situational-judgment-test');
     } else if (currentTestFilter === 'numerical' || testId.startsWith('NRT')) {
       // Handle numerical reasoning tests
       console.log('✅ Routing to numerical reasoning test');
@@ -423,6 +435,11 @@ const MainDashboard = () => {
             />
           ) : activeSection === 'lrt3-test' ? (
             <LRT3Test 
+              onBackToDashboard={() => setActiveSection('available-tests')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'situational-judgment-test' ? (
+            <SituationalJudgmentTest 
               onBackToDashboard={() => setActiveSection('available-tests')} 
               testId={currentTestId}
             />

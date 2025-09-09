@@ -15,7 +15,8 @@ import {
   FaGlobe,
   FaChartLine,
   FaCube,
-  FaUsers
+  FaUsers,
+  FaSitemap
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from "framer-motion";
 import { useScrollToTop } from '../../../shared/utils/scrollUtils';
