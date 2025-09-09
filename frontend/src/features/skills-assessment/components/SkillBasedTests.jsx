@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaPlay, FaClock, FaQuestionCircle, FaArrowLeft, FaCheckCircle, FaTrophy } from 'react-icons/fa';
 
-const SkillBasedTests = ({ userId, onBackToDashboard }) => {
+const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
   const [userSkills, setUserSkills] = useState([]);
   const [availableTests, setAvailableTests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,6 +17,17 @@ const SkillBasedTests = ({ userId, onBackToDashboard }) => {
   useEffect(() => {
     loadUserSkillsAndTests();
   }, []);
+
+  // Démarrer automatiquement un test si testId est fourni
+  useEffect(() => {
+    if (testId && availableTests.length > 0 && !selectedTest) {
+      const testToStart = availableTests.find(test => test.id === testId);
+      if (testToStart) {
+        console.log('Démarrage automatique du test:', testToStart.test_name);
+        startTest(testToStart);
+      }
+    }
+  }, [testId, availableTests, selectedTest]);
 
     const loadUserSkillsAndTests = async () => {
         try {

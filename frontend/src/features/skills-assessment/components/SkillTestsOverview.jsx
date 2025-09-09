@@ -321,7 +321,7 @@ int main() {
   );
 };
 
-const SkillTestsOverview = ({ onBackToDashboard, userId = 1 }) => {
+const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
   const [skills, setSkills] = useState([]);
   const [userSkills, setUserSkills] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -342,9 +342,29 @@ const SkillTestsOverview = ({ onBackToDashboard, userId = 1 }) => {
         if (candidateResponse.ok) {
           const candidate = await candidateResponse.json();
           userSkillsData = candidate.skills || [];
+          console.log('Compétences utilisateur chargées:', userSkillsData);
+        } else {
+          throw new Error('Candidat non trouvé');
         }
       } catch (error) {
-        console.log('Pas de compétences utilisateur trouvées, affichage de toutes les compétences');
+        console.log('Pas de compétences utilisateur trouvées, chargement de toutes les compétences disponibles');
+        // Fallback : charger toutes les compétences disponibles
+        try {
+          const skillsResponse = await fetch('http://localhost:8000/api/skills/');
+          if (skillsResponse.ok) {
+            const allSkills = await skillsResponse.json();
+            userSkillsData = allSkills.slice(0, 5); // Prendre les 5 premières compétences
+            console.log('Toutes les compétences chargées:', userSkillsData);
+          }
+        } catch (skillsError) {
+          console.log('Erreur chargement compétences, utilisation données mock');
+          // Données mock pour les compétences
+          userSkillsData = [
+            { id: 1, name: 'Python' },
+            { id: 2, name: 'Django' },
+            { id: 3, name: 'JavaScript' }
+          ];
+        }
       }
 
       setUserSkills(userSkillsData);
@@ -357,8 +377,77 @@ const SkillTestsOverview = ({ onBackToDashboard, userId = 1 }) => {
       }
 
       // Charger les tests QCM
-      const testsResponse = await fetch('http://localhost:8000/api/tests-alt/');
-      const qcmTests = await testsResponse.json();
+      let qcmTests = [];
+      try {
+        const testsResponse = await fetch('http://localhost:8000/api/tests-alt/');
+        if (testsResponse.ok) {
+          qcmTests = await testsResponse.json();
+          console.log('Tests QCM chargés depuis API:', qcmTests);
+        } else {
+          throw new Error('API non disponible');
+        }
+      } catch (error) {
+        console.log('API non disponible, utilisation des données mock QCM');
+        // Données mock pour les tests QCM basées sur le JSON
+        qcmTests = [
+          {
+            id: 1,
+            title: 'Test JavaScript Expert',
+            test_type: 'technical',
+            description: 'Évaluation des concepts avancés de JavaScript',
+            duration_minutes: 45,
+            total_questions: 6,
+            passing_score: 70,
+            is_active: true,
+            skill: 1, // JavaScript/Python
+            test_name: 'Test JavaScript Expert',
+            total_score: 30,
+            time_limit: 45
+          },
+          {
+            id: 2,
+            title: 'Test Python Architecture',
+            test_type: 'technical', 
+            description: 'Concepts avancés d\'architecture et de design patterns en Python',
+            duration_minutes: 40,
+            total_questions: 4,
+            passing_score: 70,
+            is_active: true,
+            skill: 1, // JavaScript/Python
+            test_name: 'Test Python Architecture',
+            total_score: 25,
+            time_limit: 40
+          },
+          {
+            id: 3,
+            title: 'Test Django Fondamentaux',
+            test_type: 'technical',
+            description: 'Évaluation des compétences Django : modèles, vues, templates, ORM et architecture MVT. Ce test couvre les concepts fondamentaux et avancés.',
+            duration_minutes: 25,
+            total_questions: 12,
+            passing_score: 70,
+            is_active: true,
+            skill: 2, // Django
+            test_name: 'Test Django Fondamentaux',
+            total_score: 37,
+            time_limit: 25
+          },
+          {
+            id: 4,
+            title: 'Test Java Spring Boot',
+            test_type: 'technical',
+            description: 'Framework Spring Boot et architecture microservices',
+            duration_minutes: 35,
+            total_questions: 4,
+            passing_score: 70,
+            is_active: true,
+            skill: 3, // Java (si existe)
+            test_name: 'Test Java Spring Boot',
+            total_score: 20,
+            time_limit: 35
+          }
+        ];
+      }
 
       // Charger les tests pratiques (challenges)
       let practicalTests = [];
@@ -573,6 +662,7 @@ print(fizzbuzz(15))`,
         onBack={() => setSelectedSkill(null)}
         onBackToDashboard={onBackToDashboard}
         onStartPracticalTest={startPracticalTest}
+        onStartTest={onStartTest}
       />
     );
   }
@@ -660,12 +750,15 @@ print(fizzbuzz(15))`,
 };
 
 // Composant pour afficher les tests d'une compétence spécifique
-const SkillTestsDetail = ({ skill, onBack, onBackToDashboard, onStartPracticalTest }) => {
+const SkillTestsDetail = ({ skill, onBack, onBackToDashboard, onStartPracticalTest, onStartTest }) => {
   const [selectedTest, setSelectedTest] = useState(null);
 
   const startQCMTest = (test) => {
-    // Logique pour démarrer un test QCM
+    // Démarrer le test QCM en utilisant la fonction fournie par le dashboard
     console.log(`Démarrage du test QCM : ${test.test_name}`);
+    if (onStartTest) {
+      onStartTest(test.id || test.test_id);
+    }
   };
 
   return (

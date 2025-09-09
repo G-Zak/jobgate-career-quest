@@ -195,9 +195,18 @@ const MainDashboard = () => {
       console.log('✅ Routing to LRT3 test');
       setActiveSection('lrt3-test');
     } else {
-      // Handle other test types (numerical, etc.)
-      console.log('❌ Routing to test-session for testId:', testId);
-      setActiveSection('test-session');
+      // Check if it's a custom QCM test from our skill-based system
+      const isCustomQCMTest = (typeof testId === 'number' && testId >= 1 && testId <= 100) || 
+                             (typeof testId === 'string' && testId.includes('test'));
+      
+      if (isCustomQCMTest) {
+        console.log('✅ Routing to technical-assessment for custom QCM test:', testId);
+        setActiveSection('technical-assessment');
+      } else {
+        // Handle other test types (numerical, etc.)
+        console.log('❌ Routing to test-session for testId:', testId);
+        setActiveSection('test-session');
+      }
     }
   };
 
@@ -517,12 +526,17 @@ const MainDashboard = () => {
               onSkillsUpdated={() => console.log('Skills updated')}
             />
           ) : activeSection === 'tests-by-competencies' ? (
-            <SkillTestsOverview onBackToDashboard={() => setActiveSection('applications')} userId={1} />
+            <SkillTestsOverview 
+              onBackToDashboard={() => setActiveSection('applications')} 
+              onStartTest={handleStartTest}
+              userId={1} 
+            />
           ) : activeSection === 'practical-tests' ? (
             <PracticalTests onBackToDashboard={() => setActiveSection('applications')} />
           ) : activeSection === 'technical-assessment' ? (
             <SkillBasedTests 
               userId={1}
+              testId={currentTestId}
               onBackToDashboard={() => setActiveSection('applications')}
             />
           ) : activeSection === 'test-administration' ? (
