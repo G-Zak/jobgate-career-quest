@@ -1,0 +1,59 @@
+<svg width="800" height="500" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f0f9ff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="500" fill="url(#bg-gradient)" />
+  
+  <!-- Title -->
+  <text x="400" y="50" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#1e3a8a">Book Sales</text>
+  
+  <!-- X and Y Axis -->
+  <line x1="100" y1="400" x2="700" y2="400" stroke="#64748b" stroke-width="2" />
+  <line x1="100" y1="400" x2="100" y2="100" stroke="#64748b" stroke-width="2" />
+  
+  <!-- X Axis Labels -->
+  <text x="200" y="425" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="#334155">2020</text>
+  <text x="400" y="425" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="#334155">2021</text>
+  <text x="600" y="425" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="#334155">2022</text>
+  
+  <!-- Y Axis Labels -->
+  <text x="85" y="400" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">0</text>
+  <text x="85" y="350" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$500K</text>
+  <text x="85" y="300" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$1M</text>
+  <text x="85" y="250" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$1.5M</text>
+  <text x="85" y="200" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$2M</text>
+  <text x="85" y="150" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$2.5M</text>
+  <text x="85" y="100" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$3M</text>
+  
+  <!-- Grid Lines -->
+  <line x1="100" y1="350" x2="700" y2="350" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" />
+  <line x1="100" y1="300" x2="700" y2="300" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" />
+  <line x1="100" y1="250" x2="700" y2="250" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" />
+  <line x1="100" y1="200" x2="700" y2="200" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" />
+  <line x1="100" y1="150" x2="700" y2="150" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" />
+  <line x1="100" y1="100" x2="700" y2="100" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" />
+  
+  <!-- Bars -->
+  <rect x="150" y="300" width="100" height="100" fill="#3b82f6" rx="3" opacity="0.9">
+    <title>2020: $1,000,000</title>
+  </rect>
+  <rect x="350" y="240" width="100" height="160" fill="#2563eb" rx="3" opacity="0.9">
+    <title>2021: $1,200,000</title>
+  </rect>
+  <rect x="550" y="200" width="100" height="200" fill="#1d4ed8" rx="3" opacity="0.9">
+    <title>2022: $1,400,000</title>
+  </rect>
+  
+  <!-- Data Labels -->
+  <text x="200" y="290" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#ffffff">$1M</text>
+  <text x="400" y="230" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#ffffff">$1.2M</text>
+  <text x="600" y="190" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#ffffff">$1.4M</text>
+  
+  <!-- Note -->
+  <text x="400" y="460" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#64748b">Annual Book Sales by Year</text>
+</svg>

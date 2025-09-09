@@ -1,0 +1,64 @@
+<svg width="800" height="500" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f0f9ff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="500" fill="url(#bg-gradient)" />
+  
+  <!-- Title -->
+  <text x="400" y="50" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#1e3a8a">Quarterly Sales</text>
+  
+  <!-- X and Y Axis -->
+  <line x1="100" y1="400" x2="700" y2="400" stroke="#64748b" stroke-width="2" />
+  <line x1="100" y1="400" x2="100" y2="100" stroke="#64748b" stroke-width="2" />
+  
+  <!-- X Axis Labels -->
+  <text x="175" y="425" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="#334155">Q1</text>
+  <text x="325" y="425" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="#334155">Q2</text>
+  <text x="475" y="425" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="#334155">Q3</text>
+  <text x="625" y="425" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="#334155">Q4</text>
+  
+  <!-- Y Axis Labels -->
+  <text x="85" y="400" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$0</text>
+  <text x="85" y="325" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$100K</text>
+  <text x="85" y="250" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$200K</text>
+  <text x="85" y="175" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$300K</text>
+  <text x="85" y="100" font-family="Arial, sans-serif" font-size="14" text-anchor="end" fill="#334155">$400K</text>
+  
+  <!-- Grid Lines -->
+  <line x1="100" y1="325" x2="700" y2="325" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" />
+  <line x1="100" y1="250" x2="700" y2="250" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" />
+  <line x1="100" y1="175" x2="700" y2="175" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" />
+  <line x1="100" y1="100" x2="700" y2="100" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" />
+  
+  <!-- Bars -->
+  <rect x="125" y="250" width="100" height="150" fill="#3b82f6" rx="3" opacity="0.9">
+    <title>Q1: $200,000</title>
+  </rect>
+  <rect x="275" y="175" width="100" height="225" fill="#2563eb" rx="3" opacity="0.9">
+    <title>Q2: $300,000</title>
+  </rect>
+  <rect x="425" y="175" width="100" height="225" fill="#1d4ed8" rx="3" opacity="0.9">
+    <title>Q3: $300,000</title>
+  </rect>
+  <rect x="575" y="100" width="100" height="300" fill="#3b82f6" rx="3" opacity="0.9">
+    <title>Q4: $400,000</title>
+  </rect>
+  
+  <!-- Data Labels -->
+  <text x="175" y="240" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#ffffff">$200K</text>
+  <text x="325" y="165" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#ffffff">$300K</text>
+  <text x="475" y="165" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#ffffff">$300K</text>
+  <text x="625" y="90" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#ffffff">$400K</text>
+  
+  <!-- Legend -->
+  <rect x="350" y="450" width="20" height="20" fill="#3b82f6" rx="3" />
+  <text x="380" y="465" font-family="Arial, sans-serif" font-size="14" fill="#334155">Quarterly Revenue</text>
+  
+  <!-- Note -->
+  <text x="700" y="480" font-family="Arial, sans-serif" font-size="12" text-anchor="end" fill="#64748b">Total Annual Sales: $1.2 million</text>
+</svg>

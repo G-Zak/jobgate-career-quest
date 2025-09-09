@@ -1,0 +1,114 @@
+<!-- Section 2 Intro Placeholder -->
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="400" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#2c3e50">
+    DIAGRAMMATIC REASONING - SECTION 2: FLOW DIAGRAMS
+  </text>
+  
+  <!-- Instruction text -->
+  <text x="50" y="80" font-family="Arial, sans-serif" font-size="16" fill="#34495e">
+    In this section, you will work with flow diagrams and process charts.
+  </text>
+  <text x="50" y="105" font-family="Arial, sans-serif" font-size="16" fill="#34495e">
+    Follow the arrows and apply the rules shown in each diagram.
+  </text>
+  
+  <!-- Example flow diagram -->
+  <g transform="translate(200, 150)">
+    <!-- Start -->
+    <ellipse cx="50" cy="30" rx="40" ry="25" fill="#2ecc71" stroke="#27ae60" stroke-width="2"/>
+    <text x="50" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">START</text>
+    <text x="50" y="10" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">Input: 8</text>
+    
+    <!-- Arrow down -->
+    <line x1="50" y1="55" x2="50" y2="85" stroke="#34495e" stroke-width="2" marker-end="url(#arrowhead)"/>
+    
+    <!-- Process box -->
+    <rect x="10" y="90" width="80" height="40" fill="#3498db" stroke="#2980b9" stroke-width="2"/>
+    <text x="50" y="108" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">Multiply by 2</text>
+    <text x="50" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">Result: 16</text>
+    
+    <!-- Arrow down -->
+    <line x1="50" y1="130" x2="50" y2="160" stroke="#34495e" stroke-width="2" marker-end="url(#arrowhead)"/>
+    
+    <!-- Decision diamond -->
+    <path d="M 50 165 L 90 195 L 50 225 L 10 195 Z" fill="#f39c12" stroke="#e67e22" stroke-width="2"/>
+    <text x="50" y="192" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white">Is result</text>
+    <text x="50" y="204" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white">&gt; 10?</text>
+    
+    <!-- Yes arrow (right) -->
+    <line x1="90" y1="195" x2="130" y2="195" stroke="#34495e" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <text x="110" y="190" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#27ae60">YES</text>
+    
+    <!-- No arrow (left) -->
+    <line x1="10" y1="195" x2="-30" y2="195" stroke="#34495e" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <text x="-10" y="190" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#e74c3c">NO</text>
+    
+    <!-- Yes process -->
+    <rect x="135" y="175" width="80" height="40" fill="#9b59b6" stroke="#8e44ad" stroke-width="2"/>
+    <text x="175" y="193" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">Add 5</text>
+    <text x="175" y="205" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">Result: 21</text>
+    
+    <!-- No process -->
+    <rect x="-75" y="175" width="80" height="40" fill="#e74c3c" stroke="#c0392b" stroke-width="2"/>
+    <text x="-35" y="193" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">Subtract 3</text>
+    <text x="-35" y="205" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">Result: 13</text>
+    
+    <!-- Final arrows -->
+    <line x1="175" y1="215" x2="175" y2="245" stroke="#34495e" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <line x1="-35" y1="215" x2="-35" y2="245" stroke="#34495e" stroke-width="2" marker-end="url(#arrowhead)"/>
+    
+    <!-- End nodes -->
+    <ellipse cx="175" cy="260" rx="40" ry="25" fill="#e74c3c" stroke="#c0392b" stroke-width="2"/>
+    <text x="175" y="265" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">END: 21</text>
+    
+    <ellipse cx="-35" cy="260" rx="40" ry="25" fill="#e74c3c" stroke="#c0392b" stroke-width="2"/>
+    <text x="-35" y="265" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">END: 13</text>
+  </g>
+  
+  <!-- Instructions -->
+  <text x="50" y="450" font-family="Arial, sans-serif" font-size="16" fill="#34495e">
+    EXAMPLE: Starting with input 8, follow the flow to determine the final output.
+  </text>
+  
+  <text x="50" y="480" font-family="Arial, sans-serif" font-size="14" fill="#2c3e50">
+    1. Multiply by 2: 8 × 2 = 16
+  </text>
+  <text x="50" y="500" font-family="Arial, sans-serif" font-size="14" fill="#2c3e50">
+    2. Is 16 > 10? YES, so add 5: 16 + 5 = 21
+  </text>
+  <text x="50" y="520" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#27ae60">
+    3. Final output: 21
+  </text>
+  
+  <text x="50" y="550" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#e74c3c">
+    You have 45 minutes to answer 30 questions.
+  </text>
+  
+  <!-- Answer options -->
+  <g transform="translate(500, 480)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="14" fill="#2c3e50">Select your answer:</text>
+    
+    <rect x="0" y="10" width="35" height="25" fill="#27ae60" stroke="#2c3e50" stroke-width="1"/>
+    <text x="17" y="26" text-anchor="middle" font-size="14" font-weight="bold" fill="white">A</text>
+    <text x="45" y="26" font-size="12" fill="#2c3e50">21 ✓</text>
+    
+    <rect x="0" y="40" width="35" height="25" fill="white" stroke="#2c3e50" stroke-width="1"/>
+    <text x="17" y="56" text-anchor="middle" font-size="14" fill="#2c3e50">B</text>
+    <text x="45" y="56" font-size="12" fill="#2c3e50">13</text>
+    
+    <rect x="0" y="70" width="35" height="25" fill="white" stroke="#2c3e50" stroke-width="1"/>
+    <text x="17" y="86" text-anchor="middle" font-size="14" fill="#2c3e50">C</text>
+    <text x="45" y="86" font-size="12" fill="#2c3e50">16</text>
+  </g>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#34495e"/>
+    </marker>
+  </defs>
+</svg>

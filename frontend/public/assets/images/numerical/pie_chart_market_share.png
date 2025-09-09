@@ -1,0 +1,47 @@
+<svg width="800" height="500" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f0f9ff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="500" fill="url(#bg-gradient)" />
+  
+  <!-- Title -->
+  <text x="400" y="50" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#1e3a8a">Market Share</text>
+  
+  <!-- Pie Chart -->
+  <g transform="translate(400, 250)">
+    <!-- Company A: 25% -->
+    <path d="M 0 0 L 150 0 A 150 150 0 0 1 106.06 106.06 z" fill="#3b82f6" />
+    
+    <!-- Company B: 30% -->
+    <path d="M 0 0 L 106.06 106.06 A 150 150 0 0 1 -75 129.90 z" fill="#2563eb" />
+    
+    <!-- Company C: 20% -->
+    <path d="M 0 0 L -75 129.90 A 150 150 0 0 1 -150 0 z" fill="#1d4ed8" />
+    
+    <!-- Company D: 25% -->
+    <path d="M 0 0 L -150 0 A 150 150 0 0 1 150 0 z" fill="#60a5fa" />
+  </g>
+  
+  <!-- Legend -->
+  <g transform="translate(650, 180)">
+    <rect x="0" y="0" width="20" height="20" fill="#3b82f6" />
+    <text x="30" y="15" font-family="Arial, sans-serif" font-size="14" fill="#334155">Company A: 25%</text>
+    
+    <rect x="0" y="30" width="20" height="20" fill="#2563eb" />
+    <text x="30" y="45" font-family="Arial, sans-serif" font-size="14" fill="#334155">Company B: 30%</text>
+    
+    <rect x="0" y="60" width="20" height="20" fill="#1d4ed8" />
+    <text x="30" y="75" font-family="Arial, sans-serif" font-size="14" fill="#334155">Company C: 20%</text>
+    
+    <rect x="0" y="90" width="20" height="20" fill="#60a5fa" />
+    <text x="30" y="105" font-family="Arial, sans-serif" font-size="14" fill="#334155">Company D: 25%</text>
+  </g>
+  
+  <!-- Note -->
+  <text x="400" y="450" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#64748b">Total Market Size: $5 billion</text>
+</svg>

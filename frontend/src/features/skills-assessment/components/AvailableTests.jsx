@@ -15,7 +15,8 @@ import {
   FaGlobe,
   FaChartLine,
   FaCube,
-  FaUsers
+  FaUsers,
+  FaSitemap
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from "framer-motion";
 import { useScrollToTop } from '../../../shared/utils/scrollUtils';
@@ -85,9 +86,9 @@ const defaultTestsData = [
     category: "Logical Reasoning Tests",
     prefix: "LRT",
     total: 10,
-    unlocked: [1],
+    unlocked: [1, 2, 3],
     icon: <FaChartLine className="text-purple-600" />,
-    progress: 10,
+    progress: 30,
     testType: "logical"
   },
   {
@@ -98,6 +99,24 @@ const defaultTestsData = [
     icon: <FaCube className="text-orange-600" />,
     progress: 50,
     testType: "spatial"
+  },
+  {
+    category: "Diagrammatic Reasoning Tests",
+    prefix: "DRT",
+    total: 8,
+    unlocked: [1, 2],
+    icon: <FaSitemap className="text-green-600" />,
+    progress: 25,
+    testType: "diagrammatic"
+  },
+  {
+    category: "Abstract Reasoning Tests",
+    prefix: "ART",
+    total: 6,
+    unlocked: [1],
+    icon: <FaBrain className="text-indigo-600" />,
+    progress: 16,
+    testType: "abstract"
   }
 ];
 
@@ -497,8 +516,7 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
 
                           const scheme = colorSchemes[test.color] || colorSchemes.emerald;
                           const isMasterSJT = section.testType === 'master-sjt';
-
-                          return (
+           return (
                             <motion.div
                               key={test.id}
                               whileHover={{ y: -4 }}

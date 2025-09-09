@@ -11,8 +11,13 @@ import TechnicalTests from '../../../features/skills-assessment/components/Techn
 import TestLayout from '../../../features/skills-assessment/components/TestLayout';
 import VerbalReasoningTest from '../../../features/skills-assessment/components/VerbalReasoningTest';
 import SpatialReasoningTest from '../../../features/skills-assessment/components/SpatialReasoningTest';
+import DiagrammaticReasoningTest from '../../../features/skills-assessment/components/DiagrammaticReasoningTest';
+import AbstractReasoningTest from '../../../features/skills-assessment/components/AbstractReasoningTest';
+import LogicalReasoningTest from '../../../features/skills-assessment/components/LogicalReasoningTest';
+import LRT2Test from '../../../features/skills-assessment/components/LRT2Test';
+import LRT3Test from '../../../features/skills-assessment/components/LRT3Test';
+import NumericalReasoningTest from '../../../features/skills-assessment/components/NumericalReasoningTest';
 import SituationalJudgmentTest from '../../../features/skills-assessment/components/SituationalJudgmentTest';
-import MasterSJTTest from '../../../features/skills-assessment/components/MasterSJTTest';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import { useScrollOnChange } from '../../utils/scrollUtils';
@@ -34,8 +39,11 @@ const MainDashboard = () => {
   useEffect(() => {
     const isTestView = (
       activeSection === 'spatial-reasoning-test' ||
-      activeSection === 'situational-judgment-test' ||
-      activeSection === 'master-sjt-test' ||
+      activeSection === 'diagrammatic-reasoning-test' ||
+      activeSection === 'abstract-reasoning-test' ||
+      activeSection === 'logical-reasoning-test' ||
+      activeSection === 'lrt2-test' ||
+      activeSection === 'lrt3-test' ||
       activeSection === 'test-session' ||
       (typeof activeSection === 'string' && activeSection.startsWith('verbal-reasoning-test'))
     );
@@ -114,10 +122,46 @@ const MainDashboard = () => {
     const isStringWithSpatial = (typeof testId === 'string' && testId.toLowerCase().includes('spatial'));
     const isSRTString = (typeof testId === 'string' && testId.startsWith('SRT'));
     
+    const isDiagrammaticFilterAndNumber = (currentTestFilter === 'diagrammatic' && typeof testId === 'number');
+    const isStringWithDiagrammatic = (typeof testId === 'string' && testId.toLowerCase().includes('diagrammatic'));
+    const isDRTString = (typeof testId === 'string' && testId.startsWith('DRT'));
+    
+    const isAbstractFilterAndNumber = (currentTestFilter === 'abstract' && typeof testId === 'number');
+    const isStringWithAbstract = (typeof testId === 'string' && testId.toLowerCase().includes('abstract'));
+    const isARTString = (typeof testId === 'string' && testId.startsWith('ART'));
+    
+    const isLogicalFilterAndNumber = (currentTestFilter === 'logical' && typeof testId === 'number');
+    const isStringWithLogical = (typeof testId === 'string' && testId.toLowerCase().includes('logical'));
+    const isLRTString = (typeof testId === 'string' && testId.startsWith('LRT') && !testId.startsWith('LRT2') && !testId.startsWith('LRT3'));
+    const isLRT2String = (typeof testId === 'string' && testId.startsWith('LRT2'));
+    const isLRT3String = (typeof testId === 'string' && testId.startsWith('LRT3'));
+    
     const isSituationalFilterAndNumber = (currentTestFilter === 'situational' && typeof testId === 'number');
     const isStringWithSituational = (typeof testId === 'string' && testId.toLowerCase().includes('situational'));
     const isSJTString = (typeof testId === 'string' && testId.startsWith('SJT'));
     
+    console.log('isVerbalComprehensive:', isVerbalComprehensive);
+    console.log('isVerbalFilterAndNumber:', isVerbalFilterAndNumber);
+    console.log('isStringWithVerbal:', isStringWithVerbal);
+    console.log('isVRTString:', isVRTString);
+    console.log('isSpatialFilterAndNumber:', isSpatialFilterAndNumber);
+    console.log('isStringWithSpatial:', isStringWithSpatial);
+    console.log('isSRTString:', isSRTString);
+    console.log('isDiagrammaticFilterAndNumber:', isDiagrammaticFilterAndNumber);
+    console.log('isStringWithDiagrammatic:', isStringWithDiagrammatic);
+    console.log('isDRTString:', isDRTString);
+    console.log('isAbstractFilterAndNumber:', isAbstractFilterAndNumber);
+    console.log('isStringWithAbstract:', isStringWithAbstract);
+    console.log('isARTString:', isARTString);
+    console.log('isLogicalFilterAndNumber:', isLogicalFilterAndNumber);
+    console.log('isStringWithLogical:', isStringWithLogical);
+    console.log('isLRTString:', isLRTString);
+    console.log('isLRT2String:', isLRT2String);
+    console.log('isLRT3String:', isLRT3String);
+    console.log('isSituationalFilterAndNumber:', isSituationalFilterAndNumber);
+    console.log('isStringWithSituational:', isStringWithSituational);
+    console.log('isSJTString:', isSJTString);
+
     // Set the current test ID
     setCurrentTestId(testId);
     
@@ -129,11 +173,38 @@ const MainDashboard = () => {
     } else if (isSpatialFilterAndNumber || isStringWithSpatial || isSRTString) {
       // Handle spatial reasoning tests
       setActiveSection('spatial-reasoning-test');
+    } else if (isDiagrammaticFilterAndNumber || isStringWithDiagrammatic || isDRTString) {
+      // Handle diagrammatic reasoning tests
+      console.log('✅ Routing to diagrammatic reasoning test');
+      setActiveSection('diagrammatic-reasoning-test');
+    } else if (isAbstractFilterAndNumber || isStringWithAbstract || isARTString) {
+      // Handle abstract reasoning tests
+      console.log('✅ Routing to abstract reasoning test');
+      setActiveSection('abstract-reasoning-test');
+    } else if (isLogicalFilterAndNumber || isStringWithLogical || isLRTString) {
+      // Handle logical reasoning tests (Section 1)
+      console.log('✅ Routing to logical reasoning test');
+      setActiveSection('logical-reasoning-test');
+    } else if (isLRT2String) {
+      // Handle LRT2 tests (Section 2)
+      console.log('✅ Routing to LRT2 test');
+      setActiveSection('lrt2-test');
+    } else if (isLRT3String) {
+      // Handle LRT3 tests (Section 3)
+      console.log('✅ Routing to LRT3 test');
+      setActiveSection('lrt3-test');
     } else if (isSituationalFilterAndNumber || isStringWithSituational || isSJTString) {
       // Handle situational judgment tests
+      console.log('✅ Routing to situational judgment test');
       setActiveSection('situational-judgment-test');
+    } else if (currentTestFilter === 'numerical' || testId.startsWith('NRT')) {
+      // Handle numerical reasoning tests
+      console.log('✅ Routing to numerical reasoning test');
+      setActiveSection('numerical-reasoning-test');
     } else {
-      // Handle other test types (numerical, logical, etc.)
+      // Handle other test types
+      console.log('❌ Routing to test-session for testId:', testId);
+
       setActiveSection('test-session');
     }
   };
@@ -343,16 +414,45 @@ const MainDashboard = () => {
               onBackToDashboard={() => setActiveSection('available-tests')} 
               testId={currentTestId}
             />
+          ) : activeSection === 'diagrammatic-reasoning-test' ? (
+            <DiagrammaticReasoningTest 
+              onBackToDashboard={() => setActiveSection('available-tests')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'abstract-reasoning-test' ? (
+            <AbstractReasoningTest 
+              onBackToDashboard={() => setActiveSection('available-tests')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'logical-reasoning-test' ? (
+            <LogicalReasoningTest 
+              onBackToDashboard={() => setActiveSection('available-tests')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'lrt2-test' ? (
+            <LRT2Test 
+              onBackToDashboard={() => setActiveSection('available-tests')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'lrt3-test' ? (
+            <LRT3Test 
+              onBackToDashboard={() => setActiveSection('available-tests')} 
+              testId={currentTestId}
+            />
+
           ) : activeSection === 'situational-judgment-test' ? (
             <SituationalJudgmentTest 
               onBackToDashboard={() => setActiveSection('available-tests')} 
               testId={currentTestId}
             />
-          ) : activeSection === 'master-sjt-test' ? (
-            <MasterSJTTest 
-              onClose={() => {
+          ) : activeSection === 'numerical-reasoning-test' ? (
+            <NumericalReasoningTest 
+              onBackToDashboard={() => setActiveSection('available-tests')}
+              onComplete={(results) => {
+                console.log('Numerical test completed with results:', results);
                 setActiveSection('available-tests');
               }}
+              testId={currentTestId}
             />
           ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
             // Show AvailableTests for most test categories
