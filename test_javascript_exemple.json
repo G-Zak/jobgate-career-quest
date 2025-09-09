@@ -1,0 +1,81 @@
+{
+  "test_name": "Test JavaScript Fondamentaux",
+  "description": "Évaluation des connaissances de base en JavaScript : variables, fonctions, DOM et événements",
+  "skill_name": "JavaScript",
+  "time_limit": 20,
+  "difficulty": "intermediate",
+  "questions": [
+    {
+      "question_text": "Comment déclarer une variable qui ne peut pas être modifiée en JavaScript ?",
+      "option_a": "var myVar = 'value'",
+      "option_b": "let myVar = 'value'", 
+      "option_c": "const myVar = 'value'",
+      "option_d": "final myVar = 'value'",
+      "correct_answer": "c",
+      "points": 3
+    },
+    {
+      "question_text": "Quelle méthode permet d'ajouter un élément à la fin d'un tableau ?",
+      "option_a": "array.add()",
+      "option_b": "array.push()",
+      "option_c": "array.append()",
+      "option_d": "array.insert()",
+      "correct_answer": "b",
+      "points": 3
+    },
+    {
+      "question_text": "Comment sélectionner un élément par son ID en JavaScript ?",
+      "option_a": "document.getElement('myId')",
+      "option_b": "document.getElementById('myId')",
+      "option_c": "document.selectById('myId')",
+      "option_d": "document.querySelector('#myId')",
+      "correct_answer": "b",
+      "points": 4
+    },
+    {
+      "question_text": "Que fait la méthode addEventListener() ?",
+      "option_a": "Ajoute un nouvel élément au DOM",
+      "option_b": "Écoute les événements sur un élément",
+      "option_c": "Crée un nouvel événement",
+      "option_d": "Supprime un événement",
+      "correct_answer": "b",
+      "points": 4
+    },
+    {
+      "question_text": "Quelle est la différence entre == et === ?",
+      "option_a": "Pas de différence",
+      "option_b": "== compare la valeur, === compare valeur et type",
+      "option_c": "=== est plus rapide",
+      "option_d": "== est obsolète",
+      "correct_answer": "b",
+      "points": 5
+    },
+    {
+      "question_text": "Comment créer une fonction en JavaScript ?",
+      "option_a": "function myFunc() {}",
+      "option_b": "const myFunc = () => {}",
+      "option_c": "const myFunc = function() {}",
+      "option_d": "Toutes les réponses ci-dessus",
+      "correct_answer": "d",
+      "points": 3
+    },
+    {
+      "question_text": "Que retourne typeof null en JavaScript ?",
+      "option_a": "null",
+      "option_b": "undefined",
+      "option_c": "object",
+      "option_d": "boolean",
+      "correct_answer": "c",
+      "points": 5
+    },
+    {
+      "question_text": "Comment parcourir un tableau en JavaScript ?",
+      "option_a": "for (let i = 0; i < array.length; i++)",
+      "option_b": "array.forEach()",
+      "option_c": "for (let item of array)",
+      "option_d": "Toutes les réponses ci-dessus",
+      "correct_answer": "d",
+      "points": 4
+    }
+  ]
+}

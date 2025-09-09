@@ -21,4 +21,5 @@ from django.urls import path, include
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("testsengine.urls")),
+    path("", include("skills.urls")),  # Ajout de l'API Skills
 ]

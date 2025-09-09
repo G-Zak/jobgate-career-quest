@@ -16,6 +16,12 @@ import AbstractReasoningTest from '../../../features/skills-assessment/component
 import LogicalReasoningTest from '../../../features/skills-assessment/components/LogicalReasoningTest';
 import LRT2Test from '../../../features/skills-assessment/components/LRT2Test';
 import LRT3Test from '../../../features/skills-assessment/components/LRT3Test';
+import SkillsSelector from '../../../features/skills-assessment/components/SkillsSelector';
+import TechnicalTest from '../../../features/skills-assessment/components/TechnicalTest';
+// AdaptiveTest supprimé - les tests sont créés par l'admin
+import SkillBasedTests from '../../../features/skills-assessment/components/SkillBasedTests';
+import TestAdministration from '../../../features/skills-assessment/components/TestAdministration';
+import TestDebugPage from '../../../features/skills-assessment/components/TestDebugPage';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import { useScrollOnChange } from '../../utils/scrollUtils';
@@ -331,6 +337,43 @@ const MainDashboard = () => {
             {/* Additional Navigation Items */}
             <div className="secondary-nav-section p-6 space-y-3">
               <button 
+                onClick={() => setActiveSection('skills-management')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'skills-management'
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                Gestion des compétences
+              </button>
+              
+              <button 
+                onClick={() => setActiveSection('technical-assessment')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'technical-assessment'
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                📝 Tests par compétence
+              </button>
+              
+              {/* Test adaptatif supprimé - tests créés par l'admin */}
+              
+              {/* Administration supprimée - tests créés par l'admin Django */}
+              
+              <button 
+                onClick={() => setActiveSection('test-debug')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'test-debug'
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                🔧 Debug Tests API
+              </button>
+              
+              <button 
                 onClick={() => setActiveSection('mon-espace')}
                 className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
                   activeSection === 'mon-espace'
@@ -419,6 +462,22 @@ const MainDashboard = () => {
               onBackToDashboard={() => setActiveSection('available-tests')} 
               testId={currentTestId}
             />
+          ) : activeSection === 'skills-management' ? (
+            <SkillsSelector 
+              userId={1} 
+              onSkillsUpdated={() => console.log('Skills updated')}
+            />
+          ) : activeSection === 'technical-assessment' ? (
+            <SkillBasedTests 
+              userId={1}
+              onBackToDashboard={() => setActiveSection('applications')}
+            />
+          ) : activeSection === 'test-administration' ? (
+            <TestAdministration 
+              onBackToDashboard={() => setActiveSection('applications')}
+            />
+          ) : activeSection === 'test-debug' ? (
+            <TestDebugPage />
           ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
             // Show AvailableTests for most test categories
             activeSection === 'technical-tests' ? (

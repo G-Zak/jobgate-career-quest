@@ -1,0 +1,174 @@
+{
+  "tests": [
+    {
+      "skill_name": "JavaScript",
+      "test_name": "Test JavaScript Expert",
+      "description": "Évaluation des concepts avancés de JavaScript",
+      "total_score": 30,
+      "time_limit": 45,
+      "instructions": "Répondez aux questions suivantes sur JavaScript. Vous avez 45 minutes.",
+      "questions": [
+        {
+          "question_text": "Qu'est-ce que le 'hoisting' en JavaScript ?",
+          "option_a": "L'élévation des variables et fonctions en haut de leur portée",
+          "option_b": "Une méthode pour optimiser le code",
+          "option_c": "Un framework JavaScript",
+          "option_d": "Une technique de compilation",
+          "correct_answer": "a",
+          "points": 5,
+          "explanation": "Le hoisting est un comportement JavaScript où les déclarations de variables et de fonctions sont déplacées en haut de leur portée pendant la compilation."
+        },
+        {
+          "question_text": "Que retourne cette expression : typeof null ?",
+          "option_a": "null",
+          "option_b": "undefined",
+          "option_c": "object",
+          "option_d": "string",
+          "correct_answer": "c",
+          "points": 3,
+          "explanation": "C'est un bug historique de JavaScript. typeof null retourne 'object' au lieu de 'null'."
+        },
+        {
+          "question_text": "Comment créer une closure en JavaScript ?",
+          "option_a": "Avec une fonction dans une fonction",
+          "option_b": "Avec le mot-clé 'closure'",
+          "option_c": "Avec une classe",
+          "option_d": "Avec un module",
+          "correct_answer": "a",
+          "points": 7,
+          "explanation": "Une closure est créée quand une fonction interne accède aux variables de sa fonction parent, même après que la fonction parent ait terminé son exécution."
+        },
+        {
+          "question_text": "Quelle est la différence entre '==' et '===' ?",
+          "option_a": "Aucune différence",
+          "option_b": "== compare les valeurs, === compare les valeurs et les types",
+          "option_c": "=== est plus rapide",
+          "option_d": "== est obsolète",
+          "correct_answer": "b",
+          "points": 4,
+          "explanation": "== effectue une coercition de type avant la comparaison, tandis que === compare sans conversion (égalité stricte)."
+        },
+        {
+          "question_text": "Comment fonctionne 'this' dans une arrow function ?",
+          "option_a": "this fait référence à l'objet global",
+          "option_b": "this fait référence à l'objet qui appelle la fonction",
+          "option_c": "this est hérité du contexte lexical parent",
+          "option_d": "this est undefined",
+          "correct_answer": "c",
+          "points": 6,
+          "explanation": "Les arrow functions n'ont pas leur propre 'this', elles héritent du contexte lexical dans lequel elles sont définies."
+        },
+        {
+          "question_text": "Qu'est-ce que l'Event Loop en JavaScript ?",
+          "option_a": "Une boucle for spéciale",
+          "option_b": "Le mécanisme qui gère l'exécution asynchrone",
+          "option_c": "Une méthode de debugging",
+          "option_d": "Un framework",
+          "correct_answer": "b",
+          "points": 5,
+          "explanation": "L'Event Loop permet à JavaScript d'exécuter du code asynchrone en gérant la pile d'exécution et la file d'attente des callbacks."
+        }
+      ]
+    },
+    {
+      "skill_name": "Python",
+      "test_name": "Test Python Architecture",
+      "description": "Concepts avancés d'architecture et de design patterns en Python",
+      "total_score": 25,
+      "time_limit": 40,
+      "instructions": "Questions sur l'architecture et les bonnes pratiques Python.",
+      "questions": [
+        {
+          "question_text": "Qu'est-ce qu'un décorateur en Python ?",
+          "option_a": "Une fonction qui modifie le comportement d'une autre fonction",
+          "option_b": "Un type de données",
+          "option_c": "Une méthode de classe",
+          "option_d": "Un module externe",
+          "correct_answer": "a",
+          "points": 5,
+          "explanation": "Un décorateur est une fonction qui prend une autre fonction en paramètre et étend ou modifie son comportement sans la modifier explicitement."
+        },
+        {
+          "question_text": "Comment implémenter le pattern Singleton en Python ?",
+          "option_a": "Avec une classe normale",
+          "option_b": "Avec __new__ ou un décorateur",
+          "option_c": "Avec une fonction",
+          "option_d": "Impossible en Python",
+          "correct_answer": "b",
+          "points": 8,
+          "explanation": "Le Singleton peut être implémenté en redéfinissant __new__ ou en utilisant un décorateur pour s'assurer qu'une seule instance existe."
+        },
+        {
+          "question_text": "Que fait 'yield' en Python ?",
+          "option_a": "Retourne une valeur et termine la fonction",
+          "option_b": "Crée un générateur qui produit des valeurs à la demande",
+          "option_c": "Importe un module",
+          "option_d": "Gère les exceptions",
+          "correct_answer": "b",
+          "points": 6,
+          "explanation": "yield transforme une fonction en générateur, permettant de produire des valeurs une par une sans stocker toute la séquence en mémoire."
+        },
+        {
+          "question_text": "Qu'est-ce que le GIL (Global Interpreter Lock) ?",
+          "option_a": "Un système de sécurité",
+          "option_b": "Un verrou qui empêche l'exécution simultanée de bytecode Python",
+          "option_c": "Une méthode de compilation",
+          "option_d": "Un framework web",
+          "correct_answer": "b",
+          "points": 6,
+          "explanation": "Le GIL est un verrou qui empêche plusieurs threads Python d'exécuter du bytecode Python simultanément, limitant le parallélisme réel."
+        }
+      ]
+    },
+    {
+      "skill_name": "Java",
+      "test_name": "Test Java Spring Boot",
+      "description": "Framework Spring Boot et architecture microservices",
+      "total_score": 20,
+      "time_limit": 35,
+      "instructions": "Questions sur Spring Boot et les microservices en Java.",
+      "questions": [
+        {
+          "question_text": "Qu'est-ce que l'injection de dépendances en Spring ?",
+          "option_a": "Une technique de compilation",
+          "option_b": "Un pattern où Spring fournit automatiquement les dépendances",
+          "option_c": "Une méthode de test",
+          "option_d": "Un système de sécurité",
+          "correct_answer": "b",
+          "points": 5,
+          "explanation": "L'injection de dépendances permet à Spring de fournir automatiquement les objets dont une classe a besoin, réduisant le couplage."
+        },
+        {
+          "question_text": "Quelle annotation utilise-t-on pour créer un REST controller ?",
+          "option_a": "@Controller",
+          "option_b": "@RestController",
+          "option_c": "@Component",
+          "option_d": "@Service",
+          "correct_answer": "b",
+          "points": 3,
+          "explanation": "@RestController combine @Controller et @ResponseBody, indiquant que la classe gère des requêtes HTTP REST."
+        },
+        {
+          "question_text": "Comment gérer les transactions en Spring Boot ?",
+          "option_a": "Manuellement avec try/catch",
+          "option_b": "Avec l'annotation @Transactional",
+          "option_c": "Avec des connexions JDBC",
+          "option_d": "Automatiquement sans configuration",
+          "correct_answer": "b",
+          "points": 6,
+          "explanation": "@Transactional permet à Spring de gérer automatiquement les transactions, avec rollback en cas d'exception."
+        },
+        {
+          "question_text": "Qu'est-ce qu'un microservice ?",
+          "option_a": "Un petit service web",
+          "option_b": "Une architecture où l'application est divisée en services indépendants",
+          "option_c": "Un framework Java",
+          "option_d": "Une base de données",
+          "correct_answer": "b",
+          "points": 6,
+          "explanation": "Les microservices sont une approche architecturale où une application est construite comme un ensemble de services petits, indépendants et faiblement couplés."
+        }
+      ]
+    }
+  ]
+}
