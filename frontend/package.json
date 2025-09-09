@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "JobGate Career Quest - Skills Assessment Platform",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 3001",
+    "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --report-unused-disable-directives --max-warnings 0",
@@ -12,8 +12,10 @@
     "test": "echo 'Tests not configured yet' && exit 0"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@heroicons/react": "^2.2.0",
-    "@vitejs/plugin-react": "^5.0.2",
+    "@mui/material": "^7.3.2",
     "axios": "^1.11.0",
     "chart.js": "^4.4.0",
     "framer-motion": "^12.23.12",
@@ -27,6 +29,7 @@
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-react": "^5.0.2",
     "autoprefixer": "^10.4.0",
     "eslint": "^8.56.0",
     "eslint-plugin-react-hooks": "^4.6.0",
