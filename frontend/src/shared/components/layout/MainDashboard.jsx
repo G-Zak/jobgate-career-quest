@@ -22,6 +22,7 @@ import TechnicalTest from '../../../features/skills-assessment/components/Techni
 import SkillBasedTests from '../../../features/skills-assessment/components/SkillBasedTests';
 import TestAdministration from '../../../features/skills-assessment/components/TestAdministration';
 import TestDebugPage from '../../../features/skills-assessment/components/TestDebugPage';
+import TestHistoryDashboard from '../../../features/candidate-dashboard/components/TestHistoryDashboard';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import { useScrollOnChange } from '../../utils/scrollUtils';
@@ -423,7 +424,7 @@ const MainDashboard = () => {
             )}
           
           {activeSection === 'dashboard' ? (
-            <Dashboard />
+            <Dashboard onNavigateToSection={setActiveSection} />
           ) : activeSection === 'test-session' ? (
             <TestLayout />
           ) : activeSection.startsWith('verbal-reasoning-test') ? (
@@ -547,20 +548,7 @@ const MainDashboard = () => {
               </div>
             </div>
           ) : activeSection === 'historique-tests' ? (
-            <div className="space-y-6">
-              <div className="text-center py-12">
-                <h1 className="text-3xl font-bold text-[#4A5869] mb-4">Historique des Tests</h1>
-                <p className="text-lg text-[#4A5869]/70 max-w-3xl mx-auto">
-                  Consultez l'historique de tous vos tests et évaluations de compétences.
-                </p>
-              </div>
-              <div className="bg-white rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8">
-                <h2 className="text-xl font-semibold text-[#4A5869] mb-4">Historique Complet</h2>
-                <p className="text-[#4A5869]/70">
-                  L'historique détaillé de vos tests et évaluations sera affiché ici avec les résultats et les progrès.
-                </p>
-              </div>
-            </div>
+            <TestHistoryDashboard />
           ) : (
             <>
               {/* Blue Banner Header */}

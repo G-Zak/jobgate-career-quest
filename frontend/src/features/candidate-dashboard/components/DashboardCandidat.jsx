@@ -1,14 +1,23 @@
 import React from 'react';
 import ProfileHeader from './ProfileHeader';
-import BadgesGrid from './BadgesGrid';
-import SkillsChart from './SkillsChart';
+import DynamicBadges from './DynamicBadges';
+import DynamicSkillsPerformance from './DynamicSkillsPerformance';
 import TestTimeline from './TestTimeline';
 import JobRecommendations from './JobRecommendations';
+import RecentTestResults from './RecentTestResults';
+import TestStatsWidget from './TestStatsWidget';
+import DynamicQuickStats from './DynamicQuickStats';
 import { useScrollToTop } from '../../../shared/utils/scrollUtils';
 
-const Dashboard = () => {
+const Dashboard = ({ onNavigateToSection }) => {
   // Universal scroll management
   useScrollToTop([], { smooth: true }); // Scroll on component mount
+
+  const handleViewAllTests = () => {
+    if (onNavigateToSection) {
+      onNavigateToSection('historique-tests');
+    }
+  };
   
   // Mock data - replace with API calls
   const userData = {
@@ -50,71 +59,29 @@ const Dashboard = () => {
           <div className="xl:col-span-4 space-y-4 lg:space-y-6">
             <ProfileHeader user={userData} />
             
-            {/* Quick Stats */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
-              <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">Quick Stats</h3>
-              <div className="space-y-3 lg:space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600 text-sm lg:text-base">Tests Completed</span>
-                  <span className="font-semibold text-gray-900 text-sm lg:text-base">12</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600 text-sm lg:text-base">Average Score</span>
-                  <span className="font-semibold text-green-600 text-sm lg:text-base">{userData.overallScore}%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600 text-sm lg:text-base">Job Matches</span>
-                  <span className="font-semibold text-blue-600 text-sm lg:text-base">{userData.jobRecommendations.length}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600 text-sm lg:text-base">XP Points</span>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-semibold text-purple-600 text-sm lg:text-base">{userData.xpPoints}</span>
-                    <div className="w-12 lg:w-16 h-2 bg-gray-200 rounded-full">
-                      <div 
-                        className="h-2 bg-purple-500 rounded-full" 
-                        style={{ width: `${(userData.xpPoints / userData.nextLevelXP) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Dynamic Quick Stats */}
+            <DynamicQuickStats />
 
-            {/* Recent Activity */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
-              <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">Recent Activity</h3>
-              <div className="space-y-3">
-                {userData.recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-start space-x-3">
-                    <div className={`w-2 h-2 rounded-full mt-2 ${
-                      activity.type === 'test_completed' ? 'bg-blue-500' :
-                      activity.type === 'badge_earned' ? 'bg-yellow-500' :
-                      'bg-green-500'
-                    }`}></div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900">{activity.content}</p>
-                      <p className="text-xs text-gray-500">{activity.date}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Test Stats Widget */}
+            <TestStatsWidget />
+
+            {/* Recent Test Results */}
+            <RecentTestResults onViewAll={handleViewAllTests} />
           </div>
 
           {/* Right Column - Main Content */}
           <div className="xl:col-span-8 space-y-4 lg:space-y-6">
-            {/* Badges Grid */}
-            <BadgesGrid badges={userData.badges} />
+            {/* Dynamic Badges Grid */}
+            <DynamicBadges />
             
-            {/* Skills Chart */}
-            <SkillsChart testResults={userData.testResults} />
+            {/* Dynamic Skills Performance */}
+            <DynamicSkillsPerformance />
             
             {/* Job Recommendations */}
             <JobRecommendations jobs={userData.jobRecommendations} />
             
             {/* Test Timeline */}
-            <TestTimeline tests={userData.testResults} />
+            <TestTimeline onViewAll={handleViewAllTests} />
           </div>
         </div>
       </div>
