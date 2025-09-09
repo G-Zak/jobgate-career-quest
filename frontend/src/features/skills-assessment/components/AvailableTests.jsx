@@ -516,8 +516,7 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
 
                           const scheme = colorSchemes[test.color] || colorSchemes.emerald;
                           const isMasterSJT = section.testType === 'master-sjt';
-
-                          return (
+           return (
                             <motion.div
                               key={test.id}
                               whileHover={{ y: -4 }}

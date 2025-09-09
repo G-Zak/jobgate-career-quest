@@ -161,7 +161,7 @@ const MainDashboard = () => {
     console.log('isSituationalFilterAndNumber:', isSituationalFilterAndNumber);
     console.log('isStringWithSituational:', isStringWithSituational);
     console.log('isSJTString:', isSJTString);
-    
+
     // Set the current test ID
     setCurrentTestId(testId);
     
@@ -204,6 +204,7 @@ const MainDashboard = () => {
     } else {
       // Handle other test types
       console.log('❌ Routing to test-session for testId:', testId);
+
       setActiveSection('test-session');
     }
   };
@@ -438,6 +439,7 @@ const MainDashboard = () => {
               onBackToDashboard={() => setActiveSection('available-tests')} 
               testId={currentTestId}
             />
+
           ) : activeSection === 'situational-judgment-test' ? (
             <SituationalJudgmentTest 
               onBackToDashboard={() => setActiveSection('available-tests')} 

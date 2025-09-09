@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "JobGate Career Quest - Skills Assessment Platform",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 3000",
+    "dev": "vite --host 0.0.0.0 --port 3001",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --report-unused-disable-directives --max-warnings 0",
