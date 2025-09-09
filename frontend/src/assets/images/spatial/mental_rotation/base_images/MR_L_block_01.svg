@@ -1,0 +1,56 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- L-shaped 3D block: long arm points RIGHT, short arm points UP -->
+  <!-- Precise isometric projection with 30° angles -->
+  
+  <!-- Cube 1: Corner cube (junction point) -->
+  <g id="corner-cube">
+    <!-- Top face (diamond shape in isometric) -->
+    <path d="M200 180 L230 160 L260 180 L230 200 Z" 
+          fill="#4f46e5" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Left face (parallelogram) -->
+    <path d="M200 180 L230 200 L230 240 L200 220 Z" 
+          fill="#3730a3" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Right face (parallelogram) -->
+    <path d="M230 200 L260 180 L260 220 L230 240 Z" 
+          fill="#312e81" stroke="#1e1b4b" stroke-width="2"/>
+  </g>
+  
+  <!-- Cube 2: Long arm extending RIGHT -->
+  <g id="right-cube">
+    <!-- Top face -->
+    <path d="M260 180 L290 160 L320 180 L290 200 Z" 
+          fill="#4f46e5" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Left face -->
+    <path d="M260 180 L290 200 L290 240 L260 220 Z" 
+          fill="#3730a3" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Right face -->
+    <path d="M290 200 L320 180 L320 220 L290 240 Z" 
+          fill="#312e81" stroke="#1e1b4b" stroke-width="2"/>
+  </g>
+  
+  <!-- Cube 3: Short arm extending UP -->
+  <g id="up-cube">
+    <!-- Top face -->
+    <path d="M200 140 L230 120 L260 140 L230 160 Z" 
+          fill="#4f46e5" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Left face -->
+    <path d="M200 140 L230 160 L230 200 L200 180 Z" 
+          fill="#3730a3" stroke="#1e1b4b" stroke-width="2"/>
+    <!-- Right face -->
+    <path d="M230 160 L260 140 L260 180 L230 200 Z" 
+          fill="#312e81" stroke="#1e1b4b" stroke-width="2"/>
+  </g>
+  
+  <!-- Reference grid lines (subtle) -->
+  <defs>
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#e5e7eb" stroke-width="0.5" opacity="0.3"/>
+    </pattern>
+  </defs>
+  <rect width="400" height="400" fill="url(#grid)" opacity="0.1"/>
+  
+  <!-- Orientation labels -->
+  <text x="350" y="190" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">→ RIGHT</text>
+  <text x="220" y="110" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">↑ UP</text>
+</svg>
+</svg>

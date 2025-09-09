@@ -16,7 +16,7 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 3000,
+    port: 3001,
     strictPort: true,
     watch: {
       usePolling: true, // 👈 required in Docker
@@ -28,11 +28,14 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'phaser': ['phaser']
+        // Only create a separate chunk for Phaser if it actually exists in the graph
+        manualChunks(id) {
+          if (id && id.includes('node_modules/phaser')) {
+            return 'phaser';
+          }
         }
       }
     }
   },
-  assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg', '**/*.webp', '**/*.mp3', '**/*.wav', '**/*.ogg']
+  assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg', '**/*.webp', '**/*.mp3', '**/*.wav', '**/*.ogg', '**/*.jsonl']
 })

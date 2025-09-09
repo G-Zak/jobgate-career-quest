@@ -1,0 +1,80 @@
+/* Universal Scroll Behavior - Applied globally */
+
+/* Smooth scrolling for all elements */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Apply smooth scrolling to all scroll containers */
+*[data-scroll-container],
+.test-scroll-container,
+.content-scroll,
+#test-content,
+#verbal-test-scroll,
+#spatial-test-scroll {
+  scroll-behavior: smooth;
+  overflow-y: auto;
+}
+
+/* Enhanced scrollbar styling for scroll containers */
+*[data-scroll-container]::-webkit-scrollbar,
+.test-scroll-container::-webkit-scrollbar,
+.content-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+*[data-scroll-container]::-webkit-scrollbar-track,
+.test-scroll-container::-webkit-scrollbar-track,
+.content-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+*[data-scroll-container]::-webkit-scrollbar-thumb,
+.test-scroll-container::-webkit-scrollbar-thumb,
+.content-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+*[data-scroll-container]::-webkit-scrollbar-thumb:hover,
+.test-scroll-container::-webkit-scrollbar-thumb:hover,
+.content-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Ensure test containers have proper height for scrolling */
+.test-scroll-container {
+  max-height: calc(100vh - 8rem);
+  min-height: 60vh;
+}
+
+/* Smooth transitions for all scroll-related animations */
+.scroll-to-top-transition {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Enhanced scroll indicators */
+.scroll-indicator {
+  position: fixed;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* Accessibility: Respect user preferences for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  html,
+  *[data-scroll-container],
+  .test-scroll-container,
+  .content-scroll {
+    scroll-behavior: auto;
+  }
+  
+  .scroll-to-top-transition {
+    transition: none;
+  }
+}

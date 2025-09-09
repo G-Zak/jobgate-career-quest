@@ -1,0 +1,98 @@
+<svg width="220" height="160" viewBox="0 0 220 160" xmlns="http://www.w3.org/2000/svg">
+  <!-- Irregular polyomino - 9 cubes forming a complex irregular shape -->
+  
+  <!-- Base irregular foundation - 3 cubes -->
+  <!-- Cube 1: Base left -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="40,120 70,105 100,120 70,135" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="40,120 40,140 70,155 70,135" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="70,135 70,155 100,140 100,120" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 2: Base center irregular -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="115,110 145,95 175,110 145,125" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="115,110 115,130 145,145 145,125" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="145,125 145,145 175,130 175,110" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 3: Base right jutting -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="175,110 205,95 235,110 205,125" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="175,110 175,130 205,145 205,125" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="205,125 205,145 235,130 235,110" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Irregular middle tier - 3 cubes -->
+  <!-- Cube 4: Mid left branch -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="25,90 55,75 85,90 55,105" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="25,90 25,110 55,125 55,105" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="55,105 55,125 85,110 85,90" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 5: Mid center connecting -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="85,90 115,75 145,90 115,105" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="85,90 85,110 115,125 115,105" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="115,105 115,125 145,110 145,90" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 6: Mid right irregular placement -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="160,80 190,65 220,80 190,95" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="160,80 160,100 190,115 190,95" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="190,95 190,115 220,100 220,80" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Upper irregular extensions - 3 cubes -->
+  <!-- Cube 7: Upper left arm -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="55,60 85,45 115,60 85,75" fill="#ed8936" opacity="0.9"/> <!-- top face -->
+    <polygon points="55,60 55,80 85,95 85,75" fill="#dd6b20" opacity="0.9"/> <!-- left face -->
+    <polygon points="85,75 85,95 115,80 115,60" fill="#c05621" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 8: Upper center protrusion -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="130,70 160,55 190,70 160,85" fill="#ed8936" opacity="0.9"/> <!-- top face -->
+    <polygon points="130,70 130,90 160,105 160,85" fill="#dd6b20" opacity="0.9"/> <!-- left face -->
+    <polygon points="160,85 160,105 190,90 190,70" fill="#c05621" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 9: Irregular top element -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="100,40 130,25 160,40 130,55" fill="#9f7aea" opacity="0.9"/> <!-- top face -->
+    <polygon points="100,40 100,60 130,75 130,55" fill="#805ad5" opacity="0.9"/> <!-- left face -->
+    <polygon points="130,55 130,75 160,60 160,40" fill="#6b46c1" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Irregular connection patterns -->
+  <!-- Zigzag base connection -->
+  <path d="M 70,135 L 145,125 L 205,125" stroke="#1a202c" stroke-width="1.5" opacity="0.4" fill="none"/>
+  
+  <!-- Irregular mid-tier connections -->
+  <path d="M 55,105 L 115,105 L 190,95" stroke="#1a202c" stroke-width="1.2" opacity="0.4" fill="none"/>
+  
+  <!-- Upper irregular branch -->
+  <path d="M 85,75 L 160,85 L 130,55" stroke="#1a202c" stroke-width="1" opacity="0.4" fill="none"/>
+  
+  <!-- Irregular accent lines -->
+  <line x1="25" y1="90" x2="160" y2="40" stroke="#1a202c" stroke-width="0.8" opacity="0.3"/>
+  <line x1="115" y1="110" x2="190" y2="70" stroke="#1a202c" stroke-width="0.8" opacity="0.3"/>
+  <line x1="40" y1="120" x2="235" y2="110" stroke="#1a202c" stroke-width="0.6" opacity="0.2"/>
+  
+  <!-- Polyomino shape markers -->
+  <circle cx="70" cy="120" r="2" fill="#3182ce" opacity="0.4"/>
+  <circle cx="145" cy="95" r="2" fill="#48bb78" opacity="0.4"/>
+  <circle cx="160" cy="70" r="2" fill="#ed8936" opacity="0.4"/>
+  <circle cx="130" cy="40" r="2" fill="#9f7aea" opacity="0.4"/>
+  
+  <!-- Irregular flow indicators -->
+  <polygon points="85,90 90,85 90,95" fill="#1a202c" opacity="0.3"/>
+  <polygon points="145,90 150,85 150,95" fill="#1a202c" opacity="0.3"/>
+  <polygon points="190,80 195,75 195,85" fill="#1a202c" opacity="0.3"/>
+  
+  <!-- Shape boundary emphasis -->
+  <ellipse cx="130" cy="90" rx="70" ry="40" stroke="#1a202c" stroke-width="0.8" opacity="0.2" fill="none" transform="rotate(15 130 90)"/>
+</svg>

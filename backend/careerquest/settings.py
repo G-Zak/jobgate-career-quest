@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
+    "corsheaders",
     "accounts",
     "skills",
     "testsengine",
@@ -60,6 +61,7 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -92,16 +94,11 @@ WSGI_APPLICATION = "careerquest.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'careerquest',          # ← Must match POSTGRES_DB
-        'USER': 'jobgate',
-        'PASSWORD': 'securepass',
-        'HOST': 'db',
-        'PORT': '5432',
-    }
-}
+# Import enhanced database configuration
+from .database_config import DATABASES
+
+# Use the enhanced database configuration
+# DATABASES is already defined in database_config.py
 
 
 # Password validation
@@ -144,3 +141,12 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+CORS_ALLOW_ALL_ORIGINS = True  # For development only
+CORS_ALLOW_CREDENTIALS = True

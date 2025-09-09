@@ -1,0 +1,54 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Complex L-shaped structure with corner extension and asymmetric feature -->
+  <!-- Main L-structure (5 cubes) -->
+  <g id="main-l-structure">
+    <!-- Corner cube -->
+    <g id="corner-cube">
+      <path d="M156 230 L226 200 L296 230 L226 260 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+      <path d="M156 230 L226 260 L226 330 L156 300 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+      <path d="M226 260 L296 230 L296 300 L226 330 Z" fill="#1e40af" stroke="#000" stroke-width="3"/>
+    </g>
+    <!-- Horizontal arm cubes -->
+    <g id="horizontal-arm">
+      <g id="h-cube1">
+        <path d="M296 230 L366 200 L436 230 L366 260 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+        <path d="M296 230 L366 260 L366 330 L296 300 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+        <path d="M366 260 L436 230 L436 300 L366 330 Z" fill="#1e40af" stroke="#000" stroke-width="3"/>
+      </g>
+      <g id="h-cube2">
+        <path d="M436 230 L506 200 L576 230 L506 260 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+        <path d="M436 230 L506 260 L506 330 L436 300 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+        <path d="M506 260 L576 230 L576 300 L506 330 Z" fill="#1e40af" stroke="#000" stroke-width="3"/>
+      </g>
+    </g>
+    <!-- Vertical arm cubes -->
+    <g id="vertical-arm">
+      <g id="v-cube1">
+        <path d="M156 160 L226 130 L296 160 L226 190 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+        <path d="M156 160 L226 190 L226 260 L156 230 Z" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+        <path d="M226 190 L296 160 L296 230 L226 260 Z" fill="#1e40af" stroke="#000" stroke-width="3"/>
+      </g>
+    </g>
+  </g>
+  
+  <!-- Diagonal corner extension (2 cubes in gray) -->
+  <g id="corner-extension">
+    <g id="ext-cube1">
+      <path d="M296 160 L366 130 L436 160 L366 190 Z" fill="#6b7280" stroke="#000" stroke-width="3"/>
+      <path d="M296 160 L366 190 L366 260 L296 230 Z" fill="#4b5563" stroke="#000" stroke-width="3"/>
+      <path d="M366 190 L436 160 L436 230 L366 260 Z" fill="#374151" stroke="#000" stroke-width="3"/>
+    </g>
+    <g id="ext-cube2">
+      <path d="M366 190 L436 160 L506 190 L436 220 Z" fill="#6b7280" stroke="#000" stroke-width="3"/>
+      <path d="M366 190 L436 220 L436 290 L366 260 Z" fill="#4b5563" stroke="#000" stroke-width="3"/>
+      <path d="M436 220 L506 190 L506 260 L436 290 Z" fill="#374151" stroke="#000" stroke-width="3"/>
+    </g>
+  </g>
+  
+  <!-- Asymmetric protrusion on horizontal arm (amber highlight) -->
+  <g id="asymmetric-protrusion">
+    <path d="M401 160 L451 140 L501 160 L451 180 Z" fill="#fbbf24" stroke="#000" stroke-width="3"/>
+    <path d="M401 160 L451 180 L451 230 L401 210 Z" fill="#f59e0b" stroke="#000" stroke-width="3"/>
+    <path d="M451 180 L501 160 L501 210 L451 230 Z" fill="#d97706" stroke="#000" stroke-width="3"/>
+  </g>
+</svg>

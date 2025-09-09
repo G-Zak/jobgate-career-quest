@@ -11,7 +11,7 @@ const HeaderBar = () => {
   };
 
   return (
-    <div className="header-bar h-16 bg-white border-b border-gray-200 px-12">
+    <div className="header-bar h-16 bg-white border-b border-gray-200 px-12 fixed top-0 left-0 right-0 z-20">
       <div className="header-content h-full flex items-center justify-between max-w-screen-2xl mx-auto">
         {/* Logo */}
         <div className="logo-container flex items-center">

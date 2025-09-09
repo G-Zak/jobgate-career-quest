@@ -4,8 +4,12 @@ import BadgesGrid from './BadgesGrid';
 import SkillsChart from './SkillsChart';
 import TestTimeline from './TestTimeline';
 import JobRecommendations from './JobRecommendations';
+import { useScrollToTop } from '../../../shared/utils/scrollUtils';
 
 const Dashboard = () => {
+  // Universal scroll management
+  useScrollToTop([], { smooth: true }); // Scroll on component mount
+  
   // Mock data - replace with API calls
   const userData = {
     name: "zakaria",

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -9,8 +9,13 @@ import Dashboard from '../../../features/candidate-dashboard/components/Dashboar
 import AvailableTests from '../../../features/skills-assessment/components/AvailableTests';
 import TechnicalTests from '../../../features/skills-assessment/components/TechnicalTests';
 import TestLayout from '../../../features/skills-assessment/components/TestLayout';
+import VerbalReasoningTest from '../../../features/skills-assessment/components/VerbalReasoningTest';
+import SpatialReasoningTest from '../../../features/skills-assessment/components/SpatialReasoningTest';
+import SituationalJudgmentTest from '../../../features/skills-assessment/components/SituationalJudgmentTest';
+import MasterSJTTest from '../../../features/skills-assessment/components/MasterSJTTest';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
+import { useScrollOnChange } from '../../utils/scrollUtils';
 import formationTechnique from '../../../assets/images/ui/formation_technique.avif';
 import betterImpressions from '../../../assets/images/ui/better_impressions.avif';
 
@@ -18,6 +23,33 @@ const MainDashboard = () => {
   const [activeSection, setActiveSection] = useState('applications');
   const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
+  const [currentTestFilter, setCurrentTestFilter] = useState(null);
+  const [currentTestId, setCurrentTestId] = useState(null);
+
+  // Universal scroll management using scroll utilities
+  useScrollOnChange(activeSection, { smooth: true, attempts: 3 });
+  useScrollOnChange(currentTestId, { smooth: true, attempts: 3 });
+
+  // Lock body scroll on test views so only the test area scrolls
+  useEffect(() => {
+    const isTestView = (
+      activeSection === 'spatial-reasoning-test' ||
+      activeSection === 'situational-judgment-test' ||
+      activeSection === 'master-sjt-test' ||
+      activeSection === 'test-session' ||
+      (typeof activeSection === 'string' && activeSection.startsWith('verbal-reasoning-test'))
+    );
+
+    if (isTestView) {
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = previousOverflow || '';
+      };
+    } else {
+      document.body.style.overflow = '';
+    }
+  }, [activeSection]);
 
   // Map skill categories to test types
   const skillToTestMap = {
@@ -58,8 +90,52 @@ const MainDashboard = () => {
     const normalizedSkill = skillName.toLowerCase();
     const testType = skillToTestMap[normalizedSkill] || 'available-tests';
     
-    setActiveSection(testType);
+    // Set the filter based on the skill category
+    setCurrentTestFilter(normalizedSkill);
+    setActiveSection('available-tests');
     // Keep dropdown open - don't close it automatically
+  };
+
+  const handleStartTest = (testId) => {
+    console.log('Starting test:', testId);
+    
+    // Handle Master SJT specially
+    if (testId === 'MASTER-SJT') {
+      setActiveSection('master-sjt-test');
+      return;
+    }
+    
+    const isVerbalComprehensive = testId === 'VERBAL_COMPREHENSIVE';
+    const isVerbalFilterAndNumber = (currentTestFilter === 'verbal' && typeof testId === 'number');
+    const isStringWithVerbal = (typeof testId === 'string' && testId.toLowerCase().includes('verbal'));
+    const isVRTString = (typeof testId === 'string' && testId.startsWith('VRT'));
+    
+    const isSpatialFilterAndNumber = (currentTestFilter === 'spatial' && typeof testId === 'number');
+    const isStringWithSpatial = (typeof testId === 'string' && testId.toLowerCase().includes('spatial'));
+    const isSRTString = (typeof testId === 'string' && testId.startsWith('SRT'));
+    
+    const isSituationalFilterAndNumber = (currentTestFilter === 'situational' && typeof testId === 'number');
+    const isStringWithSituational = (typeof testId === 'string' && testId.toLowerCase().includes('situational'));
+    const isSJTString = (typeof testId === 'string' && testId.startsWith('SJT'));
+    
+    // Set the current test ID
+    setCurrentTestId(testId);
+    
+    // Check if it's a verbal reasoning test
+    if (isVerbalComprehensive || isVerbalFilterAndNumber || isStringWithVerbal || isVRTString) {
+      // Extract language from test ID if it's comprehensive
+      const language = testId.toString().includes('_FRENCH') ? 'french' : 'english';
+      setActiveSection(`verbal-reasoning-test-${language}`);
+    } else if (isSpatialFilterAndNumber || isStringWithSpatial || isSRTString) {
+      // Handle spatial reasoning tests
+      setActiveSection('spatial-reasoning-test');
+    } else if (isSituationalFilterAndNumber || isStringWithSituational || isSJTString) {
+      // Handle situational judgment tests
+      setActiveSection('situational-judgment-test');
+    } else {
+      // Handle other test types (numerical, logical, etc.)
+      setActiveSection('test-session');
+    }
   };
 
   const nextSlide = () => {
@@ -71,9 +147,9 @@ const MainDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div id="dashboard-root" className="min-h-screen bg-gray-50">
       {/* Top Header Bar */}
-      <div className="header-bar h-16 bg-white border-b border-gray-200 px-12">
+      <div id="app-header" className="header-bar h-16 bg-white border-b border-gray-200 px-12 fixed top-0 left-0 right-0 z-20">
         <div className="header-content h-full flex items-center justify-between max-w-screen-2xl mx-auto">
           {/* Logo */}
           <div className="logo-container flex items-center">
@@ -85,7 +161,7 @@ const MainDashboard = () => {
           </div>
           
           {/* Center Navigation */}
-          <nav className="main-navigation flex items-center space-x-8">
+          <nav id="main-nav" className="main-navigation flex items-center space-x-8">
             <button 
               onClick={() => setActiveSection('dashboard')}
               className={`nav-button text-base font-medium transition-colors pb-1 ${
@@ -125,10 +201,10 @@ const MainDashboard = () => {
         </div>
       </div>
 
-      <div className="main-layout flex max-w-screen-2xl mx-auto px-12 pt-12 gap-8 items-start">
+      <div id="dashboard-layout" className="main-layout flex max-w-screen-2xl mx-auto px-12 pt-28 gap-8 items-start">
         {/* Left Navigation Strip */}
-        <div className="sidebar-navigation w-72">
-          <div className="sidebar-card w-full bg-white rounded-xl shadow-sm sticky top-28">
+        <div id="sidebar" className="sidebar-navigation w-72">
+          <div className="sidebar-card w-72 bg-white rounded-xl shadow-sm fixed top-28 h-[calc(100vh-8rem)] overflow-y-auto z-10">
             {/* Primary Navigation */}
             <div className="primary-nav-section p-6 space-y-3">
               <button 
@@ -169,7 +245,7 @@ const MainDashboard = () => {
             <div className="nav-separator border-t border-gray-200 mx-6"></div>
 
             {/* Skills Validation Dropdown */}
-            <div className="skills-validation-section p-6">
+            <div id="skills-validation" className="skills-validation-section p-6">
               <button 
                 onClick={() => setShowSkillsDropdown(!showSkillsDropdown)}
                 className="skills-dropdown-trigger w-full flex items-center justify-between px-4 py-3 rounded-lg text-left text-gray-700 text-sm font-semibold transition-colors hover:bg-blue-50"
@@ -180,7 +256,7 @@ const MainDashboard = () => {
 
               {/* Skills Categories Sub-options */}
               {showSkillsDropdown && (
-                <div className="skills-dropdown-menu mt-3 pl-4 space-y-2 max-h-48 overflow-y-auto">
+                <div id="skills-dropdown" className="skills-dropdown-menu mt-3 pl-4 space-y-2 max-h-48 overflow-y-auto">
                   {skillCategories.map((skill, index) => (
                     <button
                       key={index}
@@ -240,11 +316,44 @@ const MainDashboard = () => {
         </div>
 
         {/* Central Content Zone */}
-        <div className="main-content-area flex-1 max-w-4xl">
+        <div id="main-content" className="main-content-area flex-1 max-w-4xl">
+          {/* Scrollable Content Container */}
+          <div className="h-[calc(100vh-7rem)] overflow-y-auto overflow-x-hidden">
+            {/* Debug info (hidden by default) */}
+            {false && (
+              <div style={{position: 'fixed', top: 0, right: 0, background: 'yellow', padding: '10px', zIndex: 9999, fontSize: '12px'}}>
+                ActiveSection: {activeSection}<br/>
+                CurrentTestId: {currentTestId}<br/>
+                CurrentTestFilter: {currentTestFilter}
+              </div>
+            )}
+          
           {activeSection === 'dashboard' ? (
             <Dashboard />
           ) : activeSection === 'test-session' ? (
             <TestLayout />
+          ) : activeSection.startsWith('verbal-reasoning-test') ? (
+            <VerbalReasoningTest 
+              onBackToDashboard={() => setActiveSection('available-tests')} 
+              language={activeSection.includes('french') ? 'french' : 'english'}
+              testId={currentTestId}
+            />
+          ) : activeSection === 'spatial-reasoning-test' ? (
+            <SpatialReasoningTest 
+              onBackToDashboard={() => setActiveSection('available-tests')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'situational-judgment-test' ? (
+            <SituationalJudgmentTest 
+              onBackToDashboard={() => setActiveSection('available-tests')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'master-sjt-test' ? (
+            <MasterSJTTest 
+              onClose={() => {
+                setActiveSection('available-tests');
+              }}
+            />
           ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
             // Show AvailableTests for most test categories
             activeSection === 'technical-tests' ? (
@@ -252,7 +361,8 @@ const MainDashboard = () => {
             ) : (
               <AvailableTests 
                 onBackToDashboard={() => setActiveSection('applications')} 
-                onStartTest={() => setActiveSection('test-session')}
+                onStartTest={handleStartTest}
+                testFilter={currentTestFilter}
               />
             )
           ) : activeSection.startsWith('skill-') ? (
@@ -439,6 +549,7 @@ const MainDashboard = () => {
               </div>
             </>
           )}
+          </div>
         </div>
 
         {/* Right Side Strip */}

@@ -1,0 +1,97 @@
+<svg width="240" height="180" viewBox="0 0 240 180" xmlns="http://www.w3.org/2000/svg">
+  <!-- Multi-directional hub - 10 cubes radiating from central hub -->
+  
+  <!-- Central hub cube -->
+  <!-- Cube 1: Hub center -->
+  <g stroke="#2d3748" stroke-width="2" fill="none">
+    <polygon points="105,85 135,70 165,85 135,100" fill="#e53e3e" opacity="0.95"/> <!-- top face -->
+    <polygon points="105,85 105,105 135,120 135,100" fill="#c53030" opacity="0.95"/> <!-- left face -->
+    <polygon points="135,100 135,120 165,105 165,85" fill="#9c2c2c" opacity="0.95"/> <!-- right face -->
+  </g>
+  
+  <!-- North extension (2 cubes) -->
+  <!-- Cube 2: North 1 -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="105,55 135,40 165,55 135,70" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="105,55 105,75 135,90 135,70" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="135,70 135,90 165,75 165,55" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 3: North 2 -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="105,25 135,10 165,25 135,40" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="105,25 105,45 135,60 135,40" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="135,40 135,60 165,45 165,25" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- South extension (2 cubes) -->
+  <!-- Cube 4: South 1 -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="105,115 135,100 165,115 135,130" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="105,115 105,135 135,150 135,130" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="135,130 135,150 165,135 165,115" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 5: South 2 -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="105,145 135,130 165,145 135,160" fill="#3182ce" opacity="0.9"/> <!-- top face -->
+    <polygon points="105,145 105,165 135,180 135,160" fill="#2c5282" opacity="0.9"/> <!-- left face -->
+    <polygon points="135,160 135,180 165,165 165,145" fill="#2a69ac" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- East extension (2 cubes) -->
+  <!-- Cube 6: East 1 -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="165,85 195,70 225,85 195,100" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="165,85 165,105 195,120 195,100" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="195,100 195,120 225,105 225,85" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 7: East 2 -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="195,70 225,55 255,70 225,85" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="195,70 195,90 225,105 225,85" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="225,85 225,105 255,90 255,70" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- West extension (2 cubes) -->
+  <!-- Cube 8: West 1 -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="45,85 75,70 105,85 75,100" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="45,85 45,105 75,120 75,100" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="75,100 75,120 105,105 105,85" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Cube 9: West 2 -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="15,70 45,55 75,70 45,85" fill="#48bb78" opacity="0.9"/> <!-- top face -->
+    <polygon points="15,70 15,90 45,105 45,85" fill="#38a169" opacity="0.9"/> <!-- left face -->
+    <polygon points="45,85 45,105 75,90 75,70" fill="#2f855a" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Vertical extension (1 cube above hub) -->
+  <!-- Cube 10: Up -->
+  <g stroke="#2d3748" stroke-width="1.5" fill="none">
+    <polygon points="120,55 150,40 180,55 150,70" fill="#9f7aea" opacity="0.9"/> <!-- top face -->
+    <polygon points="120,55 120,75 150,90 150,70" fill="#805ad5" opacity="0.9"/> <!-- left face -->
+    <polygon points="150,70 150,90 180,75 180,55" fill="#6b46c1" opacity="0.9"/> <!-- right face -->
+  </g>
+  
+  <!-- Hub connection lines -->
+  <!-- Cardinal directions -->
+  <line x1="135" y1="100" x2="135" y2="10" stroke="#e53e3e" stroke-width="2" opacity="0.6"/> <!-- North -->
+  <line x1="135" y1="100" x2="135" y2="160" stroke="#e53e3e" stroke-width="2" opacity="0.6"/> <!-- South -->
+  <line x1="135" y1="85" x2="225" y2="70" stroke="#e53e3e" stroke-width="2" opacity="0.6"/> <!-- East -->
+  <line x1="135" y1="85" x2="45" y2="70" stroke="#e53e3e" stroke-width="2" opacity="0.6"/> <!-- West -->
+  <line x1="135" y1="70" x2="150" y2="40" stroke="#e53e3e" stroke-width="2" opacity="0.6"/> <!-- Up -->
+  
+  <!-- Hub emphasis -->
+  <circle cx="135" cy="85" r="6" fill="#e53e3e" opacity="0.4"/>
+  
+  <!-- Directional indicators -->
+  <polygon points="135,5 140,15 130,15" fill="#3182ce" opacity="0.7"/> <!-- North arrow -->
+  <polygon points="135,175 130,165 140,165" fill="#3182ce" opacity="0.7"/> <!-- South arrow -->
+  <polygon points="255,70 245,65 245,75" fill="#48bb78" opacity="0.7"/> <!-- East arrow -->
+  <polygon points="15,70 25,75 25,65" fill="#48bb78" opacity="0.7"/> <!-- West arrow -->
+  <polygon points="150,35 155,45 145,45" fill="#9f7aea" opacity="0.7"/> <!-- Up arrow -->
+</svg>

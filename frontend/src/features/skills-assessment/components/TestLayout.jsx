@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import HeaderBar from './HeaderBar'; // ✅ Important
 import TestHeader from './TestHeader';
 import TestContent from './TestContent';
+import { useScrollToTop } from '../../../shared/utils/scrollUtils';
 
 const TestLayout = () => {
   const [step, setStep] = useState('instructions');
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [timer, setTimer] = useState(18 * 60); // 18 minutes
+
+  // Universal scroll management
+  useScrollToTop([], { smooth: true }); // Scroll on component mount
 
   useEffect(() => {
     if (step !== 'question') return;

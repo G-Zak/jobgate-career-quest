@@ -1,0 +1,49 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- 3-level stepped staircase structure in isometric view -->
+  <!-- Level 1: 1 cube height (leftmost) -->
+  <g id="level1">
+    <g id="step1-cube1">
+      <path d="M86 300 L156 270 L226 300 L156 330 Z" fill="#93c5fd" stroke="#000" stroke-width="3"/>
+      <path d="M86 300 L156 330 L156 400 L86 370 Z" fill="#60a5fa" stroke="#000" stroke-width="3"/>
+      <path d="M156 330 L226 300 L226 370 L156 400 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+    </g>
+  </g>
+  
+  <!-- Level 2: 2 cubes height (center) -->
+  <g id="level2">
+    <!-- Bottom cube of level 2 -->
+    <g id="step2-cube1">
+      <path d="M226 300 L296 270 L366 300 L296 330 Z" fill="#60a5fa" stroke="#000" stroke-width="3"/>
+      <path d="M226 300 L296 330 L296 400 L226 370 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M296 330 L366 300 L366 370 L296 400 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+    </g>
+    <!-- Top cube of level 2 -->
+    <g id="step2-cube2">
+      <path d="M226 230 L296 200 L366 230 L296 260 Z" fill="#93c5fd" stroke="#000" stroke-width="3"/>
+      <path d="M226 230 L296 260 L296 330 L226 300 Z" fill="#60a5fa" stroke="#000" stroke-width="3"/>
+      <path d="M296 260 L366 230 L366 300 L296 330 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+    </g>
+  </g>
+  
+  <!-- Level 3: 3 cubes height (rightmost) -->
+  <g id="level3">
+    <!-- Bottom cube of level 3 -->
+    <g id="step3-cube1">
+      <path d="M366 300 L436 270 L506 300 L436 330 Z" fill="#60a5fa" stroke="#000" stroke-width="3"/>
+      <path d="M366 300 L436 330 L436 400 L366 370 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+      <path d="M436 330 L506 300 L506 370 L436 400 Z" fill="#2563eb" stroke="#000" stroke-width="3"/>
+    </g>
+    <!-- Middle cube of level 3 -->
+    <g id="step3-cube2">
+      <path d="M366 230 L436 200 L506 230 L436 260 Z" fill="#93c5fd" stroke="#000" stroke-width="3"/>
+      <path d="M366 230 L436 260 L436 330 L366 300 Z" fill="#60a5fa" stroke="#000" stroke-width="3"/>
+      <path d="M436 260 L506 230 L506 300 L436 330 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+    </g>
+    <!-- Top cube of level 3 -->
+    <g id="step3-cube3">
+      <path d="M366 160 L436 130 L506 160 L436 190 Z" fill="#93c5fd" stroke="#000" stroke-width="3"/>
+      <path d="M366 160 L436 190 L436 260 L366 230 Z" fill="#60a5fa" stroke="#000" stroke-width="3"/>
+      <path d="M436 190 L506 160 L506 230 L436 260 Z" fill="#3b82f6" stroke="#000" stroke-width="3"/>
+    </g>
+  </g>
+</svg>
