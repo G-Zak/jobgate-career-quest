@@ -147,13 +147,6 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
         },
         { 
           id: 2, 
-          title: "VRT4", 
-          unlocked: true, 
-          level: "Expert",
-          type: "verbal_analogies",
-          description: "Comprehensive analogies across 9 different types",
-          duration: "25 min",
-          questions: 30,
           title: "VRT2", 
           unlocked: true, 
           level: "Intermediate",

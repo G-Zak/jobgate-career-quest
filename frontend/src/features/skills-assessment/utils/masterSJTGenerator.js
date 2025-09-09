@@ -43,6 +43,9 @@ class MasterSJTGenerator {
    * Check if user can take a test (respects cooldown period)
    */
   canUserTakeTest(userId) {
+    // DEVELOPMENT: Temporarily disable cooldown for testing
+    return true;
+    
     const lastTestDate = this.lastTestDates.get(userId);
     if (!lastTestDate) return true;
     
@@ -60,6 +63,19 @@ class MasterSJTGenerator {
     const timeSinceLastTest = Date.now() - lastTestDate;
     const timeRemaining = this.retakeCooldown - timeSinceLastTest;
     return Math.ceil(timeRemaining / (24 * 60 * 60 * 1000));
+  }
+
+  /**
+   * Clear test history for development (removes cooldown restrictions)
+   */
+  clearTestHistory(userId = null) {
+    if (userId) {
+      this.lastTestDates.delete(userId);
+      this.usedQuestions.delete(userId);
+    } else {
+      this.lastTestDates.clear();
+      this.usedQuestions.clear();
+    }
   }
 
   /**
@@ -141,7 +157,7 @@ class MasterSJTGenerator {
     // Shuffle questions and choices
     const shuffledQuestions = this.shuffleArray([...selectedQuestions])
       .slice(0, options.questionCount)
-      .map(this.randomizeChoices);
+      .map(question => this.randomizeChoices(question));
 
     // Track used questions
     const usedIds = this.usedQuestions.get(userId) || new Set();
@@ -213,7 +229,7 @@ class MasterSJTGenerator {
   /**
    * Randomize answer choices order
    */
-  randomizeChoices(question) {
+  randomizeChoices = (question) => {
     const originalAnswer = question.choices[question.answer_index];
     const shuffledChoices = this.shuffleArray([...question.choices]);
     const newAnswerIndex = shuffledChoices.indexOf(originalAnswer);
@@ -256,7 +272,7 @@ class MasterSJTGenerator {
   /**
    * Shuffle array using Fisher-Yates algorithm
    */
-  shuffleArray(array) {
+  shuffleArray = (array) => {
     const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));

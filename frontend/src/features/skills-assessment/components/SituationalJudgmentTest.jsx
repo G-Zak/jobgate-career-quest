@@ -24,6 +24,7 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
   const [testData, setTestData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [score, setScore] = useState(0);
+  const [loadError, setLoadError] = useState(null);
 
   // Utility function to shuffle array (Fisher-Yates algorithm)
   const shuffleArray = (array) => {
@@ -35,40 +36,45 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
     return shuffled;
   };
 
-  // Function to load test data with random selection
+  // Function to load test data with robust export support and error handling
   const loadTestData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/data/masterSJTPool.jsonl');
-      const text = await response.text();
-      const lines = text.trim().split('\n').filter(line => line.trim());
-      
-      // Parse all questions from the master pool
-      const allQuestions = lines.map(line => JSON.parse(line));
-      
-      // Randomly select 20 questions for this test instance
-      const selectedQuestions = shuffleArray(allQuestions).slice(0, 20);
-      
-      // Shuffle answer choices for each question to prevent answer patterns
-      const questionsWithShuffledChoices = selectedQuestions.map(q => {
-        const originalChoices = [...q.choices];
-        const shuffledChoices = shuffleArray(q.choices);
-        const newCorrectIndex = shuffledChoices.indexOf(originalChoices[q.answer_index]);
-        
-        return {
-          ...q,
-          choices: shuffledChoices,
-          answer_index: newCorrectIndex
-        };
-      });
-      
-      setTestData(questionsWithShuffledChoices);
-      setLoading(false);
-      console.log(`🎯 Loaded ${questionsWithShuffledChoices.length} randomly selected questions from pool of ${allQuestions.length}`);
+      setLoadError(null);
+
+      // Dynamically import the generator; support various export shapes
+      const mod = await import('../utils/masterSJTGenerator');
+      const maybeDefault = mod?.default;
+      const maybeFunc = mod?.generateTest;
+
+      let generatorInstance = null;
+      let testResult = null;
+
+      if (typeof maybeDefault === 'function') {
+        // default export is a class/constructor
+        generatorInstance = new maybeDefault();
+        testResult = generatorInstance.generateTest('test-user', { questionCount: 20 });
+      } else if (maybeDefault && typeof maybeDefault.generateTest === 'function') {
+        // default export is a singleton/object with generateTest
+        testResult = maybeDefault.generateTest('test-user', { questionCount: 20 });
+      } else if (typeof maybeFunc === 'function') {
+        // named export function
+        testResult = maybeFunc('test-user', { questionCount: 20 });
+      } else {
+        throw new Error('masterSJTGenerator has no usable export (expected class, object, or function with generateTest)');
+      }
+
+      if (!testResult || !Array.isArray(testResult.questions) || testResult.questions.length === 0) {
+        throw new Error('SJT generator returned no questions');
+      }
+
+      setTestData(testResult.questions);
+      console.log(`🎯 Loaded ${testResult.questions.length} randomly selected questions from master SJT pool`);
     } catch (error) {
       console.error('❌ Error loading SJT data:', error);
-      // Fallback to basic questions if loading fails
       setTestData([]);
+      setLoadError(error?.message || String(error));
+    } finally {
       setLoading(false);
     }
   };
@@ -76,6 +82,7 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
   // Function to reset test state and load new questions for retake
   const handleRetakeTest = async () => {
     console.log('🔄 Starting test retake with new random questions...');
+    setLoadError(null);
     // Reset all state variables
     setCurrentQuestion(0);
     setSelectedAnswers({});
@@ -301,13 +308,30 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
             </div>
           </div>
 
+          {/* Error and warning messages */}
+          {loadError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-sm text-red-700">
+              Failed to load questions: {loadError}. Try retaking or reload the page.
+            </div>
+          )}
+          {!loadError && !loading && testData.length === 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm text-amber-800">
+              No questions loaded yet. Please try again.
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={startTest}
-              className="flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-lg font-semibold"
+              disabled={loading || testData.length === 0}
+              className={`flex items-center justify-center gap-2 px-8 py-4 rounded-lg transition-colors text-lg font-semibold
+                ${loading || testData.length === 0
+                  ? 'bg-blue-300 text-white cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
             >
               <FaPlay className="text-sm" />
-              Start Test
+              {loading ? 'Loading…' : 'Start Test'}
             </button>
             <button
               onClick={onBackToDashboard || (() => navigate('/dashboard/skills'))}
@@ -322,7 +346,30 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
   }
 
   const currentQ = testData[currentQuestion];
-  if (!currentQ) return null;
+  if (!currentQ) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          Unable to start the test because no question is available.
+          {loadError ? <> Error: {loadError}</> : null}
+        </div>
+        <div className="mt-4">
+          <button
+            onClick={onBackToDashboard || (() => navigate('/dashboard/skills'))}
+            className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            Back to Dashboard
+          </button>
+          <button
+            onClick={handleRetakeTest}
+            className="ml-3 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Retry Loading Questions
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div

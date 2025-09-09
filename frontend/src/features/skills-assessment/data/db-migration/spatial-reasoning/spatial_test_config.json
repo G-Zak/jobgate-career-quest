@@ -1,0 +1,38 @@
+{
+  "test_name": "Spatial Reasoning Assessment",
+  "description": "Multi-section spatial reasoning test covering various spatial abilities",
+  "total_duration_minutes": 249,
+  "sections": [
+    {
+      "section_id": "spatial_section_1",
+      "name": "2D Mental Rotation",
+      "description": "Basic 2D shape rotation tasks",
+      "duration_minutes": 60,
+      "question_count": 20
+    },
+    {
+      "section_id": "spatial_section_2", 
+      "name": "3D Mental Rotation",
+      "description": "3D object rotation and visualization",
+      "duration_minutes": 45,
+      "question_count": 15
+    },
+    {
+      "section_id": "spatial_section_3",
+      "name": "Spatial Visualization",
+      "description": "Complex spatial reasoning and pattern recognition",
+      "duration_minutes": 90,
+      "question_count": 30
+    },
+    {
+      "section_id": "spatial_section_4",
+      "name": "Cross-Section Analysis", 
+      "description": "Understanding 3D objects from 2D cross-sections",
+      "duration_minutes": 40,
+      "question_count": 15
+    }
+  ],
+  "difficulty_levels": ["easy", "medium", "hard"],
+  "scoring_method": "adaptive",
+  "image_path_base": "/assets/images/spatial/questions/"
+}
