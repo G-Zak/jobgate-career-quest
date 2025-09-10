@@ -5,11 +5,13 @@ import {
   ChevronRightIcon,
   UserCircleIcon
 } from '@heroicons/react/24/outline';
+import { useDarkMode } from '../../../contexts/DarkModeContext';
 import Dashboard from '../../../features/candidate-dashboard/components/DashboardCandidat';
 import AvailableTests from '../../../features/skills-assessment/components/AvailableTests';
 import TechnicalTests from '../../../features/skills-assessment/components/TechnicalTests';
 import TestLayout from '../../../features/skills-assessment/components/TestLayout';
 import VerbalReasoningTest from '../../../features/skills-assessment/components/VerbalReasoningTest';
+import ProfilePage from '../../../features/profile/components/ProfilePage';
 import SpatialReasoningTest from '../../../features/skills-assessment/components/SpatialReasoningTest';
 import DiagrammaticReasoningTest from '../../../features/skills-assessment/components/DiagrammaticReasoningTest';
 import AbstractReasoningTest from '../../../features/skills-assessment/components/AbstractReasoningTest';
@@ -25,6 +27,7 @@ import SkillBasedTests from '../../../features/skills-assessment/components/Skil
 import TestAdministration from '../../../features/skills-assessment/components/TestAdministration';
 import TestDebugPage from '../../../features/skills-assessment/components/TestDebugPage';
 import TestHistoryDashboard from '../../../features/candidate-dashboard/components/TestHistoryDashboard';
+import JobRecommendationsPage from '../../../features/job-recommendations/components/JobRecommendationsPage';
 import { ChallengesList, ChallengeDetail, CodingDashboard } from '../../../features/coding-challenges/components';
 import DebugChallenges from '../../../features/coding-challenges/components/DebugChallenges';
 import SkillTestsOverview from '../../../features/skills-assessment/components/SkillTestsOverview';
@@ -36,8 +39,10 @@ import formationTechnique from '../../../assets/images/ui/formation_technique.av
 import betterImpressions from '../../../assets/images/ui/better_impressions.avif';
 
 const MainDashboard = () => {
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
   const [activeSection, setActiveSection] = useState('applications');
   const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [currentTestFilter, setCurrentTestFilter] = useState(null);
   const [currentTestId, setCurrentTestId] = useState(null);
@@ -47,6 +52,23 @@ const MainDashboard = () => {
   // Universal scroll management using scroll utilities
   useScrollOnChange(activeSection, { smooth: true, attempts: 3 });
   useScrollOnChange(currentTestId, { smooth: true, attempts: 3 });
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.profile-dropdown-container')) {
+        setShowProfileDropdown(false);
+      }
+      if (!event.target.closest('#skills-validation')) {
+        setShowSkillsDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Lock body scroll on test views so only the test area scrolls
   useEffect(() => {
@@ -241,9 +263,9 @@ const MainDashboard = () => {
   };
 
   return (
-    <div id="dashboard-root" className="min-h-screen bg-gray-50">
+    <div id="dashboard-root" className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Top Header Bar */}
-      <div id="app-header" className="header-bar h-16 bg-white border-b border-gray-200 px-12 fixed top-0 left-0 right-0 z-20">
+      <div id="app-header" className="header-bar h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-12 fixed top-0 left-0 right-0 z-20">
         <div className="header-content h-full flex items-center justify-between max-w-screen-2xl mx-auto">
           {/* Logo */}
           <div className="logo-container flex items-center">
@@ -261,7 +283,7 @@ const MainDashboard = () => {
               className={`nav-button text-base font-medium transition-colors pb-1 ${
                 activeSection === 'dashboard' 
                   ? 'text-blue-500 border-b-2 border-blue-500' 
-                  : 'text-gray-700 hover:text-blue-500'
+                  : 'text-gray-700 dark:text-gray-300 hover:text-blue-500'
               }`}
             >
               Tableau de bord
@@ -272,7 +294,7 @@ const MainDashboard = () => {
               className={`nav-button text-base font-medium transition-colors pb-1 ${
                 activeSection === 'jobs' 
                   ? 'text-blue-500 border-b-2 border-blue-500' 
-                  : 'text-gray-700 hover:text-blue-500'
+                  : 'text-gray-700 dark:text-gray-300 hover:text-blue-500'
               }`}
             >
               Offres d'emploi
@@ -283,7 +305,7 @@ const MainDashboard = () => {
               className={`nav-button text-base font-medium transition-colors pb-1 ${
                 activeSection === 'career' 
                   ? 'text-blue-500 border-b-2 border-blue-500' 
-                  : 'text-gray-700 hover:text-blue-500'
+                  : 'text-gray-700 dark:text-gray-300 hover:text-blue-500'
               }`}
             >
               Conseils de carrière
@@ -291,14 +313,169 @@ const MainDashboard = () => {
           </nav>
 
           {/* Right Avatar */}
-          <div className="user-avatar w-8 h-8 bg-gray-300 rounded-full"></div>
+          <div className="relative profile-dropdown-container">
+            <button 
+              onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+              className="user-avatar w-8 h-8 bg-gray-300 rounded-full hover:bg-gray-400 transition-colors flex items-center justify-center"
+            >
+              <UserCircleIcon className="w-6 h-6 text-gray-600" />
+            </button>
+            
+            {/* Profile Dropdown */}
+            {showProfileDropdown && (
+              <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
+                {/* User Info Header */}
+                <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                      YA
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">Yassine</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">yassine@jobgate.com</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Menu Items */}
+                <div className="py-2">
+                  {/* Profile */}
+                  <button
+                    onClick={() => {
+                      setActiveSection('profile');
+                      setShowProfileDropdown(false);
+                    }}
+                    className="w-full flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <UserCircleIcon className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
+                    <span>Profile</span>
+                  </button>
+
+                  {/* Settings */}
+                  <button
+                    onClick={() => {
+                      setActiveSection('settings');
+                      setShowProfileDropdown(false);
+                    }}
+                    className="w-full flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <svg className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>Settings</span>
+                  </button>
+
+                  {/* Notifications */}
+                  <button
+                    onClick={() => {
+                      setActiveSection('notifications');
+                      setShowProfileDropdown(false);
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <div className="flex items-center">
+                      <svg className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Notifications</span>
+                    </div>
+                    <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center">3</span>
+                  </button>
+
+                  {/* Language Section */}
+                  <div className="px-4 py-2">
+                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">LANGUAGE</p>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      console.log('Language settings');
+                      setShowProfileDropdown(false);
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <div className="flex items-center">
+                      <svg className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                      </svg>
+                      <span>English</span>
+                    </div>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">EN</span>
+                  </button>
+
+                  {/* Appearance Section */}
+                  <div className="px-4 py-2 mt-2">
+                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">APPEARANCE</p>
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleDarkMode();
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <div className="flex items-center">
+                      <svg className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                      </svg>
+                      <span>Dark Mode</span>
+                    </div>
+                    <div 
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${isDarkMode ? 'bg-blue-600' : 'bg-gray-200'}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleDarkMode();
+                      }}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ${isDarkMode ? 'translate-x-4' : 'translate-x-0.5'}`}></span>
+                    </div>
+                  </button>
+
+                  {/* Help & Support */}
+                  <button
+                    onClick={() => {
+                      setActiveSection('help');
+                      setShowProfileDropdown(false);
+                    }}
+                    className="w-full flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <svg className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Help & Support</span>
+                  </button>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-100 dark:border-gray-700 my-2"></div>
+
+                  {/* Sign Out */}
+                  <button
+                    onClick={() => {
+                      console.log('Sign out');
+                      setShowProfileDropdown(false);
+                    }}
+                    className="w-full flex items-center px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  >
+                    <svg className="w-4 h-4 mr-3 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       <div id="dashboard-layout" className="main-layout flex max-w-screen-2xl mx-auto px-12 pt-28 gap-8 items-start">
         {/* Left Navigation Strip */}
         <div id="sidebar" className="sidebar-navigation w-72">
-          <div className="sidebar-card w-72 bg-white rounded-xl shadow-sm fixed top-28 h-[calc(100vh-8rem)] overflow-y-auto z-10">
+          <div className="sidebar-card w-72 bg-white dark:bg-gray-800 rounded-xl shadow-sm fixed top-28 h-[calc(100vh-8rem)] overflow-y-auto z-10">
             {/* Primary Navigation */}
             <div className="primary-nav-section p-6 space-y-3">
               <button 
@@ -444,11 +621,11 @@ const MainDashboard = () => {
               </button>
               
               <button 
-                onClick={() => setActiveSection('mon-espace')}
+                onClick={() => setActiveSection('profile')}
                 className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
-                  activeSection === 'mon-espace'
+                  activeSection === 'profile'
                     ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                    : 'text-gray-700 hover:bg-blue-50'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700'
                 }`}
               >
                 Mon espace
@@ -605,38 +782,14 @@ const MainDashboard = () => {
                 </button>
               </div>
             </div>
-          ) : activeSection === 'mon-espace' ? (
-            <div className="space-y-6">
-              <div className="text-center py-12">
-                <h1 className="text-3xl font-bold text-[#4A5869] mb-4">Mon Espace</h1>
-                <p className="text-lg text-[#4A5869]/70 max-w-3xl mx-auto">
-                  Gérez votre profil, vos préférences et vos paramètres personnels.
-                </p>
-              </div>
-              <div className="bg-white rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8">
-                <h2 className="text-xl font-semibold text-[#4A5869] mb-4">Espace Personnel</h2>
-                <p className="text-[#4A5869]/70">
-                  Votre espace personnel sera implémenté ici avec la gestion du profil et les paramètres.
-                </p>
-              </div>
-            </div>
+          ) : activeSection === 'profile' ? (
+            <ProfilePage />
           ) : activeSection === 'offres-recommandees' ? (
-            <div className="space-y-6">
-              <div className="text-center py-12">
-                <h1 className="text-3xl font-bold text-[#4A5869] mb-4">Offres Recommandées</h1>
-                <p className="text-lg text-[#4A5869]/70 max-w-3xl mx-auto">
-                  Découvrez les offres d'emploi personnalisées en fonction de votre profil et de vos compétences.
-                </p>
-              </div>
-              <div className="bg-white rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8">
-                <h2 className="text-xl font-semibold text-[#4A5869] mb-4">Recommandations Personnalisées</h2>
-                <p className="text-[#4A5869]/70">
-                  Le système de recommandations d'offres sera implémenté ici avec des suggestions basées sur votre profil.
-                </p>
-              </div>
-            </div>
+            <JobRecommendationsPage />
           ) : activeSection === 'historique-tests' ? (
             <TestHistoryDashboard />
+          ) : activeSection === 'profile' ? (
+            <ProfilePage />
           ) : activeSection === 'coding-challenges' ? (
             <ChallengesList onSelectChallenge={handleSelectChallenge} />
           ) : activeSection === 'coding-dashboard' ? (

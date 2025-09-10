@@ -4,6 +4,7 @@ import DynamicBadges from './DynamicBadges';
 import DynamicSkillsPerformance from './DynamicSkillsPerformance';
 import TestTimeline from './TestTimeline';
 import JobRecommendations from './JobRecommendations';
+import JobRecommendationWidget from '../../job-recommendations/components/JobRecommendationWidget';
 import RecentTestResults from './RecentTestResults';
 import TestStatsWidget from './TestStatsWidget';
 import DynamicQuickStats from './DynamicQuickStats';
@@ -16,6 +17,12 @@ const Dashboard = ({ onNavigateToSection }) => {
   const handleViewAllTests = () => {
     if (onNavigateToSection) {
       onNavigateToSection('historique-tests');
+    }
+  };
+
+  const handleViewAllJobRecommendations = () => {
+    if (onNavigateToSection) {
+      onNavigateToSection('offres-recommandees');
     }
   };
   
@@ -55,21 +62,27 @@ const Dashboard = ({ onNavigateToSection }) => {
 
         {/* Main Grid Layout */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6">
-          {/* Left Column - Profile & Stats */}
-          <div className="xl:col-span-4 space-y-4 lg:space-y-6">
-            <ProfileHeader user={userData} />
-            
-            {/* Dynamic Quick Stats */}
-            <DynamicQuickStats />
+        {/* Left Column - Profile & Stats */}
+        <div className="xl:col-span-4 space-y-4 lg:space-y-6">
+          <ProfileHeader user={userData} />
+          
+          {/* Dynamic Quick Stats */}
+          <DynamicQuickStats />
 
-            {/* Test Stats Widget */}
-            <TestStatsWidget />
+          {/* Job Recommendations Widget */}
+          <JobRecommendationWidget 
+            userSkills={userData.declaredSkills}
+            userLocation="Casablanca"
+            maxJobs={3}
+            onViewAll={handleViewAllJobRecommendations}
+          />
 
-            {/* Recent Test Results */}
-            <RecentTestResults onViewAll={handleViewAllTests} />
-          </div>
+          {/* Test Stats Widget */}
+          <TestStatsWidget />
 
-          {/* Right Column - Main Content */}
+          {/* Recent Test Results */}
+          <RecentTestResults onViewAll={handleViewAllTests} />
+        </div>          {/* Right Column - Main Content */}
           <div className="xl:col-span-8 space-y-4 lg:space-y-6">
             {/* Dynamic Badges Grid */}
             <DynamicBadges />
