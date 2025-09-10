@@ -16,8 +16,19 @@ import AbstractReasoningTest from '../../../features/skills-assessment/component
 import LogicalReasoningTest from '../../../features/skills-assessment/components/LogicalReasoningTest';
 import LRT2Test from '../../../features/skills-assessment/components/LRT2Test';
 import LRT3Test from '../../../features/skills-assessment/components/LRT3Test';
-import NumericalReasoningTest from '../../../features/skills-assessment/components/NumericalReasoningTest';
 import SituationalJudgmentTest from '../../../features/skills-assessment/components/SituationalJudgmentTest';
+import MasterSJTTest from '../../../features/skills-assessment/components/MasterSJTTest';
+import SkillsSelector from '../../../features/skills-assessment/components/SkillsSelector';
+import TechnicalTest from '../../../features/skills-assessment/components/TechnicalTest';
+// AdaptiveTest supprimé - les tests sont créés par l'admin
+import SkillBasedTests from '../../../features/skills-assessment/components/SkillBasedTests';
+import TestAdministration from '../../../features/skills-assessment/components/TestAdministration';
+import TestDebugPage from '../../../features/skills-assessment/components/TestDebugPage';
+import TestHistoryDashboard from '../../../features/candidate-dashboard/components/TestHistoryDashboard';
+import { ChallengesList, ChallengeDetail, CodingDashboard } from '../../../features/coding-challenges/components';
+import DebugChallenges from '../../../features/coding-challenges/components/DebugChallenges';
+import SkillTestsOverview from '../../../features/skills-assessment/components/SkillTestsOverview';
+import PracticalTests from '../../../features/coding-challenges/components/PracticalTests';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import { useScrollOnChange } from '../../utils/scrollUtils';
@@ -30,6 +41,7 @@ const MainDashboard = () => {
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [currentTestFilter, setCurrentTestFilter] = useState(null);
   const [currentTestId, setCurrentTestId] = useState(null);
+  const [selectedChallenge, setSelectedChallenge] = useState(null);
 
   // Universal scroll management using scroll utilities
   useScrollOnChange(activeSection, { smooth: true, attempts: 3 });
@@ -105,13 +117,11 @@ const MainDashboard = () => {
   };
 
   const handleStartTest = (testId) => {
-    console.log('Starting test:', testId);
-    
-    // Handle Master SJT specially
-    if (testId === 'MASTER-SJT') {
-      setActiveSection('master-sjt-test');
-      return;
-    }
+  const isMasterSJT = (typeof testId === 'string' && (testId === 'MASTER-SJT' || testId === 'MASTER-SJT1' || testId.toLowerCase().includes('master-sjt')));
+  const isSJT = (typeof testId === 'string' && (testId === 'SJT' || testId.toLowerCase().includes('situational') || testId.toLowerCase().includes('sjt')));
+    console.log('=== HANDLE START TEST ===');
+    console.log('testId:', testId, 'Type:', typeof testId);
+    console.log('currentTestFilter:', currentTestFilter);
     
     const isVerbalComprehensive = testId === 'VERBAL_COMPREHENSIVE';
     const isVerbalFilterAndNumber = (currentTestFilter === 'verbal' && typeof testId === 'number');
@@ -155,16 +165,24 @@ const MainDashboard = () => {
     console.log('isLRT2String:', isLRT2String);
     console.log('isLRT3String:', isLRT3String);
     
-    // Set the current test ID
+  // Set the current test ID
     setCurrentTestId(testId);
     
     // Check if it's a verbal reasoning test
-    if (isVerbalComprehensive || isVerbalFilterAndNumber || isStringWithVerbal || isVRTString) {
+    if (isMasterSJT) {
+      console.log('✅ Routing to Master SJT');
+      setActiveSection('master-sjt');
+    } else if (isSJT) {
+      console.log('✅ Routing to Situational Judgment Test');
+      setActiveSection('situational-judgment-test');
+    } else if (isVerbalComprehensive || isVerbalFilterAndNumber || isStringWithVerbal || isVRTString) {
       // Extract language from test ID if it's comprehensive
       const language = testId.toString().includes('_FRENCH') ? 'french' : 'english';
+      console.log('✅ Routing to verbal reasoning test with language:', language);
       setActiveSection(`verbal-reasoning-test-${language}`);
     } else if (isSpatialFilterAndNumber || isStringWithSpatial || isSRTString) {
       // Handle spatial reasoning tests
+      console.log('✅ Routing to spatial reasoning test');
       setActiveSection('spatial-reasoning-test');
     } else if (isDiagrammaticFilterAndNumber || isStringWithDiagrammatic || isDRTString) {
       // Handle diagrammatic reasoning tests
@@ -186,19 +204,30 @@ const MainDashboard = () => {
       // Handle LRT3 tests (Section 3)
       console.log('✅ Routing to LRT3 test');
       setActiveSection('lrt3-test');
-    } else if (currentTestFilter === 'numerical' || testId.startsWith('NRT')) {
-      // Handle numerical reasoning tests
-      console.log('✅ Routing to numerical reasoning test');
-      setActiveSection('numerical-reasoning-test');
-    } else if (currentTestFilter === 'situational' || testId === 'SJT' || testId.startsWith('SJT')) {
-      // Handle situational judgment tests
-      console.log('✅ Routing to situational judgment test');
-      setActiveSection('master-sjt-test');
     } else {
-      // Handle other test types
-      console.log('❌ Routing to test-session for testId:', testId);
-      setActiveSection('test-session');
+      // Check if it's a custom QCM test from our skill-based system
+      const isCustomQCMTest = (typeof testId === 'number' && testId >= 1 && testId <= 100) || 
+                             (typeof testId === 'string' && testId.includes('test'));
+      
+      if (isCustomQCMTest) {
+        console.log('✅ Routing to technical-assessment for custom QCM test:', testId);
+        setActiveSection('technical-assessment');
+      } else {
+        // Handle other test types (numerical, etc.)
+        console.log('❌ Routing to test-session for testId:', testId);
+        setActiveSection('test-session');
+      }
     }
+  };
+
+  const handleSelectChallenge = (challenge) => {
+    setSelectedChallenge(challenge);
+    setActiveSection(`challenge-${challenge.id}`);
+  };
+
+  const handleBackFromChallenge = () => {
+    setSelectedChallenge(null);
+    setActiveSection('coding-challenges');
   };
 
   const nextSlide = () => {
@@ -343,6 +372,76 @@ const MainDashboard = () => {
             {/* Additional Navigation Items */}
             <div className="secondary-nav-section p-6 space-y-3">
               <button 
+                onClick={() => setActiveSection('skills-management')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'skills-management'
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                Gestion des compétences
+              </button>
+              
+              <button 
+                onClick={() => setActiveSection('tests-by-competencies')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'tests-by-competencies'
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                📝 Tests par Compétences
+              </button>
+              
+              <button 
+                onClick={() => setActiveSection('practical-tests')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'practical-tests'
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                💻 Tests Pratiques
+              </button>
+              
+              <button 
+                onClick={() => setActiveSection('coding-challenges')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'coding-challenges' || activeSection === 'coding-dashboard' || activeSection.startsWith('challenge-')
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                � Debug: Défis
+              </button>
+              
+              <button 
+                onClick={() => setActiveSection('technical-assessment')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'technical-assessment'
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                � Debug: QCM Skills
+              </button>
+              
+              {/* Test adaptatif supprimé - tests créés par l'admin */}
+              
+              {/* Administration supprimée - tests créés par l'admin Django */}
+              
+              <button 
+                onClick={() => setActiveSection('test-debug')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'test-debug'
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                🔧 Debug Tests API
+              </button>
+              
+              <button 
                 onClick={() => setActiveSection('mon-espace')}
                 className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
                   activeSection === 'mon-espace'
@@ -392,7 +491,7 @@ const MainDashboard = () => {
             )}
           
           {activeSection === 'dashboard' ? (
-            <Dashboard />
+            <Dashboard onNavigateToSection={setActiveSection} />
           ) : activeSection === 'test-session' ? (
             <TestLayout />
           ) : activeSection.startsWith('verbal-reasoning-test') ? (
@@ -431,24 +530,40 @@ const MainDashboard = () => {
               onBackToDashboard={() => setActiveSection('available-tests')} 
               testId={currentTestId}
             />
-          ) : activeSection === 'numerical-reasoning-test' ? (
-            <NumericalReasoningTest 
-              onBackToDashboard={() => setActiveSection('available-tests')}
-              onComplete={(results) => {
-                console.log('Numerical test completed with results:', results);
-                setActiveSection('available-tests');
-              }}
-              testId={currentTestId}
+          ) : activeSection === 'skills-management' ? (
+            <SkillsSelector 
+              userId={1} 
+              onSkillsUpdated={() => console.log('Skills updated')}
             />
-          ) : activeSection === 'master-sjt-test' ? (
+          ) : activeSection === 'tests-by-competencies' ? (
+            <SkillTestsOverview 
+              onBackToDashboard={() => setActiveSection('applications')} 
+              onStartTest={handleStartTest}
+              userId={1} 
+            />
+          ) : activeSection === 'practical-tests' ? (
+            <PracticalTests onBackToDashboard={() => setActiveSection('applications')} />
+          ) : activeSection === 'technical-assessment' ? (
+            <SkillBasedTests 
+              userId={1}
+              testId={currentTestId}
+              onBackToDashboard={() => setActiveSection('applications')}
+            />
+          ) : activeSection === 'situational-judgment-test' ? (
             <SituationalJudgmentTest 
               onBackToDashboard={() => setActiveSection('available-tests')}
-              onComplete={(results) => {
-                console.log('SJT test completed with results:', results);
-                setActiveSection('available-tests');
-              }}
               testId={currentTestId}
             />
+          ) : activeSection === 'master-sjt' ? (
+            <MasterSJTTest 
+              onClose={() => setActiveSection('available-tests')}
+            />
+          ) : activeSection === 'test-administration' ? (
+            <TestAdministration 
+              onBackToDashboard={() => setActiveSection('applications')}
+            />
+          ) : activeSection === 'test-debug' ? (
+            <TestDebugPage />
           ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
             // Show AvailableTests for most test categories
             activeSection === 'technical-tests' ? (
@@ -518,20 +633,16 @@ const MainDashboard = () => {
               </div>
             </div>
           ) : activeSection === 'historique-tests' ? (
-            <div className="space-y-6">
-              <div className="text-center py-12">
-                <h1 className="text-3xl font-bold text-[#4A5869] mb-4">Historique des Tests</h1>
-                <p className="text-lg text-[#4A5869]/70 max-w-3xl mx-auto">
-                  Consultez l'historique de tous vos tests et évaluations de compétences.
-                </p>
-              </div>
-              <div className="bg-white rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8">
-                <h2 className="text-xl font-semibold text-[#4A5869] mb-4">Historique Complet</h2>
-                <p className="text-[#4A5869]/70">
-                  L'historique détaillé de vos tests et évaluations sera affiché ici avec les résultats et les progrès.
-                </p>
-              </div>
-            </div>
+            <TestHistoryDashboard />
+          ) : activeSection === 'coding-challenges' ? (
+            <ChallengesList onSelectChallenge={handleSelectChallenge} />
+          ) : activeSection === 'coding-dashboard' ? (
+            <CodingDashboard />
+          ) : activeSection.startsWith('challenge-') ? (
+            <ChallengeDetail 
+              challenge={selectedChallenge} 
+              onBack={handleBackFromChallenge}
+            />
           ) : (
             <>
               {/* Blue Banner Header */}
