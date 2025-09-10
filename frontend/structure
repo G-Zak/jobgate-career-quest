@@ -1,0 +1,469 @@
+
+├── src
+│   ├── app
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── assets
+│   │   └── images
+│   │       ├── abstract
+│   │       │   ├── instructions
+│   │       │   │   └── intro.svg
+│   │       │   ├── questions
+│   │       │   │   ├── 0.png
+│   │       │   │   ├── 1.png
+│   │       │   │   ├── 10.png
+│   │       │   │   ├── 11.png
+│   │       │   │   ├── 12.png
+│   │       │   │   ├── 13.png
+│   │       │   │   ├── 14.png
+│   │       │   │   ├── 15.png
+│   │       │   │   ├── 16.png
+│   │       │   │   ├── 17.png
+│   │       │   │   ├── 18.png
+│   │       │   │   ├── 19.png
+│   │       │   │   ├── 2.png
+│   │       │   │   ├── 20.png
+│   │       │   │   ├── 21.png
+│   │       │   │   ├── 22.png
+│   │       │   │   ├── 23.png
+│   │       │   │   ├── 24.png
+│   │       │   │   ├── 3.png
+│   │       │   │   ├── 4.png
+│   │       │   │   ├── 5.png
+│   │       │   │   ├── 6.png
+│   │       │   │   ├── 7.png
+│   │       │   │   ├── 8.png
+│   │       │   │   └── 9.png
+│   │       │   └── README.md
+│   │       ├── diagrammatic
+│   │       │   ├── instructions
+│   │       │   │   ├── section_1_intro.svg
+│   │       │   │   └── section_2_intro.svg
+│   │       │   ├── questions
+│   │       │   │   ├── section_1
+│   │       │   │   │   ├── question_1.png
+│   │       │   │   │   ├── question_10.png
+│   │       │   │   │   ├── question_11.png
+│   │       │   │   │   ├── question_12.png
+│   │       │   │   │   ├── question_13.png
+│   │       │   │   │   ├── question_14.png
+│   │       │   │   │   ├── question_15.png
+│   │       │   │   │   ├── question_16.png
+│   │       │   │   │   ├── question_17.png
+│   │       │   │   │   ├── question_18.png
+│   │       │   │   │   ├── question_19.png
+│   │       │   │   │   ├── question_2.png
+│   │       │   │   │   ├── question_20.png
+│   │       │   │   │   ├── question_3.png
+│   │       │   │   │   ├── question_4.png
+│   │       │   │   │   ├── question_5.png
+│   │       │   │   │   ├── question_6.png
+│   │       │   │   │   ├── question_7.png
+│   │       │   │   │   ├── question_8.png
+│   │       │   │   │   └── question_9.png
+│   │       │   │   └── section_2
+│   │       │   │       └── question_1.svg
+│   │       │   └── README.md
+│   │       ├── spatial
+│   │       │   ├── COMPLETE_IMAGE_SETUP_GUIDE.md
+│   │       │   ├── instructions
+│   │       │   │   ├── QUESTION_FORMAT_GUIDE.md
+│   │       │   │   ├── README.md
+│   │       │   │   ├── SAVE_IMAGE_INSTRUCTIONS.md
+│   │       │   │   ├── SECTION_1_IMAGE_PLACEHOLDER.txt
+│   │       │   │   ├── section_1_intro.png
+│   │       │   │   ├── section_2_intro.png
+│   │       │   │   ├── section_3_intro.png
+│   │       │   │   ├── section_4_intro.png
+│   │       │   │   ├── section_5_intro.png
+│   │       │   │   └── section_6_intro.png
+│   │       │   ├── ISSUE_RESOLVED.md
+│   │       │   ├── mental_rotation
+│   │       │   │   ├── base_images
+│   │       │   │   │   ├── MR_abstract_assembly_01.svg
+│   │       │   │   │   ├── MR_asymmetric_01.svg
+│   │       │   │   │   ├── MR_complex_asymmetric_01.svg
+│   │       │   │   │   ├── MR_complex_block_01_180.svg
+│   │       │   │   │   ├── MR_complex_block_01_90ccw.svg
+│   │       │   │   │   ├── MR_complex_block_01_90cw.svg
+│   │       │   │   │   ├── MR_complex_block_01.svg
+│   │       │   │   │   ├── MR_complex_L_01.svg
+│   │       │   │   │   ├── MR_corner_block_01.svg
+│   │       │   │   │   ├── MR_interlocked_01.svg
+│   │       │   │   │   ├── MR_irregular_polyomino_01.svg
+│   │       │   │   │   ├── MR_L_block_01_180.svg
+│   │       │   │   │   ├── MR_L_block_01_90ccw.svg
+│   │       │   │   │   ├── MR_L_block_01_90cw.svg
+│   │       │   │   │   ├── MR_L_block_01.svg
+│   │       │   │   │   ├── MR_multi_directional_01.svg
+│   │       │   │   │   ├── MR_multi_step_01.svg
+│   │       │   │   │   ├── MR_step_block_01.svg
+│   │       │   │   │   ├── MR_T_block_01_180.svg
+│   │       │   │   │   ├── MR_T_block_01_90cw.svg
+│   │       │   │   │   ├── MR_T_block_01.svg
+│   │       │   │   │   ├── MR_U_block_01.svg
+│   │       │   │   │   └── MR_Z_block_01.svg
+│   │       │   │   ├── complete_preview.html
+│   │       │   │   ├── overlays
+│   │       │   │   │   └── rotation_arrows
+│   │       │   │   │       ├── overlay_rotation_180.svg
+│   │       │   │   │       ├── overlay_rotation_90ccw.svg
+│   │       │   │   │       └── overlay_rotation_90cw.svg
+│   │       │   │   └── preview.html
+│   │       │   ├── questions
+│   │       │   │   ├── section_1
+│   │       │   │   │   ├── question_1.png
+│   │       │   │   │   ├── question_10.png
+│   │       │   │   │   ├── question_11.png
+│   │       │   │   │   ├── question_12.png
+│   │       │   │   │   ├── question_13.png
+│   │       │   │   │   ├── question_14.png
+│   │       │   │   │   ├── question_15.png
+│   │       │   │   │   ├── question_16.png
+│   │       │   │   │   ├── question_17.png
+│   │       │   │   │   ├── question_18.png
+│   │       │   │   │   ├── question_19.png
+│   │       │   │   │   ├── question_2.png
+│   │       │   │   │   ├── question_20.png
+│   │       │   │   │   ├── question_21.png
+│   │       │   │   │   ├── question_22.png
+│   │       │   │   │   ├── question_23.png
+│   │       │   │   │   ├── question_24.png
+│   │       │   │   │   ├── question_25.png
+│   │       │   │   │   ├── question_26.png
+│   │       │   │   │   ├── question_27.png
+│   │       │   │   │   ├── question_28.png
+│   │       │   │   │   ├── question_29.png
+│   │       │   │   │   ├── question_3.png
+│   │       │   │   │   ├── question_30.png
+│   │       │   │   │   ├── question_31.png
+│   │       │   │   │   ├── question_32.png
+│   │       │   │   │   ├── question_33.png
+│   │       │   │   │   ├── question_34.png
+│   │       │   │   │   ├── question_35.png
+│   │       │   │   │   ├── question_36.png
+│   │       │   │   │   ├── question_37.png
+│   │       │   │   │   ├── question_38.png
+│   │       │   │   │   ├── question_39.png
+│   │       │   │   │   ├── question_4.png
+│   │       │   │   │   ├── question_40.png
+│   │       │   │   │   ├── question_5.png
+│   │       │   │   │   ├── question_6.png
+│   │       │   │   │   ├── question_7.png
+│   │       │   │   │   ├── question_8.png
+│   │       │   │   │   └── question_9.png
+│   │       │   │   ├── section_2
+│   │       │   │   │   ├── question_1.png
+│   │       │   │   │   ├── question_10.png
+│   │       │   │   │   ├── question_11.png
+│   │       │   │   │   ├── question_12.png
+│   │       │   │   │   ├── question_13.png
+│   │       │   │   │   ├── question_14.png
+│   │       │   │   │   ├── question_15.png
+│   │       │   │   │   ├── question_16.png
+│   │       │   │   │   ├── question_17.png
+│   │       │   │   │   ├── question_18.png
+│   │       │   │   │   ├── question_19.png
+│   │       │   │   │   ├── question_2.png
+│   │       │   │   │   ├── question_20.png
+│   │       │   │   │   ├── question_21.png
+│   │       │   │   │   ├── question_22.png
+│   │       │   │   │   ├── question_23.png
+│   │       │   │   │   ├── question_24.png
+│   │       │   │   │   ├── question_25.png
+│   │       │   │   │   ├── question_26.png
+│   │       │   │   │   ├── question_27.png
+│   │       │   │   │   ├── question_28.png
+│   │       │   │   │   ├── question_29.png
+│   │       │   │   │   ├── question_3.png
+│   │       │   │   │   ├── question_30.png
+│   │       │   │   │   ├── question_31.png
+│   │       │   │   │   ├── question_32.png
+│   │       │   │   │   ├── question_33.png
+│   │       │   │   │   ├── question_34.png
+│   │       │   │   │   ├── question_35.png
+│   │       │   │   │   ├── question_36.png
+│   │       │   │   │   ├── question_37.png
+│   │       │   │   │   ├── question_38.png
+│   │       │   │   │   ├── question_39.png
+│   │       │   │   │   ├── question_4.png
+│   │       │   │   │   ├── question_40.png
+│   │       │   │   │   ├── question_5.png
+│   │       │   │   │   ├── question_6.png
+│   │       │   │   │   ├── question_7.png
+│   │       │   │   │   ├── question_8.png
+│   │       │   │   │   └── question_9.png
+│   │       │   │   ├── section_3
+│   │       │   │   │   ├── question_1.png
+│   │       │   │   │   ├── question_10.png
+│   │       │   │   │   ├── question_11.png
+│   │       │   │   │   ├── question_12.png
+│   │       │   │   │   ├── question_13.png
+│   │       │   │   │   ├── question_14.png
+│   │       │   │   │   ├── question_15.png
+│   │       │   │   │   ├── question_16.png
+│   │       │   │   │   ├── question_17.png
+│   │       │   │   │   ├── question_18.png
+│   │       │   │   │   ├── question_19.png
+│   │       │   │   │   ├── question_2.png
+│   │       │   │   │   ├── question_20.png
+│   │       │   │   │   ├── question_21.png
+│   │       │   │   │   ├── question_22.png
+│   │       │   │   │   ├── question_23.png
+│   │       │   │   │   ├── question_24.png
+│   │       │   │   │   ├── question_25.png
+│   │       │   │   │   ├── question_26.png
+│   │       │   │   │   ├── question_27.png
+│   │       │   │   │   ├── question_28.png
+│   │       │   │   │   ├── question_29.png
+│   │       │   │   │   ├── question_3.png
+│   │       │   │   │   ├── question_30.png
+│   │       │   │   │   ├── question_31.png
+│   │       │   │   │   ├── question_32.png
+│   │       │   │   │   ├── question_33.png
+│   │       │   │   │   ├── question_34.png
+│   │       │   │   │   ├── question_35.png
+│   │       │   │   │   ├── question_36.png
+│   │       │   │   │   ├── question_37.png
+│   │       │   │   │   ├── question_38.png
+│   │       │   │   │   ├── question_39.png
+│   │       │   │   │   ├── question_4.png
+│   │       │   │   │   ├── question_40.png
+│   │       │   │   │   ├── question_5.png
+│   │       │   │   │   ├── question_6.png
+│   │       │   │   │   ├── question_7.png
+│   │       │   │   │   ├── question_8.png
+│   │       │   │   │   └── question_9.png
+│   │       │   │   ├── section_4
+│   │       │   │   │   ├── question_1.png
+│   │       │   │   │   ├── question_10.png
+│   │       │   │   │   ├── question_11.png
+│   │       │   │   │   ├── question_12.png
+│   │       │   │   │   ├── question_13.png
+│   │       │   │   │   ├── question_14.png
+│   │       │   │   │   ├── question_15.png
+│   │       │   │   │   ├── question_16.png
+│   │       │   │   │   ├── question_17.png
+│   │       │   │   │   ├── question_18.png
+│   │       │   │   │   ├── question_19.png
+│   │       │   │   │   ├── question_2.png
+│   │       │   │   │   ├── question_20.png
+│   │       │   │   │   ├── question_21.png
+│   │       │   │   │   ├── question_22.png
+│   │       │   │   │   ├── question_23.png
+│   │       │   │   │   ├── question_24.png
+│   │       │   │   │   ├── question_25.png
+│   │       │   │   │   ├── question_26.png
+│   │       │   │   │   ├── question_27.png
+│   │       │   │   │   ├── question_28.png
+│   │       │   │   │   ├── question_29.png
+│   │       │   │   │   ├── question_3.png
+│   │       │   │   │   ├── question_30.png
+│   │       │   │   │   ├── question_31.png
+│   │       │   │   │   ├── question_32.png
+│   │       │   │   │   ├── question_33.png
+│   │       │   │   │   ├── question_34.png
+│   │       │   │   │   ├── question_35.png
+│   │       │   │   │   ├── question_36.png
+│   │       │   │   │   ├── question_37.png
+│   │       │   │   │   ├── question_38.png
+│   │       │   │   │   ├── question_39.png
+│   │       │   │   │   ├── question_4.png
+│   │       │   │   │   ├── question_40.png
+│   │       │   │   │   ├── question_5.png
+│   │       │   │   │   ├── question_6.png
+│   │       │   │   │   ├── question_7.png
+│   │       │   │   │   ├── question_8.png
+│   │       │   │   │   └── question_9.png
+│   │       │   │   ├── section_5
+│   │       │   │   │   ├── question_1.png
+│   │       │   │   │   ├── question_10.png
+│   │       │   │   │   ├── question_11.png
+│   │       │   │   │   ├── question_12.png
+│   │       │   │   │   ├── question_13.png
+│   │       │   │   │   ├── question_14.png
+│   │       │   │   │   ├── question_15.png
+│   │       │   │   │   ├── question_16.png
+│   │       │   │   │   ├── question_17.png
+│   │       │   │   │   ├── question_18.png
+│   │       │   │   │   ├── question_19.png
+│   │       │   │   │   ├── question_2.png
+│   │       │   │   │   ├── question_20.png
+│   │       │   │   │   ├── question_3.png
+│   │       │   │   │   ├── question_4.png
+│   │       │   │   │   ├── question_5.png
+│   │       │   │   │   ├── question_6.png
+│   │       │   │   │   ├── question_7.png
+│   │       │   │   │   ├── question_8.png
+│   │       │   │   │   └── question_9.png
+│   │       │   │   └── section_6
+│   │       │   │       ├── question_1.png
+│   │       │   │       ├── question_10.png
+│   │       │   │       ├── question_11.png
+│   │       │   │       ├── question_12.png
+│   │       │   │       ├── question_13.png
+│   │       │   │       ├── question_14.png
+│   │       │   │       ├── question_15.png
+│   │       │   │       ├── question_16.png
+│   │       │   │       ├── question_17.png
+│   │       │   │       ├── question_18.png
+│   │       │   │       ├── question_19.png
+│   │       │   │       ├── question_2.png
+│   │       │   │       ├── question_20.png
+│   │       │   │       ├── question_3.png
+│   │       │   │       ├── question_4.png
+│   │       │   │       ├── question_5.png
+│   │       │   │       ├── question_6.png
+│   │       │   │       ├── question_7.png
+│   │       │   │       ├── question_8.png
+│   │       │   │       └── question_9.png
+│   │       │   ├── README.md
+│   │       │   ├── SECTION_1_FINAL_SETUP.md
+│   │       │   ├── SECTION_2_COMPLETE_STATUS.md
+│   │       │   ├── SECTION_2_SETUP_GUIDE.md
+│   │       │   └── UI_IMPROVEMENTS_SUMMARY.md
+│   │       └── ui
+│   │           ├── better_impressions.avif
+│   │           ├── formation_en_ligne.avif
+│   │           ├── formation_technique.avif
+│   │           └── JOBGATE LOGO.png
+│   ├── components
+│   │   ├── MentalRotationRenderer.jsx
+│   │   └── SpatialImageRenderer.jsx
+│   ├── config
+│   │   ├── constants.js
+│   │   └── routes.js
+│   ├── features
+│   │   ├── candidate-dashboard
+│   │   │   ├── components
+│   │   │   │   ├── BadgesGrid.jsx
+│   │   │   │   ├── DashboardCandidat.jsx
+│   │   │   │   ├── JobRecommendations.jsx
+│   │   │   │   ├── ProfileHeader.jsx
+│   │   │   │   ├── SkillsChart.jsx
+│   │   │   │   └── TestTimeline.jsx
+│   │   │   ├── hooks
+│   │   │   │   └── useDashboard.js
+│   │   │   └── services
+│   │   │       └── dashboardService.js
+│   │   └── skills-assessment
+│   │       ├── components
+│   │       │   ├── AbstractReasoningTest_new.jsx
+│   │       │   ├── AbstractReasoningTest.jsx
+│   │       │   ├── AbstractReasoningTest.jsx.bak
+│   │       │   ├── AvailableTests.jsx
+│   │       │   ├── DiagrammaticReasoningTest.jsx
+│   │       │   ├── HeaderBar.jsx
+│   │       │   ├── Instructions.jsx
+│   │       │   ├── LogicalReasoningTest.jsx
+│   │       │   ├── LRT2Test.jsx
+│   │       │   ├── LRT3Test.jsx
+│   │       │   ├── MasterSJTTest.jsx
+│   │       │   ├── NumericalReasoningTest_new.jsx
+│   │       │   ├── NumericalReasoningTest.jsx
+│   │       │   ├── NumericalReasoningTest.jsx.bak
+│   │       │   ├── QuestionCard.jsx
+│   │       │   ├── SituationalJudgmentTest.jsx
+│   │       │   ├── SpatialReasoningTest_backup.jsx
+│   │       │   ├── SpatialReasoningTest_clean.jsx
+│   │       │   ├── SpatialReasoningTest_new.jsx
+│   │       │   ├── SpatialReasoningTest.jsx
+│   │       │   ├── TechnicalTests.jsx
+│   │       │   ├── TestContent.jsx
+│   │       │   ├── TestHeader.jsx
+│   │       │   ├── TestLayout.jsx
+│   │       │   └── VerbalReasoningTest.jsx
+│   │       ├── config
+│   │       │   └── testConfig.js
+│   │       ├── data
+│   │       │   ├── abstractTestSections.js
+│   │       │   ├── analyze-questions.mjs
+│   │       │   ├── db-migration
+│   │       │   │   ├── COMPLETE_MIGRATION_SUMMARY.md
+│   │       │   │   ├── DATABASE_MIGRATION_GUIDE.md
+│   │       │   │   ├── django_import_command.py
+│   │       │   │   ├── django_models.py
+│   │       │   │   ├── import-to-database.py
+│   │       │   │   ├── migrate_to_database.py
+│   │       │   │   ├── randomizedQuestionPools.js
+│   │       │   │   ├── README.md
+│   │       │   │   ├── requirements.txt
+│   │       │   │   ├── ScoreDashboard.jsx
+│   │       │   │   ├── scoring_api.py
+│   │       │   │   ├── scoring_configs.py
+│   │       │   │   ├── scoring_system.py
+│   │       │   │   ├── setup_postgresql.sh
+│   │       │   │   ├── setup_scoring_command.py
+│   │       │   │   ├── setup.sh
+│   │       │   │   ├── situational-judgment
+│   │       │   │   │   └── sjt_questions.jsonl
+│   │       │   │   ├── spatial-reasoning
+│   │       │   │   │   ├── imageBasedQuestions.js
+│   │       │   │   │   ├── spatial_test_config.json
+│   │       │   │   │   └── spatialTestSections.js
+│   │       │   │   ├── TestResultsIntegration.jsx
+│   │       │   │   ├── validate-data.mjs
+│   │       │   │   └── verbal-reasoning
+│   │       │   │       ├── analogy_questions.jsonl
+│   │       │   │       ├── blood_relations_questions.jsonl
+│   │       │   │       ├── classification_questions_extended.jsonl
+│   │       │   │       ├── classification_questions.jsonl
+│   │       │   │       ├── coding_decoding_questions_extended.jsonl
+│   │       │   │       ├── coding_decoding_questions.jsonl
+│   │       │   │       ├── verbalAnalogiesVRT4.js
+│   │       │   │       ├── verbalBloodRelationsLogicalPuzzlesVRT7_Enhanced.js
+│   │       │   │       ├── verbalClassificationVRT5.js
+│   │       │   │       ├── verbalCodingDecodingVRT6.js
+│   │       │   │       ├── verbalReasoningCategories.js
+│   │       │   │       └── verbalTestSections.js
+│   │       │   ├── diagrammaticTestSections.js
+│   │       │   ├── extract-js-questions.mjs
+│   │       │   ├── imageBasedQuestions.js
+│   │       │   ├── logicalTestSections.js
+│   │       │   ├── lrt2TestSections.js
+│   │       │   ├── lrt3TestSections.js
+│   │       │   ├── masterSJTPool.jsonl
+│   │       │   ├── numericalTestSections.js
+│   │       │   ├── randomizedQuestionPools.js
+│   │       │   ├── spatialTestSections_new.js
+│   │       │   ├── spatialTestSections.js
+│   │       │   ├── verbal_analogy_dataset.jsonl
+│   │       │   ├── verbal_classification_dataset.jsonl
+│   │       │   ├── verbal_coding_decoding_dataset.jsonl
+│   │       │   ├── verbalAnalogiesVRT4.js
+│   │       │   ├── verbalBloodRelationsLogicalPuzzlesVRT7_Enhanced.js
+│   │       │   ├── verbalClassificationVRT5.js
+│   │       │   ├── verbalCodingDecodingVRT6.js
+│   │       │   ├── verbalQuestionPools.js
+│   │       │   ├── verbalReasoningCategories.js
+│   │       │   ├── verbalReasoningTestManager.js
+│   │       │   ├── verbalReasoningVRT7.jsonl
+│   │       │   └── verbalTestSections.js
+│   │       ├── services
+│   │       │   └── randomizedTestService.js
+│   │       └── utils
+│   │           └── masterSJTGenerator.js
+│   ├── index.css
+│   └── shared
+│       ├── components
+│       │   ├── layout
+│       │   │   └── MainDashboard.jsx
+│       │   └── ui
+│       │       └── index.js
+│       ├── hooks
+│       │   └── useScrollRestoration.js
+│       ├── services
+│       │   ├── api.js
+│       │   └── endpoints.js
+│       ├── styles
+│       │   └── scrollStyles.css
+│       └── utils
+│           └── scrollUtils.js
+├── start-dev.js
+├── structure
+├── tailwind.config.js
+├── test_sjt_fix.mjs
+├── validate-jsonl.mjs
+└── vite.config.js
+
+1966 directories, 18880 files

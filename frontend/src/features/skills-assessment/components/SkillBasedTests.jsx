@@ -23,7 +23,7 @@ const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
     if (testId && availableTests.length > 0 && !selectedTest) {
       const testToStart = availableTests.find(test => test.id === testId);
       if (testToStart) {
-        console.log('Démarrage automatique du test:', testToStart.test_name);
+        console.log('Démarrage automatique du test:', testToStart.title);
         startTest(testToStart);
       }
     }
@@ -50,14 +50,13 @@ const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
                 return;
             }
             
-            // Charger les tests pour les compétences de l'utilisateur
-            const userSkillIds = userSkillsData.map(skill => skill.id);
-            const testsResponse = await fetch('http://localhost:8000/api/tests-alt/');
+            // Charger les tests techniques depuis testsengine
+            const testsResponse = await fetch('http://localhost:8000/api/tests/?test_type=technical');
             const allTests = await testsResponse.json();
             
-            // Filtrer les tests pour les compétences de l'utilisateur
+            // Filtrer les tests techniques actifs  
             const userTests = allTests.filter(test => 
-                userSkillIds.includes(test.skill) && test.is_active
+                test.test_type === 'technical' && test.is_active
             );
             
             setAvailableTests(userTests);
@@ -70,12 +69,12 @@ const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
         }
     };  const startTest = async (test) => {
     try {
-      // Charger les questions du test
-      const response = await fetch(`http://localhost:8000/api/tests-alt/${test.id}/`);
+      // Charger les questions du test depuis testsengine
+      const response = await fetch(`http://localhost:8000/api/tests/${test.id}/`);
       const testWithQuestions = await response.json();
       
       setSelectedTest(testWithQuestions);
-      setTimeLeft(test.time_limit * 60); // Convertir minutes en secondes
+      setTimeLeft(test.duration_minutes * 60); // Convertir minutes en secondes
       setTestStarted(true);
       setTestCompleted(false);
       setCurrentQuestion(0);
@@ -109,7 +108,7 @@ const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
 
   const finishTest = async () => {
     try {
-      const timeTaken = (selectedTest.time_limit * 60) - timeLeft;
+      const timeTaken = (selectedTest.duration_minutes * 60) - timeLeft;
       
       const result = await fetch('http://localhost:8000/api/results/submit_test/', {
         method: 'POST',
@@ -185,7 +184,7 @@ const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
           <div className="mb-6">
             <FaCheckCircle className={`text-6xl mx-auto mb-4 ${getScoreColor(percentage)}`} />
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Test Terminé !</h1>
-            <h2 className="text-xl text-gray-600">{selectedTest.test_name}</h2>
+            <h2 className="text-xl text-gray-600">{selectedTest.title}</h2>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-6 mb-6">
@@ -193,7 +192,7 @@ const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
               <div>
                 <p className="text-sm text-gray-500 mb-1">Score</p>
                 <p className={`text-2xl font-bold ${getScoreColor(percentage)}`}>
-                  {testResult.score}/{selectedTest.total_score}
+                  {testResult.score}/{selectedTest.total_questions * 5} {/* Assuming 5 points per question */}
                 </p>
               </div>
               <div>
@@ -232,7 +231,51 @@ const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
 
   // Vue du test en cours
   if (selectedTest && testStarted) {
+    // Safety checks for questions
+    if (!selectedTest.questions || selectedTest.questions.length === 0) {
+      return (
+        <div className="max-w-4xl mx-auto p-6">
+          <div className="text-center py-12">
+            <div className="text-red-500 text-6xl mb-4">❌</div>
+            <h3 className="text-xl font-medium text-gray-600 mb-2">Erreur: Aucune question trouvée</h3>
+            <p className="text-gray-500 mb-6">Ce test ne contient aucune question.</p>
+            <button
+              onClick={() => setSelectedTest(null)}
+              className="bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg transition-colors"
+            >
+              Retour aux tests
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (currentQuestion >= selectedTest.questions.length) {
+      console.error('Current question index out of bounds:', currentQuestion, 'Total questions:', selectedTest.questions.length);
+      setCurrentQuestion(0); // Reset to first question
+      return null;
+    }
+
     const question = selectedTest.questions[currentQuestion];
+    
+    // Additional safety check for the question object
+    if (!question) {
+      return (
+        <div className="max-w-4xl mx-auto p-6">
+          <div className="text-center py-12">
+            <div className="text-red-500 text-6xl mb-4">❌</div>
+            <h3 className="text-xl font-medium text-gray-600 mb-2">Erreur: Question introuvable</h3>
+            <p className="text-gray-500 mb-6">La question {currentQuestion + 1} n'existe pas.</p>
+            <button
+              onClick={() => setSelectedTest(null)}
+              className="bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg transition-colors"
+            >
+              Retour aux tests
+            </button>
+          </div>
+        </div>
+      );
+    }
     
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -240,7 +283,7 @@ const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">{selectedTest.test_name}</h1>
+              <h1 className="text-2xl font-bold text-gray-800">{selectedTest.title}</h1>
               <p className="text-gray-600">Question {currentQuestion + 1} sur {selectedTest.questions.length}</p>
             </div>
             <div className="flex items-center space-x-4">
@@ -264,23 +307,40 @@ const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
 
         {/* Question */}
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-semibold mb-6">{question.question_text}</h2>
+          <h2 className="text-xl font-semibold mb-6">
+            {question?.question_text || question?.text || "Question non disponible"}
+          </h2>
           
           <div className="space-y-3">
-            {['a', 'b', 'c', 'd'].map(option => (
-              <button
-                key={option}
-                onClick={() => submitAnswer(question.id, option)}
-                className={`w-full text-left p-4 rounded-lg border-2 transition-colors ${
-                  answers[question.id] === option
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <span className="font-semibold mr-3">{option.toUpperCase()}.</span>
-                {question[`option_${option}`]}
-              </button>
-            ))}
+            {['a', 'b', 'c', 'd'].map(option => {
+              // Handle different option formats
+              let optionText = '';
+              if (question[`option_${option}`]) {
+                // Django format: option_a, option_b, etc.
+                optionText = question[`option_${option}`];
+              } else if (question.options && Array.isArray(question.options)) {
+                // Array format: options[0], options[1], etc.
+                const optionIndex = option === 'a' ? 0 : option === 'b' ? 1 : option === 'c' ? 2 : 3;
+                optionText = question.options[optionIndex];
+              } else {
+                optionText = `Option ${option.toUpperCase()} non disponible`;
+              }
+
+              return (
+                <button
+                  key={option}
+                  onClick={() => submitAnswer(question.id, option)}
+                  className={`w-full text-left p-4 rounded-lg border-2 transition-colors ${
+                    answers[question.id] === option
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <span className="font-semibold mr-3">{option.toUpperCase()}.</span>
+                  {optionText}
+                </button>
+              );
+            })}
           </div>
           
           <div className="flex justify-between mt-8">
@@ -382,7 +442,7 @@ const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
               <div key={test.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">{test.test_name}</h3>
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">{test.title}</h3>
                     <p className="text-sm text-blue-600 font-medium">
                       Compétence: {skill?.name}
                     </p>
@@ -399,14 +459,14 @@ const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
                 <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                   <div className="flex items-center">
                     <FaQuestionCircle className="mr-1" />
-                    <span>{test.question_count} questions</span>
+                    <span>{test.total_questions} questions</span>
                   </div>
                   <div className="flex items-center">
                     <FaClock className="mr-1" />
-                    <span>{test.time_limit} min</span>
+                    <span>{test.duration_minutes} min</span>
                   </div>
                   <div className="font-medium">
-                    {test.total_score} points
+                    Seuil: {test.passing_score}%
                   </div>
                 </div>
                 
