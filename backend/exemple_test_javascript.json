@@ -1,0 +1,49 @@
+{
+  "questions": [
+    {
+      "question": "Qu'est-ce que le hoisting en JavaScript ?",
+      "options": [
+        "Une méthode pour optimiser le code",
+        "Le fait que les déclarations sont remontées en haut de leur scope",
+        "Une façon de créer des objets",
+        "Un type de boucle"
+      ],
+      "correct_answer": "b",
+      "points": 3,
+      "explanation": "Le hoisting est un comportement de JavaScript où les déclarations de variables et fonctions sont 'remontées' au début de leur scope."
+    },
+    {
+      "question": "Quelle est la différence entre == et === ?",
+      "options": [
+        "Aucune différence",
+        "== compare les valeurs, === compare les valeurs et les types",
+        "== est plus rapide",
+        "=== est obsolète"
+      ],
+      "correct_answer": "b",
+      "points": 2
+    },
+    {
+      "question": "Comment fonctionne async/await ?",
+      "options": [
+        "C'est une syntaxe pour les callbacks",
+        "C'est une façon de gérer les Promises de manière synchrone",
+        "C'est pour les boucles asynchrones",
+        "C'est obsolète"
+      ],
+      "correct_answer": "b",
+      "points": 3
+    },
+    {
+      "question": "Que fait Array.prototype.map() ?",
+      "options": [
+        "Modifie le tableau original",
+        "Crée un nouveau tableau avec les résultats d'une fonction appliquée à chaque élément",
+        "Filtre les éléments",
+        "Trie le tableau"
+      ],
+      "correct_answer": "b",
+      "points": 2
+    }
+  ]
+}
