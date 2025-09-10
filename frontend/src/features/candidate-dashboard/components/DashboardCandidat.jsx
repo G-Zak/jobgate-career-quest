@@ -4,7 +4,6 @@ import DynamicBadges from './DynamicBadges';
 import DynamicSkillsPerformance from './DynamicSkillsPerformance';
 import TestTimeline from './TestTimeline';
 import JobRecommendations from './JobRecommendations';
-import JobRecommendationWidget from '../../job-recommendations/components/JobRecommendationWidget';
 import RecentTestResults from './RecentTestResults';
 import TestStatsWidget from './TestStatsWidget';
 import DynamicQuickStats from './DynamicQuickStats';
@@ -69,14 +68,6 @@ const Dashboard = ({ onNavigateToSection }) => {
           {/* Dynamic Quick Stats */}
           <DynamicQuickStats />
 
-          {/* Job Recommendations Widget */}
-          <JobRecommendationWidget 
-            userSkills={userData.declaredSkills}
-            userLocation="Casablanca"
-            maxJobs={3}
-            onViewAll={handleViewAllJobRecommendations}
-          />
-
           {/* Test Stats Widget */}
           <TestStatsWidget />
 
@@ -91,7 +82,10 @@ const Dashboard = ({ onNavigateToSection }) => {
             <DynamicSkillsPerformance />
             
             {/* Job Recommendations */}
-            <JobRecommendations jobs={userData.jobRecommendations} />
+            <JobRecommendations 
+              onViewAll={handleViewAllJobRecommendations}
+              maxJobs={2}
+            />
             
             {/* Test Timeline */}
             <TestTimeline onViewAll={handleViewAllTests} />
