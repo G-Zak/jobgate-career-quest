@@ -62,27 +62,27 @@ const Dashboard = ({ onNavigateToSection }) => {
 
         {/* Main Grid Layout */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6">
-        {/* Left Column - Profile & Stats */}
-        <div className="xl:col-span-4 space-y-4 lg:space-y-6">
-          <ProfileHeader user={userData} />
-          
-          {/* Dynamic Quick Stats */}
-          <DynamicQuickStats />
+          {/* Left Column - Profile & Stats */}
+          <div className="xl:col-span-4 space-y-4 lg:space-y-6">
+            <ProfileHeader user={userData} />
+            
+            {/* Dynamic Quick Stats */}
+            <DynamicQuickStats />
 
-          {/* Job Recommendations Widget */}
-          <JobRecommendationWidget 
-            userSkills={userData.declaredSkills}
-            userLocation="Casablanca"
-            maxJobs={3}
-            onViewAll={handleViewAllJobRecommendations}
-          />
+            {/* Job Recommendations Widget */}
+            <JobRecommendationWidget 
+              userSkills={userData.declaredSkills}
+              userLocation="Casablanca"
+              maxJobs={3}
+              onViewAll={handleViewAllJobRecommendations}
+            />
 
-          {/* Test Stats Widget */}
-          <TestStatsWidget />
+            {/* Test Stats Widget */}
+            <TestStatsWidget />
 
-          {/* Recent Test Results */}
-          <RecentTestResults onViewAll={handleViewAllTests} />
-        </div>          {/* Right Column - Main Content */}
+            {/* Recent Test Results */}
+            <RecentTestResults onViewAll={handleViewAllTests} />
+          </div>          {/* Right Column - Main Content */}
           <div className="xl:col-span-8 space-y-4 lg:space-y-6">
             {/* Dynamic Badges Grid */}
             <DynamicBadges />
