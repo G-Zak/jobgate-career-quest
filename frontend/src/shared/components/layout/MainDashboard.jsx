@@ -16,8 +16,6 @@ import AbstractReasoningTest from '../../../features/skills-assessment/component
 import LogicalReasoningTest from '../../../features/skills-assessment/components/LogicalReasoningTest';
 import LRT2Test from '../../../features/skills-assessment/components/LRT2Test';
 import LRT3Test from '../../../features/skills-assessment/components/LRT3Test';
-import NumericalReasoningTest from '../../../features/skills-assessment/components/NumericalReasoningTest';
-import SituationalJudgmentTest from '../../../features/skills-assessment/components/SituationalJudgmentTest';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import { useScrollOnChange } from '../../utils/scrollUtils';
@@ -30,6 +28,7 @@ const MainDashboard = () => {
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [currentTestFilter, setCurrentTestFilter] = useState(null);
   const [currentTestId, setCurrentTestId] = useState(null);
+  const [selectedChallenge, setSelectedChallenge] = useState(null);
 
   // Universal scroll management using scroll utilities
   useScrollOnChange(activeSection, { smooth: true, attempts: 3 });
@@ -193,18 +192,9 @@ const MainDashboard = () => {
       // Handle LRT3 tests (Section 3)
       console.log('✅ Routing to LRT3 test');
       setActiveSection('lrt3-test');
-    } else if (isSituationalFilterAndNumber || isStringWithSituational || isSJTString) {
-      // Handle situational judgment tests
-      console.log('✅ Routing to situational judgment test');
-      setActiveSection('situational-judgment-test');
-    } else if (currentTestFilter === 'numerical' || testId.startsWith('NRT')) {
-      // Handle numerical reasoning tests
-      console.log('✅ Routing to numerical reasoning test');
-      setActiveSection('numerical-reasoning-test');
     } else {
-      // Handle other test types
+      // Handle other test types (numerical, etc.)
       console.log('❌ Routing to test-session for testId:', testId);
-
       setActiveSection('test-session');
     }
   };
@@ -351,6 +341,76 @@ const MainDashboard = () => {
             {/* Additional Navigation Items */}
             <div className="secondary-nav-section p-6 space-y-3">
               <button 
+                onClick={() => setActiveSection('skills-management')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'skills-management'
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                Gestion des compétences
+              </button>
+              
+              <button 
+                onClick={() => setActiveSection('tests-by-competencies')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'tests-by-competencies'
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                📝 Tests par Compétences
+              </button>
+              
+              <button 
+                onClick={() => setActiveSection('practical-tests')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'practical-tests'
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                💻 Tests Pratiques
+              </button>
+              
+              <button 
+                onClick={() => setActiveSection('coding-challenges')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'coding-challenges' || activeSection === 'coding-dashboard' || activeSection.startsWith('challenge-')
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                � Debug: Défis
+              </button>
+              
+              <button 
+                onClick={() => setActiveSection('technical-assessment')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'technical-assessment'
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                � Debug: QCM Skills
+              </button>
+              
+              {/* Test adaptatif supprimé - tests créés par l'admin */}
+              
+              {/* Administration supprimée - tests créés par l'admin Django */}
+              
+              <button 
+                onClick={() => setActiveSection('test-debug')}
+                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
+                  activeSection === 'test-debug'
+                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+              >
+                🔧 Debug Tests API
+              </button>
+              
+              <button 
                 onClick={() => setActiveSection('mon-espace')}
                 className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
                   activeSection === 'mon-espace'
@@ -400,7 +460,7 @@ const MainDashboard = () => {
             )}
           
           {activeSection === 'dashboard' ? (
-            <Dashboard />
+            <Dashboard onNavigateToSection={setActiveSection} />
           ) : activeSection === 'test-session' ? (
             <TestLayout />
           ) : activeSection.startsWith('verbal-reasoning-test') ? (
@@ -437,21 +497,6 @@ const MainDashboard = () => {
           ) : activeSection === 'lrt3-test' ? (
             <LRT3Test 
               onBackToDashboard={() => setActiveSection('available-tests')} 
-              testId={currentTestId}
-            />
-
-          ) : activeSection === 'situational-judgment-test' ? (
-            <SituationalJudgmentTest 
-              onBackToDashboard={() => setActiveSection('available-tests')} 
-              testId={currentTestId}
-            />
-          ) : activeSection === 'numerical-reasoning-test' ? (
-            <NumericalReasoningTest 
-              onBackToDashboard={() => setActiveSection('available-tests')}
-              onComplete={(results) => {
-                console.log('Numerical test completed with results:', results);
-                setActiveSection('available-tests');
-              }}
               testId={currentTestId}
             />
           ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
@@ -523,20 +568,16 @@ const MainDashboard = () => {
               </div>
             </div>
           ) : activeSection === 'historique-tests' ? (
-            <div className="space-y-6">
-              <div className="text-center py-12">
-                <h1 className="text-3xl font-bold text-[#4A5869] mb-4">Historique des Tests</h1>
-                <p className="text-lg text-[#4A5869]/70 max-w-3xl mx-auto">
-                  Consultez l'historique de tous vos tests et évaluations de compétences.
-                </p>
-              </div>
-              <div className="bg-white rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8">
-                <h2 className="text-xl font-semibold text-[#4A5869] mb-4">Historique Complet</h2>
-                <p className="text-[#4A5869]/70">
-                  L'historique détaillé de vos tests et évaluations sera affiché ici avec les résultats et les progrès.
-                </p>
-              </div>
-            </div>
+            <TestHistoryDashboard />
+          ) : activeSection === 'coding-challenges' ? (
+            <ChallengesList onSelectChallenge={handleSelectChallenge} />
+          ) : activeSection === 'coding-dashboard' ? (
+            <CodingDashboard />
+          ) : activeSection.startsWith('challenge-') ? (
+            <ChallengeDetail 
+              challenge={selectedChallenge} 
+              onBack={handleBackFromChallenge}
+            />
           ) : (
             <>
               {/* Blue Banner Header */}

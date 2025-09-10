@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "JobGate Career Quest - Skills Assessment Platform",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 3001",
+    "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --report-unused-disable-directives --max-warnings 0",
@@ -19,6 +19,8 @@
     "axios": "^1.11.0",
     "chart.js": "^4.4.0",
     "framer-motion": "^12.23.12",
+    "lucide-react": "^0.542.0",
+    "monaco-editor": "^0.53.0",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",

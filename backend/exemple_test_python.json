@@ -1,0 +1,48 @@
+{
+  "questions": [
+    {
+      "question": "Qu'est-ce qu'un décorateur en Python ?",
+      "options": [
+        "Une fonction qui modifie le comportement d'une autre fonction",
+        "Un pattern de design",
+        "Une librairie",
+        "Un type de classe"
+      ],
+      "correct_answer": "a",
+      "points": 3
+    },
+    {
+      "question": "Quelle est la différence entre une liste et un tuple ?",
+      "options": [
+        "Aucune différence",
+        "Les tuples sont mutables, les listes non",
+        "Les listes sont mutables, les tuples non",
+        "Les tuples sont plus lents"
+      ],
+      "correct_answer": "c",
+      "points": 2
+    },
+    {
+      "question": "Comment gérer les exceptions en Python ?",
+      "options": [
+        "try/catch",
+        "try/except",
+        "catch/finally",
+        "handle/error"
+      ],
+      "correct_answer": "b",
+      "points": 2
+    },
+    {
+      "question": "Qu'est-ce qu'une list comprehension ?",
+      "options": [
+        "Une fonction built-in",
+        "Une façon concise de créer des listes",
+        "Un type de données",
+        "Une librairie"
+      ],
+      "correct_answer": "b",
+      "points": 3
+    }
+  ]
+}
