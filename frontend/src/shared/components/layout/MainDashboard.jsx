@@ -569,7 +569,7 @@ const MainDashboard = () => {
                     : 'text-gray-700 hover:bg-blue-50'
                 }`}
               >
-                📝 Tests par Compétences
+                Tests par Compétences
               </button>
               
               <button 
@@ -580,7 +580,7 @@ const MainDashboard = () => {
                     : 'text-gray-700 hover:bg-blue-50'
                 }`}
               >
-                💻 Tests Pratiques
+                Tests Pratiques
               </button>
               
               <button 
@@ -591,7 +591,7 @@ const MainDashboard = () => {
                     : 'text-gray-700 hover:bg-blue-50'
                 }`}
               >
-                � Debug: Défis
+                Debug: Défis
               </button>
               
               <button 
@@ -602,7 +602,7 @@ const MainDashboard = () => {
                     : 'text-gray-700 hover:bg-blue-50'
                 }`}
               >
-                � Debug: QCM Skills
+                Debug: QCM Skills
               </button>
               
               {/* Test adaptatif supprimé - tests créés par l'admin */}
@@ -617,7 +617,7 @@ const MainDashboard = () => {
                     : 'text-gray-700 hover:bg-blue-50'
                 }`}
               >
-                🔧 Debug Tests API
+                Debug Tests API
               </button>
               
               <button 

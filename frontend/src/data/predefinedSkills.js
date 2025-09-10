@@ -3,7 +3,7 @@
 
 export const skillCategories = {
   "Frontend Development": {
-    icon: "🎨",
+    icon: "",
     color: "#3B82F6",
     skills: [
       "React", "Vue.js", "Angular", "JavaScript", "TypeScript", 
@@ -13,7 +13,7 @@ export const skillCategories = {
     ]
   },
   "Backend Development": {
-    icon: "⚙️",
+    icon: "",
     color: "#10B981",
     skills: [
       "Node.js", "Django", "Flask", "FastAPI", "Express.js",
@@ -23,7 +23,7 @@ export const skillCategories = {
     ]
   },
   "Mobile Development": {
-    icon: "📱",
+    icon: "",
     color: "#8B5CF6",
     skills: [
       "React Native", "Flutter", "Swift", "Kotlin", "Ionic",
@@ -32,7 +32,7 @@ export const skillCategories = {
     ]
   },
   "Database & Data": {
-    icon: "🗄️",
+    icon: "",
     color: "#F59E0B",
     skills: [
       "MySQL", "PostgreSQL", "MongoDB", "Redis", "SQLite",
@@ -42,7 +42,7 @@ export const skillCategories = {
     ]
   },
   "DevOps & Cloud": {
-    icon: "☁️",
+    icon: "",
     color: "#06B6D4",
     skills: [
       "Docker", "Kubernetes", "AWS", "Azure", "Google Cloud",
@@ -52,7 +52,7 @@ export const skillCategories = {
     ]
   },
   "Data Science & AI": {
-    icon: "🤖",
+    icon: "",
     color: "#EC4899",
     skills: [
       "Python", "R", "Pandas", "NumPy", "Scikit-learn",
@@ -62,7 +62,7 @@ export const skillCategories = {
     ]
   },
   "UI/UX Design": {
-    icon: "🎨",
+    icon: "",
     color: "#EF4444",
     skills: [
       "Figma", "Adobe XD", "Sketch", "InVision", "Zeplin",
@@ -72,7 +72,7 @@ export const skillCategories = {
     ]
   },
   "Project Management": {
-    icon: "📊",
+    icon: "",
     color: "#059669",
     skills: [
       "Agile", "Scrum", "Kanban", "JIRA", "Trello", "Asana",
@@ -82,7 +82,7 @@ export const skillCategories = {
     ]
   },
   "Testing & QA": {
-    icon: "🧪",
+    icon: "",
     color: "#7C3AED",
     skills: [
       "Jest", "Cypress", "Selenium", "Playwright", "Postman",
@@ -92,7 +92,7 @@ export const skillCategories = {
     ]
   },
   "Security": {
-    icon: "🔒",
+    icon: "",
     color: "#DC2626",
     skills: [
       "Cybersecurity", "Penetration Testing", "OWASP", "SSL/TLS",
