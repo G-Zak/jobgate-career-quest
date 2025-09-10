@@ -41,6 +41,7 @@ const MainDashboard = () => {
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [currentTestFilter, setCurrentTestFilter] = useState(null);
   const [currentTestId, setCurrentTestId] = useState(null);
+  const [currentSkillId, setCurrentSkillId] = useState(null);
   const [selectedChallenge, setSelectedChallenge] = useState(null);
 
   // Universal scroll management using scroll utilities
@@ -116,7 +117,7 @@ const MainDashboard = () => {
     // Keep dropdown open - don't close it automatically
   };
 
-  const handleStartTest = (testId) => {
+  const handleStartTest = (testId, skillId = null) => {
   const isMasterSJT = (typeof testId === 'string' && (testId === 'MASTER-SJT' || testId === 'MASTER-SJT1' || testId.toLowerCase().includes('master-sjt')));
   const isSJT = (typeof testId === 'string' && (testId === 'SJT' || testId.toLowerCase().includes('situational') || testId.toLowerCase().includes('sjt')));
     console.log('=== HANDLE START TEST ===');
@@ -165,8 +166,9 @@ const MainDashboard = () => {
     console.log('isLRT2String:', isLRT2String);
     console.log('isLRT3String:', isLRT3String);
     
-  // Set the current test ID
+  // Set the current test ID and skill ID
     setCurrentTestId(testId);
+    setCurrentSkillId(skillId);
     
     // Check if it's a verbal reasoning test
     if (isMasterSJT) {
@@ -547,6 +549,7 @@ const MainDashboard = () => {
             <SkillBasedTests 
               userId={1}
               testId={currentTestId}
+              skillId={currentSkillId}
               onBackToDashboard={() => setActiveSection('applications')}
             />
           ) : activeSection === 'situational-judgment-test' ? (

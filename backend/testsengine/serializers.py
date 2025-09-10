@@ -36,7 +36,7 @@ class TestSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Test
-        fields = ['id', 'title', 'test_type', 'description', 'duration_minutes', 'total_questions', 'passing_score', 'questions']
+        fields = ['id', 'title', 'test_type', 'description', 'duration_minutes', 'total_questions', 'passing_score', 'is_active', 'questions']
 
 class TestSessionSerializer(serializers.ModelSerializer):
     test_title = serializers.CharField(source='test.title', read_only=True)

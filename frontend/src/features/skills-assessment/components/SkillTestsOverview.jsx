@@ -757,7 +757,7 @@ const SkillTestsDetail = ({ skill, onBack, onBackToDashboard, onStartPracticalTe
     // Démarrer le test QCM en utilisant la fonction fournie par le dashboard
     console.log(`Démarrage du test QCM : ${test.test_name}`);
     if (onStartTest) {
-      onStartTest(test.id || test.test_id);
+      onStartTest(test.id || test.test_id, skill.id); // Pass skillId as second parameter
     }
   };
 

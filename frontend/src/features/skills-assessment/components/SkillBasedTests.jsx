@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaPlay, FaClock, FaQuestionCircle, FaArrowLeft, FaCheckCircle, FaTrophy } from 'react-icons/fa';
 
-const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
+const SkillBasedTests = ({ userId, testId, skillId, onBackToDashboard }) => {
   const [userSkills, setUserSkills] = useState([]);
   const [availableTests, setAvailableTests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,22 +44,41 @@ const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
             const userSkillsData = candidate.skills || [];
             setUserSkills(userSkillsData);
             
-            if (userSkillsData.length === 0) {
-                setAvailableTests([]);
-                setLoading(false);
-                return;
-            }
-            
-            // Charger les tests techniques depuis testsengine
+            // Charger tous les tests techniques depuis testsengine
             const testsResponse = await fetch('http://localhost:8000/api/tests/?test_type=technical');
             const allTests = await testsResponse.json();
             
-            // Filtrer les tests techniques actifs  
-            const userTests = allTests.filter(test => 
-                test.test_type === 'technical' && test.is_active
-            );
+            // Si un skillId spécifique est fourni, filtrer les tests pour cette compétence
+            let filteredTests;
+            if (skillId) {
+                // Trouver la compétence spécifique
+                const specificSkill = userSkillsData.find(skill => skill.id === skillId);
+                if (specificSkill) {
+                    // Filtrer les tests qui correspondent à cette compétence (par titre ou contenu)
+                    filteredTests = allTests.filter(test => {
+                        const skillName = specificSkill.name.toLowerCase();
+                        const testTitle = test.title.toLowerCase();
+                        const testDescription = test.description.toLowerCase();
+                        
+                        return test.test_type === 'technical' && (
+                            testTitle.includes(skillName) ||
+                            testDescription.includes(skillName) ||
+                            (skillName === 'python' && (testTitle.includes('python') || testTitle.includes('django'))) ||
+                            (skillName === 'javascript' && (testTitle.includes('javascript') || testTitle.includes('js') || testTitle.includes('react'))) ||
+                            (skillName === 'django' && testTitle.includes('django')) ||
+                            (skillName === 'react' && testTitle.includes('react')) ||
+                            (skillName === 'sql' && testTitle.includes('sql'))
+                        );
+                    });
+                } else {
+                    filteredTests = [];
+                }
+            } else {
+                // Pas de skillId spécifique, montrer tous les tests techniques
+                filteredTests = allTests.filter(test => test.test_type === 'technical');
+            }
             
-            setAvailableTests(userTests);
+            setAvailableTests(filteredTests);
             setLoading(false);
         } catch (error) {
             console.error('Erreur lors du chargement:', error);
@@ -377,9 +396,17 @@ const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
           <FaArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Tests par Compétence</h1>
+          <h1 className="text-3xl font-bold text-gray-800">
+            {skillId ? 
+              `Tests - ${userSkills.find(skill => skill.id === skillId)?.name || 'Compétence'}` : 
+              'Tests par Compétence'
+            }
+          </h1>
           <p className="text-gray-600 mt-2">
-            Passez des tests techniques basés sur vos compétences déclarées
+            {skillId ? 
+              `Tests techniques spécifiques à ${userSkills.find(skill => skill.id === skillId)?.name || 'cette compétence'}` :
+              'Passez des tests techniques basés sur vos compétences déclarées'
+            }
           </p>
         </div>
       </div>
@@ -402,26 +429,12 @@ const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
       )}
 
       {/* Tests disponibles ou messages */}
-      {availableTests.length === 0 && userSkills.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-400 text-6xl mb-4">🎯</div>
-          <h3 className="text-xl font-medium text-gray-600 mb-2">Aucune compétence déclarée</h3>
-          <p className="text-gray-500 mb-6">
-            Vous devez d'abord ajouter vos compétences techniques pour voir les tests disponibles.
-          </p>
-          <button
-            onClick={onBackToDashboard}
-            className="bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 rounded-lg transition-colors"
-          >
-            Aller à la gestion des compétences
-          </button>
-        </div>
-      ) : availableTests.length === 0 && userSkills.length > 0 ? (
+      {availableTests.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-gray-400 text-6xl mb-4">📚</div>
           <h3 className="text-xl font-medium text-gray-600 mb-2">Aucun test disponible</h3>
           <p className="text-gray-500 mb-6">
-            Aucun test n'est encore créé pour vos compétences actuelles.
+            Aucun test technique n'est actuellement disponible.
             <br />
             Les administrateurs peuvent créer des tests dans l'interface d'administration.
           </p>
@@ -436,15 +449,13 @@ const SkillBasedTests = ({ userId, testId, onBackToDashboard }) => {
         /* Tests disponibles */
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {availableTests.map(test => {
-            const skill = userSkills.find(s => s.id === test.skill);
-            
             return (
               <div key={test.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-xl font-semibold text-gray-800 mb-2">{test.title}</h3>
                     <p className="text-sm text-blue-600 font-medium">
-                      Compétence: {skill?.name}
+                      Test technique - {test.test_type}
                     </p>
                   </div>
                   <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
