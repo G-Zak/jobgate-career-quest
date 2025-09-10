@@ -1,79 +1,178 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { jobOffers } from '../../../data/jobOffers';
 
-const JobRecommendations = ({ jobs }) => {
+const JobRecommendations = ({ onViewAll, maxJobs = 2 }) => {
+  const [recommendedJobs, setRecommendedJobs] = useState([]);
+
+  useEffect(() => {
+    // Get user profile from localStorage
+    const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+    const userSkills = userProfile.skills || [];
+    const userLocation = userProfile.location || 'Casablanca';
+
+    // Get recommended jobs using the same logic as JobRecommendations.jsx
+    const getRecommendedJobs = () => {
+      if (!jobOffers || jobOffers.length === 0) {
+        return [];
+      }
+      
+      const activeJobs = jobOffers.filter(job => job.status !== 'inactive');
+      
+      const jobsWithScores = activeJobs.map(job => {
+        let score = 0;
+        
+        // Skills matching (50% weight)
+        if (userSkills.length > 0 && job.tags && job.tags.length > 0) {
+          const matchingSkills = job.tags.filter(skill => 
+            userSkills.some(userSkill => 
+              userSkill.name && userSkill.name.toLowerCase() === skill.toLowerCase()
+            )
+          );
+          const skillsScore = (matchingSkills.length / job.tags.length) * 50;
+          score += skillsScore;
+
+          // Proficiency bonus
+          matchingSkills.forEach(skill => {
+            const userSkill = userSkills.find(us => 
+              us.name && us.name.toLowerCase() === skill.toLowerCase()
+            );
+            if (userSkill && userSkill.proficiency) {
+              const proficiencyBonus = {
+                'expert': 10,
+                'advanced': 7,
+                'intermediate': 4,
+                'beginner': 2
+              }[userSkill.proficiency] || 0;
+              score += proficiencyBonus;
+            }
+          });
+        }
+        
+        // Location matching (20% weight)
+        if (job.location.toLowerCase().includes(userLocation.toLowerCase()) || 
+            job.remote) {
+          score += 20;
+        }
+        
+        // Remote work bonus (10% weight)
+        if (job.remote) {
+          score += 10;
+        }
+        
+        // Job recency (10% weight)
+        if (job.postedDate) {
+          const daysSincePosted = Math.floor(
+            (new Date() - new Date(job.postedDate)) / (1000 * 60 * 60 * 24)
+          );
+          if (daysSincePosted <= 7) score += 10;
+          else if (daysSincePosted <= 30) score += 5;
+        }
+        
+        // Job type preference (10% weight)
+        if (job.type === 'Full-time') score += 10;
+        
+        return {
+          ...job,
+          matchScore: Math.min(Math.round(score), 100)
+        };
+      });
+      
+      return jobsWithScores
+        .filter(job => job.matchScore > 0)
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, maxJobs);
+    };
+
+    setRecommendedJobs(getRecommendedJobs());
+  }, [maxJobs]);
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900">Recommended Jobs</h2>
-        <a href="#" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+        <button 
+          onClick={onViewAll}
+          className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+        >
           View all jobs →
-        </a>
+        </button>
       </div>
       
       <div className="space-y-4">
-        {jobs.map(job => (
-          <div
-            key={job.id}
-            className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 hover:border-blue-200 cursor-pointer group"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center space-x-3 mb-2">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                    {job.company.charAt(0)}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                      {job.title}
-                    </h3>
-                    <p className="text-sm text-gray-600">{job.company}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
-                  <span className="flex items-center">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    {job.location}
-                  </span>
-                  <span className="flex items-center">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                    </svg>
-                    {job.salary}
-                  </span>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-gray-700">Match:</span>
-                    <div className="w-20 h-2 bg-gray-200 rounded-full">
-                      <div 
-                        className={`h-2 rounded-full ${
-                          job.match >= 80 ? 'bg-green-500' : 
-                          job.match >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-                        }`}
-                        style={{ width: `${job.match}%` }}
-                      ></div>
+        {recommendedJobs && recommendedJobs.length > 0 ? (
+          recommendedJobs.map(job => (
+            <div
+              key={job.id}
+              className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 hover:border-blue-200 cursor-pointer group"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div 
+                      className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+                      style={{ backgroundColor: job.logoColor || '#3B82F6' }}
+                    >
+                      {job.logo || job.company.charAt(0)}
                     </div>
-                    <span className={`text-sm font-semibold ${
-                      job.match >= 80 ? 'text-green-600' : 
-                      job.match >= 60 ? 'text-yellow-600' : 'text-red-600'
-                    }`}>
-                      {job.match}%
+                    <div>
+                      <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                        {job.title}
+                      </h3>
+                      <p className="text-sm text-gray-600">{job.company}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                    <span className="flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      {job.location}
+                      {job.remote && <span className="ml-1 text-green-600">(Remote)</span>}
+                    </span>
+                    <span className="flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
+                      {job.salary}
                     </span>
                   </div>
                   
-                  <button className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors">
-                    Apply Now
-                  </button>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-gray-700">Match:</span>
+                      <div className="w-20 h-2 bg-gray-200 rounded-full">
+                        <div 
+                          className={`h-2 rounded-full ${
+                            job.matchScore >= 80 ? 'bg-green-500' : 
+                            job.matchScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                          }`}
+                          style={{ width: `${job.matchScore}%` }}
+                        ></div>
+                      </div>
+                      <span className={`text-sm font-semibold ${
+                        job.matchScore >= 80 ? 'text-green-600' : 
+                        job.matchScore >= 60 ? 'text-yellow-600' : 'text-red-600'
+                      }`}>
+                        {job.matchScore}%
+                      </span>
+                    </div>
+                    
+                    <button className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors">
+                      Apply Now
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
+          ))
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <p className="mb-2">No job recommendations available yet.</p>
+            <p className="text-sm">Complete your profile to get personalized recommendations!</p>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
