@@ -2,12 +2,14 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     TestViewSet, TestSessionViewSet, 
-    CodingChallengeViewSet, CodingSubmissionViewSet, CodingSessionViewSet
+    CodingChallengeViewSet, CodingSubmissionViewSet, CodingSessionViewSet,
+    TestAttemptViewSet
 )
 
 router = DefaultRouter()
 router.register(r'tests', TestViewSet)
 router.register(r'sessions', TestSessionViewSet, basename='testsession')
+router.register(r'attempts', TestAttemptViewSet, basename='testattempt')
 
 # Coding challenges routes
 router.register(r'challenges', CodingChallengeViewSet)

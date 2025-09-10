@@ -1,44 +1,61 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaArrowLeft, FaArrowRight, FaClock, FaCheckCircle, FaFlag } from 'react-icons/fa';
+import { FaClock, FaFlag, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, FaSearchPlus, FaLayerGroup, FaImage, FaPause, FaPlay, FaTimes } from 'react-icons/fa';
+import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
 import { getAbstractTestWithAnswers } from '../data/abstractTestSections';
-import { scrollToTop } from '../../../shared/utils/scrollUtils';
-import { Button } from '@mui/material';
+import { submitTestAttempt } from '../lib/submitHelper';
+import TestResultsPage from './TestResultsPage';
 
-const AbstractReasoningTest = ({ onComplete, onBack }) => {
-  const [testData, setTestData] = useState(null);
-  const [currentSection, setCurrentSection] = useState(0);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
+const AbstractReasoningTest = ({ onBackToDashboard }) => {
+  const [testStep, setTestStep] = useState('test'); // Skip instructions - start directly with test
+  const [currentSection, setCurrentSection] = useState(1);
+  const [currentQuestion, setCurrentQuestion] = useState(1);
+  const [timeRemaining, setTimeRemaining] = useState(30 * 60); // 30 minutes for abstract reasoning
   const [answers, setAnswers] = useState({});
-  const [showInstructions, setShowInstructions] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [testStarted, setTestStarted] = useState(false);
-  const [testCompleted, setTestCompleted] = useState(false);
-  const timerRef = useRef(null);
+  const [testData, setTestData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+  const [showPauseModal, setShowPauseModal] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [startedAt, setStartedAt] = useState(null);
+  const [results, setResults] = useState(null);
 
+  // Universal scroll management using scroll utilities
+  useScrollToTop([], { smooth: true }); // Scroll on component mount
+  useTestScrollToTop(testStep, 'abstract-test-scroll', { smooth: true, attempts: 5 }); // Scroll on test step changes
+  useQuestionScrollToTop(currentQuestion, testStep, 'abstract-test-scroll'); // Scroll on question changes
+
+  // Load test data
   useEffect(() => {
-    const data = getAbstractTestWithAnswers();
-    setTestData(data);
-    setTimeLeft(data.duration_minutes * 60); // Convert to seconds
+    try {
+      setLoading(true);
+      const data = getAbstractTestWithAnswers();
+      setTestData(data);
+      setTimeRemaining(30 * 60); // 30 minutes for abstract reasoning
+      setStartedAt(new Date());
+    } catch (error) {
+      console.error('Error loading test data:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  // Timer countdown
   useEffect(() => {
-    if (testStarted && !testCompleted && timeLeft > 0) {
-      timerRef.current = setInterval(() => {
-        setTimeLeft(prev => {
+    if (testStep === 'test' && timeRemaining > 0 && !isPaused) {
+      const timer = setInterval(() => {
+        setTimeRemaining(prev => {
           if (prev <= 1) {
-            handleTestComplete();
+            handleFinishTest();
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
-    } else {
-      clearInterval(timerRef.current);
-    }
 
-    return () => clearInterval(timerRef.current);
-  }, [testStarted, testCompleted, timeLeft]);
+      return () => clearInterval(timer);
+    }
+  }, [testStep, timeRemaining, isPaused]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -47,9 +64,17 @@ const AbstractReasoningTest = ({ onComplete, onBack }) => {
   };
 
   const handleStartTest = () => {
-    setShowInstructions(false);
-    setTestStarted(true);
-    scrollToTop();
+    setTestStep('test');
+    
+    // Use scroll utility for immediate scroll on test start
+    setTimeout(() => {
+      scrollToTop({
+        container: 'abstract-test-scroll',
+        forceImmediate: true,
+        attempts: 3,
+        delay: 50
+      });
+    }, 100);
   };
 
   const handleAnswerSelect = (questionId, answer) => {
@@ -59,382 +84,502 @@ const AbstractReasoningTest = ({ onComplete, onBack }) => {
     }));
   };
 
-  const handleNext = () => {
-    const section = testData.sections[currentSection];
-    if (currentQuestion < section.questions.length - 1) {
+  const handleNextQuestion = () => {
+    const currentSectionData = getCurrentSection();
+    if (currentQuestion < currentSectionData.questions.length) {
       setCurrentQuestion(prev => prev + 1);
     } else {
-      handleTestComplete();
+      handleFinishTest();
     }
-    scrollToTop();
   };
 
-  const handlePrevious = () => {
-    if (currentQuestion > 0) {
+  const handlePreviousQuestion = () => {
+    if (currentQuestion > 1) {
       setCurrentQuestion(prev => prev - 1);
-      scrollToTop();
     }
   };
 
-  const handleTestComplete = () => {
-    setTestCompleted(true);
-    clearInterval(timerRef.current);
-    scrollToTop();
-    
-    // Calculate results
-    const section = testData?.sections?.[currentSection];
-    if (!section) return;
-    
-    // Calculate score (number of correct answers)
-    let correctCount = 0;
-    Object.entries(answers).forEach(([questionId, selectedAnswer]) => {
-      const question = section.questions.find(q => q.id === parseInt(questionId));
-      if (question && question.correct_answer === selectedAnswer) {
-        correctCount++;
-      }
-    });
-    
-    const results = {
-      testType: 'Abstract Reasoning',
-      sectionTitle: section.title,
-      totalQuestions: section.questions.length,
-      answeredQuestions: Object.keys(answers).length,
-      correctCount: correctCount,
-      score: (correctCount / section.questions.length) * 100,
-      answers: answers,
-      correctAnswers: section.questions.reduce((acc, q) => {
-        acc[q.id] = q.correct_answer;
-        return acc;
-      }, {}),
-      timeSpent: testData.duration_minutes * 60 - timeLeft,
-      completed: true
-    };
-    
-    if (onComplete) {
-      onComplete(results);
+  const handleFinishTest = async () => {
+    try {
+      // Submit the test using unified scoring
+      const result = await submitTestAttempt({
+        testId: 'ART',
+        testVersion: '1.0',
+        language: 'en',
+        answers,
+        testData,
+        startedAt
+      });
+      
+      setResults(result);
+      setTestStep('results');
+    } catch (error) {
+      console.error('Error submitting test:', error);
+      setTestStep('results'); // Still show results even if submission fails
     }
   };
 
-  if (!testData) {
+  const handlePauseToggle = () => {
+    if (isPaused) {
+      setIsPaused(false);
+      setShowPauseModal(false);
+    } else {
+      setIsPaused(true);
+      setShowPauseModal(true);
+    }
+  };
+
+  const handleResumeTest = () => {
+    setIsPaused(false);
+    setShowPauseModal(false);
+  };
+
+  const handleExitTest = () => {
+    setShowExitModal(true);
+  };
+
+  const confirmExitTest = () => {
+    onBackToDashboard();
+  };
+
+  const cancelExitTest = () => {
+    setShowExitModal(false);
+  };
+
+  const handleAbortTest = () => {
+    if (window.confirm("Are you sure you want to abort this test? Your progress will be lost.")) {
+      onBackToDashboard();
+    }
+  };
+
+  const getCurrentSection = () => {
+    return testData?.sections?.[0]; // Abstract reasoning typically has one main section
+  };
+
+  const getCurrentQuestion = () => {
+    const section = getCurrentSection();
+    return section?.questions?.find((q, index) => index + 1 === currentQuestion);
+  };
+
+  const getTotalAnswered = () => {
+    return Object.keys(answers).length;
+  };
+
+  const getTotalQuestions = () => {
+    const section = getCurrentSection();
+    return section?.questions?.length || 0;
+  };
+
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading Abstract Reasoning Test...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="animate-spin rounded-full h-32 w-32 border-4 border-orange-200 border-t-orange-600 mx-auto mb-8"></div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Loading Abstract Reasoning Test</h3>
+          <p className="text-gray-600">Preparing your assessment...</p>
+        </motion.div>
       </div>
     );
   }
 
-  const section = testData?.sections?.[currentSection] || { questions: [] };
-  const question = section?.questions?.[currentQuestion] || {};
-
-  if (showInstructions) {
+  if (!testData) {
     return (
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-6"
-      >
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-xl shadow-xl p-8">
-            {/* Header */}
-            <div className="text-center mb-8">
-              <div className="flex items-center justify-center mb-4">
-                <FaFlag className="text-purple-600 text-3xl mr-3" />
-                <h1 className="text-3xl font-bold text-gray-900">{section.intro_text.title}</h1>
-              </div>
-              <p className="text-xl text-gray-600">{section.description}</p>
-            </div>
-
-            {/* Instructions Image */}
-            {section.intro_image && (
-              <div className="mb-8 text-center">
-                <img 
-                  src={section.intro_image} 
-                  alt="Abstract Reasoning Instructions"
-                  className="max-w-full h-auto mx-auto rounded-lg shadow-md"
-                  style={{ maxHeight: '300px' }}
-                />
-              </div>
-            )}
-
-            {/* Instructions List */}
-            <div className="bg-gray-50 rounded-lg p-6 mb-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Instructions:</h3>
-              <ul className="space-y-2">
-                {section.intro_text.instructions.map((instruction, index) => (
-                  <li key={index} className="text-gray-700 flex items-start">
-                    {instruction && (
-                      <>
-                        <span className="text-purple-600 mr-2">•</span>
-                        {instruction}
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Test Info */}
-            <div className="grid md:grid-cols-3 gap-4 mb-8">
-              <div className="bg-purple-50 p-4 rounded-lg text-center">
-                <FaClock className="text-purple-600 text-2xl mx-auto mb-2" />
-                <p className="font-semibold text-gray-900">{testData.duration_minutes} Minutes</p>
-                <p className="text-sm text-gray-600">Time Limit</p>
-              </div>
-              <div className="bg-indigo-50 p-4 rounded-lg text-center">
-                <FaCheckCircle className="text-indigo-600 text-2xl mx-auto mb-2" />
-                <p className="font-semibold text-gray-900">{testData.total_questions} Questions</p>
-                <p className="text-sm text-gray-600">Total Questions</p>
-              </div>
-              <div className="bg-blue-50 p-4 rounded-lg text-center">
-                <FaFlag className="text-blue-600 text-2xl mx-auto mb-2" />
-                <p className="font-semibold text-gray-900">Pattern Analysis</p>
-                <p className="text-sm text-gray-600">Focus Area</p>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-between">
-              <button
-                onClick={onBack}
-                className="flex items-center px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                <FaArrowLeft className="mr-2" />
-                Back to Tests
-              </button>
-              <button
-                onClick={handleStartTest}
-                className="flex items-center px-8 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold"
-              >
-                Start Test
-                <FaArrowRight className="ml-2" />
-              </button>
-            </div>
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center max-w-md"
+        >
+          <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <FaTimesCircle className="w-12 h-12 text-red-600" />
           </div>
-        </div>
-      </motion.div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Test Unavailable</h2>
+          <p className="text-gray-600 mb-8">Unable to load the test data. Please try again later.</p>
+          <button
+            onClick={onBackToDashboard}
+            className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-colors font-medium"
+          >
+            Back to Dashboard
+          </button>
+        </motion.div>
+      </div>
     );
   }
 
-  if (testCompleted) {
+  // Results step - delegate to TestResultsPage
+  if (testStep === 'results') {
+    const section = getCurrentSection();
+    if (!section) return null;
+
+    let correctCount = 0;
+    section.questions.forEach(question => {
+      if (answers[question.id] === question.correct_answer) {
+        correctCount++;
+      }
+    });
+
+    const results = {
+      testType: 'Abstract Reasoning',
+      totalQuestions: section.questions.length,
+      answeredQuestions: Object.keys(answers).length,
+      correctAnswers: correctCount,
+      score: Math.round((correctCount / section.questions.length) * 100),
+      timeSpent: (30 * 60) - timeRemaining, // 30 minutes base time
+      timeTaken: formatTime((30 * 60) - timeRemaining),
+      totalTime: formatTime(30 * 60),
+      answers: answers,
+      correctAnswersList: section.questions.reduce((acc, q) => {
+        acc[q.id] = q.correct_answer;
+        return acc;
+      }, {}),
+      complexity: 'High',
+      averageComplexity: section.questions.reduce((sum, q) => sum + (q.complexity_score || 3), 0) / section.questions.length
+    };
+
     return (
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 p-6"
-      >
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white rounded-xl shadow-xl p-8 text-center">
-            <FaCheckCircle className="text-green-600 text-6xl mx-auto mb-6" />
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Test Completed!</h2>
-            <p className="text-xl text-gray-600 mb-6">
-              Your Abstract Reasoning test has been submitted successfully.
-            </p>
-            <div className="bg-gray-50 rounded-lg p-6 mb-6">
-              {/* Score information */}
-              <div className="mb-6">
-                <div className="relative pt-1">
-                  <div className="flex mb-2 items-center justify-between">
-                    <div>
-                      <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-purple-600 bg-purple-200">
-                        Your Score
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-semibold inline-block text-purple-600">
-                        {Math.round((Object.values(answers).filter((answer, index) => {
-                          const question = section.questions.find(q => q.id === parseInt(Object.keys(answers)[index]));
-                          return question && question.correct_answer === answer;
-                        }).length / section.questions.length) * 100)}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-purple-200">
-                    <div style={{ width: `${Math.round((Object.values(answers).filter((answer, index) => {
-                      const question = section.questions.find(q => q.id === parseInt(Object.keys(answers)[index]));
-                      return question && question.correct_answer === answer;
-                    }).length / section.questions.length) * 100)}%` }} 
-                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-purple-600"></div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 text-center mb-4">
-                <div>
-                  <p className="text-2xl font-bold text-purple-600">
-                    {Object.values(answers).filter((answer, index) => {
-                      const question = section.questions.find(q => q.id === parseInt(Object.keys(answers)[index]));
-                      return question && question.correct_answer === answer;
-                    }).length} / {section.questions.length}
-                  </p>
-                  <p className="text-gray-600">Correct Answers</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-indigo-600">
-                    {formatTime(testData.duration_minutes * 60 - timeLeft)}
-                  </p>
-                  <p className="text-gray-600">Time Spent</p>
-                </div>
-              </div>
-              
-              <p className="text-center text-gray-700">
-                Your results will be processed and added to your profile.
-              </p>
-            </div>
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              className="action-button"
-              onClick={() => {
-                if (typeof onBack === 'function') {
-                  onBack();
-                } else {
-                  console.warn("onBack function was not provided to AbstractReasoningTest");
-                }
-              }}
-            >
-              Return to Dashboard
-            </Button>
-          </div>
-        </div>
-      </motion.div>
+      <TestResultsPage
+        results={results}
+        testType="abstract"
+        testId="ART"
+        answers={answers}
+        testData={testData}
+        onBackToDashboard={onBackToDashboard}
+        onRetakeTest={() => window.location.reload()}
+      />
     );
   }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100"
-    >
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{section.title}</h1>
-              <p className="text-gray-600">
-                Question {currentQuestion + 1} of {section.questions.length}
-              </p>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
+      {/* Unified Modern Header */}
+      <motion.header 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-white/20 shadow-lg"
+      >
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={handleExitTest}
+              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-white/50 rounded-lg transition-all duration-200"
+            >
+              <FaTimes className="w-4 h-4" />
+              <span className="font-medium">Exit Test</span>
+            </button>
+
+            <div className="flex items-center gap-8">
+              <div className="text-center">
+                <div className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+                  Abstract Reasoning Test
+                </div>
+                <div className="text-sm text-gray-600">
+                  Question {currentQuestion} of {getTotalQuestions()}
+                </div>
+              </div>
             </div>
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center text-lg font-semibold">
-                <FaClock className="text-purple-600 mr-2" />
-                <span className={timeLeft < 300 ? 'text-red-600' : 'text-gray-700'}>
-                  {formatTime(timeLeft)}
-                </span>
+
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="text-sm text-gray-500">Time Remaining</div>
+                <div className={`text-xl font-bold font-mono ${timeRemaining <= 300 ? 'text-red-500' : 'text-orange-600'}`}>
+                  {formatTime(timeRemaining)}
+                </div>
               </div>
               <button
-                onClick={handleTestComplete}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                onClick={handlePauseToggle}
+                className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
               >
-                Finish Test
+                {isPaused ? <FaPlay className="w-4 h-4" /> : <FaPause className="w-4 h-4" />}
+                <span className="font-medium">{isPaused ? 'Resume' : 'Pause'}</span>
               </button>
-            </div>
-          </div>
-          
-          {/* Progress Bar */}
-          <div className="mt-4">
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${((currentQuestion + 1) / section.questions.length) * 100}%` }}
-              ></div>
             </div>
           </div>
         </div>
-      </div>
+      </motion.header>
 
-      {/* Question Content */}
+      {/* Main Content */}
       <div className="max-w-6xl mx-auto px-6 py-8">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentQuestion}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-            className="bg-white rounded-xl shadow-lg p-8"
-          >
-            {/* Question */}
-            <div className="mb-8">
+        {testStep === 'test' && (
+          <div className="flex flex-col gap-6">
+            {/* Section Info & Progress Card */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl shadow-lg p-8 border border-white/20"
+            >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Question {currentQuestion + 1}
-                </h2>
-                <span className="text-sm text-gray-500">
-                  Complexity: {question?.complexity_score || '?'}/5
-                </span>
+                <div className="flex items-center gap-4">
+                  <FaFlag className="text-orange-600" />
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800">
+                      Abstract Pattern Recognition
+                    </h2>
+                    <p className="text-gray-600 mt-1">
+                      Identify logical patterns and select the correct answer
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-gray-500">Progress</div>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {currentQuestion}/{getTotalQuestions()}
+                  </div>
+                </div>
               </div>
-              
-              <p className="text-lg text-gray-700 mb-6">{question?.question || 'Loading question...'}</p>
-              
-              {/* Question Image */}
-              {question?.image && (
-                <div className="mb-8 text-center">
-                  <img 
-                    src={question.image} 
-                    alt={`Abstract reasoning question ${question?.id || ''}`}
-                    className="max-w-full h-auto mx-auto rounded-lg shadow-md bg-gray-50"
-                    style={{ maxHeight: '500px' }}
+
+              {/* Enhanced Progress Bar */}
+              <div className="relative">
+                <div className="flex justify-between text-sm text-gray-600 mb-2">
+                  <span>Progress</span>
+                  <span>{Math.round((currentQuestion / getTotalQuestions()) * 100)}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(currentQuestion / getTotalQuestions()) * 100}%` }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
                   />
                 </div>
-              )}
-              
-              {/* Answer Options */}
-              <div className={`grid gap-4 ${question?.options?.length === 5 ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4'}`}>
-                {question?.options?.map((option) => (
-                  <button
-                    key={option}
-                    onClick={() => handleAnswerSelect(question.id, option.toLowerCase())}
-                    className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                      answers[question.id] === option.toLowerCase()
-                        ? 'border-purple-600 bg-purple-50 text-purple-700'
-                        : 'border-gray-200 hover:border-purple-300 bg-white'
-                    }`}
-                  >
-                    <span className="text-lg font-semibold">{option}</span>
-                  </button>
-                ))}
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Start</span>
+                  <span>Complete</span>
+                </div>
               </div>
-            </div>
+            </motion.section>
 
-            {/* Navigation */}
-            <div className="flex justify-between items-center pt-6 border-t">
-              <button
-                onClick={handlePrevious}
-                disabled={currentQuestion === 0}
-                className={`flex items-center px-6 py-3 rounded-lg transition-colors ${
-                  currentQuestion === 0
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-gray-500 text-white hover:bg-gray-600'
-                }`}
+            {/* Question Card */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentQuestion}
+                className="bg-white rounded-2xl shadow-lg border border-white/20 overflow-hidden"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
               >
-                <FaArrowLeft className="mr-2" />
-                Previous
-              </button>
+                <div className="p-8">
+                  {/* Question Header */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                        {currentQuestion}
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-800">Abstract Pattern</h3>
+                        <p className="text-gray-600">Find the logical pattern</p>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      <FaLayerGroup className="inline mr-1" />
+                      Complexity: {getCurrentQuestion()?.complexity_score || 3}/5
+                    </div>
+                  </div>
 
-              <div className="text-center">
-                <p className="text-sm text-gray-600">
-                  {answers[question.id] ? 'Answer selected' : 'Select an answer'}
-                </p>
-              </div>
+                  {/* Question Content */}
+                  {getCurrentQuestion()?.question && (
+                    <div className="mb-6 p-4 bg-gray-50 rounded-xl">
+                      <p className="text-lg text-gray-800">{getCurrentQuestion().question}</p>
+                    </div>
+                  )}
 
-              <button
-                onClick={handleNext}
-                className="flex items-center px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                {currentQuestion === section.questions.length - 1 ? 'Complete Test' : 'Next'}
-                <FaArrowRight className="ml-2" />
-              </button>
-            </div>
-          </motion.div>
-        </AnimatePresence>
+                  {/* Question Image */}
+                  {getCurrentQuestion()?.image && (
+                    <div className="mb-8 text-center">
+                      <div className="inline-block bg-white rounded-xl p-4 shadow-md border">
+                        <img 
+                          src={getCurrentQuestion().image} 
+                          alt={`Abstract pattern ${getCurrentQuestion()?.id || ''}`}
+                          className="max-w-full h-auto mx-auto rounded-lg"
+                          style={{ maxHeight: '400px' }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextElementSibling.style.display = 'flex';
+                          }}
+                        />
+                        <div className="hidden items-center justify-center w-full h-48 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
+                          <div className="text-center">
+                            <FaImage className="text-gray-400 text-3xl mx-auto mb-2" />
+                            <p className="text-gray-500">Pattern image not available</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Answer Options */}
+                  <div className="mb-8">
+                    <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                      <FaSearchPlus className="mr-2 text-orange-600" />
+                      Select the correct answer:
+                    </h4>
+                    <div className={`grid gap-4 ${getCurrentQuestion()?.options?.length === 5 ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4'}`}>
+                      {getCurrentQuestion()?.options?.map((option) => (
+                        <motion.button
+                          key={option}
+                          onClick={() => handleAnswerSelect(getCurrentQuestion().id, option.toLowerCase())}
+                          className={`p-6 rounded-xl border-2 transition-all duration-200 ${
+                            answers[getCurrentQuestion().id] === option.toLowerCase()
+                              ? 'border-orange-500 bg-orange-50 shadow-lg'
+                              : 'border-gray-200 hover:border-orange-300 bg-white hover:shadow-md'
+                          }`}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <div className="flex items-center justify-center h-12">
+                            <span className={`text-2xl font-bold ${
+                              answers[getCurrentQuestion().id] === option.toLowerCase()
+                                ? 'text-orange-600'
+                                : 'text-gray-700'
+                            }`}>
+                              {option}
+                            </span>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Navigation */}
+                  <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+                    <motion.button
+                      onClick={handlePreviousQuestion}
+                      disabled={currentQuestion === 1}
+                      className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 ${
+                        currentQuestion === 1
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-md'
+                      }`}
+                      whileHover={currentQuestion > 1 ? { scale: 1.02 } : {}}
+                      whileTap={currentQuestion > 1 ? { scale: 0.98 } : {}}
+                    >
+                      <span>← Previous</span>
+                    </motion.button>
+
+                    <div className="text-center">
+                      <p className={`text-sm font-medium ${
+                        answers[getCurrentQuestion()?.id] ? 'text-green-600' : 'text-gray-500'
+                      }`}>
+                        {answers[getCurrentQuestion()?.id] ? '✓ Answer selected' : 'Select an answer to continue'}
+                      </p>
+                    </div>
+
+                    <motion.button
+                      onClick={handleNextQuestion}
+                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl hover:from-orange-600 hover:to-amber-600 transition-all duration-200 shadow-lg"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <span>{currentQuestion === getTotalQuestions() ? 'Complete Test' : 'Next Question'}</span>
+                      <FaArrowRight />
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        )}
       </div>
-    </motion.div>
+
+      {/* Pause Modal */}
+      <AnimatePresence>
+        {showPauseModal && (
+          <motion.div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <div className="p-6">
+                <div className="flex items-center mb-4">
+                  <FaPause className="text-yellow-600 text-2xl mr-3" />
+                  <h3 className="text-xl font-bold text-gray-900">Test Paused</h3>
+                </div>
+                <p className="text-gray-600 mb-6">
+                  Your test is currently paused. The timer has stopped. Click resume when you're ready to continue.
+                </p>
+                <div className="flex space-x-3">
+                  <motion.button
+                    onClick={handleResumeTest}
+                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <FaPlay />
+                    <span>Resume Test</span>
+                  </motion.button>
+                  <motion.button
+                    onClick={() => setShowExitModal(true)}
+                    className="px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Exit Test
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Exit Confirmation Modal */}
+      <AnimatePresence>
+        {showExitModal && (
+          <motion.div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <div className="p-6">
+                <div className="flex items-center mb-4">
+                  <FaTimes className="text-red-600 text-2xl mr-3" />
+                  <h3 className="text-xl font-bold text-gray-900">Exit Test?</h3>
+                </div>
+                <p className="text-gray-600 mb-6">
+                  Are you sure you want to exit the test? All your progress will be lost and you'll return to the dashboard.
+                </p>
+                <div className="flex space-x-3">
+                  <motion.button
+                    onClick={cancelExitTest}
+                    className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    onClick={confirmExitTest}
+                    className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Exit Test
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 

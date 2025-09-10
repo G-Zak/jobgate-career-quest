@@ -11,7 +11,6 @@ import {
   FaChevronDown,
   FaChevronUp,
   FaSearch,
-  FaFilter,
   FaGlobe,
   FaChartLine,
   FaCube,
@@ -20,6 +19,130 @@ import {
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from "framer-motion";
 import { useScrollToTop } from '../../../shared/utils/scrollUtils';
+import TestInfoPage from './TestInfoPage';
+import TestResultsPage from './TestResultsPage';
+
+
+const unifiedTestsData = [
+  {
+    category: "Numerical Reasoning Tests",
+    prefix: "NRT",
+    total: 1,
+    unlocked: [1],
+    icon: <FaChartLine className="text-blue-600" />,
+    progress: 100,
+    testType: "numerical",
+    tests: [
+      { id: "NRT1", title: "NRT1", difficulty: "easy", level: "Beginner", duration: "15 min", questions: "20", badge: "📊", color: "blue" }
+
+    ].map(test => ({ ...test, unlocked: true, description: `${test.level} numerical reasoning assessment` }))
+  },
+  {
+    category: "Verbal Reasoning Tests", 
+    prefix: "VRT",
+    total: 7,
+    unlocked: [1, 2, 3, 4, 5, 6, 7],
+    icon: <FaBrain className="text-emerald-600" />,
+    progress: 100,
+    testType: "verbal",
+    tests: [
+      { id: "VRT1", title: "VRT1", difficulty: "mixed", level: "Mixed Difficulty", duration: "25 min", questions: "8 passages", badge: "�", color: "emerald", unlocked: true, description: "Comprehensive reading comprehension test with randomized passages" },
+      { id: "VRT2", title: "VRT2", difficulty: "medium", level: "Intermediate", duration: "25 min", questions: "25", badge: "�", color: "emerald", unlocked: true, description: "Business & professional reading comprehension" },
+      { id: "VRT3", title: "VRT3", difficulty: "hard", level: "Advanced", duration: "30 min", questions: "30", badge: "�", color: "emerald", unlocked: true, description: "Management & leadership comprehension" },
+      { id: "VRT4", title: "VRT4", difficulty: "expert", level: "Expert", duration: "25 min", questions: "30", badge: "🔗", color: "emerald", unlocked: true, description: "Comprehensive analogies across 9 different types" },
+      { id: "VRT5", title: "VRT5", difficulty: "expert", level: "Expert", duration: "25 min", questions: "25", badge: "🔍", color: "emerald", unlocked: true, description: "Classification (Odd-One-Out): words, pairs, numbers, letters" },
+      { id: "VRT6", title: "VRT6", difficulty: "expert", level: "Master", duration: "30 min", questions: "25", badge: "🔐", color: "emerald", unlocked: true, description: "Coding & Decoding: crack patterns, codes, and ciphers" },
+      { id: "VRT7", title: "VRT7", difficulty: "expert", level: "Master", duration: "35 min", questions: "25", badge: "🧩", color: "emerald", unlocked: true, description: "Blood Relations & Logical Puzzles: advanced reasoning challenges" }
+    ]
+  },
+  {
+    category: "Logical Reasoning Tests",
+    prefix: "LRT", 
+    total: 3,
+    unlocked: [1, 2, 3],
+    icon: <FaCog className="text-purple-600" />,
+    progress: 100,
+    testType: "logical",
+    tests: [
+      { id: "LRT1", title: "LRT1", difficulty: "easy", level: "Beginner", duration: "15 min", questions: "20", badge: "🧩", color: "purple" },
+      { id: "LRT2", title: "LRT2", difficulty: "easy", level: "Beginner", duration: "15 min", questions: "20", badge: "🧩", color: "purple" },
+      { id: "LRT3", title: "LRT3", difficulty: "easy", level: "Beginner", duration: "15 min", questions: "20", badge: "🧩", color: "purple" }
+    ].map(test => ({ ...test, unlocked: true, description: `${test.level} logical reasoning assessment` }))
+  },
+  {
+    category: "Abstract Reasoning Tests",
+    prefix: "ART",
+    total: 1,
+    unlocked: [1],
+    icon: <FaBrain className="text-indigo-600" />,
+    progress: 100,
+    testType: "abstract",
+    tests: [
+      { id: "ART1", title: "ART1", difficulty: "easy", level: "Beginner", duration: "15 min", questions: "20", badge: "🔮", color: "indigo" }
+    ].map(test => ({ ...test, unlocked: true, description: `${test.level} abstract reasoning assessment` }))
+  },
+  {
+    category: "Diagrammatic Reasoning Tests",
+    prefix: "DRT",
+    total: 2,
+    unlocked: [1, 2],
+    icon: <FaSitemap className="text-green-600" />,
+    progress: 100,
+    testType: "diagrammatic",
+    tests: [
+      { id: "DRT1", title: "DRT1", difficulty: "easy", level: "Beginner", duration: "15 min", questions: "20", badge: "📊", color: "green" },
+      { id: "DRT2", title: "DRT2", difficulty: "easy", level: "Beginner", duration: "15 min", questions: "20", badge: "📊", color: "green" }
+    ].map(test => ({ ...test, unlocked: true, description: `${test.level} diagrammatic reasoning assessment` }))
+  },
+  {
+    category: "Spatial Reasoning Tests",
+    prefix: "SRT",
+    total: 6,
+    unlocked: [1, 2, 3, 4, 5, 6],
+    icon: <FaCube className="text-orange-600" />,
+    progress: 100,
+    testType: "spatial",
+    tests: [
+      { id: "SRT1", title: "SRT1", difficulty: "easy", level: "Beginner", duration: "15 min", questions: "20", badge: "📐", color: "orange" },
+      { id: "SRT2", title: "SRT2", difficulty: "easy", level: "Beginner", duration: "15 min", questions: "20", badge: "📐", color: "orange" },
+      { id: "SRT3", title: "SRT3", difficulty: "easy", level: "Beginner", duration: "15 min", questions: "20", badge: "📐", color: "orange" },
+      { id: "SRT4", title: "SRT4", difficulty: "medium", level: "Intermediate", duration: "20 min", questions: "25", badge: "🔺", color: "orange" },
+      { id: "SRT5", title: "SRT5", difficulty: "medium", level: "Intermediate", duration: "20 min", questions: "25", badge: "🔺", color: "orange" },
+      { id: "SRT6", title: "SRT6", difficulty: "medium", level: "Intermediate", duration: "20 min", questions: "25", badge: "🔺", color: "orange" }
+    ].map(test => ({ ...test, unlocked: true, description: `${test.level} spatial reasoning assessment` }))
+  },
+  {
+    category: "Situational Judgment Tests",
+    prefix: "SJT",
+    total: 1,
+    unlocked: [1],
+    icon: <FaUsers className="text-teal-600" />,
+    progress: 100,
+    testType: "situational",
+    tests: [
+      { id: "SJT1", title: "SJT1", difficulty: "easy", level: "Beginner", duration: "15 min", questions: "20", badge: "🤝", color: "teal" }
+    ].map(test => ({ ...test, unlocked: true, description: `${test.level} situational judgment assessment` }))
+  },
+  {
+    category: "Technical Assessment Tests",
+    prefix: "TAT",
+    total: 8,
+    unlocked: [1, 2, 3, 4, 5, 6, 7, 8],
+    icon: <FaCog className="text-red-600" />,
+    progress: 100,
+    testType: "technical",
+    tests: [
+      { id: "TAT1", title: "TAT1", difficulty: "easy", level: "Beginner", duration: "15 min", questions: "20", badge: "💻", color: "red" },
+      { id: "TAT2", title: "TAT2", difficulty: "easy", level: "Beginner", duration: "15 min", questions: "20", badge: "💻", color: "red" },
+      { id: "TAT3", title: "TAT3", difficulty: "medium", level: "Intermediate", duration: "20 min", questions: "25", badge: "⚡", color: "red" },
+      { id: "TAT4", title: "TAT4", difficulty: "medium", level: "Intermediate", duration: "20 min", questions: "25", badge: "⚡", color: "red" },
+      { id: "TAT5", title: "TAT5", difficulty: "medium", level: "Intermediate", duration: "20 min", questions: "25", badge: "⚡", color: "red" },
+      { id: "TAT6", title: "TAT6", difficulty: "hard", level: "Advanced", duration: "25 min", questions: "30", badge: "🔥", color: "red" },
+      { id: "TAT7", title: "TAT7", difficulty: "hard", level: "Advanced", duration: "25 min", questions: "30", badge: "🔥", color: "red" },
+      { id: "TAT8", title: "TAT8", difficulty: "hard", level: "Expert", duration: "30 min", questions: "35", badge: "🚀", color: "red" }
+    ].map(test => ({ ...test, unlocked: true, description: `${test.level} technical assessment` }))
+  }
+];
 
 const defaultTestsData = [
   {
@@ -47,88 +170,22 @@ const defaultTestsData = [
         features: ["Anti-cheating", "Retake cooldown", "200+ question pool", "Personalized results"]
       }
     ]
-  },
-  {
-    category: "Situational Judgment Tests",
-    prefix: "SJT",
-    total: 1,
-    unlocked: [1],
-    icon: <FaUsers className="text-indigo-600" />,
-    progress: 100,
-    testType: "situational",
-    tests: [
-      {
-        id: "SJT",
-        title: "SJT",
-        unlocked: true,
-        level: "Professional",
-        type: "workplace_scenarios",
-        description: "Randomized workplace scenarios from 200+ question pool",
-        duration: "25 min",
-        questions: "20 (random)",
-        badge: "💼",
-        difficulty: "medium",
-        color: "indigo",
-        features: ["Random selection", "200+ question pool", "Shuffled answers", "Fresh test every time"]
-      }
-    ]
-  },
-  {
-    category: "Numerical Reasoning Tests",
-    prefix: "NRT",
-    total: 15,
-    unlocked: [1, 2, 3],
-    icon: <FaChartLine className="text-blue-600" />,
-    progress: 20,
-    testType: "numerical"
-  },
-  {
-    category: "Logical Reasoning Tests",
-    prefix: "LRT",
-    total: 10,
-    unlocked: [1, 2, 3],
-    icon: <FaChartLine className="text-purple-600" />,
-    progress: 30,
-    testType: "logical"
-  },
-  {
-    category: "Spatial Reasoning Tests",
-    prefix: "SRT",
-    total: 12,
-    unlocked: [1, 2, 3, 4, 5, 6],
-    icon: <FaCube className="text-orange-600" />,
-    progress: 50,
-    testType: "spatial"
-  },
-  {
-    category: "Diagrammatic Reasoning Tests",
-    prefix: "DRT",
-    total: 8,
-    unlocked: [1, 2],
-    icon: <FaSitemap className="text-green-600" />,
-    progress: 25,
-    testType: "diagrammatic"
-  },
-  {
-    category: "Abstract Reasoning Tests",
-    prefix: "ART",
-    total: 6,
-    unlocked: [1],
-    icon: <FaBrain className="text-indigo-600" />,
-    progress: 16,
-    testType: "abstract"
   }
 ];
 
-const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
+const AvailableTests = ({ onBackToDashboard, onStartTest, onViewTestInfo, testFilter }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filter, setFilter] = useState("all");
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [selectedLanguage, setSelectedLanguage] = useState("english");
   const [verbalTests, setVerbalTests] = useState([]);
-  const [testsData, setTestsData] = useState(defaultTestsData);
+  const [testsData, setTestsData] = useState([...defaultTestsData, ...unifiedTestsData]);
   const [loading, setLoading] = useState(true);
+  
+  // Navigation state for test info and results pages
+  const [currentPage, setCurrentPage] = useState('dashboard'); // 'dashboard', 'testInfo', 'testResults'
+  const [selectedTestData, setSelectedTestData] = useState(null);
+  const [testResults, setTestResults] = useState(null);
 
   // Universal scroll management
   useScrollToTop([], { smooth: true });
@@ -141,110 +198,7 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
 
   // Fetch verbal tests from backend
   useEffect(() => {
-    const verbalSection = {
-      category: "Verbal Reasoning Tests",
-      prefix: "VRT",
-      total: 5, // Updated from 7 to 5 after consolidation
-      unlocked: [1, 2, 3, 4, 5], // Updated to reflect new structure
-      icon: <FaBrain className="text-emerald-600" />,
-      progress: 100,
-      testType: "verbal",
-      tests: [
-        { 
-          id: 1, 
-          title: "VRT-COMP", 
-          unlocked: true, 
-          level: "Mixed Difficulty",
-          type: "reading_comprehension_consolidated",
-          description: "Comprehensive reading comprehension test with randomized passages across all difficulty levels (science, business, management)",
-          duration: "25 min",
-          questions: "8 passages",
-          badge: "📚",
-          difficulty: "mixed",
-          color: "emerald",
-          features: ["Anti-cheating randomization", "Mixed difficulty", "Comprehensive coverage", "Fresh test every time"]
-        },
-        { 
-          id: 2, 
-          title: "VRT2", 
-          unlocked: true, 
-          level: "Intermediate",
-          type: "reading_comprehension",
-          description: "Business & professional reading comprehension",
-          duration: "25 min",
-          questions: 25,
-          badge: "📖",
-          difficulty: "medium",
-          color: "blue"
-        },
-        { 
-          id: 3, 
-          title: "VRT3", 
-          unlocked: true, 
-          level: "Advanced",
-          type: "reading_comprehension",
-          description: "Management & leadership comprehension",
-          duration: "30 min",
-          questions: 30,
-          badge: "💼",
-          difficulty: "hard",
-          color: "purple"
-        },
-        { 
-          id: 4, 
-          title: "VRT4", 
-          unlocked: true, 
-          level: "Expert",
-          type: "verbal_analogies",
-          description: "Comprehensive analogies across 9 different types",
-          duration: "25 min",
-          questions: 30,
-          badge: "🔗",
-          difficulty: "expert",
-          color: "red"
-        },
-        { 
-          id: 5, 
-          title: "VRT5", 
-          unlocked: true, 
-          level: "Expert",
-          type: "classification",
-          description: "Classification (Odd-One-Out): words, pairs, numbers, letters",
-          duration: "25 min",
-          questions: 25,
-          badge: "🔍",
-          difficulty: "expert",
-          color: "teal"
-        },
-        { 
-          id: 6, 
-          title: "VRT6", 
-          unlocked: true, 
-          level: "Master",
-          type: "coding_decoding",
-          description: "Coding & Decoding: crack patterns, codes, and ciphers",
-          duration: "30 min",
-          questions: 25,
-          badge: "🔐",
-          difficulty: "master",
-          color: "indigo"
-        },
-        { 
-          id: 7, 
-          title: "VRT7", 
-          unlocked: true, 
-          level: "Master",
-          type: "blood_relations_logical_puzzles",
-          description: "Blood Relations & Logical Puzzles: advanced reasoning challenges",
-          duration: "35 min",
-          questions: 25,
-          badge: "🧩",
-          difficulty: "master",
-          color: "rose"
-        }
-      ]
-    };
-    setTestsData([verbalSection, ...defaultTestsData]);
+    setTestsData([...defaultTestsData, ...unifiedTestsData]);
     setLoading(false);
   }, []);
 
@@ -264,10 +218,7 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
     }
     
     const matchesSearch = test.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filter === "all" || 
-                         (filter === "unlocked" && test.unlocked.length > 0) ||
-                         (filter === "inprogress" && test.progress > 0 && test.progress < 100);
-    return matchesSearch && matchesFilter;
+    return matchesSearch;
   });
 
   const toggleCategory = (index) => {
@@ -275,22 +226,98 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
   };
 
   const handleTestStart = (testId) => {
-    const testIdWithLang = testId === 'VERBAL_COMPREHENSIVE' ? `${testId}_${selectedLanguage.toUpperCase()}` : testId;
+    // Find the test data from both defaultTestsData and unifiedTestsData
+    let testData = null;
     
-    // Handle Master SJT specially - only if the testId is exactly 'MASTER-SJT1' or it's from the master-sjt section
-    if (testId === 'MASTER-SJT1' || testId === 'Master SJT') {
-      // Use the callback pattern to set the section
-      if (onStartTest) {
-        onStartTest('MASTER-SJT');
+    // Search in unifiedTestsData first
+    for (const section of unifiedTestsData) {
+      const test = section.tests?.find(t => t.id === testId || t.title === testId);
+      if (test) {
+        testData = {
+          id: testId,
+          title: test.title,
+          difficulty: test.difficulty,
+          level: test.level,
+          duration: test.duration,
+          questions: test.questions,
+          description: test.description,
+          testType: section.testType
+        };
+        break;
       }
-      return;
     }
+    
+    // If not found, search in defaultTestsData
+    if (!testData) {
+      for (const section of defaultTestsData) {
+        const test = section.tests?.find(t => 
+          t.id === testId || 
+          t.title === testId || 
+          t.id.toString() === testId.toString()
+        );
+        if (test) {
+          testData = {
+            id: testId,
+            title: test.title,
+            difficulty: test.difficulty,
+            level: test.level,
+            duration: test.duration,
+            questions: test.questions,
+            description: test.description,
+            testType: section.testType
+          };
+          break;
+        }
+      }
+    }
+    
+    // Handle Master SJT specially - check for multiple variations
+    if (testId === 'MASTER-SJT' || testId === 'Master SJT' || testId === 1 || testId === '1') {
+      testData = {
+        id: 'MASTER-SJT',
+        title: 'Master SJT',
+        difficulty: 'adaptive',
+        level: 'Comprehensive',
+        duration: '35 min',
+        questions: '35 (randomized)',
+        description: 'Comprehensive workplace behavior and judgment assessment covering all professional domains',
+        testType: 'master-sjt'
+      };
+    }
+    
+    // Check if we should use the new unified UX pattern
+    if (onViewTestInfo && testData) {
+      // New unified pattern: Dashboard → Test Info → Test Runner → Results
+      onViewTestInfo(testId, testData);
+    } else if (testData) {
+      // Legacy pattern: Show test info page within AvailableTests
+      setSelectedTestData(testData);
+      setCurrentPage('testInfo');
+    }
+  };
+
+  const handleActualTestStart = (testId) => {
+    const testIdWithLang = testId === 'VERBAL_COMPREHENSIVE' ? `${testId}_${selectedLanguage.toUpperCase()}` : testId;
     
     if (onStartTest) {
       onStartTest(testIdWithLang);
     } else {
       navigate("/test-session", { state: { testId: testIdWithLang } });
     }
+  };
+
+  const handleBackToDashboard = () => {
+    setCurrentPage('dashboard');
+    setSelectedTestData(null);
+    setTestResults(null);
+    if (onBackToDashboard) {
+      onBackToDashboard();
+    }
+  };
+
+  const handleShowResults = (results) => {
+    setTestResults(results);
+    setCurrentPage('testResults');
   };
 
   // Difficulty badge component
@@ -311,13 +338,38 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
     );
   };
 
+  // Conditional rendering based on current page
+  if (currentPage === 'testInfo') {
+    return (
+      <TestInfoPage
+        testData={selectedTestData}
+        onBackToDashboard={handleBackToDashboard}
+        onStartTest={handleActualTestStart}
+        onShowResults={handleShowResults}
+      />
+    );
+  }
+
+  if (currentPage === 'testResults') {
+    return (
+      <TestResultsPage
+        testResults={testResults}
+        onBackToDashboard={handleBackToDashboard}
+        onRetakeTest={(testId) => {
+          // Reset to test info page for retake
+          handleTestStart(testId);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with back button */}
       <div id="available-tests-header" className="bg-white shadow-sm border-b border-gray-200 p-4 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button
-            onClick={onBackToDashboard}
+            onClick={handleBackToDashboard}
             className="flex items-center text-gray-600 hover:text-blue-600 transition-colors"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -344,7 +396,7 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
           </p>
         </motion.div>
 
-        {/* Search and Filter Bar */}
+        {/* Search and Language Bar */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -364,35 +416,21 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center">
-                <FaFilter className="text-gray-400 mr-2" />
-                <select
-                  className="border border-gray-300 rounded-md bg-gray-50 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                >
-                  <option value="all">All Tests</option>
-                  <option value="unlocked">Unlocked</option>
-                  <option value="inprogress">In Progress</option>
-                </select>
-              </div>
-              
-              {/* Language Selector */}
-              <div className="flex items-center">
-                <FaGlobe className="text-gray-400 mr-2" />
-                <select
-                  className="border border-gray-300 rounded-md bg-gray-50 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={selectedLanguage}
-                  onChange={(e) => setSelectedLanguage(e.target.value)}
-                >
-                  {languages.map((lang) => (
-                    <option key={lang.code} value={lang.code}>
-                      {lang.flag} {lang.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            
+            {/* Language Selector */}
+            <div className="flex items-center">
+              <FaGlobe className="text-gray-400 mr-2" />
+              <select
+                className="border border-gray-300 rounded-md bg-gray-50 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+              >
+                {languages.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.flag} {lang.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </motion.div>
@@ -465,46 +503,11 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
                     transition={{ duration: 0.3 }}
                     className="px-6 pb-6"
                   >
-                    {/* Enhanced Test Cards for all test types */}
-                    {(section.testType === "verbal" || section.testType === "situational" || section.testType === "master-sjt") && section.tests ? (
-                      <div className={`grid ${section.testType === 'master-sjt' ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'} gap-6`}>
+                    {/* Special layout for Master SJT, Grid layout for all other tests */}
+                    {section.testType === "master-sjt" && section.tests ? (
+                      <div className="grid grid-cols-1 gap-6">
                         {section.tests.map((test) => {
                           const colorSchemes = {
-                            emerald: {
-                              bg: "bg-emerald-50",
-                              border: "border-emerald-200",
-                              text: "text-emerald-700",
-                              hover: "hover:border-emerald-400",
-                              button: "bg-emerald-600 hover:bg-emerald-700"
-                            },
-                            blue: {
-                              bg: "bg-blue-50",
-                              border: "border-blue-200",
-                              text: "text-blue-700",
-                              hover: "hover:border-blue-400",
-                              button: "bg-blue-600 hover:bg-blue-700"
-                            },
-                            purple: {
-                              bg: "bg-purple-50",
-                              border: "border-purple-200",
-                              text: "text-purple-700",
-                              hover: "hover:border-purple-400",
-                              button: "bg-purple-600 hover:bg-purple-700"
-                            },
-                            red: {
-                              bg: "bg-red-50",
-                              border: "border-red-200",
-                              text: "text-red-700",
-                              hover: "hover:border-red-400",
-                              button: "bg-red-600 hover:bg-red-700"
-                            },
-                            teal: {
-                              bg: "bg-teal-50",
-                              border: "border-teal-200",
-                              text: "text-teal-700",
-                              hover: "hover:border-teal-400",
-                              button: "bg-teal-600 hover:bg-teal-700"
-                            },
                             indigo: {
                               bg: "bg-indigo-50",
                               border: "border-indigo-200",
@@ -514,47 +517,39 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
                             }
                           };
 
-                          const scheme = colorSchemes[test.color] || colorSchemes.emerald;
-                          const isMasterSJT = section.testType === 'master-sjt';
-           return (
+                          const scheme = colorSchemes.indigo;
+                          const isMasterSJT = true;
+                          
+                          return (
                             <motion.div
                               key={test.id}
                               whileHover={{ y: -4 }}
                               className={`rounded-lg border ${scheme.border} ${scheme.bg} overflow-hidden transition-all duration-300 ${
                                 test.unlocked ? `cursor-pointer ${scheme.hover}` : "opacity-70"
-                              } ${isMasterSJT ? 'relative' : ''}`}
+                              } relative`}
                               onClick={() => {
                                 if (!test.unlocked) return;
-                                // Ensure Master SJT routes correctly using an explicit identifier
-                                if (isMasterSJT) {
-                                  handleTestStart('MASTER-SJT');
-                                } else {
-                                  handleTestStart(section.testType === 'verbal' ? test.title : test.id);
-                                }
+                                handleTestStart('MASTER-SJT');
                               }}
                             >
-                              {isMasterSJT && section.featured && (
+                              {section.featured && (
                                 <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                                   FEATURED
                                 </div>
                               )}
                               
-                              <div className={`p-6 ${isMasterSJT ? 'p-8' : ''}`}>
+                              <div className="p-8">
                                 {/* Test header with title and difficulty */}
                                 <div className="flex justify-between items-start mb-4">
                                   <div className="flex items-center space-x-3">
                                     <span className="text-2xl">{test.badge}</span>
-                                    <h3 className={`${isMasterSJT ? 'text-xl' : 'text-lg'} font-semibold text-gray-900`}>
+                                    <h3 className="text-xl font-semibold text-gray-900">
                                       {test.title}
                                     </h3>
                                   </div>
-                                  {test.difficulty === 'adaptive' ? (
-                                    <span className="inline-block bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-                                      ADAPTIVE
-                                    </span>
-                                  ) : (
-                                    <DifficultyBadge difficulty={test.difficulty} />
-                                  )}
+                                  <span className="inline-block bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                    ADAPTIVE
+                                  </span>
                                 </div>
                                 
                                 {/* Level indicator */}
@@ -563,12 +558,12 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
                                 </div>
                                 
                                 {/* Description */}
-                                <p className={`text-gray-600 ${isMasterSJT ? 'text-base' : 'text-sm'} mb-6 leading-relaxed`}>
+                                <p className="text-gray-600 text-base mb-6 leading-relaxed">
                                   {test.description}
                                 </p>
 
                                 {/* Master SJT Features */}
-                                {isMasterSJT && test.features && (
+                                {test.features && (
                                   <div className="grid grid-cols-2 gap-3 mb-6">
                                     {test.features.map((feature, idx) => (
                                       <div key={idx} className="flex items-center space-x-2 text-sm text-indigo-700">
@@ -580,7 +575,7 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
                                 )}
                                 
                                 {/* Stats */}
-                                <div className={`flex justify-between items-center text-sm text-gray-500 mb-6 ${isMasterSJT ? 'text-base' : ''}`}>
+                                <div className="flex justify-between items-center text-base text-gray-500 mb-6">
                                   <div className="flex items-center gap-1">
                                     <FaClock className="text-gray-400" />
                                     <span>{test.duration}</span>
@@ -594,13 +589,17 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
                                 {/* Action Button */}
                                 {test.unlocked ? (
                                   <button 
-                                    className={`w-full ${isMasterSJT ? 'py-4 text-lg' : 'py-3'} px-4 text-white font-medium rounded-md transition-colors ${scheme.button} flex items-center justify-center gap-2`}
+                                    className="w-full py-4 text-lg px-4 text-white font-medium rounded-md transition-colors bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center gap-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleTestStart('MASTER-SJT');
+                                    }}
                                   >
                                     <FaPlay className="text-sm" />
-                                    <span>{isMasterSJT ? 'Start Master Assessment' : 'Start Test'}</span>
+                                    <span>Start Master Assessment</span>
                                   </button>
                                 ) : (
-                                  <div className={`w-full ${isMasterSJT ? 'py-4' : 'py-3'} px-4 bg-gray-100 text-gray-500 font-medium rounded-md flex items-center justify-center gap-2`}>
+                                  <div className="w-full py-4 px-4 bg-gray-100 text-gray-500 font-medium rounded-md flex items-center justify-center gap-2">
                                     <FaLock className="text-sm" />
                                     <span>Locked</span>
                                   </div>
@@ -611,12 +610,16 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
                         })}
                       </div>
                     ) : (
-                      // Original grid layout for non-verbal tests
+                      /* Grid Layout for ALL other test types */
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {Array.from({ length: section.total }, (_, i) => {
                           const num = i + 1;
                           const unlocked = section.unlocked.includes(num);
                           const testId = `${section.prefix}${num}`;
+                          
+                          // Find the corresponding test in the section's tests array to get difficulty
+                          const testData = section.tests?.find(test => test.id === testId);
+                          const difficultyLabel = testData?.level || "Available";
 
                           return (
                             <motion.div
@@ -643,7 +646,7 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
                               </div>
                               {unlocked && (
                                 <div className="mt-2 text-xs text-blue-600 font-medium">
-                                  Available
+                                  {difficultyLabel}
                                 </div>
                               )}
                             </motion.div>
