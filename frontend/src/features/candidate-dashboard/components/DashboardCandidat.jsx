@@ -3,7 +3,7 @@ import ProfileHeader from './ProfileHeader';
 import DynamicBadges from './DynamicBadges';
 import DynamicSkillsPerformance from './DynamicSkillsPerformance';
 import TestTimeline from './TestTimeline';
-import JobRecommendations from './JobRecommendations';
+import JobRecommendationWidget from '../../job-recommendations/components/JobRecommendationWidget';
 import RecentTestResults from './RecentTestResults';
 import TestStatsWidget from './TestStatsWidget';
 import DynamicQuickStats from './DynamicQuickStats';
@@ -78,7 +78,7 @@ const Dashboard = ({ onNavigateToSection }) => {
             <DynamicSkillsPerformance />
             
             {/* Job Recommendations */}
-            <JobRecommendations jobs={userData.jobRecommendations} />
+            <JobRecommendationWidget />
             
             {/* Test Timeline */}
             <TestTimeline onViewAll={handleViewAllTests} />

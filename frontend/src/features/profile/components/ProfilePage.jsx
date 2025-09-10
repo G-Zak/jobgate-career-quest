@@ -26,12 +26,27 @@ const ProfilePage = () => {
   
   // Load user data from localStorage or use default
   const [userData, setUserData] = useState(() => {
-    const savedData = loadUserProfile();
-    return savedData || defaultUserProfile;
+    try {
+      const savedData = loadUserProfile();
+      return savedData || defaultUserProfile;
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      return defaultUserProfile;
+    }
   });
   
   // State for tracking if data has been modified
   const [isDataModified, setIsDataModified] = useState(false);
+
+  // Ensure userData has the required structure
+  const safeUserData = {
+    ...defaultUserProfile,
+    ...userData,
+    contact: {
+      ...defaultUserProfile.contact,
+      ...(userData?.contact || {})
+    }
+  };
 
   // Save changes to localStorage
   const saveChanges = () => {
@@ -51,7 +66,7 @@ const ProfilePage = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         setUserData({
-          ...userData,
+          ...safeUserData,
           avatar: e.target.result
         });
         setIsDataModified(true);
@@ -63,7 +78,7 @@ const ProfilePage = () => {
   // Handle avatar delete
   const handleAvatarDelete = () => {
     setUserData({
-      ...userData,
+      ...safeUserData,
       avatar: "https://i.pravatar.cc/300?img=placeholder"
     });
     setIsDataModified(true);
@@ -72,7 +87,7 @@ const ProfilePage = () => {
   // Handle info update
   const handleInfoUpdate = (field, value) => {
     setUserData({
-      ...userData,
+      ...safeUserData,
       [field]: value
     });
     setIsDataModified(true);
@@ -81,9 +96,9 @@ const ProfilePage = () => {
   // Handle contact update
   const handleContactUpdate = (field, value) => {
     setUserData({
-      ...userData,
+      ...safeUserData,
       contact: {
-        ...userData.contact,
+        ...safeUserData.contact,
         [field]: value
       }
     });
@@ -92,11 +107,11 @@ const ProfilePage = () => {
 
   // Add new skill
   const handleAddSkill = () => {
-    if (newSkill.trim() && !userData.skills.includes(newSkill.trim())) {
-      const updatedSkills = [...userData.skills, newSkill.trim()];
+    if (newSkill.trim() && !safeUserData.skills.includes(newSkill.trim())) {
+      const updatedSkills = [...safeUserData.skills, newSkill.trim()];
       
       // Create default skill assessment entry if it doesn't exist
-      const updatedSkillAssessments = { ...userData.skillAssessments };
+      const updatedSkillAssessments = { ...safeUserData.skillAssessments };
       if (!updatedSkillAssessments[newSkill.trim()]) {
         updatedSkillAssessments[newSkill.trim()] = {
           score: 0,
@@ -106,7 +121,7 @@ const ProfilePage = () => {
       }
       
       setUserData({
-        ...userData,
+        ...safeUserData,
         skills: updatedSkills,
         skillAssessments: updatedSkillAssessments
       });
@@ -121,7 +136,7 @@ const ProfilePage = () => {
     // Convert skills with proficiency back to simple array for compatibility
     const skillNames = newSkills.map(skill => skill.name);
     setUserData({
-      ...userData,
+      ...safeUserData,
       skills: skillNames,
       skillsWithProficiency: newSkills // Store detailed skills separately
     });
@@ -133,7 +148,7 @@ const ProfilePage = () => {
     const file = e.target.files[0];
     if (file) {
       setUserData({
-        ...userData,
+        ...safeUserData,
         resume: file.name
       });
       setIsDataModified(true);
@@ -150,8 +165,8 @@ const ProfilePage = () => {
     };
     
     setUserData({
-      ...userData,
-      education: [...userData.education, newEducation]
+      ...safeUserData,
+      education: [...safeUserData.education, newEducation]
     });
     
     setIsDataModified(true);
@@ -159,11 +174,11 @@ const ProfilePage = () => {
   
   // Handle editing education entry
   const handleEditEducation = (index, field, value) => {
-    const updatedEducation = [...userData.education];
+    const updatedEducation = [...safeUserData.education];
     updatedEducation[index][field] = value;
     
     setUserData({
-      ...userData,
+      ...safeUserData,
       education: updatedEducation
     });
     
@@ -172,10 +187,10 @@ const ProfilePage = () => {
   
   // Handle removing education entry
   const handleRemoveEducation = (index) => {
-    const updatedEducation = userData.education.filter((_, i) => i !== index);
+    const updatedEducation = safeUserData.education.filter((_, i) => i !== index);
     
     setUserData({
-      ...userData,
+      ...safeUserData,
       education: updatedEducation
     });
     
@@ -192,8 +207,8 @@ const ProfilePage = () => {
     };
     
     setUserData({
-      ...userData,
-      experience: [...userData.experience, newExperience]
+      ...safeUserData,
+      experience: [...safeUserData.experience, newExperience]
     });
     
     setIsDataModified(true);
@@ -201,11 +216,11 @@ const ProfilePage = () => {
   
   // Handle editing experience entry
   const handleEditExperience = (index, field, value) => {
-    const updatedExperience = [...userData.experience];
+    const updatedExperience = [...safeUserData.experience];
     updatedExperience[index][field] = value;
     
     setUserData({
-      ...userData,
+      ...safeUserData,
       experience: updatedExperience
     });
     
@@ -214,10 +229,10 @@ const ProfilePage = () => {
   
   // Handle removing experience entry
   const handleRemoveExperience = (index) => {
-    const updatedExperience = userData.experience.filter((_, i) => i !== index);
+    const updatedExperience = safeUserData.experience.filter((_, i) => i !== index);
     
     setUserData({
-      ...userData,
+      ...safeUserData,
       experience: updatedExperience
     });
     
@@ -269,8 +284,8 @@ const ProfilePage = () => {
               <div className="flex flex-col items-center justify-center">
                 <div className="relative group mb-4 profile-avatar-container avatar-border-animated">
                   <img 
-                    src={userData.avatar} 
-                    alt={userData.name} 
+                    src={safeUserData.avatar} 
+                    alt={safeUserData.name} 
                     className="w-40 h-40 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-md group-hover:shadow-lg transition-all duration-300 profile-avatar pulse-avatar"
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-full flex items-center justify-center transition-all duration-200">
@@ -288,7 +303,7 @@ const ProfilePage = () => {
                     </div>
                   </div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{userData.name}</h3>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{safeUserData.name}</h3>
                 <p className="text-gray-500 dark:text-gray-400 text-sm">Senior Frontend Developer</p>
               </div>
             </div>
@@ -307,8 +322,8 @@ const ProfilePage = () => {
                   <EnvelopeIcon className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 mt-0.5 flex-shrink-0" />
                   <div className="flex-grow">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
-                    <a href={`mailto:${userData.contact.email}`} className="text-blue-600 dark:text-blue-400 hover:underline animated-underline break-all">
-                      {userData.contact.email}
+                    <a href={`mailto:${safeUserData.contact.email}`} className="text-blue-600 dark:text-blue-400 hover:underline animated-underline break-all">
+                      {safeUserData.contact.email}
                     </a>
                   </div>
                 </div>
@@ -317,8 +332,8 @@ const ProfilePage = () => {
                   <PhoneIcon className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 mt-0.5 flex-shrink-0" />
                   <div className="flex-grow">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Phone</p>
-                    <a href={`tel:${userData.contact.phone}`} className="text-gray-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 phone-link">
-                      {userData.contact.phone}
+                    <a href={`tel:${safeUserData.contact.phone}`} className="text-gray-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 phone-link">
+                      {safeUserData.contact.phone}
                     </a>
                   </div>
                 </div>
@@ -327,8 +342,8 @@ const ProfilePage = () => {
                   <LinkIcon className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 mt-0.5 flex-shrink-0" />
                   <div className="flex-grow">
                     <p className="text-sm text-gray-500 dark:text-gray-400">LinkedIn</p>
-                    <a href={`https://${userData.contact.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline animated-underline break-all">
-                      {userData.contact.linkedin}
+                    <a href={`https://${safeUserData.contact.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline animated-underline break-all">
+                      {safeUserData.contact.linkedin}
                     </a>
                   </div>
                 </div>
@@ -339,7 +354,7 @@ const ProfilePage = () => {
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transition-all duration-200 hover:shadow-lg profile-card">
               <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white section-title">Resume</h2>
               
-              {userData.resume ? (
+              {safeUserData.resume ? (
                 <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 glass-card">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center max-w-[70%]">
@@ -347,7 +362,7 @@ const ProfilePage = () => {
                         <PaperClipIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="min-w-0 overflow-hidden">
-                        <p className="font-medium text-gray-800 dark:text-white truncate" title={userData.resume}>{userData.resume}</p>
+                        <p className="font-medium text-gray-800 dark:text-white truncate" title={safeUserData.resume}>{safeUserData.resume}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">PDF Document • Uploaded on Sep 1, 2025</p>
                       </div>
                     </div>
@@ -395,13 +410,13 @@ const ProfilePage = () => {
                   {isEditingInfo ? (
                     <input
                       type="text"
-                      value={userData.name}
+                      value={safeUserData.name}
                       onChange={(e) => handleInfoUpdate('name', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200 profile-input"
                     />
                   ) : (
                     <p className="bg-gray-50 dark:bg-gray-700/50 px-3 py-2 rounded-lg text-gray-800 dark:text-white">
-                      {userData.name}
+                      {safeUserData.name}
                     </p>
                   )}
                 </div>
@@ -411,7 +426,7 @@ const ProfilePage = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Languages</label>
                   <div className="flex flex-wrap gap-2">
-                    {userData.languages.map((language, index) => (
+                    {safeUserData.languages.map((language, index) => (
                       <span 
                         key={index}
                         className="px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-sm font-medium"
@@ -428,14 +443,14 @@ const ProfilePage = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">About</label>
                   {isEditingInfo ? (
                     <textarea
-                      value={userData.about}
+                      value={safeUserData.about}
                       onChange={(e) => handleInfoUpdate('about', e.target.value)}
                       rows={4}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200 profile-input"
                     ></textarea>
                   ) : (
                     <p className="bg-gray-50 dark:bg-gray-700/50 px-3 py-2 rounded-lg text-gray-800 dark:text-white">
-                      {userData.about}
+                      {safeUserData.about}
                     </p>
                   )}
                 </div>
@@ -450,7 +465,7 @@ const ProfilePage = () => {
               
               {/* New Skills Selector Component */}
               <SkillsSelector 
-                userSkills={userData.skillsWithProficiency || userData.skills.map(skill => ({ name: skill, proficiency: 'intermediate' }))}
+                userSkills={safeUserData.skillsWithProficiency || safeUserData.skills.map(skill => ({ name: skill, proficiency: 'intermediate' }))}
                 onSkillsChange={handleSkillsChange}
                 showRecommendations={true}
               />
@@ -466,7 +481,7 @@ const ProfilePage = () => {
               </div>
               
               <div className="space-y-6">
-                {userData.education.map((edu, index) => (
+                {safeUserData.education.map((edu, index) => (
                   <div 
                     key={index}
                     className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-all duration-200 education-card hover-lift"
@@ -500,7 +515,7 @@ const ProfilePage = () => {
               </div>
               
               <div className="space-y-6">
-                {userData.experience.map((exp, index) => (
+                {safeUserData.experience.map((exp, index) => (
                   <div 
                     key={index}
                     className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-all duration-200 experience-card hover-lift"

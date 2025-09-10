@@ -35,6 +35,9 @@ import SkillTestsOverview from '../../../features/skills-assessment/components/S
 import PracticalTests from '../../../features/coding-challenges/components/PracticalTests';
 import AssessmentDashboardMetrics from '../../../features/skills-assessment/components/AssessmentDashboardMetrics';
 import AttemptsHistory from '../../../features/skills-assessment/components/AttemptsHistory';
+// Import new job recommendations and profile components
+import JobRecommendationsPage from '../../../features/job-recommendations/components/JobRecommendationsPage';
+import ProfilePage from '../../../features/profile/components/ProfilePage';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import { useScrollOnChange } from '../../utils/scrollUtils';
@@ -337,6 +340,17 @@ const MainDashboard = () => {
             >
               Conseils de carrière
             </button>
+            
+            <button 
+              onClick={() => setActiveSection('mon-espace')}
+              className={`nav-button text-base font-medium transition-colors pb-1 ${
+                activeSection === 'mon-espace' 
+                  ? 'text-blue-500 border-b-2 border-blue-500' 
+                  : 'text-gray-700 hover:text-blue-500'
+              }`}
+            >
+              Mon Profil
+            </button>
           </nav>
 
           {/* Right Avatar */}
@@ -494,15 +508,6 @@ const MainDashboard = () => {
         <div id="main-content" className="main-content-area flex-1 max-w-4xl">
           {/* Scrollable Content Container */}
           <div className="h-[calc(100vh-7rem)] overflow-y-auto overflow-x-hidden">
-            {/* Debug info (temporarily enabled for troubleshooting) */}
-            {true && (
-              <div style={{position: 'fixed', top: 0, right: 0, background: 'yellow', padding: '10px', zIndex: 9999, fontSize: '12px'}}>
-                ActiveSection: {activeSection}<br/>
-                CurrentTestId: {currentTestId}<br/>
-                CurrentTestFilter: {currentTestFilter}<br/>
-                CurrentTestInfo: {currentTestInfo ? 'Set' : 'Null'}
-              </div>
-            )}
           
           {activeSection === 'dashboard' ? (
             <div className="space-y-6">
@@ -657,35 +662,9 @@ const MainDashboard = () => {
               </div>
             </div>
           ) : activeSection === 'mon-espace' ? (
-            <div className="space-y-6">
-              <div className="text-center py-12">
-                <h1 className="text-3xl font-bold text-[#4A5869] mb-4">Mon Espace</h1>
-                <p className="text-lg text-[#4A5869]/70 max-w-3xl mx-auto">
-                  Gérez votre profil, vos préférences et vos paramètres personnels.
-                </p>
-              </div>
-              <div className="bg-white rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8">
-                <h2 className="text-xl font-semibold text-[#4A5869] mb-4">Espace Personnel</h2>
-                <p className="text-[#4A5869]/70">
-                  Votre espace personnel sera implémenté ici avec la gestion du profil et les paramètres.
-                </p>
-              </div>
-            </div>
+            <ProfilePage />
           ) : activeSection === 'offres-recommandees' ? (
-            <div className="space-y-6">
-              <div className="text-center py-12">
-                <h1 className="text-3xl font-bold text-[#4A5869] mb-4">Offres Recommandées</h1>
-                <p className="text-lg text-[#4A5869]/70 max-w-3xl mx-auto">
-                  Découvrez les offres d'emploi personnalisées en fonction de votre profil et de vos compétences.
-                </p>
-              </div>
-              <div className="bg-white rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8">
-                <h2 className="text-xl font-semibold text-[#4A5869] mb-4">Recommandations Personnalisées</h2>
-                <p className="text-[#4A5869]/70">
-                  Le système de recommandations d'offres sera implémenté ici avec des suggestions basées sur votre profil.
-                </p>
-              </div>
-            </div>
+            <JobRecommendationsPage />
           ) : activeSection === 'historique-tests' ? (
             <AttemptsHistory />
           ) : activeSection === 'coding-challenges' ? (
