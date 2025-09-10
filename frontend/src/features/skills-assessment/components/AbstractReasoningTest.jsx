@@ -10,7 +10,7 @@ const AbstractReasoningTest = ({ onComplete, onBack }) => {
   const [currentSection, setCurrentSection] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [showInstructions, setShowInstructions] = useState(true);
+  const [showInstructions, setShowInstructions] = useState(false); // Disable instructions - use TestInfoPage instead
   const [timeLeft, setTimeLeft] = useState(0);
   const [testStarted, setTestStarted] = useState(false);
   const [testCompleted, setTestCompleted] = useState(false);
@@ -20,6 +20,9 @@ const AbstractReasoningTest = ({ onComplete, onBack }) => {
     const data = getAbstractTestWithAnswers();
     setTestData(data);
     setTimeLeft(data.duration_minutes * 60); // Convert to seconds
+    // Start test immediately - instructions shown via TestInfoPage
+    setShowInstructions(false);
+    setTestStarted(true);
   }, []);
 
   useEffect(() => {

@@ -22,7 +22,7 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
 
   const startingSection = getStartingSection(testId);
   
-  const [testStep, setTestStep] = useState('instructions'); // instructions, section_intro, test, results
+  const [testStep, setTestStep] = useState('test'); // Skip instructions - start directly with test
   const [currentSection, setCurrentSection] = useState(startingSection);
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [timeRemaining, setTimeRemaining] = useState(45 * 60); // Will be updated based on section

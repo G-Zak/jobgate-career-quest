@@ -19,7 +19,7 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [timeRemaining, setTimeRemaining] = useState(25 * 60); // 25 minutes
-  const [isTestStarted, setIsTestStarted] = useState(false);
+  const [isTestStarted, setIsTestStarted] = useState(true);
   const [showResults, setShowResults] = useState(false);
   const [testData, setTestData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,7 +87,7 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
     setCurrentQuestion(0);
     setSelectedAnswers({});
     setTimeRemaining(25 * 60);
-    setIsTestStarted(false);
+    setIsTestStarted(true);
     setShowResults(false);
     setScore(0);
     

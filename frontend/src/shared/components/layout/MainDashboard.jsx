@@ -88,15 +88,12 @@ const MainDashboard = () => {
   };
 
   const skillCategories = [
-    'Accelerated Learning',
     'Numerical', 
     'Verbal',
     'Logical',
     'Abstract',
     'Diagrammatic',
     'Spatial',
-    'Cognitive Assessment',
-    'Personality',
     'Situational',
     'Technical'
   ];

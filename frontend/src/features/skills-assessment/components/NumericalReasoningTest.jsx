@@ -9,7 +9,7 @@ const NumericalReasoningTest = ({ onComplete, onBack }) => {
   const [currentSection, setCurrentSection] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [showInstructions, setShowInstructions] = useState(true);
+  const [showInstructions, setShowInstructions] = useState(false); // Disable instructions - use TestInfoPage instead
   const [timeLeft, setTimeLeft] = useState(0);
   const [testStarted, setTestStarted] = useState(false);
   const [testCompleted, setTestCompleted] = useState(false);
@@ -22,8 +22,8 @@ const NumericalReasoningTest = ({ onComplete, onBack }) => {
     
     // Reset test state in case component is remounted
     setTestCompleted(false);
-    setShowInstructions(true);
-    setTestStarted(false);
+    setShowInstructions(false); // Always start with questions - instructions shown via TestInfoPage
+    setTestStarted(true); // Start test immediately
     setCurrentQuestion(0);
     setAnswers({});
   }, []);

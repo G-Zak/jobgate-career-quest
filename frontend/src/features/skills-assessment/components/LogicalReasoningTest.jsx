@@ -5,7 +5,7 @@ import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop
 import { getLogicalTestSections } from '../data/logicalTestSections';
 
 const LogicalReasoningTest = ({ onBackToDashboard }) => {
-  const [testStep, setTestStep] = useState('instructions'); // instructions, test, results
+  const [testStep, setTestStep] = useState('test'); // Skip instructions - start directly with test
   const [currentSection, setCurrentSection] = useState(1);
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [timeRemaining, setTimeRemaining] = useState(10 * 60); // 10 minutes per section

@@ -136,7 +136,7 @@ const getSampleQuestions = () => {
 };
 
 const MasterSJTTest = ({ onClose }) => {
-  const [phase, setPhase] = useState('intro'); // 'intro', 'test', 'results'
+  const [phase, setPhase] = useState('test'); // 'intro', 'test', 'results'
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
