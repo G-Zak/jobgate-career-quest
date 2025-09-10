@@ -28,6 +28,7 @@ import TestAdministration from '../../../features/skills-assessment/components/T
 import TestDebugPage from '../../../features/skills-assessment/components/TestDebugPage';
 import TestHistoryDashboard from '../../../features/candidate-dashboard/components/TestHistoryDashboard';
 import JobRecommendationsPage from '../../../features/job-recommendations/components/JobRecommendationsPage';
+import JobRecommendationWidget from '../../../features/job-recommendations/components/JobRecommendationWidget';
 import { ChallengesList, ChallengeDetail, CodingDashboard } from '../../../features/coding-challenges/components';
 import DebugChallenges from '../../../features/coding-challenges/components/DebugChallenges';
 import SkillTestsOverview from '../../../features/skills-assessment/components/SkillTestsOverview';
@@ -870,45 +871,11 @@ const MainDashboard = () => {
                 </div>
               </div>
 
-              {/* Offers Card */}
-              <div className="job-offers-card bg-white rounded-xl shadow-sm p-6">
-                <div className="offers-header flex items-center justify-between mb-4">
-                  <h2 className="offers-title text-gray-800 font-medium text-lg">Offres</h2>
-                  <button className="view-all-btn text-blue-500 text-sm hover:underline">Voir tout</button>
-                </div>
-                
-                {/* Job Offer Card */}
-                <div className="job-offer-item border border-gray-200 rounded-lg p-4">
-                  <div className="offer-content flex items-start space-x-4">
-                    {/* Company Logo */}
-                    <div className="company-logo w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                      J
-                    </div>
-                    
-                    {/* Job Details */}
-                    <div className="job-details flex-1">
-                      <h3 className="job-title font-medium text-gray-800 mb-1">Développeur Backend</h3>
-                      <p className="company-name text-gray-800 text-sm mb-2">JOBGATE</p>
-                      <p className="job-location text-gray-800 text-sm mb-3">📍 Casablanca, Maroc</p>
-                      
-                      {/* Tags */}
-                      <div className="job-tags flex space-x-2 mb-3">
-                        <span className="job-tag bg-blue-50 text-blue-500 px-2 py-1 rounded text-xs">Stage</span>
-                        <span className="job-tag bg-blue-50 text-blue-500 px-2 py-1 rounded text-xs">Télétravail</span>
-                        <span className="job-tag bg-blue-50 text-blue-500 px-2 py-1 rounded text-xs">3 mois</span>
-                      </div>
-                      
-                      <p className="job-description text-gray-800 text-sm mb-4">
-                        À propos JOBGATE: JOBGATE est une plateforme de recrutement en ligne leader qui connecte les professionnels talentueux avec les meilleurs employeurs...
-                      </p>
-                      
-                      <button className="view-more-btn bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded text-sm transition-colors">
-                        Voir plus
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {/* Recommended Jobs Section */}
+              <JobRecommendationWidget 
+                maxJobs={3}
+                onViewAll={() => setActiveSection('offres-recommandees')}
+              />
             </>
           )}
           </div>

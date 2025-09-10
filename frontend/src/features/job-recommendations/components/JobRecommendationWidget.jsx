@@ -73,11 +73,8 @@ const JobRecommendationWidget = ({ userSkills = [], userLocation = "Casablanca",
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Recommandé pour vous
+              Recommended Jobs
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Basé sur votre profil
-            </p>
           </div>
         </div>
         
@@ -85,8 +82,7 @@ const JobRecommendationWidget = ({ userSkills = [], userLocation = "Casablanca",
           onClick={onViewAll}
           className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium flex items-center space-x-1"
         >
-          <span>Voir tout</span>
-          <ArrowRightIcon className="w-4 h-4" />
+          <span>View all jobs →</span>
         </button>
       </div>
 
