@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaCube, FaStop, FaArrowRight, FaFlag, FaSync, FaSearchPlus, FaExpand, FaEye, FaImage, FaLayerGroup } from 'react-icons/fa';
-import { getSpatialTestSections, getSpatialSection1, getSpatialSection2 } from '../data/spatialTestSections';
+import { getSpatialTestSections, getSpatialSection1, getSpatialSection2, getSpatialSection3, getSpatialSection4, getSpatialSection5, getSpatialSection6 } from '../data/spatialTestSections';
 import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
 
 const SpatialReasoningTest = ({ onBackToDashboard, testId = null }) => {
@@ -10,11 +10,15 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = null }) => {
     if (typeof testId === 'string') {
       if (testId === 'SRT1') return 1;
       if (testId === 'SRT2') return 2;
+      if (testId === 'SRT3') return 3;
+      if (testId === 'SRT4') return 4;
+      if (testId === 'SRT5') return 5;
+      if (testId === 'SRT6') return 6;
       // Extract section number from testId if it follows SRT pattern
       const match = testId.match(/SRT(\d+)/);
       if (match) {
         const sectionNum = parseInt(match[1]);
-        return sectionNum <= 2 ? sectionNum : 1; // Default to section 1 if invalid
+        return sectionNum <= 6 ? sectionNum : 1; // Default to section 1 if invalid
       }
     }
     return 1; // Default to section 1
@@ -55,6 +59,18 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = null }) => {
         } else if (testId === 'SRT2') {
           data = getSpatialSection2();
           console.log('Loading Section 2 only');
+        } else if (testId === 'SRT3') {
+          data = getSpatialSection3();
+          console.log('Loading Section 3 only');
+        } else if (testId === 'SRT4') {
+          data = getSpatialSection4();
+          console.log('Loading Section 4 only');
+        } else if (testId === 'SRT5') {
+          data = getSpatialSection5();
+          console.log('Loading Section 5 only');
+        } else if (testId === 'SRT6') {
+          data = getSpatialSection6();
+          console.log('Loading Section 6 only');
         } else {
           // Default to full multi-section test
           data = getSpatialTestSections();
@@ -517,7 +533,11 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = null }) => {
               <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-lg p-6 border border-green-200">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-green-800">
                   <FaLayerGroup className="text-green-600" />
-                  {getCurrentSection()?.question_type === 'mental_rotation' ? 'Mental Rotation Strategy' : 'Section Overview'}
+                  {getCurrentSection()?.question_type === 'mental_rotation' 
+                    ? 'Mental Rotation Strategy' 
+                    : getCurrentSection()?.question_type === 'spatial_visualization'
+                    ? 'Spatial Visualization Strategy'
+                    : 'Section Overview'}
                 </h3>
                 
                 {getCurrentSection()?.question_type === 'mental_rotation' ? (
@@ -543,6 +563,31 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = null }) => {
                     </ul>
                     <div className="mt-4 p-3 bg-white rounded-lg border border-blue-300">
                       <p className="text-sm text-blue-700 font-medium">🧠 <strong>Tip:</strong> Take your time to visualize each rotation before selecting your answer.</p>
+                    </div>
+                  </div>
+                ) : getCurrentSection()?.question_type === 'spatial_visualization' ? (
+                  /* Spatial Visualization Strategy */
+                  <div>
+                    <ul className="space-y-3 text-gray-700">
+                      <li className="flex items-start gap-3">
+                        <span className="text-purple-600 font-bold text-lg">1.</span>
+                        <span><strong>Analyze the 3D pattern</strong> - study the existing spatial arrangement and identify relationships</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-purple-600 font-bold text-lg">2.</span>
+                        <span><strong>Identify missing elements</strong> - determine what would complete the pattern or fill the gap</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-purple-600 font-bold text-lg">3.</span>
+                        <span><strong>Visualize completion</strong> - imagine how each option would fit into the arrangement</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-purple-600 font-bold text-lg">4.</span>
+                        <span><strong>Check spatial constraints</strong> - ensure the piece fits correctly without overlapping</span>
+                      </li>
+                    </ul>
+                    <div className="mt-4 p-3 bg-white rounded-lg border border-purple-300">
+                      <p className="text-sm text-purple-700 font-medium">🎯 <strong>Strategy:</strong> Focus on spatial relationships and how pieces connect in 3D space.</p>
                     </div>
                   </div>
                 ) : (
@@ -607,6 +652,8 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = null }) => {
                     <p className="text-orange-700 text-xs mt-1">
                       {getCurrentSection()?.question_type === 'mental_rotation' 
                         ? 'Mental rotation • 3D visualization • Object recognition • Spatial orientation'
+                        : getCurrentSection()?.question_type === 'spatial_visualization'
+                        ? 'Spatial visualization • Pattern completion • 3D reasoning • Missing element identification'
                         : 'Spatial visualization • Pattern recognition • 3D reasoning • Shape assembly'
                       }
                     </p>
@@ -768,13 +815,119 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = null }) => {
                           Click the letter that corresponds to the correct rotated position
                         </p>
                       </div>
+                    ) : getCurrentSection()?.question_type === 'spatial_visualization' ? (
+                      // Letter buttons for Section 3 (Spatial Visualization)
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Select the correct option:</h3>
+                        <div className="flex justify-center gap-4">
+                          {['A', 'B', 'C', 'D'].map((letter) => {
+                            const isSelected = answers[`${currentSection}_${getCurrentQuestion()?.id}`] === letter;
+                            return (
+                              <button
+                                key={letter}
+                                className={`w-16 h-16 rounded-lg border-2 font-bold text-xl transition-all ${
+                                  isSelected
+                                    ? 'border-blue-500 bg-blue-500 text-white'
+                                    : 'border-gray-300 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'
+                                }`}
+                                onClick={() => handleAnswerSelect(getCurrentQuestion()?.id, letter)}
+                              >
+                                {letter}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <p className="text-sm text-gray-500 text-center mt-4">
+                          Click the letter that corresponds to the correct answer
+                        </p>
+                      </div>
+                    ) : getCurrentSection()?.question_type === 'figure_identification' ? (
+                      // Letter buttons for Section 4 (Figure Identification)
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Select the correct option:</h3>
+                        <div className="flex justify-center gap-4">
+                          {['A', 'B', 'C', 'D'].map((letter) => {
+                            const isSelected = answers[`${currentSection}_${getCurrentQuestion()?.id}`] === letter;
+                            return (
+                              <button
+                                key={letter}
+                                className={`w-16 h-16 rounded-lg border-2 font-bold text-xl transition-all ${
+                                  isSelected
+                                    ? 'border-green-500 bg-green-500 text-white'
+                                    : 'border-gray-300 bg-white text-gray-700 hover:border-green-300 hover:bg-green-50'
+                                }`}
+                                onClick={() => handleAnswerSelect(getCurrentQuestion()?.id, letter)}
+                              >
+                                {letter}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <p className="text-sm text-gray-500 text-center mt-4">
+                          Click the letter that corresponds to the figure identical to the first
+                        </p>
+                      </div>
+                    ) : getCurrentSection()?.question_type === 'rotation_recognition' ? (
+                      // Letter buttons for Section 5 (Rotation Recognition)
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Select the correct option:</h3>
+                        <div className="flex justify-center gap-4">
+                          {['A', 'B', 'C', 'D', 'E'].map((letter) => {
+                            const isSelected = answers[`${currentSection}_${getCurrentQuestion()?.id}`] === letter;
+                            return (
+                              <button
+                                key={letter}
+                                className={`w-16 h-16 rounded-lg border-2 font-bold text-xl transition-all ${
+                                  isSelected
+                                    ? 'border-purple-500 bg-purple-500 text-white'
+                                    : 'border-gray-300 bg-white text-gray-700 hover:border-purple-300 hover:bg-purple-50'
+                                }`}
+                                onClick={() => handleAnswerSelect(getCurrentQuestion()?.id, letter)}
+                              >
+                                {letter}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <p className="text-sm text-gray-500 text-center mt-4">
+                          Click the letter that corresponds to the rotated figure that matches the question
+                        </p>
+                      </div>
+                    ) : getCurrentSection()?.question_type === 'component_assembly' ? (
+                      // Letter buttons for Section 6 (Component Assembly)
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Select the correct option:</h3>
+                        <div className="flex justify-center gap-4">
+                          {['A', 'B', 'C', 'D'].map((letter) => {
+                            const isSelected = answers[`${currentSection}_${getCurrentQuestion()?.id}`] === letter;
+                            return (
+                              <button
+                                key={letter}
+                                className={`w-16 h-16 rounded-lg border-2 font-bold text-xl transition-all ${
+                                  isSelected
+                                    ? 'border-indigo-500 bg-indigo-500 text-white'
+                                    : 'border-gray-300 bg-white text-gray-700 hover:border-indigo-300 hover:bg-indigo-50'
+                                }`}
+                                onClick={() => handleAnswerSelect(getCurrentQuestion()?.id, letter)}
+                              >
+                                {letter}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <p className="text-sm text-gray-500 text-center mt-4">
+                          Click the letter that corresponds to the component shape that can be made from the parts
+                        </p>
+                      </div>
                     ) : (
                       // Original format - individual option images (for other question types)
                       <div>
                         <h3 className="text-lg font-semibold mb-4">Select the correct option:</h3>
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                           {getCurrentQuestion()?.options.map((option, index) => {
-                            const optionLetter = option.id || String.fromCharCode(65 + index); // A, B, C, D
+                            // Handle both string format (e.g., "A") and object format (e.g., { id: "A", text: "Option A" })
+                            const optionLetter = typeof option === 'string' ? option : (option.id || String.fromCharCode(65 + index));
+                            const optionText = typeof option === 'string' ? option : option.text;
                             const isSelected = answers[`${currentSection}_${getCurrentQuestion()?.id}`] === optionLetter;
                             
                             return (
@@ -789,17 +942,24 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = null }) => {
                               >
                                 <div className="text-center">
                                   <div className="font-bold text-lg mb-2">{optionLetter}</div>
-                                  <div className="h-32 bg-white rounded border flex items-center justify-center mb-2">
-                                    <img 
-                                      src={option.image} 
-                                      alt={`Option ${optionLetter}`}
-                                      className="max-w-full max-h-full object-contain"
-                                      onError={(e) => {
-                                        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjNGNEY2Ii8+CjxjaXJjbGUgY3g9Ijc1IiBjeT0iNzUiIHI9IjMwIiBmaWxsPSIjOUNBOEYwIi8+Cjx0ZXh0IGNsYXNzPSJzbWFsbCIgZmlsbD0iIzZGNzU4NyIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxMiIgZm9udC13ZWlnaHQ9IjUwMCI+CiAgPHRzcGFuIHg9Ijc1IiB5PSI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+T3B0aW9uPC90c3Bhbj4KICA8dHNwYW4geD0iNzUiIHk9Ijk1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4nNCIgZm9udC13ZWlnaHQ9IjUwMCI+T3B0aW9uPC90c3Bhbj4KICA8dHNwYW4geD0iNzUiIHk9Ijk1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4nPC90c3Bhbj4KPC90ZXh0Pgo8L3N2Zz4K';
-                                      }}
-                                    />
-                                  </div>
-                                  <div className="text-sm text-gray-600">{option.text}</div>
+                                  {typeof option === 'object' && (
+                                    <>
+                                      <div className="h-32 bg-white rounded border flex items-center justify-center mb-2">
+                                        <img 
+                                          src={option.image} 
+                                          alt={`Option ${optionLetter}`}
+                                          className="max-w-full max-h-full object-contain"
+                                          onError={(e) => {
+                                            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjNGNEY2Ii8+CjxjaXJjbGUgY3g9Ijc1IiBjeT0iNzUiIHI9IjMwIiBmaWxsPSIjOUNBOEYwIi8+Cjx0ZXh0IGNsYXNzPSJzbWFsbCIgZmlsbD0iIzZGNzU4NyIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxMiIgZm9udC13ZWlnaHQ9IjUwMCI+CiAgPHRzcGFuIHg9Ijc1IiB5PSI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+T3B0aW9uPC90c3Bhbj4KICA8dHNwYW4geD0iNzUiIHk9Ijk1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4nNCIgZm9udC13ZWlnaHQ9IjUwMCI+T3B0aW9uPC90c3Bhbj4KICA8dHNwYW4geD0iNzUiIHk9Ijk1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4nPC90c3Bhbj4KPC90ZXh0Pgo8L3N2Zz4K';
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="text-sm text-gray-600">{optionText}</div>
+                                    </>
+                                  )}
+                                  {typeof option === 'string' && (
+                                    <div className="text-sm text-gray-600">Click the letter that corresponds to the correct rotated position</div>
+                                  )}
                                 </div>
                               </div>
                             );

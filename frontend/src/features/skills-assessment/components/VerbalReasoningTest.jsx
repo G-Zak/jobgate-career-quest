@@ -1,287 +1,144 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaClock, FaBookOpen, FaBrain, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, FaFlag } from 'react-icons/fa';
+import { FaClock, FaBook, FaStop, FaArrowRight, FaFlag, FaQuestionCircle, FaFileAlt } from 'react-icons/fa';
+import { getVerbalTestSections, getVerbalSection1, getVerbalSection2, getVerbalSection3 } from '../data/verbalTestSections';
+import { 
+  getRandomizedVRT1, 
+  getRandomizedVRT2, 
+  getRandomizedVRT3,
+  verbalReasoningCategories 
+} from '../data/verbalReasoningCategories';
+import { getRandomizedTestByLegacyId, testManager } from '../data/verbalReasoningTestManager';
 import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
 
-const VerbalReasoningTest = ({ onBackToDashboard, language = 'english', testId = 1 }) => {
-  const [testStep, setTestStep] = useState('instructions'); // instructions, test, results
-  const [currentQuestion, setCurrentQuestion] = useState(1);
-  const [timeRemaining, setTimeRemaining] = useState(25 * 60); // 25 minutes in seconds
+const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'english' }) => {
+  // Determine starting section based on testId
+  const getStartingSection = (testId) => {
+    if (typeof testId === 'string') {
+      if (testId === 'VRT1') return 1;
+      // Extract section number from testId if it follows VRT pattern
+      const match = testId.match(/VRT(\d+)/);
+      if (match) {
+        const sectionNum = parseInt(match[1]);
+        return sectionNum <= 1 ? sectionNum : 1; // Default to section 1 if invalid
+      }
+    }
+    return 1; // Default to section 1
+  };
+
+  const startingSection = getStartingSection(testId);
+  
+  const [testStep, setTestStep] = useState('instructions'); // instructions, section_intro, test, results
+  const [currentSection, setCurrentSection] = useState(startingSection);
+  const [currentPassage, setCurrentPassage] = useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes
   const [answers, setAnswers] = useState({});
   const [testData, setTestData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Ref for test scroll container
+  const testContainerRef = useRef(null);
 
   // Universal scroll management using scroll utilities
   useScrollToTop([], { smooth: true }); // Scroll on component mount
-  useTestScrollToTop(testStep, 'verbal-test-scroll', { smooth: true, attempts: 5 }); // Scroll on test step changes
-  useQuestionScrollToTop(currentQuestion, testStep, 'verbal-test-scroll'); // Scroll on question changes
+  useTestScrollToTop(testStep, testContainerRef, { smooth: true, attempts: 5 }); // Scroll on test step changes
+  useTestScrollToTop(currentSection, testContainerRef, { smooth: true, attempts: 3 }); // Scroll on section changes
+  useQuestionScrollToTop(currentQuestion, testStep, testContainerRef); // Scroll on question changes
 
-  // Fetch test data from API
+  // Load verbal reasoning test data
   useEffect(() => {
-    const fetchTestData = async () => {
+    const loadVerbalTestData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:8000/api/tests/${testId}/`);
-        if (response.ok) {
-          const data = await response.json();
-          setTestData(data);
-          // Set timer based on actual test duration
-          setTimeRemaining(data.duration_minutes * 60);
+        setError(null);
+        
+        // VERBAL REASONING TEST CATEGORIZATION SYSTEM
+        // ==========================================
+        // Current Categories:
+        // 1. Reading Comprehension (CONSOLIDATED)
+        //    - VRT-COMP: Mixed difficulty passages (science, business, management)
+        //    - Anti-cheating: Random selection from all 3 difficulty pools
+        //    - Time limit: 25 minutes, 8 passages with mixed complexity
+        //
+        // 2. Verbal Analogies (VRT4)
+        //    - Comprehensive: 30 mixed analogies across 9 types
+        //    - Anti-cheating: Random selection from 72+ questions
+        //    - Time limit: 25 minutes
+        //    - Difficulty: 40% easy, 40% medium, 20% hard
+        //
+        // 3. Classification (VRT5)
+        //    - Comprehensive: Odd-one-out across words, pairs, numerals, letters
+        //    - Anti-cheating: Random selection from 90+ questions
+        //    - Time limit: 25 minutes
+        //    - Difficulty distribution: Easy, Medium, Hard
+        //
+        // 4. Coding & Decoding (VRT6)
+        //    - Comprehensive: Letter coding, number coding, substitution patterns
+        //    - Anti-cheating: Random selection from 100+ questions
+        //    - Time limit: 30 minutes
+        //    - Cultural neutrality: Works across diverse backgrounds
+        //
+        // 5. Blood Relations & Logical Puzzles (VRT7)
+        //    - Comprehensive: Family relationships and logical reasoning puzzles
+        //    - Anti-cheating: Random selection from 100+ questions (JSONL format)
+        //    - Time limit: 35 minutes
+        //    - Advanced reasoning: Master level difficulty
+        //
+        // Each category contains randomized question pools for anti-cheating
+        // ==========================================
+        
+        // Use the new categorized test system with randomized content
+        let data;
+        
+        // CONSOLIDATED READING COMPREHENSION TEST
+        if (testId === 'VRT-COMP' || testId === 'VRT_COMP' || testId === 'VRTCOMP') {
+          data = getRandomizedTestByLegacyId('VRT-COMP'); // Reading Comprehension - Consolidated (Mixed Difficulty)
+        
+        // LEGACY READING COMPREHENSION TESTS (deprecated but maintained for compatibility)
+        } else if (testId === 'VRT1' || testId === '1' || testId === 1) {
+          data = getRandomizedTestByLegacyId('VRT1'); // Reading Comprehension - Basic
+        } else if (testId === 'VRT2' || testId === '2' || testId === 2) {
+          data = getRandomizedTestByLegacyId('VRT2'); // Reading Comprehension - Intermediate
+        } else if (testId === 'VRT3' || testId === '3' || testId === 3) {
+          data = getRandomizedTestByLegacyId('VRT3'); // Reading Comprehension - Advanced
+        
+        // OTHER VERBAL REASONING TESTS
+        } else if (testId === 'VRT4' || testId === '4' || testId === 4) {
+          data = getRandomizedTestByLegacyId('VRT4'); // Verbal Analogies - Comprehensive
+        } else if (testId === 'VRT5' || testId === '5' || testId === 5) {
+          data = getRandomizedTestByLegacyId('VRT5'); // Classification - Odd-One-Out
+        } else if (testId === 'VRT6' || testId === '6' || testId === 6) {
+          data = getRandomizedTestByLegacyId('VRT6'); // Coding & Decoding - Comprehensive
+        } else if (testId === 'VRT7' || testId === '7' || testId === 7) {
+          data = getRandomizedTestByLegacyId('VRT7'); // Blood Relations & Logical Puzzles - Comprehensive
         } else {
-          console.error('Failed to fetch test data');
-          // Fall back to mock data if API fails
-          setTestData(getTestData(language));
+          // Default to full multi-section test (fallback)
+          data = getVerbalTestSections();
         }
-      } catch (error) {
-        console.error('Error fetching test data:', error);
-        // Fall back to mock data if API fails
-        setTestData(getTestData(language));
-      } finally {
+        
+        setTestData(data);
+        
+        // Set timer based on test duration
+        if (data.timeLimit) {
+          setTimeRemaining(data.timeLimit * 60);
+        } else if (data.duration_minutes) {
+          setTimeRemaining(data.duration_minutes * 60);
+        } else if (data.sections && data.sections[startingSection - 1]?.duration_minutes) {
+          setTimeRemaining(data.sections[startingSection - 1].duration_minutes * 60);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error('Error loading verbal test data:', err);
+        setError('Failed to load test data. Please try again.');
         setLoading(false);
       }
     };
 
-    fetchTestData();
-  }, [testId, language]);
-
-  // Translation object
-  const translations = {
-    english: {
-      title: "Verbal Reasoning Assessment",
-      description: "Assess your ability to understand, analyze, and draw conclusions from written information.",
-      backToDashboard: "Back to Dashboard",
-      instructions: "Verbal Reasoning Assessment Instructions",
-      testOverview: "Test Overview",
-      duration: "Duration",
-      questions: "Questions",
-      questionTypes: "Question Types",
-      instructionsList: "Instructions",
-      instructionsText: [
-        "Read each question carefully and select the best answer",
-        "For reading comprehension questions, refer to the provided passage", 
-        "You can navigate between questions using the Previous/Next buttons",
-        "Your answers are automatically saved",
-        "Ensure you have a quiet environment for optimal concentration",
-        "The test will automatically submit when time runs out"
-      ],
-      minutes: "minutes",
-      startTest: "Start Test",
-      abortTest: "Abort Test",
-      abortConfirm: "Are you sure you want to abort this test? Your progress will be lost.",
-      passage: "Passage:",
-      previous: "Previous",
-      next: "Next",
-      finishTest: "Finish Test",
-      testCompleted: "Test Completed!",
-      testSubmitted: "Your verbal reasoning assessment has been submitted.",
-      questionsAnswered: "Questions Answered",
-      timeUsed: "Time Used",
-      status: "Status",
-      complete: "Complete",
-      submitted: "Submitted successfully",
-      resultsMessage: "Your results will be processed and available in your dashboard shortly.",
-      returnToDashboard: "Return to Dashboard",
-      questionTypesLabels: {
-        reading_comprehension: "Reading Comprehension",
-        vocabulary: "Vocabulary in Context", 
-        logical_deduction: "Logical Deduction",
-        critical_reasoning: "Critical Reasoning",
-        analogies: "Analogies"
-      }
-    },
-    french: {
-      title: "Évaluation du Raisonnement Verbal",
-      description: "Évaluez votre capacité à comprendre, analyser et tirer des conclusions à partir d'informations écrites.",
-      backToDashboard: "Retour au Tableau de Bord",
-      instructions: "Instructions de l'Évaluation du Raisonnement Verbal",
-      testOverview: "Aperçu du Test",
-      duration: "Durée",
-      questions: "Questions",
-      questionTypes: "Types de Questions",
-      instructionsList: "Instructions",
-      instructionsText: [
-        "Lisez attentivement chaque question et sélectionnez la meilleure réponse",
-        "Pour les questions de compréhension de lecture, référez-vous au passage fourni",
-        "Vous pouvez naviguer entre les questions en utilisant les boutons Précédent/Suivant",
-        "Vos réponses sont automatiquement sauvegardées",
-        "Assurez-vous d'avoir un environnement calme pour une concentration optimale",
-        "Le test se soumettra automatiquement lorsque le temps sera écoulé"
-      ],
-      minutes: "minutes",
-      startTest: "Commencer le Test",
-      abortTest: "Abandonner le Test",
-      abortConfirm: "Êtes-vous sûr de vouloir abandonner ce test ? Votre progression sera perdue.",
-      passage: "Passage:",
-      previous: "Précédent",
-      next: "Suivant",
-      finishTest: "Terminer le Test",
-      testCompleted: "Test Terminé!",
-      testSubmitted: "Votre évaluation du raisonnement verbal a été soumise.",
-      questionsAnswered: "Questions Répondues",
-      timeUsed: "Temps Utilisé",
-      status: "Statut",
-      complete: "Terminé",
-      submitted: "Soumis avec succès",
-      resultsMessage: "Vos résultats seront traités et disponibles dans votre tableau de bord sous peu.",
-      returnToDashboard: "Retourner au Tableau de Bord",
-      questionTypesLabels: {
-        reading_comprehension: "Compréhension de Lecture",
-        vocabulary: "Vocabulaire en Contexte",
-        logical_deduction: "Déduction Logique", 
-        critical_reasoning: "Raisonnement Critique",
-        analogies: "Analogies"
-      }
-    }
-  };
-
-  const t = translations[language] || translations.english;
-
-  // Mock test data with language support
-  const getTestData = (lang) => {
-    const baseData = {
-      id: 1,
-      title: t.title,
-      description: t.description,
-      duration_minutes: 25,
-      total_questions: 5, // Reduced for demo
-    };
-
-    if (lang === 'french') {
-      return {
-        ...baseData,
-        questions: [
-          {
-            id: 1,
-            question_type: "reading_comprehension",
-            question_text: "Selon le passage, quelle est la cause principale du réchauffement climatique ?",
-            passage: "Le changement climatique représente l'un des défis les plus importants auxquels l'humanité fait face au 21e siècle. Le consensus scientifique est clair : les activités humaines, en particulier la combustion de combustibles fossiles, sont les principaux moteurs du réchauffement climatique. L'augmentation des températures a conduit à la fonte des calottes glaciaires, à l'élévation du niveau de la mer et à des événements météorologiques extrêmes de plus en plus fréquents.",
-            options: [
-              "Cycles climatiques naturels",
-              "Activités humaines, en particulier la combustion de combustibles fossiles",
-              "Changements du rayonnement solaire",
-              "Éruptions volcaniques"
-            ],
-            order: 1
-          },
-          {
-            id: 2,
-            question_type: "vocabulary",
-            question_text: "Dans la phrase \"La rhétorique du politicien était si persuasive qu'elle a influencé même les électeurs les plus sceptiques,\" le mot \"rhétorique\" signifie principalement :",
-            options: [
-              "Malhonnêteté",
-              "Style oratoire ou langage persuasif",
-              "Position politique",
-              "Charme personnel"
-            ],
-            order: 2
-          },
-          {
-            id: 3,
-            question_type: "logical_deduction",
-            question_text: "Tous les entrepreneurs prospères prennent des risques. Marie est une entrepreneure prospère. Par conséquent :",
-            options: [
-              "Marie pourrait prendre des risques",
-              "Marie prend définitivement des risques",
-              "Marie ne prend pas de risques",
-              "Nous ne pouvons pas déterminer si Marie prend des risques"
-            ],
-            order: 3
-          },
-          {
-            id: 4,
-            question_type: "critical_reasoning",
-            question_text: "Une étude montre que les étudiants qui prennent un petit-déjeuner obtiennent de meilleurs résultats aux tests. Le conseil d'école conclut que fournir un petit-déjeuner gratuit améliorera les résultats de tous les étudiants. Quelle est la principale faille de ce raisonnement ?",
-            options: [
-              "L'échantillon était trop petit",
-              "La corrélation n'implique pas la causalité",
-              "L'étude était biaisée",
-              "Le petit-déjeuner gratuit coûte trop cher"
-            ],
-            order: 4
-          },
-          {
-            id: 5,
-            question_type: "analogies",
-            question_text: "Livre est à Auteur comme Peinture est à :",
-            options: [
-              "Toile",
-              "Artiste",
-              "Cadre",
-              "Galerie"
-            ],
-            order: 5
-          }
-        ]
-      };
-    } else {
-      return {
-        ...baseData,
-        questions: [
-          {
-            id: 1,
-            question_type: "reading_comprehension",
-            question_text: "According to the passage, what is the primary cause of global warming?",
-            passage: "Climate change represents one of the most significant challenges facing humanity in the 21st century. The scientific consensus is clear: human activities, particularly the burning of fossil fuels, are the primary drivers of global warming. Rising temperatures have led to melting ice caps, rising sea levels, and increasingly frequent extreme weather events.",
-            options: [
-              "Natural climate cycles",
-              "Human activities, especially burning fossil fuels", 
-              "Solar radiation changes",
-              "Volcanic eruptions"
-            ],
-            order: 1
-          },
-          {
-            id: 2,
-            question_type: "vocabulary",
-            question_text: "In the sentence \"The politician's rhetoric was so persuasive that it swayed even the most skeptical voters,\" the word \"rhetoric\" most nearly means:",
-            options: [
-              "Dishonesty",
-              "Speaking style or persuasive language",
-              "Political position", 
-              "Personal charm"
-            ],
-            order: 2
-          },
-          {
-            id: 3,
-            question_type: "logical_deduction",
-            question_text: "All successful entrepreneurs are risk-takers. Maria is a successful entrepreneur. Therefore:",
-            options: [
-              "Maria might be a risk-taker",
-              "Maria is definitely a risk-taker",
-              "Maria is not a risk-taker",
-              "We cannot determine if Maria is a risk-taker"
-            ],
-            order: 3
-          },
-          {
-            id: 4,
-            question_type: "critical_reasoning",
-            question_text: "A study shows that students who eat breakfast perform better on tests. The school board concludes that providing free breakfast will improve all students' test scores. What is the main flaw in this reasoning?",
-            options: [
-              "The sample size was too small",
-              "Correlation does not imply causation",
-              "The study was biased",
-              "Free breakfast is too expensive"
-            ],
-            order: 4
-          },
-          {
-            id: 5,
-            question_type: "analogies",
-            question_text: "Book is to Author as Painting is to:",
-            options: [
-              "Canvas",
-              "Artist", 
-              "Frame",
-              "Gallery"
-            ],
-            order: 5
-          }
-        ]
-      };
-    }
-  };
+    loadVerbalTestData();
+  }, [testId, startingSection]);
 
   // Timer countdown
   useEffect(() => {
@@ -289,7 +146,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, language = 'english', testId =
       const timer = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev <= 1) {
-            handleFinishTest();
+            handleSubmitTest();
             return 0;
           }
           return prev - 1;
@@ -300,103 +157,210 @@ const VerbalReasoningTest = ({ onBackToDashboard, language = 'english', testId =
     }
   }, [testStep, timeRemaining]);
 
-  const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  // Helper functions
+  const getSectionPassages = (section) => {
+    if (!section) return [];
+    // Prefer explicit passages array
+    if (Array.isArray(section.passages)) return section.passages;
+    // If we have a questions array, detect whether it's an array of passages or flat questions
+    if (Array.isArray(section.questions)) {
+      const q = section.questions;
+      if (q.length > 0 && q[0] && Array.isArray(q[0].questions)) {
+        return q; // already passages
+      }
+      // flat questions array → wrap into a single virtual passage
+      return [{ id: 'virtual', questions: q }];
+    }
+    return [];
   };
 
-  const handleStartTest = () => {
-    setTestStep('test');
+  const getCurrentSection = () => {
+    // For single test data (VRT1, VRT2, VRT3), return the test data itself
+    if (testData && testData.questions && !testData.sections) {
+      return testData;
+    }
+    // For multi-section data, return specific section
+    const section = testData?.sections?.[currentSection - 1];
+    return section;
+  };
+
+  const getCurrentPassage = () => {
+    const section = getCurrentSection();
+    const passages = getSectionPassages(section);
+    return passages[currentPassage];
+  };
+
+  const getCurrentQuestion = () => {
+    const passage = getCurrentPassage();
+    const question = passage?.questions?.[currentQuestion];
+    return question;
+  };
+
+  const getTotalQuestions = () => {
+    // For single test data (including flat question arrays)
+    if (testData && Array.isArray(testData.questions) && !testData.sections) {
+      if (testData.questions.length > 0 && testData.questions[0] && Array.isArray(testData.questions[0].questions)) {
+        return testData.questions.reduce((total, passage) => total + (passage?.questions?.length || 0), 0);
+      }
+      // flat array
+      return testData.questions.length;
+    }
+    // For multi-section data
+    if (!testData?.sections) return 0;
+    return testData.sections.reduce((total, section) => {
+      const passages = getSectionPassages(section);
+      return total + passages.reduce((sectionTotal, passage) => sectionTotal + (passage?.questions?.length || 0), 0);
+    }, 0);
+  };
+
+  const getQuestionNumber = () => {
+    // For single test data (including flat arrays)
+    if (testData && Array.isArray(testData.questions) && !testData.sections) {
+      let questionNum = 1;
+      const section = getCurrentSection();
+      const passages = getSectionPassages(section);
+      // Add questions from previous passages (usually 1 virtual passage for flat arrays)
+      for (let i = 0; i < currentPassage; i++) {
+        questionNum += (passages[i]?.questions?.length || 0);
+      }
+      
+      // Add current question index
+      questionNum += currentQuestion;
+      
+      return questionNum;
+    }
     
-    // Use scroll utility for immediate scroll on test start
-    setTimeout(() => {
-      scrollToTop({
-        container: 'verbal-test-scroll',
-        forceImmediate: true,
-        attempts: 3,
-        delay: 50
-      });
-    }, 100);
+    // For multi-section data
+    if (!testData?.sections) return 1;
+    
+    let questionNum = 1;
+    const section = getCurrentSection();
+    const passages = getSectionPassages(section);
+    
+    // Add questions from previous passages in current section
+    for (let i = 0; i < currentPassage; i++) {
+      questionNum += (passages[i]?.questions?.length || 0);
+    }
+    
+    // Add current question index
+    questionNum += currentQuestion;
+    
+    return questionNum;
   };
 
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Navigation functions
   const handleAnswerSelect = (questionId, answer) => {
+    const answerKey = `${currentSection}_${currentPassage}_${questionId}`;
     setAnswers(prev => ({
       ...prev,
-      [questionId]: answer
+      [answerKey]: answer
     }));
   };
 
   const handleNextQuestion = () => {
-    if (currentQuestion < testData.total_questions) {
-      setCurrentQuestion(prev => prev + 1);
+    const passage = getCurrentPassage();
+    const isLastQuestionInPassage = currentQuestion >= ((passage?.questions?.length || 0) - 1);
+    const section = getCurrentSection();
+    const passages = getSectionPassages(section);
+    const isLastPassage = currentPassage >= passages.length - 1;
+
+    if (isLastQuestionInPassage && isLastPassage) {
+      // End of test
+      handleSubmitTest();
+    } else if (isLastQuestionInPassage) {
+      // Move to next passage, first question
+      setCurrentPassage(prev => prev + 1);
+      setCurrentQuestion(0);
     } else {
-      handleFinishTest();
+      // Move to next question in same passage
+      setCurrentQuestion(prev => prev + 1);
     }
   };
 
-  const handlePreviousQuestion = () => {
-    if (currentQuestion > 1) {
+  const handlePrevQuestion = () => {
+    if (currentQuestion > 0) {
       setCurrentQuestion(prev => prev - 1);
+    } else if (currentPassage > 0) {
+      // Move to previous passage, last question
+      setCurrentPassage(prev => prev - 1);
+      const section = getCurrentSection();
+      const passages = getSectionPassages(section);
+      const prevPassage = passages[currentPassage - 1];
+      setCurrentQuestion(((prevPassage?.questions?.length) || 1) - 1);
     }
   };
 
-  const handleFinishTest = () => {
+  const handleSubmitTest = () => {
     setTestStep('results');
+    scrollToTop();
   };
 
-  const handleAbortTest = () => {
-    if (window.confirm(t.abortConfirm)) {
-      onBackToDashboard();
+  const calculateScore = () => {
+    let correct = 0;
+    let total = 0;
+
+    // For single test data (VRT1, VRT2, VRT3)
+    if (testData && testData.questions && !testData.sections) {
+      testData.questions.forEach((passage, passageIndex) => {
+        passage.questions.forEach((question) => {
+          const answerKey = `${currentSection}_${passageIndex}_${question.id}`;
+          const userAnswer = answers[answerKey];
+          total++;
+          if (userAnswer === question.correct_answer) {
+            correct++;
+          }
+        });
+      });
+    } else if (testData?.sections) {
+      // For multi-section data
+      testData.sections.forEach((section, sectionIndex) => {
+        const passages = getSectionPassages(section);
+        passages.forEach((passage, passageIndex) => {
+          passage.questions.forEach((question) => {
+            const answerKey = `${sectionIndex + 1}_${passageIndex}_${question.id}`;
+            const userAnswer = answers[answerKey];
+            total++;
+            if (userAnswer === question.correct_answer) {
+              correct++;
+            }
+          });
+        });
+      });
     }
+
+    return { correct, total, percentage: Math.round((correct / total) * 100) };
   };
 
-  const getCurrentQuestion = () => {
-    return testData?.questions?.find(q => q.order === currentQuestion);
-  };
-
-  const getQuestionTypeIcon = (type) => {
-    switch (type) {
-      case 'reading_comprehension':
-        return <FaBookOpen className="text-blue-600" />;
-      case 'vocabulary':
-        return <FaBrain className="text-green-600" />;
-      case 'logical_deduction':
-        return <FaCheckCircle className="text-purple-600" />;
-      case 'critical_reasoning':
-        return <FaTimesCircle className="text-red-600" />;
-      case 'analogies':
-        return <FaClock className="text-orange-600" />;
-      default:
-        return <FaBrain className="text-gray-600" />;
-    }
-  };
-
-  const getQuestionTypeLabel = (type) => {
-    return t.questionTypesLabels[type] || type;
-  };
-
+  // Loading state
   if (loading) {
     return (
-      <div className="w-full bg-gray-50 flex items-center justify-center py-20">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading test...</p>
+          <FaBook className="text-6xl text-blue-600 mb-4 mx-auto animate-pulse" />
+          <h2 className="text-2xl font-semibold text-gray-800 mb-2">Loading Verbal Reasoning Test...</h2>
+          <p className="text-gray-600">Please wait while we prepare your test.</p>
         </div>
       </div>
     );
   }
 
-  if (!testData) {
+  // Error state
+  if (error) {
     return (
-      <div className="w-full bg-gray-50 flex items-center justify-center py-20">
-        <div className="text-center">
-          <div className="text-red-600 text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Test Not Available</h2>
-          <p className="text-gray-600 mb-4">Unable to load the test data. Please try again.</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-md">
+          <FaStop className="text-6xl text-red-600 mb-4 mx-auto" />
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Test Loading Error</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={onBackToDashboard}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Back to Dashboard
           </button>
@@ -406,317 +370,228 @@ const VerbalReasoningTest = ({ onBackToDashboard, language = 'english', testId =
   }
 
   return (
-    <div id="verbal-test-root" className="relative min-h-screen">
-      {/* Fixed gradient background */}
-      <div id="verbal-bg" className="fixed inset-0 -z-10 bg-gradient-to-br from-gray-50 to-gray-100" aria-hidden="true" />
-      {/* Local scroll container: only test area scrolls */}
-      <div 
-        id="verbal-test-scroll" 
-        className="test-scroll-container relative h-[calc(100vh-7rem)] overflow-y-auto overflow-x-hidden"
-        data-scroll-container="verbal-test"
-      >
-      {/* Test Header - Sticky within local container */}
-      <div id="verbal-test-header" className="bg-white shadow-sm border-b border-gray-200 p-4 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <button
-              onClick={onBackToDashboard}
-              className="flex items-center text-gray-600 hover:text-blue-600 transition-colors"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              {t.backToDashboard}
-            </button>
-            <h1 className="text-xl font-semibold text-gray-800">{testData.title}</h1>
-            {testStep === 'test' && (
-              <div className="flex items-center space-x-6">
-                <div className="flex items-center text-blue-600">
-                  <FaClock className="mr-2" />
-                  <span className="font-mono text-lg">{formatTime(timeRemaining)}</span>
-                </div>
-                <span className="text-gray-500">
-                  {t.questions.slice(0, -1)} {currentQuestion} of {testData.total_questions}
-                </span>
-                <button
-                  onClick={handleAbortTest}
-                  className="flex items-center px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors font-medium"
-                  title={t.abortTest}
-                >
-                  <FaStop className="mr-2" />
-                  {t.abortTest}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-      {/* Content within local scroll container */}
-      <div>
-        {/* Instructions Step */}
+    <div className="min-h-screen bg-gray-50" ref={testContainerRef}>
+      <AnimatePresence mode="wait">
         {testStep === 'instructions' && (
-          <motion.div id="verbal-instructions"
+          <motion.div
+            key="instructions"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl mx-auto px-6 py-12"
-        >
-          <div className="bg-white rounded-lg shadow-sm p-8 border border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">{t.instructions}</h2>
-            
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-3">{t.testOverview}</h3>
-                <ul className="space-y-2 text-gray-600">
-                  <li>• <strong>{t.duration}:</strong> {testData.duration_minutes} {t.minutes}</li>
-                  <li>• <strong>{t.questions}:</strong> {testData.total_questions} {t.questions.toLowerCase()}</li>
-                  <li>• <strong>{t.questionTypes}:</strong> {Object.values(t.questionTypesLabels).join(', ')}</li>
-                </ul>
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+            className="container mx-auto px-4 py-8"
+          >
+            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
+              {/* Header */}
+              <div className="text-center mb-8">
+                <FaBook className="text-6xl text-blue-600 mb-4 mx-auto" />
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                  {getCurrentSection()?.intro_text?.title || getCurrentSection()?.title || 'Verbal Reasoning Test'}
+                </h1>
+                <p className="text-lg text-gray-600">
+                  {getCurrentSection()?.description}
+                </p>
               </div>
 
-              <div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-3">{t.instructionsList}</h3>
-                <ul className="space-y-2 text-gray-600">
-                  {t.instructionsText.map((instruction, index) => (
-                    <li key={index}>• {instruction}</li>
+              {/* Instructions */}
+              <div className="bg-blue-50 rounded-lg p-6 mb-8">
+                <div className="space-y-4">
+                  {getCurrentSection()?.intro_text?.instructions?.map((instruction, index) => (
+                    <p key={index} className={`text-gray-700 ${instruction === '' ? 'h-2' : ''}`}>
+                      {instruction}
+                    </p>
                   ))}
-                </ul>
+                </div>
               </div>
 
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h4 className="font-semibold text-blue-800 mb-2">{t.questionTypes}:</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <FaBookOpen className="text-blue-600" />
-                    <span className="text-blue-700">{t.questionTypesLabels.reading_comprehension}</span>
+              {/* Test Info */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-gray-50 rounded-lg p-4 text-center">
+                  <FaClock className="text-2xl text-blue-600 mb-2 mx-auto" />
+                  <h3 className="font-semibold text-gray-800">Duration</h3>
+                  <p className="text-gray-600">{getCurrentSection()?.duration_minutes || testData?.timeLimit || 25} minutes</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4 text-center">
+                  <FaQuestionCircle className="text-2xl text-blue-600 mb-2 mx-auto" />
+                  <h3 className="font-semibold text-gray-800">Questions</h3>
+                  <p className="text-gray-600">{getTotalQuestions()} questions</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4 text-center">
+                  <FaFileAlt className="text-2xl text-blue-600 mb-2 mx-auto" />
+                  <h3 className="font-semibold text-gray-800">Format</h3>
+                  <p className="text-gray-600">True/False/Cannot Say</p>
+                </div>
+              </div>
+
+              {/* Start Button */}
+              <div className="text-center">
+                <button
+                  onClick={() => setTestStep('test')}
+                  className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+                >
+                  Start Test
+                  <FaArrowRight />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {testStep === 'test' && (
+          <motion.div
+            key="test"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+            className="container mx-auto px-4 py-8"
+          >
+            <div className="max-w-6xl mx-auto">
+              {/* Header */}
+              <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-800">Verbal Reasoning Test</h1>
+                    <p className="text-gray-600">
+                      Question {getQuestionNumber()} of {getTotalQuestions()}
+                    </p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <FaBrain className="text-green-600" />
-                    <span className="text-blue-700">{t.questionTypesLabels.vocabulary}</span>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-blue-600">
+                      <FaClock className="inline mr-2" />
+                      {formatTime(timeRemaining)}
+                    </div>
+                    <p className="text-sm text-gray-600">Time Remaining</p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <FaCheckCircle className="text-purple-600" />
-                    <span className="text-blue-700">{t.questionTypesLabels.logical_deduction}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Passage */}
+                <div className="bg-white rounded-lg shadow-lg p-6">
+                  <h2 className="text-xl font-bold text-gray-800 mb-4">
+                    {getCurrentPassage()?.passage_title}
+                  </h2>
+                  <div className="prose max-w-none">
+                    <p className="text-gray-700 leading-relaxed text-justify">
+                      {getCurrentPassage()?.passage_text}
+                    </p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <FaTimesCircle className="text-red-600" />
-                    <span className="text-blue-700">{t.questionTypesLabels.critical_reasoning}</span>
+                </div>
+
+                {/* Question */}
+                <div className="bg-white rounded-lg shadow-lg p-6">
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      Q{getCurrentQuestion()?.id}: {getCurrentQuestion()?.question_text}
+                    </h3>
+                    
+                    {/* Answer Options */}
+                    <div className="space-y-3">
+                      {getCurrentQuestion()?.options?.map((option) => {
+                        const isSelected = answers[`${currentSection}_${currentPassage}_${getCurrentQuestion()?.id}`] === option;
+                        
+                        return (
+                          <button
+                            key={option}
+                            className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
+                              isSelected 
+                                ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            }`}
+                            onClick={() => handleAnswerSelect(getCurrentQuestion()?.id, option)}
+                          >
+                            <span className="font-semibold">{option}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <FaClock className="text-orange-600" />
-                    <span className="text-blue-700">{t.questionTypesLabels.analogies}</span>
+
+                  {/* Navigation */}
+                  <div className="flex justify-between items-center">
+                    <button
+                      onClick={handlePrevQuestion}
+                      disabled={currentPassage === 0 && currentQuestion === 0}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Previous
+                    </button>
+
+                    <button
+                      onClick={handleNextQuestion}
+                      className="flex items-center gap-2 px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                    >
+                      {currentPassage === getCurrentSection()?.questions?.length - 1 && 
+                       currentQuestion === getCurrentPassage()?.questions?.length - 1 ? (
+                        <>
+                          <FaFlag />
+                          Submit Test
+                        </>
+                      ) : (
+                        <>
+                          Next
+                          <FaArrowRight />
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
+          </motion.div>
+        )}
 
-            <div className="mt-8 text-center">
-              <button
-                onClick={handleStartTest}
-                className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg"
-              >
-                {t.startTest}
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Test Step */}
-      {testStep === 'test' && (
-        // Extra top margin so the sticky header never overlaps the question card
-        <div id="verbal-test-content" className="max-w-5xl mx-auto px-6 py-8 mt-8 md:mt-10">
-          {/* Progress Bar */}
-          <div className="mb-6">
-            <div className="flex justify-between text-sm text-gray-600 mb-2">
-              <span>Progress</span>
-              <span>{Math.round((currentQuestion / testData.total_questions) * 100)}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(currentQuestion / testData.total_questions) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-
-          <AnimatePresence mode="wait">
-            <motion.div id="verbal-question-card"
-              key={currentQuestion}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-lg shadow-sm p-8 border border-gray-200 relative z-0"
-            >
-              {(() => {
-                const question = getCurrentQuestion();
-                if (!question) return null;
-
-                return (
-                  <div>
-                    {/* Question Header */}
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center space-x-3">
-                        {getQuestionTypeIcon(question.question_type)}
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-800">
-                            Question {currentQuestion}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            {getQuestionTypeLabel(question.question_type)}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="text-sm text-gray-400">
-                        {currentQuestion} of {testData.total_questions}
-                      </span>
-                    </div>
-
-                    {/* Passage (if reading comprehension) */}
-                    {question.passage && (
-                      <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <h4 className="font-semibold text-gray-700 mb-3">{t.passage}</h4>
-                        <p className="text-gray-700 leading-relaxed">{question.passage}</p>
-                      </div>
-                    )}
-
-                    {/* Question Text */}
-                    <div className="mb-6">
-                      <h4 className="text-lg font-medium text-gray-800 mb-4">
-                        {question.question_text}
-                      </h4>
-
-                      {/* Answer Options */}
-                      <div className="space-y-3">
-                        {question.options.map((option, index) => {
-                          const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
-                          const isSelected = answers[question.id] === optionLetter;
-
-                          return (
-                            <button
-                              key={index}
-                              onClick={() => handleAnswerSelect(question.id, optionLetter)}
-                              className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
-                                isSelected
-                                  ? 'border-blue-500 bg-blue-50 shadow-md'
-                                  : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                              }`}
-                            >
-                              <div className="flex items-center space-x-3">
-                                <div
-                                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-sm font-medium ${
-                                    isSelected
-                                      ? 'border-blue-500 bg-blue-500 text-white'
-                                      : 'border-gray-300 text-gray-500'
-                                  }`}
-                                >
-                                  {optionLetter}
-                                </div>
-                                <span className="text-gray-700">{option}</span>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Navigation Buttons */}
-                    <div className="flex justify-between items-center pt-4">
-                      <button
-                        onClick={handlePreviousQuestion}
-                        disabled={currentQuestion === 1}
-                        className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-                          currentQuestion === 1
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300 hover:shadow-md'
-                        }`}
-                      >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                        {t.previous}
-                      </button>
-
-                      {currentQuestion === testData.total_questions ? (
-                        <button
-                          onClick={handleFinishTest}
-                          className="flex items-center px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
-                        >
-                          <FaFlag className="mr-2" />
-                          {t.finishTest}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={handleNextQuestion}
-                          disabled={!answers[question.id]}
-                          className={`flex items-center px-8 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg ${
-                            !answers[question.id]
-                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
-                              : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:shadow-xl transform hover:scale-105'
-                          }`}
-                        >
-                          {t.next}
-                          <FaArrowRight className="ml-2" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })()}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* Results Step */}
-      {testStep === 'results' && (
-        <motion.div id="verbal-results"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl mx-auto px-6 py-12"
-        >
-          <div className="bg-white rounded-lg shadow-sm p-8 border border-gray-200 text-center">
-            <div className="mb-6">
-              <FaCheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Test Completed!</h2>
-              <p className="text-gray-600">Your verbal reasoning assessment has been submitted.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-blue-800">Questions Answered</h3>
-                <p className="text-2xl font-bold text-blue-600">{Object.keys(answers).length}</p>
-                <p className="text-sm text-blue-600">of {testData.total_questions}</p>
-              </div>
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-green-800">Time Used</h3>
-                <p className="text-2xl font-bold text-green-600">
-                  {formatTime(testData.duration_minutes * 60 - timeRemaining)}
+        {testStep === 'results' && (
+          <motion.div
+            key="results"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+            className="container mx-auto px-4 py-8"
+          >
+            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
+              <div className="text-center mb-8">
+                <FaFlag className="text-6xl text-green-600 mb-4 mx-auto" />
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">Test Complete!</h1>
+                <p className="text-lg text-gray-600">
+                  You have successfully completed the verbal reasoning test.
                 </p>
-                <p className="text-sm text-green-600">of {testData.duration_minutes} minutes</p>
               </div>
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-purple-800">Status</h3>
-                <p className="text-2xl font-bold text-purple-600">Complete</p>
-                <p className="text-sm text-purple-600">Submitted successfully</p>
-              </div>
-            </div>
 
-            <div className="space-y-4">
-              <p className="text-gray-600">
-                Your results will be processed and available in your dashboard shortly.
-              </p>
-              <button
-                onClick={onBackToDashboard}
-                className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-              >
-                Return to Dashboard
-              </button>
+              {/* Results */}
+              <div className="bg-gray-50 rounded-lg p-6 mb-8">
+                <h2 className="text-xl font-bold text-gray-800 mb-4">Your Results</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-blue-600">{calculateScore().correct}</div>
+                    <p className="text-gray-600">Correct Answers</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-gray-600">{calculateScore().total}</div>
+                    <p className="text-gray-600">Total Questions</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-green-600">{calculateScore().percentage}%</div>
+                    <p className="text-gray-600">Score</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="text-center">
+                <button
+                  onClick={onBackToDashboard}
+                  className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  Back to Dashboard
+                </button>
+              </div>
             </div>
-          </div>
-        </motion.div>
-      )}
-      </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

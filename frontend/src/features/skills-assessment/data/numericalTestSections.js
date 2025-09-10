@@ -1,0 +1,477 @@
+// Data for the Numerical Reasoning Test
+// This file provides the questions, answers, and configuration for the test
+
+export const getNumericalTestData = () => {
+  return {
+    title: 'Numerical Reasoning Test',
+    description: 'Assess your ability to interpret and analyze numerical data',
+    duration_minutes: 25,
+    total_questions: 25,
+    sections: [
+      {
+        id: 1,
+        title: 'Numerical Reasoning Assessment',
+        description: 'This test evaluates your ability to interpret data, analyze numerical information, and solve mathematical problems.',
+        intro_text: {
+          title: 'Numerical Reasoning Test',
+          instructions: [
+            'You will be presented with 25 numerical reasoning questions that test your ability to interpret data and perform calculations.',
+            'Each question includes numerical information presented as tables, charts, or text.',
+            'Analyze the data carefully before selecting your answer.',
+            'You have 25 minutes to complete all questions.',
+            'Use a calculator if necessary for complex calculations.',
+            'Once you select an answer and move to the next question, you cannot go back.',
+            'Read all information carefully before making your selection.'
+          ]
+        },
+        intro_image: '/assets/images/numerical/intro.png',
+        questions: [
+          // Basic Arithmetic Questions
+          {
+            question_id: 1,
+            category: "Basic Arithmetic",
+            complexity_score: 2,
+            question: "If a car travels at a speed of 60 miles per hour, how far will it travel in 2.5 hours?",
+            options: [
+              { option_id: "A", text: "120 miles" },
+              { option_id: "B", text: "150 miles" },
+              { option_id: "C", text: "180 miles" },
+              { option_id: "D", text: "200 miles" }
+            ],
+            correct_answer: "B",
+            explanation: "To find the distance, multiply the speed by the time: 60 miles/hour × 2.5 hours = 150 miles."
+          },
+          {
+            question_id: 2,
+            category: "Basic Arithmetic",
+            complexity_score: 2,
+            question: "What is the result of 15% of 240?",
+            options: [
+              { option_id: "A", text: "36" },
+              { option_id: "B", text: "42" },
+              { option_id: "C", text: "24" },
+              { option_id: "D", text: "30" }
+            ],
+            correct_answer: "A",
+            explanation: "To find 15% of 240, multiply 240 by 0.15: 240 × 0.15 = 36."
+          },
+          {
+            question_id: 3,
+            category: "Basic Arithmetic",
+            complexity_score: 2,
+            question: "If 15% of x is 45, what is the value of x?",
+            options: [
+              { option_id: "A", text: "300" },
+              { option_id: "B", text: "350" },
+              { option_id: "C", text: "400" },
+              { option_id: "D", text: "450" }
+            ],
+            correct_answer: "A",
+            explanation: "If 15% of x is 45, then 0.15x = 45. Solve for x: x = 45 ÷ 0.15 = 300."
+          },
+          {
+            question_id: 4,
+            category: "Basic Arithmetic",
+            complexity_score: 3,
+            question: "A machine can produce 140 units in 4 hours. At this rate, how many units can it produce in 7 hours?",
+            options: [
+              { option_id: "A", text: "200 units" },
+              { option_id: "B", text: "235 units" },
+              { option_id: "C", text: "245 units" },
+              { option_id: "D", text: "260 units" }
+            ],
+            correct_answer: "C",
+            explanation: "The rate is 140 units ÷ 4 hours = 35 units per hour. In 7 hours: 35 units/hour × 7 hours = 245 units."
+          },
+          {
+            question_id: 5,
+            category: "Basic Arithmetic",
+            complexity_score: 3,
+            question: "If a team of 8 people can complete a project in 12 days, how many days would it take 6 people to complete the same project?",
+            options: [
+              { option_id: "A", text: "9 days" },
+              { option_id: "B", text: "16 days" },
+              { option_id: "C", text: "18 days" },
+              { option_id: "D", text: "24 days" }
+            ],
+            correct_answer: "B",
+            explanation: "The total work is 8 people × 12 days = 96 person-days. With 6 people, it would take 96 ÷ 6 = 16 days."
+          },
+          
+          // Ratio and Proportion Questions
+          {
+            question_id: 6,
+            category: "Ratio and Proportion",
+            complexity_score: 3,
+            question: "A company's revenue increased from $2.4 million to $3 million in one year. What was the percentage increase?",
+            options: [
+              { option_id: "A", text: "20%" },
+              { option_id: "B", text: "25%" },
+              { option_id: "C", text: "30%" },
+              { option_id: "D", text: "35%" }
+            ],
+            correct_answer: "B",
+            explanation: "The increase was $3M - $2.4M = $0.6M. The percentage increase is (0.6 ÷ 2.4) × 100 = 25%."
+          },
+          {
+            question_id: 7,
+            category: "Ratio and Proportion",
+            complexity_score: 4,
+            question: "A company has 420 employees, and the ratio of male to female employees is 4:3. How many female employees are there?",
+            options: [
+              { option_id: "A", text: "160" },
+              { option_id: "B", text: "180" },
+              { option_id: "C", text: "240" },
+              { option_id: "D", text: "280" }
+            ],
+            correct_answer: "B",
+            explanation: "If the ratio is 4:3, then out of 7 parts, 3 are female. So, (3/7) × 420 = 180 female employees."
+          },
+          {
+            question_id: 8,
+            category: "Ratio and Proportion",
+            complexity_score: 2,
+            question: "If an item costs $80 with a 25% discount, what is the final price?",
+            options: [
+              { option_id: "A", text: "$55" },
+              { option_id: "B", text: "$60" },
+              { option_id: "C", text: "$65" },
+              { option_id: "D", text: "$70" }
+            ],
+            correct_answer: "B",
+            explanation: "A 25% discount means the item will cost 75% of the original price: $80 × 0.75 = $60."
+          },
+          {
+            question_id: 9,
+            category: "Ratio and Proportion",
+            complexity_score: 4,
+            question: "If a recipe requires 2.5 cups of flour to make 20 cookies, how many cups of flour are needed to make 32 cookies?",
+            options: [
+              { option_id: "A", text: "3.2 cups" },
+              { option_id: "B", text: "4 cups" },
+              { option_id: "C", text: "4.5 cups" },
+              { option_id: "D", text: "5 cups" }
+            ],
+            correct_answer: "B",
+            explanation: "We can set up a proportion: 2.5 cups / 20 cookies = x cups / 32 cookies. Cross multiply: 2.5 × 32 = 20 × x, so x = (2.5 × 32) ÷ 20 = 4 cups."
+          },
+          {
+            question_id: 10,
+            category: "Ratio and Proportion",
+            complexity_score: 3,
+            question: "In a class, the ratio of boys to girls is 5:7. If there are 35 boys, how many girls are there?",
+            options: [
+              { option_id: "A", text: "45" },
+              { option_id: "B", text: "49" },
+              { option_id: "C", text: "42" },
+              { option_id: "D", text: "56" }
+            ],
+            correct_answer: "B",
+            explanation: "If the ratio of boys to girls is 5:7, and there are 35 boys, then: 5 parts = 35 boys, so 1 part = 7 boys. Therefore, 7 parts (girls) = 7 × 7 = 49 girls."
+          },
+          
+          // Data Interpretation Questions
+          {
+            question_id: 11,
+            category: "Data Interpretation",
+            complexity_score: 3,
+            data_type: "table",
+            table_data: {
+              title: "Sales by Department",
+              headers: ["Department", "Q1", "Q2", "Q3", "Q4", "Total"],
+              rows: [
+                ["Electronics", "$82,500", "$78,300", "$85,700", "$97,200", "$343,700"],
+                ["Clothing", "$65,800", "$72,400", "$68,900", "$84,500", "$291,600"],
+                ["Home Goods", "$45,200", "$48,700", "$51,300", "$60,100", "$205,300"],
+                ["Groceries", "$128,400", "$130,600", "$132,800", "$142,900", "$534,700"]
+              ]
+            },
+            question: "In which quarter did the Electronics department see the highest sales?",
+            options: [
+              { option_id: "A", text: "Q1" },
+              { option_id: "B", text: "Q2" },
+              { option_id: "C", text: "Q3" },
+              { option_id: "D", text: "Q4" }
+            ],
+            correct_answer: "D",
+            explanation: "The Electronics department sales were: Q1: $82,500, Q2: $78,300, Q3: $85,700, Q4: $97,200. The highest sales were in Q4 at $97,200."
+          },
+          {
+            question_id: 12,
+            category: "Data Interpretation",
+            complexity_score: 4,
+            data_type: "chart",
+            chart_data: {
+              type: "bar_chart",
+              title: "Quarterly Sales",
+            },
+            image: "/assets/images/numerical/bar_chart_quarterly_sales.png",
+            question: "If the total sales for the year were $1.2 million, approximately what percentage of annual sales occurred in Q3?",
+            options: [
+              { option_id: "A", text: "20%" },
+              { option_id: "B", text: "25%" },
+              { option_id: "C", text: "30%" },
+              { option_id: "D", text: "35%" }
+            ],
+            correct_answer: "B",
+            explanation: "From the chart, Q3 sales were $300,000. The percentage is (300,000 ÷ 1,200,000) × 100 = 25%."
+          },
+          {
+            question_id: 13,
+            category: "Data Interpretation",
+            complexity_score: 3,
+            data_type: "chart",
+            chart_data: {
+              type: "pie_chart",
+              title: "Market Share",
+            },
+            image: "/assets/images/numerical/pie_chart_market_share.png",
+            question: "If the total market size is $5 billion, what is the approximate market share in dollars for Company B?",
+            options: [
+              { option_id: "A", text: "$1 billion" },
+              { option_id: "B", text: "$1.25 billion" },
+              { option_id: "C", text: "$1.5 billion" },
+              { option_id: "D", text: "$1.75 billion" }
+            ],
+            correct_answer: "C",
+            explanation: "Company B has approximately 30% market share according to the chart. So, 30% of $5 billion is $1.5 billion."
+          },
+          {
+            question_id: 14,
+            category: "Data Interpretation",
+            complexity_score: 4,
+            data_type: "chart",
+            chart_data: {
+              type: "line_chart",
+              title: "Website Visitors",
+            },
+            image: "/assets/images/numerical/line_chart_website_visitors.png",
+            question: "What was the approximate percentage increase in website visitors from January to March?",
+            options: [
+              { option_id: "A", text: "25%" },
+              { option_id: "B", text: "33%" },
+              { option_id: "C", text: "50%" },
+              { option_id: "D", text: "75%" }
+            ],
+            correct_answer: "C",
+            explanation: "January had approximately 40,000 visitors, and March had approximately 60,000 visitors. The increase is (60,000 - 40,000) ÷ 40,000 × 100 = 50%."
+          },
+          {
+            question_id: 15,
+            category: "Data Interpretation",
+            complexity_score: 3,
+            data_type: "table",
+            table_data: {
+              title: "Project Budget Allocation",
+              headers: ["Department", "Budget ($)", "Spent ($)", "Remaining (%)"],
+              rows: [
+                ["Research", "120,000", "84,000", "?"],
+                ["Development", "200,000", "150,000", "?"],
+                ["Marketing", "80,000", "72,000", "?"],
+                ["Operations", "150,000", "90,000", "?"]
+              ]
+            },
+            question: "What percentage of the Development department's budget remains unspent?",
+            options: [
+              { option_id: "A", text: "20%" },
+              { option_id: "B", text: "25%" },
+              { option_id: "C", text: "30%" },
+              { option_id: "D", text: "35%" }
+            ],
+            correct_answer: "B",
+            explanation: "Development spent $150,000 out of $200,000. Remaining: $200,000 - $150,000 = $50,000. As a percentage: ($50,000 ÷ $200,000) × 100 = 25%."
+          },
+          {
+            question_id: 16,
+            category: "Data Interpretation",
+            complexity_score: 5,
+            data_type: "chart",
+            chart_data: {
+              type: "bar_chart",
+              title: "Book Sales",
+            },
+            image: "/assets/images/numerical/bar_chart_book_sales.png",
+            question: "If sales in 2021 were 20% higher than in 2020, and 15% lower than in 2022, what was the percentage increase from 2020 to 2022?",
+            options: [
+              { option_id: "A", text: "32%" },
+              { option_id: "B", text: "35%" },
+              { option_id: "C", text: "38%" },
+              { option_id: "D", text: "41.2%" }
+            ],
+            correct_answer: "D",
+            explanation: "Let's say sales in 2020 were x. Then 2021 sales were 1.2x, and 2022 sales were 1.2x ÷ 0.85 ≈ 1.412x. So the increase from 2020 to 2022 is approximately 41.2%."
+          },
+          {
+            question_id: 17,
+            category: "Data Interpretation",
+            complexity_score: 4,
+            data_type: "table",
+            table_data: {
+              title: "Monthly Expenses for a Small Business",
+              headers: ["Category", "January ($)", "February ($)", "March ($)", "Quarter Average ($)"],
+              rows: [
+                ["Rent", "2,000", "2,000", "2,000", "2,000"],
+                ["Utilities", "450", "480", "430", "453.33"],
+                ["Salaries", "8,500", "8,500", "9,200", "8,733.33"],
+                ["Marketing", "1,200", "1,500", "1,800", "1,500"],
+                ["Supplies", "750", "620", "840", "736.67"]
+              ]
+            },
+            question: "By what percentage did marketing expenses increase from January to March?",
+            options: [
+              { option_id: "A", text: "33.3%" },
+              { option_id: "B", text: "50%" },
+              { option_id: "C", text: "60%" },
+              { option_id: "D", text: "25%" }
+            ],
+            correct_answer: "B",
+            explanation: "January marketing expenses were $1,200, and March expenses were $1,800. The increase is ($1,800 - $1,200) ÷ $1,200 × 100 = 50%."
+          },
+          {
+            question_id: 18,
+            category: "Data Interpretation",
+            complexity_score: 4,
+            data_type: "chart",
+            chart_data: {
+              type: "line_chart",
+              title: "Stock Prices",
+            },
+            image: "/assets/images/numerical/line_chart_stock_prices.png",
+            question: "If an investor bought 300 shares of Company X in February and sold them all in May, what would be the approximate profit or loss?",
+            options: [
+              { option_id: "A", text: "$600 loss" },
+              { option_id: "B", text: "$600 profit" },
+              { option_id: "C", text: "$900 profit" },
+              { option_id: "D", text: "$1,500 profit" }
+            ],
+            correct_answer: "C",
+            explanation: "From the chart, Company X's stock price was approximately $45 in February and $48 in May. The profit would be ($48 - $45) × 300 shares = $900 profit."
+          },
+          
+          // Financial Calculations Questions
+          {
+            question_id: 19,
+            category: "Financial Calculations",
+            complexity_score: 3,
+            question: "An investment of $5,000 grows to $6,200 after 2 years. What is the annual growth rate, assuming simple interest?",
+            options: [
+              { option_id: "A", text: "10%" },
+              { option_id: "B", text: "12%" },
+              { option_id: "C", text: "15%" },
+              { option_id: "D", text: "24%" }
+            ],
+            correct_answer: "B",
+            explanation: "The growth is $6,200 - $5,000 = $1,200. Simple interest rate: ($1,200 ÷ $5,000) ÷ 2 years = 0.12 or 12% per year."
+          },
+          {
+            question_id: 20,
+            category: "Financial Calculations",
+            complexity_score: 4,
+            question: "If a company's monthly expenses are $45,000 and its revenue is $60,000, what is its profit margin?",
+            options: [
+              { option_id: "A", text: "15%" },
+              { option_id: "B", text: "25%" },
+              { option_id: "C", text: "33.3%" },
+              { option_id: "D", text: "75%" }
+            ],
+            correct_answer: "B",
+            explanation: "The profit is $60,000 - $45,000 = $15,000. The profit margin is ($15,000 ÷ $60,000) × 100 = 25%."
+          },
+          {
+            question_id: 21,
+            category: "Financial Calculations",
+            complexity_score: 3,
+            question: "A bank offers a savings account with an annual interest rate of 3%, compounded monthly. If $10,000 is deposited, how much will be in the account after 2 years (rounded to the nearest dollar)?",
+            options: [
+              { option_id: "A", text: "$10,600" },
+              { option_id: "B", text: "$10,609" },
+              { option_id: "C", text: "$10,618" },
+              { option_id: "D", text: "$10,627" }
+            ],
+            correct_answer: "C",
+            explanation: "Using the compound interest formula: P(1+r/n)^(nt) = $10,000(1+0.03/12)^(12*2) ≈ $10,618."
+          },
+          {
+            question_id: 22,
+            category: "Financial Calculations",
+            complexity_score: 4,
+            question: "A house was purchased for $320,000 and sold years later for $416,000. If the annual appreciation rate was 6.75%, approximately how many years was the house owned?",
+            options: [
+              { option_id: "A", text: "3 years" },
+              { option_id: "B", text: "4 years" },
+              { option_id: "C", text: "5 years" },
+              { option_id: "D", text: "6 years" }
+            ],
+            correct_answer: "B",
+            explanation: "Using the formula: Future Value = Present Value × (1 + rate)^time. $416,000 = $320,000 × (1 + 0.0675)^t. Solving for t: t = ln(416,000/320,000)/ln(1.0675) ≈ 4 years."
+          },
+          {
+            question_id: 23,
+            category: "Financial Calculations",
+            complexity_score: 5,
+            question: "A loan of $15,000 is taken at an annual interest rate of 8%, to be repaid in 3 equal annual installments. What is the approximate amount of each annual payment?",
+            options: [
+              { option_id: "A", text: "$5,786" },
+              { option_id: "B", text: "$5,852" },
+              { option_id: "C", text: "$5,921" },
+              { option_id: "D", text: "$6,000" }
+            ],
+            correct_answer: "A",
+            explanation: "Using the formula for equal loan payments: PMT = P × r × (1+r)^n/((1+r)^n-1), where P = $15,000, r = 0.08, n = 3. PMT = $15,000 × 0.08 × (1.08)^3/((1.08)^3-1) ≈ $5,786."
+          },
+          {
+            question_id: 24,
+            category: "Financial Calculations",
+            complexity_score: 3,
+            question: "A company had $50,000 in cash reserves on January 1st. It earns $8,000 monthly and spends $6,500 monthly. What will be the cash reserves on December 31st?",
+            options: [
+              { option_id: "A", text: "$65,500" },
+              { option_id: "B", text: "$68,000" },
+              { option_id: "C", text: "$68,500" },
+              { option_id: "D", text: "$70,000" }
+            ],
+            correct_answer: "B",
+            explanation: "Monthly net gain = $8,000 - $6,500 = $1,500. Over 12 months: $1,500 × 12 = $18,000. Final reserves = $50,000 + $18,000 = $68,000.",
+            time_limit: 90,
+            points: 3,
+            metadata: { created_date: "2025-08-27", difficulty_rating: 7.0, average_time: 85, success_rate: 0.38 }
+          },
+          {
+            question_id: 25,
+            category: "Data Interpretation",
+            complexity_score: 3,
+            data_type: "table",
+            table_data: {
+              title: "Monthly Sales by Region ($000s)",
+              headers: ["Region", "January", "February", "March"],
+              rows: [
+                ["North", 120, 130, 145],
+                ["South", 95, 105, 110],
+                ["East", 105, 100, 115],
+                ["West", 130, 135, 140]
+              ]
+            },
+            question: "What was the percentage increase in total sales from January to March?",
+            options: [
+              { option_id: "A", text: "11.1%" },
+              { option_id: "B", text: "12.5%" },
+              { option_id: "C", text: "13.3%" },
+              { option_id: "D", text: "15.0%" }
+            ],
+            correct_answer: "C",
+            explanation: "January total: 120+95+105+130=450. March total: 145+110+115+140=510. Percentage increase: (510-450)/450×100=13.3%",
+            time_limit: 75,
+            points: 2,
+            metadata: { created_date: "2025-08-27", difficulty_rating: 5.5, average_time: 65, success_rate: 0.53 }
+          }
+        ]
+      }
+    ]
+  };
+};
+
+// Function to get test data with answers (for instructor view)
+export const getNumericalTestWithAnswers = () => {
+  const testData = getNumericalTestData();
+  return testData;
+};

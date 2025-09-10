@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaArrowLeft, FaArrowRight, FaClock, FaCheckCircle, FaFlag } from 'react-icons/fa';
 import { getAbstractTestWithAnswers } from '../data/abstractTestSections';
 import { scrollToTop } from '../../../shared/utils/scrollUtils';
+import { Button } from '@mui/material';
 
 const AbstractReasoningTest = ({ onComplete, onBack }) => {
   const [testData, setTestData] = useState(null);
@@ -78,14 +79,28 @@ const AbstractReasoningTest = ({ onComplete, onBack }) => {
   const handleTestComplete = () => {
     setTestCompleted(true);
     clearInterval(timerRef.current);
+    scrollToTop();
     
     // Calculate results
-    const section = testData.sections[currentSection];
+    const section = testData?.sections?.[currentSection];
+    if (!section) return;
+    
+    // Calculate score (number of correct answers)
+    let correctCount = 0;
+    Object.entries(answers).forEach(([questionId, selectedAnswer]) => {
+      const question = section.questions.find(q => q.id === parseInt(questionId));
+      if (question && question.correct_answer === selectedAnswer) {
+        correctCount++;
+      }
+    });
+    
     const results = {
       testType: 'Abstract Reasoning',
       sectionTitle: section.title,
       totalQuestions: section.questions.length,
       answeredQuestions: Object.keys(answers).length,
+      correctCount: correctCount,
+      score: (correctCount / section.questions.length) * 100,
       answers: answers,
       correctAnswers: section.questions.reduce((acc, q) => {
         acc[q.id] = q.correct_answer;
@@ -95,7 +110,9 @@ const AbstractReasoningTest = ({ onComplete, onBack }) => {
       completed: true
     };
     
-    onComplete(results);
+    if (onComplete) {
+      onComplete(results);
+    }
   };
 
   if (!testData) {
@@ -109,8 +126,8 @@ const AbstractReasoningTest = ({ onComplete, onBack }) => {
     );
   }
 
-  const section = testData.sections[currentSection];
-  const question = section.questions[currentQuestion];
+  const section = testData?.sections?.[currentSection] || { questions: [] };
+  const question = section?.questions?.[currentQuestion] || {};
 
   if (showInstructions) {
     return (
@@ -216,10 +233,43 @@ const AbstractReasoningTest = ({ onComplete, onBack }) => {
               Your Abstract Reasoning test has been submitted successfully.
             </p>
             <div className="bg-gray-50 rounded-lg p-6 mb-6">
-              <div className="grid grid-cols-2 gap-4 text-center">
+              {/* Score information */}
+              <div className="mb-6">
+                <div className="relative pt-1">
+                  <div className="flex mb-2 items-center justify-between">
+                    <div>
+                      <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-purple-600 bg-purple-200">
+                        Your Score
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-semibold inline-block text-purple-600">
+                        {Math.round((Object.values(answers).filter((answer, index) => {
+                          const question = section.questions.find(q => q.id === parseInt(Object.keys(answers)[index]));
+                          return question && question.correct_answer === answer;
+                        }).length / section.questions.length) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-purple-200">
+                    <div style={{ width: `${Math.round((Object.values(answers).filter((answer, index) => {
+                      const question = section.questions.find(q => q.id === parseInt(Object.keys(answers)[index]));
+                      return question && question.correct_answer === answer;
+                    }).length / section.questions.length) * 100)}%` }} 
+                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-purple-600"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 text-center mb-4">
                 <div>
-                  <p className="text-2xl font-bold text-purple-600">{Object.keys(answers).length}</p>
-                  <p className="text-gray-600">Questions Answered</p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {Object.values(answers).filter((answer, index) => {
+                      const question = section.questions.find(q => q.id === parseInt(Object.keys(answers)[index]));
+                      return question && question.correct_answer === answer;
+                    }).length} / {section.questions.length}
+                  </p>
+                  <p className="text-gray-600">Correct Answers</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-indigo-600">
@@ -228,13 +278,26 @@ const AbstractReasoningTest = ({ onComplete, onBack }) => {
                   <p className="text-gray-600">Time Spent</p>
                 </div>
               </div>
+              
+              <p className="text-center text-gray-700">
+                Your results will be processed and added to your profile.
+              </p>
             </div>
-            <button
-              onClick={onBack}
-              className="px-8 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold"
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              className="action-button"
+              onClick={() => {
+                if (typeof onBack === 'function') {
+                  onBack();
+                } else {
+                  console.warn("onBack function was not provided to AbstractReasoningTest");
+                }
+              }}
             >
               Return to Dashboard
-            </button>
+            </Button>
           </div>
         </div>
       </motion.div>
@@ -303,25 +366,27 @@ const AbstractReasoningTest = ({ onComplete, onBack }) => {
                   Question {currentQuestion + 1}
                 </h2>
                 <span className="text-sm text-gray-500">
-                  Complexity: {question.complexity_score}/5
+                  Complexity: {question?.complexity_score || '?'}/5
                 </span>
               </div>
               
-              <p className="text-lg text-gray-700 mb-6">{question.question}</p>
+              <p className="text-lg text-gray-700 mb-6">{question?.question || 'Loading question...'}</p>
               
               {/* Question Image */}
-              <div className="mb-8 text-center">
-                <img 
-                  src={question.image} 
-                  alt={`Abstract reasoning question ${question.id}`}
-                  className="max-w-full h-auto mx-auto rounded-lg shadow-md bg-gray-50"
-                  style={{ maxHeight: '500px' }}
-                />
-              </div>
+              {question?.image && (
+                <div className="mb-8 text-center">
+                  <img 
+                    src={question.image} 
+                    alt={`Abstract reasoning question ${question?.id || ''}`}
+                    className="max-w-full h-auto mx-auto rounded-lg shadow-md bg-gray-50"
+                    style={{ maxHeight: '500px' }}
+                  />
+                </div>
+              )}
               
               {/* Answer Options */}
-              <div className={`grid gap-4 ${question.options.length === 5 ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4'}`}>
-                {question.options.map((option) => (
+              <div className={`grid gap-4 ${question?.options?.length === 5 ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4'}`}>
+                {question?.options?.map((option) => (
                   <button
                     key={option}
                     onClick={() => handleAnswerSelect(question.id, option.toLowerCase())}
