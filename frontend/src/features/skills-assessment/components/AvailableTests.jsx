@@ -523,7 +523,15 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
                               className={`rounded-lg border ${scheme.border} ${scheme.bg} overflow-hidden transition-all duration-300 ${
                                 test.unlocked ? `cursor-pointer ${scheme.hover}` : "opacity-70"
                               } ${isMasterSJT ? 'relative' : ''}`}
-                              onClick={() => test.unlocked && handleTestStart(section.testType === 'verbal' ? test.title : test.id)}
+                              onClick={() => {
+                                if (!test.unlocked) return;
+                                // Ensure Master SJT routes correctly using an explicit identifier
+                                if (isMasterSJT) {
+                                  handleTestStart('MASTER-SJT');
+                                } else {
+                                  handleTestStart(section.testType === 'verbal' ? test.title : test.id);
+                                }
+                              }}
                             >
                               {isMasterSJT && section.featured && (
                                 <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">

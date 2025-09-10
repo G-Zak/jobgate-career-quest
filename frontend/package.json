@@ -12,8 +12,12 @@
     "test": "echo 'Tests not configured yet' && exit 0"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@heroicons/react": "^2.2.0",
     "@monaco-editor/react": "^4.7.0",
+    "@mui/icons-material": "^7.3.2",
+    "@mui/material": "^7.3.2",
     "@vitejs/plugin-react": "^5.0.2",
     "axios": "^1.11.0",
     "chart.js": "^4.4.0",

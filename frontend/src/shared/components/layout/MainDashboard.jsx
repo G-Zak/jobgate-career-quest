@@ -16,6 +16,8 @@ import AbstractReasoningTest from '../../../features/skills-assessment/component
 import LogicalReasoningTest from '../../../features/skills-assessment/components/LogicalReasoningTest';
 import LRT2Test from '../../../features/skills-assessment/components/LRT2Test';
 import LRT3Test from '../../../features/skills-assessment/components/LRT3Test';
+import SituationalJudgmentTest from '../../../features/skills-assessment/components/SituationalJudgmentTest';
+import MasterSJTTest from '../../../features/skills-assessment/components/MasterSJTTest';
 import SkillsSelector from '../../../features/skills-assessment/components/SkillsSelector';
 import TechnicalTest from '../../../features/skills-assessment/components/TechnicalTest';
 // AdaptiveTest supprimé - les tests sont créés par l'admin
@@ -115,6 +117,8 @@ const MainDashboard = () => {
   };
 
   const handleStartTest = (testId) => {
+  const isMasterSJT = (typeof testId === 'string' && (testId === 'MASTER-SJT' || testId === 'MASTER-SJT1' || testId.toLowerCase().includes('master-sjt')));
+  const isSJT = (typeof testId === 'string' && (testId === 'SJT' || testId.toLowerCase().includes('situational') || testId.toLowerCase().includes('sjt')));
     console.log('=== HANDLE START TEST ===');
     console.log('testId:', testId, 'Type:', typeof testId);
     console.log('currentTestFilter:', currentTestFilter);
@@ -161,11 +165,17 @@ const MainDashboard = () => {
     console.log('isLRT2String:', isLRT2String);
     console.log('isLRT3String:', isLRT3String);
     
-    // Set the current test ID
+  // Set the current test ID
     setCurrentTestId(testId);
     
     // Check if it's a verbal reasoning test
-    if (isVerbalComprehensive || isVerbalFilterAndNumber || isStringWithVerbal || isVRTString) {
+    if (isMasterSJT) {
+      console.log('✅ Routing to Master SJT');
+      setActiveSection('master-sjt');
+    } else if (isSJT) {
+      console.log('✅ Routing to Situational Judgment Test');
+      setActiveSection('situational-judgment-test');
+    } else if (isVerbalComprehensive || isVerbalFilterAndNumber || isStringWithVerbal || isVRTString) {
       // Extract language from test ID if it's comprehensive
       const language = testId.toString().includes('_FRENCH') ? 'french' : 'english';
       console.log('✅ Routing to verbal reasoning test with language:', language);
@@ -538,6 +548,15 @@ const MainDashboard = () => {
               userId={1}
               testId={currentTestId}
               onBackToDashboard={() => setActiveSection('applications')}
+            />
+          ) : activeSection === 'situational-judgment-test' ? (
+            <SituationalJudgmentTest 
+              onBackToDashboard={() => setActiveSection('available-tests')}
+              testId={currentTestId}
+            />
+          ) : activeSection === 'master-sjt' ? (
+            <MasterSJTTest 
+              onClose={() => setActiveSection('available-tests')}
             />
           ) : activeSection === 'test-administration' ? (
             <TestAdministration 
