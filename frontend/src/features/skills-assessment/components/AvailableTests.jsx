@@ -11,7 +11,6 @@ import {
   FaChevronDown,
   FaChevronUp,
   FaSearch,
-  FaFilter,
   FaGlobe,
   FaChartLine,
   FaCube,
@@ -174,10 +173,9 @@ const defaultTestsData = [
   }
 ];
 
-const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
+const AvailableTests = ({ onBackToDashboard, onStartTest, onViewTestInfo, testFilter }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filter, setFilter] = useState("all");
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [selectedLanguage, setSelectedLanguage] = useState("english");
   const [verbalTests, setVerbalTests] = useState([]);
@@ -220,10 +218,7 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
     }
     
     const matchesSearch = test.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filter === "all" || 
-                         (filter === "unlocked" && test.unlocked.length > 0) ||
-                         (filter === "inprogress" && test.progress > 0 && test.progress < 100);
-    return matchesSearch && matchesFilter;
+    return matchesSearch;
   });
 
   const toggleCategory = (index) => {
@@ -236,7 +231,7 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
     
     // Search in unifiedTestsData first
     for (const section of unifiedTestsData) {
-      const test = section.tests?.find(t => t.id === testId);
+      const test = section.tests?.find(t => t.id === testId || t.title === testId);
       if (test) {
         testData = {
           id: testId,
@@ -255,7 +250,11 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
     // If not found, search in defaultTestsData
     if (!testData) {
       for (const section of defaultTestsData) {
-        const test = section.tests?.find(t => t.id === testId || t.title === testId);
+        const test = section.tests?.find(t => 
+          t.id === testId || 
+          t.title === testId || 
+          t.id.toString() === testId.toString()
+        );
         if (test) {
           testData = {
             id: testId,
@@ -272,8 +271,8 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
       }
     }
     
-    // Handle Master SJT specially
-    if (testId === 'MASTER-SJT' || testId === 'Master SJT') {
+    // Handle Master SJT specially - check for multiple variations
+    if (testId === 'MASTER-SJT' || testId === 'Master SJT' || testId === 1 || testId === '1') {
       testData = {
         id: 'MASTER-SJT',
         title: 'Master SJT',
@@ -286,8 +285,12 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
       };
     }
     
-    // Show the test info page first
-    if (testData) {
+    // Check if we should use the new unified UX pattern
+    if (onViewTestInfo && testData) {
+      // New unified pattern: Dashboard → Test Info → Test Runner → Results
+      onViewTestInfo(testId, testData);
+    } else if (testData) {
+      // Legacy pattern: Show test info page within AvailableTests
       setSelectedTestData(testData);
       setCurrentPage('testInfo');
     }
@@ -393,7 +396,7 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
           </p>
         </motion.div>
 
-        {/* Search and Filter Bar */}
+        {/* Search and Language Bar */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -413,35 +416,21 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, testFilter }) => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center">
-                <FaFilter className="text-gray-400 mr-2" />
-                <select
-                  className="border border-gray-300 rounded-md bg-gray-50 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                >
-                  <option value="all">All Tests</option>
-                  <option value="unlocked">Unlocked</option>
-                  <option value="inprogress">In Progress</option>
-                </select>
-              </div>
-              
-              {/* Language Selector */}
-              <div className="flex items-center">
-                <FaGlobe className="text-gray-400 mr-2" />
-                <select
-                  className="border border-gray-300 rounded-md bg-gray-50 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={selectedLanguage}
-                  onChange={(e) => setSelectedLanguage(e.target.value)}
-                >
-                  {languages.map((lang) => (
-                    <option key={lang.code} value={lang.code}>
-                      {lang.flag} {lang.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            
+            {/* Language Selector */}
+            <div className="flex items-center">
+              <FaGlobe className="text-gray-400 mr-2" />
+              <select
+                className="border border-gray-300 rounded-md bg-gray-50 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+              >
+                {languages.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.flag} {lang.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </motion.div>

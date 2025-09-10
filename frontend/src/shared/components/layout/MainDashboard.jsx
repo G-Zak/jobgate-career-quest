@@ -7,9 +7,13 @@ import {
 } from '@heroicons/react/24/outline';
 import Dashboard from '../../../features/candidate-dashboard/components/DashboardCandidat';
 import AvailableTests from '../../../features/skills-assessment/components/AvailableTests';
+import TestInfoPage from '../../../features/skills-assessment/components/TestInfoPage';
+import UnifiedTestRunnerShell from '../../../features/skills-assessment/components/UnifiedTestRunnerShell';
+import TestResultsPage from '../../../features/skills-assessment/components/TestResultsPage';
 import TechnicalTests from '../../../features/skills-assessment/components/TechnicalTests';
 import TestLayout from '../../../features/skills-assessment/components/TestLayout';
 import VerbalReasoningTest from '../../../features/skills-assessment/components/VerbalReasoningTest';
+import NumericalReasoningTest from '../../../features/skills-assessment/components/NumericalReasoningTest';
 import SpatialReasoningTest from '../../../features/skills-assessment/components/SpatialReasoningTest';
 import DiagrammaticReasoningTest from '../../../features/skills-assessment/components/DiagrammaticReasoningTest';
 import AbstractReasoningTest from '../../../features/skills-assessment/components/AbstractReasoningTest';
@@ -29,6 +33,8 @@ import { ChallengesList, ChallengeDetail, CodingDashboard } from '../../../featu
 import DebugChallenges from '../../../features/coding-challenges/components/DebugChallenges';
 import SkillTestsOverview from '../../../features/skills-assessment/components/SkillTestsOverview';
 import PracticalTests from '../../../features/coding-challenges/components/PracticalTests';
+import AssessmentDashboardMetrics from '../../../features/skills-assessment/components/AssessmentDashboardMetrics';
+import AttemptsHistory from '../../../features/skills-assessment/components/AttemptsHistory';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import { useScrollOnChange } from '../../utils/scrollUtils';
@@ -43,6 +49,8 @@ const MainDashboard = () => {
   const [currentTestId, setCurrentTestId] = useState(null);
   const [currentSkillId, setCurrentSkillId] = useState(null);
   const [selectedChallenge, setSelectedChallenge] = useState(null);
+  const [currentTestInfo, setCurrentTestInfo] = useState(null);
+  const [testResults, setTestResults] = useState(null);
 
   // Universal scroll management using scroll utilities
   useScrollOnChange(activeSection, { smooth: true, attempts: 3 });
@@ -52,6 +60,7 @@ const MainDashboard = () => {
   useEffect(() => {
     const isTestView = (
       activeSection === 'spatial-reasoning-test' ||
+      activeSection === 'numerical-reasoning-test' ||
       activeSection === 'diagrammatic-reasoning-test' ||
       activeSection === 'abstract-reasoning-test' ||
       activeSection === 'logical-reasoning-test' ||
@@ -110,8 +119,40 @@ const MainDashboard = () => {
     
     // Set the filter based on the skill category
     setCurrentTestFilter(normalizedSkill);
-    setActiveSection('available-tests');
+    setActiveSection('assessments');
     // Keep dropdown open - don't close it automatically
+  };
+
+  // New unified routing handlers
+  const handleViewTestInfo = (testId, testInfo) => {
+    console.log('=== handleViewTestInfo called ===');
+    console.log('testId:', testId);
+    console.log('testInfo:', testInfo);
+    setCurrentTestId(testId);
+    setCurrentTestInfo(testInfo);
+    setActiveSection(`test-info-${testId}`);
+    console.log('Set activeSection to:', `test-info-${testId}`);
+  };
+
+  const handleStartTestFromInfo = (testId) => {
+    setActiveSection(`test-run-${testId}`);
+  };
+
+  const handleTestComplete = (results) => {
+    setTestResults(results);
+    setActiveSection(`test-results-${currentTestId}`);
+  };
+
+  const handleBackToAssessments = () => {
+    setActiveSection('assessments');
+    setCurrentTestId(null);
+    setCurrentTestInfo(null);
+    setTestResults(null);
+  };
+
+  const handleRetakeTest = (testId) => {
+    setTestResults(null);
+    setActiveSection(`test-run-${testId}`);
   };
 
   const handleStartTest = (testId, skillId = null) => {
@@ -125,6 +166,10 @@ const MainDashboard = () => {
     const isVerbalFilterAndNumber = (currentTestFilter === 'verbal' && typeof testId === 'number');
     const isStringWithVerbal = (typeof testId === 'string' && testId.toLowerCase().includes('verbal'));
     const isVRTString = (typeof testId === 'string' && testId.startsWith('VRT'));
+    
+    const isNumericalFilterAndNumber = (currentTestFilter === 'numerical' && typeof testId === 'number');
+    const isStringWithNumerical = (typeof testId === 'string' && testId.toLowerCase().includes('numerical'));
+    const isNRTString = (typeof testId === 'string' && testId.startsWith('NRT'));
     
     const isSpatialFilterAndNumber = (currentTestFilter === 'spatial' && typeof testId === 'number');
     const isStringWithSpatial = (typeof testId === 'string' && testId.toLowerCase().includes('spatial'));
@@ -148,6 +193,9 @@ const MainDashboard = () => {
     console.log('isVerbalFilterAndNumber:', isVerbalFilterAndNumber);
     console.log('isStringWithVerbal:', isStringWithVerbal);
     console.log('isVRTString:', isVRTString);
+    console.log('isNumericalFilterAndNumber:', isNumericalFilterAndNumber);
+    console.log('isStringWithNumerical:', isStringWithNumerical);
+    console.log('isNRTString:', isNRTString);
     console.log('isSpatialFilterAndNumber:', isSpatialFilterAndNumber);
     console.log('isStringWithSpatial:', isStringWithSpatial);
     console.log('isSRTString:', isSRTString);
@@ -179,6 +227,10 @@ const MainDashboard = () => {
       const language = testId.toString().includes('_FRENCH') ? 'french' : 'english';
       console.log('✅ Routing to verbal reasoning test with language:', language);
       setActiveSection(`verbal-reasoning-test-${language}`);
+    } else if (isNumericalFilterAndNumber || isStringWithNumerical || isNRTString) {
+      // Handle numerical reasoning tests
+      console.log('✅ Routing to numerical reasoning test');
+      setActiveSection('numerical-reasoning-test');
     } else if (isSpatialFilterAndNumber || isStringWithSpatial || isSRTString) {
       // Handle spatial reasoning tests
       console.log('✅ Routing to spatial reasoning test');
@@ -370,6 +422,8 @@ const MainDashboard = () => {
 
             {/* Additional Navigation Items */}
             <div className="secondary-nav-section p-6 space-y-3">
+
+              
               <button 
                 onClick={() => setActiveSection('skills-management')}
                 className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
@@ -389,56 +443,16 @@ const MainDashboard = () => {
                     : 'text-gray-700 hover:bg-blue-50'
                 }`}
               >
-                📝 Tests par Compétences
+                Tests par Compétences
               </button>
               
-              <button 
-                onClick={() => setActiveSection('practical-tests')}
-                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
-                  activeSection === 'practical-tests'
-                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                    : 'text-gray-700 hover:bg-blue-50'
-                }`}
-              >
-                💻 Tests Pratiques
-              </button>
-              
-              <button 
-                onClick={() => setActiveSection('coding-challenges')}
-                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
-                  activeSection === 'coding-challenges' || activeSection === 'coding-dashboard' || activeSection.startsWith('challenge-')
-                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                    : 'text-gray-700 hover:bg-blue-50'
-                }`}
-              >
-                � Debug: Défis
-              </button>
-              
-              <button 
-                onClick={() => setActiveSection('technical-assessment')}
-                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
-                  activeSection === 'technical-assessment'
-                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                    : 'text-gray-700 hover:bg-blue-50'
-                }`}
-              >
-                � Debug: QCM Skills
-              </button>
+
+
               
               {/* Test adaptatif supprimé - tests créés par l'admin */}
               
               {/* Administration supprimée - tests créés par l'admin Django */}
               
-              <button 
-                onClick={() => setActiveSection('test-debug')}
-                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
-                  activeSection === 'test-debug'
-                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                    : 'text-gray-700 hover:bg-blue-50'
-                }`}
-              >
-                🔧 Debug Tests API
-              </button>
               
               <button 
                 onClick={() => setActiveSection('mon-espace')}
@@ -480,53 +494,93 @@ const MainDashboard = () => {
         <div id="main-content" className="main-content-area flex-1 max-w-4xl">
           {/* Scrollable Content Container */}
           <div className="h-[calc(100vh-7rem)] overflow-y-auto overflow-x-hidden">
-            {/* Debug info (hidden by default) */}
-            {false && (
+            {/* Debug info (temporarily enabled for troubleshooting) */}
+            {true && (
               <div style={{position: 'fixed', top: 0, right: 0, background: 'yellow', padding: '10px', zIndex: 9999, fontSize: '12px'}}>
                 ActiveSection: {activeSection}<br/>
                 CurrentTestId: {currentTestId}<br/>
-                CurrentTestFilter: {currentTestFilter}
+                CurrentTestFilter: {currentTestFilter}<br/>
+                CurrentTestInfo: {currentTestInfo ? 'Set' : 'Null'}
               </div>
             )}
           
           {activeSection === 'dashboard' ? (
-            <Dashboard onNavigateToSection={setActiveSection} />
+            <div className="space-y-6">
+              <Dashboard onNavigateToSection={setActiveSection} />
+              <AssessmentDashboardMetrics />
+            </div>
+          ) : activeSection === 'assessments' ? (
+            // Unified Assessment Dashboard
+            <AvailableTests 
+              onBackToDashboard={() => setActiveSection('applications')} 
+              onViewTestInfo={handleViewTestInfo}
+              testFilter={currentTestFilter}
+            />
+          ) : activeSection.startsWith('test-info-') ? (
+            // Test Information Page
+            <TestInfoPage 
+              testData={currentTestInfo}
+              onStartTest={handleStartTestFromInfo}
+              onBackToDashboard={handleBackToAssessments}
+            />
+          ) : activeSection.startsWith('test-run-') ? (
+            // Unified Test Runner
+            <UnifiedTestRunnerShell
+              testId={currentTestId}
+              testInfo={currentTestInfo}
+              onTestComplete={handleTestComplete}
+              onAbortTest={handleBackToAssessments}
+            />
+          ) : activeSection.startsWith('test-results-') ? (
+            // Test Results Page
+            <TestResultsPage 
+              testId={currentTestId}
+              results={testResults}
+              onBackToDashboard={handleBackToAssessments}
+              onRetakeTest={handleRetakeTest}
+            />
           ) : activeSection === 'test-session' ? (
             <TestLayout />
           ) : activeSection.startsWith('verbal-reasoning-test') ? (
             <VerbalReasoningTest 
-              onBackToDashboard={() => setActiveSection('available-tests')} 
+              onBackToDashboard={() => setActiveSection('assessments')} 
               language={activeSection.includes('french') ? 'french' : 'english'}
+              testId={currentTestId}
+            />
+          ) : activeSection === 'numerical-reasoning-test' ? (
+            <NumericalReasoningTest 
+              onBack={() => setActiveSection('assessments')} 
+              onComplete={() => setActiveSection('assessments')}
               testId={currentTestId}
             />
           ) : activeSection === 'spatial-reasoning-test' ? (
             <SpatialReasoningTest 
-              onBackToDashboard={() => setActiveSection('available-tests')} 
+              onBackToDashboard={() => setActiveSection('assessments')} 
               testId={currentTestId}
             />
           ) : activeSection === 'diagrammatic-reasoning-test' ? (
             <DiagrammaticReasoningTest 
-              onBackToDashboard={() => setActiveSection('available-tests')} 
+              onBackToDashboard={() => setActiveSection('assessments')} 
               testId={currentTestId}
             />
           ) : activeSection === 'abstract-reasoning-test' ? (
             <AbstractReasoningTest 
-              onBackToDashboard={() => setActiveSection('available-tests')} 
+              onBackToDashboard={() => setActiveSection('assessments')} 
               testId={currentTestId}
             />
           ) : activeSection === 'logical-reasoning-test' ? (
             <LogicalReasoningTest 
-              onBackToDashboard={() => setActiveSection('available-tests')} 
+              onBackToDashboard={() => setActiveSection('assessments')} 
               testId={currentTestId}
             />
           ) : activeSection === 'lrt2-test' ? (
             <LRT2Test 
-              onBackToDashboard={() => setActiveSection('available-tests')} 
+              onBackToDashboard={() => setActiveSection('assessments')} 
               testId={currentTestId}
             />
           ) : activeSection === 'lrt3-test' ? (
             <LRT3Test 
-              onBackToDashboard={() => setActiveSection('available-tests')} 
+              onBackToDashboard={() => setActiveSection('assessments')} 
               testId={currentTestId}
             />
           ) : activeSection === 'skills-management' ? (
@@ -551,12 +605,12 @@ const MainDashboard = () => {
             />
           ) : activeSection === 'situational-judgment-test' ? (
             <SituationalJudgmentTest 
-              onBackToDashboard={() => setActiveSection('available-tests')}
+              onBackToDashboard={() => setActiveSection('assessments')}
               testId={currentTestId}
             />
           ) : activeSection === 'master-sjt' ? (
             <MasterSJTTest 
-              onClose={() => setActiveSection('available-tests')}
+              onClose={() => setActiveSection('assessments')}
             />
           ) : activeSection === 'test-administration' ? (
             <TestAdministration 
@@ -565,13 +619,13 @@ const MainDashboard = () => {
           ) : activeSection === 'test-debug' ? (
             <TestDebugPage />
           ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
-            // Show AvailableTests for most test categories
+            // Legacy test routing (keeping for compatibility)
             activeSection === 'technical-tests' ? (
               <TechnicalTests onBackToDashboard={() => setActiveSection('applications')} />
             ) : (
               <AvailableTests 
                 onBackToDashboard={() => setActiveSection('applications')} 
-                onStartTest={handleStartTest}
+                onViewTestInfo={handleViewTestInfo}
                 testFilter={currentTestFilter}
               />
             )
@@ -595,7 +649,7 @@ const MainDashboard = () => {
                   Les exercices d'évaluation et de pratique interactifs seront disponibles ici. Cette évaluation de catégorie de compétences est prête à commencer.
                 </p>
                 <button 
-                  onClick={() => setActiveSection('available-tests')}
+                  onClick={() => setActiveSection('assessments')}
                   className="start-assessment-btn bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-sm transition-colors"
                 >
                   Commencer l'évaluation
@@ -633,7 +687,7 @@ const MainDashboard = () => {
               </div>
             </div>
           ) : activeSection === 'historique-tests' ? (
-            <TestHistoryDashboard />
+            <AttemptsHistory />
           ) : activeSection === 'coding-challenges' ? (
             <ChallengesList onSelectChallenge={handleSelectChallenge} />
           ) : activeSection === 'coding-dashboard' ? (

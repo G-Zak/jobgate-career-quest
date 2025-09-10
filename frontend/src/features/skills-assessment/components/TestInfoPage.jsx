@@ -39,9 +39,9 @@ const TestInfoPage = ({ testData, onBackToDashboard, onStartTest, onShowResults,
       'NRT1': {
         title: "Numerical Reasoning Test",
         subtitle: "Charts, Tables & Figures Analysis",
-        duration: "18 minutes",
+        duration: "20 minutes",
         questions: "20",
-        format: "Multiple Choice (5 options)",
+        format: "Multiple Choice (4 options)",
         instructions: "This test has been designed to assess your numerical reasoning ability using the information provided in a series of charts, tables and figures. Look at each chart or table provided for each question, and use the information in these to work out the correct answer. You have 5 options from which to choose from. Only one of these options is the correct answer.",
         guidelines: [
           "Please take this test in a quiet environment where you are unlikely to be distracted",
@@ -51,7 +51,7 @@ const TestInfoPage = ({ testData, onBackToDashboard, onStartTest, onShowResults,
           "If required for accessibility purposes, additional time can be assigned in your profile",
           "If you are not using a mobile device, you can navigate this test without using your keyboard, using the arrow keys to move between items"
         ],
-        additionalInfo: "This test consists of 20 questions and you have 18 minutes in which to complete this. The questions are numbered across the top of the screen.",
+        additionalInfo: "This test consists of 20 questions and you have 20 minutes in which to complete this. The questions are numbered across the top of the screen.",
         extraInfo: [
           "Calculator is permitted for complex calculations",
           "Rough paper should be available for workings",
@@ -93,7 +93,7 @@ const TestInfoPage = ({ testData, onBackToDashboard, onStartTest, onShowResults,
       'LRT1': {
         title: "Basic Logical Reasoning",
         subtitle: "Fundamental Logic & Patterns",
-        duration: "15 minutes",
+        duration: "20 minutes",
         questions: "20",
         format: "Multiple Choice",
         instructions: "Identify logical patterns, sequences, and relationships in various problem types.",
@@ -134,7 +134,7 @@ const TestInfoPage = ({ testData, onBackToDashboard, onStartTest, onShowResults,
   const displayInfo = testInfo || {
     title: testData.category || "Assessment Test",
     subtitle: testData.description || "Assessment Test",
-    duration: testData.duration || "15 minutes",
+    duration: testData.duration || "20 minutes",
     questions: testData.questions || "20",
     format: "Multiple Choice",
     instructions: "Follow the instructions for each question carefully. Select the best answer from the available options.",
@@ -278,27 +278,7 @@ const TestInfoPage = ({ testData, onBackToDashboard, onStartTest, onShowResults,
               Start Test
             </button>
             {/* Demo button for testing results page */}
-            <button
-              onClick={() => {
-                // Simulate test completion with demo results
-                const demoResults = {
-                  testId: testData.id,
-                  score: testData.id === 'LRT2' ? 0 : Math.floor(Math.random() * parseInt(testData.questions || '20')) + 10,
-                  totalQuestions: parseInt(testData.questions || '20'),
-                  percentage: testData.id === 'LRT2' ? 0 : Math.floor(Math.random() * 50) + 50,
-                  isPassed: testData.id !== 'LRT2',
-                  timeSpent: testData.duration
-                };
-                demoResults.percentage = Math.round((demoResults.score / demoResults.totalQuestions) * 100);
-                
-                if (onShowResults) {
-                  onShowResults(demoResults);
-                }
-              }}
-              className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium text-sm"
-            >
-              Demo Results
-            </button>
+          
           </div>
         </div>
       </motion.div>

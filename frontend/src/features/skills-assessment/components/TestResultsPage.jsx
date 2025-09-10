@@ -1,9 +1,32 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaCheckCircle, FaTimesCircle, FaTrophy, FaRedo } from 'react-icons/fa';
+import { FaCheckCircle, FaTrophy, FaRedo, FaArrowLeft, FaClock, FaChartLine } from 'react-icons/fa';
+import { formatDuration, getPerformanceLevel } from '../lib/scoreUtils';
+import { useAssessmentStore } from '../store/useAssessmentStore';
 
-const TestResultsPage = ({ testResults, onBackToDashboard, onRetakeTest }) => {
-  if (!testResults) {
+const TestResultsPage = ({ 
+  testResults, 
+  results, // From unified scoring system
+  testType,
+  testId,
+  answers,
+  testData,
+  onBackToDashboard, 
+  onRetakeTest 
+}) => {
+  const { addAttempt } = useAssessmentStore();
+
+  // Use results from unified scoring if available, otherwise fallback to legacy testResults
+  const finalResults = results || testResults;
+
+  useEffect(() => {
+    // If we have results from unified scoring, make sure it's in the store
+    if (results && results.attempt) {
+      addAttempt(results.attempt);
+    }
+  }, [results, addAttempt]);
+
+  if (!finalResults) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -19,26 +42,45 @@ const TestResultsPage = ({ testResults, onBackToDashboard, onRetakeTest }) => {
     );
   }
 
-  const { testId, score, totalQuestions, percentage, isPassed, timeSpent } = testResults;
-
-  const getResultStatus = () => {
-    if (isPassed) {
+  // Extract data from either unified results or legacy results
+  const extractResultData = () => {
+    if (results) {
+      // From unified scoring system
       return {
-        icon: <FaCheckCircle className="text-green-600" />,
-        text: 'PASSED',
-        color: 'text-green-600',
-        bgColor: 'bg-green-50',
-        borderColor: 'border-green-200'
+        testId: testId || results.attempt?.test_id || 'unknown',
+        score: results.correct || 0,
+        totalQuestions: results.total || 0,
+        percentage: results.percentage || 0,
+        timeSpent: results.attempt?.duration_seconds || 0,
+        resultLabel: results.resultLabel || results.attempt?.result_label || 'Completed',
+        isPassed: results.percentage >= 70
       };
     } else {
+      // Legacy format
       return {
-        icon: <FaTimesCircle className="text-red-600" />,
-        text: 'FAILED', 
-        color: 'text-red-600',
-        bgColor: 'bg-red-50',
-        borderColor: 'border-red-200'
+        testId: finalResults.testId || testId || 'unknown',
+        score: finalResults.score || 0,
+        totalQuestions: finalResults.totalQuestions || 0,
+        percentage: finalResults.percentage || 0,
+        timeSpent: finalResults.timeSpent || 0,
+        resultLabel: finalResults.resultLabel || 'Completed',
+        isPassed: finalResults.isPassed || finalResults.percentage >= 70
       };
     }
+  };
+
+  const resultData = extractResultData();
+  const performanceLevel = getPerformanceLevel(resultData.percentage);
+
+  const getResultStatus = () => {
+    // Use performanceLevel from scoreUtils for consistent labeling
+    return {
+      icon: <FaCheckCircle className="text-green-600" />,
+      text: performanceLevel.label,
+      color: performanceLevel.color,
+      bgColor: performanceLevel.bgColor,
+      borderColor: performanceLevel.borderColor
+    };
   };
 
   const resultStatus = getResultStatus();
@@ -102,7 +144,7 @@ const TestResultsPage = ({ testResults, onBackToDashboard, onRetakeTest }) => {
             transition={{ delay: 0.5 }}
             className="text-gray-600"
           >
-            {getTestTitle(testId)} Results
+            {getTestTitle(resultData.testId)} Results
           </motion.p>
         </div>
 
@@ -117,7 +159,7 @@ const TestResultsPage = ({ testResults, onBackToDashboard, onRetakeTest }) => {
           >
             <h3 className="text-lg font-semibold text-gray-800 mb-1">Score</h3>
             <p className="text-3xl font-bold text-blue-600">
-              {score}/{totalQuestions}
+              {resultData.score}/{resultData.totalQuestions}
             </p>
           </motion.div>
 
@@ -130,7 +172,7 @@ const TestResultsPage = ({ testResults, onBackToDashboard, onRetakeTest }) => {
           >
             <h3 className="text-lg font-semibold text-gray-800 mb-1">Percentage</h3>
             <p className="text-3xl font-bold text-green-600">
-              {percentage}%
+              {resultData.percentage}%
             </p>
           </motion.div>
 
@@ -148,8 +190,28 @@ const TestResultsPage = ({ testResults, onBackToDashboard, onRetakeTest }) => {
           </motion.div>
         </div>
 
+        {/* Time Spent (if available) */}
+        {resultData.timeSpent > 0 && (
+          <div className="px-8 pb-4">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.85 }}
+              className="text-center p-4 bg-gray-50 rounded-lg"
+            >
+              <div className="flex items-center justify-center mb-2">
+                <FaClock className="text-gray-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-800">Time Taken</h3>
+              </div>
+              <p className="text-xl font-bold text-gray-700">
+                {formatDuration(resultData.timeSpent)}
+              </p>
+            </motion.div>
+          </div>
+        )}
+
         {/* Performance Message */}
-        {isPassed ? (
+        {resultData.isPassed ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -181,7 +243,7 @@ const TestResultsPage = ({ testResults, onBackToDashboard, onRetakeTest }) => {
           </motion.div>
         )}
 
-        {/* Action Button */}
+        {/* Action Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -191,15 +253,17 @@ const TestResultsPage = ({ testResults, onBackToDashboard, onRetakeTest }) => {
           <div className="flex justify-center gap-4">
             <button
               onClick={onBackToDashboard}
-              className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
+              className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
             >
-              Back to Dashboard
+              <FaArrowLeft className="w-4 h-4 mr-2" />
+              Back to Assessment Dashboard
             </button>
             {onRetakeTest && (
               <button
-                onClick={() => onRetakeTest(testId)}
-                className="px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors font-medium"
+                onClick={() => onRetakeTest(resultData.testId)}
+                className="flex items-center px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors font-medium"
               >
+                <FaRedo className="w-4 h-4 mr-2" />
                 Retake Test
               </button>
             )}

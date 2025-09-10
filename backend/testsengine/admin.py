@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Test, Question, TestSession, TestAnswer
+from .models import Test, Question, TestSession, TestAnswer, TestAttempt
 
 @admin.register(Test)
 class TestAdmin(admin.ModelAdmin):
@@ -27,3 +27,12 @@ class TestAnswerAdmin(admin.ModelAdmin):
     list_display = ['session', 'question', 'selected_answer', 'is_correct', 'time_taken']
     list_filter = ['is_correct', 'question__test']
     search_fields = ['session__user__username', 'question__question_text']
+
+
+@admin.register(TestAttempt)
+class TestAttemptAdmin(admin.ModelAdmin):
+    list_display = ['user', 'test_id', 'percentage', 'result', 'created_at']
+    list_filter = ['test_id', 'result', 'language']
+    search_fields = ['user__username', 'test_id']
+    readonly_fields = ['created_at']
+    date_hierarchy = 'created_at'

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Test, Question, TestSession, TestAnswer, CodingChallenge, CodingSubmission, CodingSession
+from .models import Test, Question, TestSession, TestAnswer, CodingChallenge, CodingSubmission, CodingSession, TestAttempt
 
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -147,3 +147,12 @@ class SaveCodeSerializer(serializers.Serializer):
     """Serializer for saving code during session"""
     challenge_id = serializers.IntegerField()
     code = serializers.CharField(allow_blank=True)
+
+
+class TestAttemptSerializer(serializers.ModelSerializer):
+    """Serializer for unified test attempts across all test types"""
+    
+    class Meta:
+        model = TestAttempt
+        fields = '__all__'
+        read_only_fields = ('id', 'created_at')
