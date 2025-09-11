@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BriefcaseIcon, 
   MapPinIcon, 
@@ -9,52 +9,166 @@ import {
 } from '@heroicons/react/24/outline';
 import { jobOffers } from '../../../data/jobOffers';
 
-const JobRecommendationWidget = ({ userSkills = [], userLocation = "Casablanca", maxJobs = 3, onViewAll }) => {
-  // Simple recommendation algorithm for widget
-  const getRecommendedJobs = () => {
-    const activeJobs = jobOffers.filter(job => job.status === 'active');
+const JobRecommendationWidget = ({ maxJobs = 3, onViewAll }) => {
+  const [recommendedJobs, setRecommendedJobs] = useState([]);
+  const [userProfile, setUserProfile] = useState({});
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Function to get user profile from localStorage
+  const getUserProfile = () => {
+    try {
+      const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+      return profile;
+    } catch (error) {
+      console.error('Error parsing user profile:', error);
+      return {};
+    }
+  };
+
+  // Function to update recommendations with loading state
+  const updateRecommendations = async (profile) => {
+    setIsUpdating(true);
+    try {
+      // Small delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const newJobs = calculateRecommendedJobs(profile);
+      setRecommendedJobs(newJobs);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Manual refresh function
+  const handleRefresh = () => {
+    const currentProfile = getUserProfile();
+    setUserProfile(currentProfile);
+    updateRecommendations(currentProfile);
+  };
+
+  // Enhanced recommendation algorithm
+  const calculateRecommendedJobs = (profile) => {
+    const userSkills = profile.skills || [];
+    const userLocation = profile.location || 'Casablanca';
+
+    if (!jobOffers || jobOffers.length === 0) {
+      return [];
+    }
     
-    // Calculate simple scores
+    const activeJobs = jobOffers.filter(job => job.status !== 'inactive');
+    
     const jobsWithScores = activeJobs.map(job => {
       let score = 0;
+      let reasons = [];
       
-      // Skills matching
-      const skillMatches = job.tags.filter(tag => 
-        userSkills.some(skill => 
-          skill.toLowerCase().includes(tag.toLowerCase()) || 
-          tag.toLowerCase().includes(skill.toLowerCase())
+      // Skill matching (50% weight)
+      const jobSkills = job.skills || [];
+      const skillMatches = jobSkills.filter(skill => 
+        userSkills.some(userSkill => 
+          userSkill.name && userSkill.name.toLowerCase() === skill.toLowerCase()
         )
       );
-      score += (skillMatches.length / Math.max(job.tags.length, 1)) * 40;
       
-      // Location matching
-      if (job.location.toLowerCase().includes(userLocation.toLowerCase())) {
-        score += 20;
+      if (skillMatches.length > 0) {
+        score += (skillMatches.length / jobSkills.length) * 50;
+        
+        // Proficiency bonus
+        const totalProficiency = skillMatches.reduce((sum, skillName) => {
+          const userSkill = userSkills.find(us => 
+            us.name && us.name.toLowerCase() === skillName.toLowerCase()
+          );
+          return sum + (userSkill?.proficiency || 0);
+        }, 0);
+        
+        if (totalProficiency > 0) {
+          score += (totalProficiency / (skillMatches.length * 5)) * 15;
+          reasons.push(`${skillMatches.length} skill match${skillMatches.length > 1 ? 'es' : ''}`);
+        }
       }
       
-      // Remote work bonus
-      if (job.remote) score += 10;
+      // Location matching (20% weight)
+      if (job.location && userLocation) {
+        if (job.location.toLowerCase().includes(userLocation.toLowerCase()) || 
+            userLocation.toLowerCase().includes(job.location.toLowerCase())) {
+          score += 20;
+          reasons.push('Location match');
+        }
+      }
       
-      // Recency bonus
-      const daysOld = Math.floor((new Date() - new Date(job.posted)) / (1000 * 60 * 60 * 24));
-      score += Math.max(0, 15 - (daysOld * 0.5));
+      // Remote work bonus (10% weight)
+      if (job.type && job.type.toLowerCase().includes('remote')) {
+        score += 10;
+        reasons.push('Remote work');
+      }
       
-      // Job type preference
-      score += job.type === 'CDI' ? 15 : job.type === 'Stage' ? 10 : 5;
+      // Experience level matching (15% weight)
+      if (job.level && profile.experience) {
+        const experienceYears = profile.experience;
+        if ((job.level.toLowerCase().includes('junior') && experienceYears <= 2) ||
+            (job.level.toLowerCase().includes('mid') && experienceYears >= 2 && experienceYears <= 5) ||
+            (job.level.toLowerCase().includes('senior') && experienceYears >= 5)) {
+          score += 15;
+          reasons.push('Experience level match');
+        }
+      }
       
       return {
         ...job,
-        score: Math.min(100, Math.max(0, score)),
+        score: Math.round(score),
+        reasons: reasons,
         matchedSkills: skillMatches
       };
     });
     
     return jobsWithScores
+      .filter(job => job.score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, maxJobs);
   };
 
-  const recommendedJobs = getRecommendedJobs();
+  // Initialize recommendations and profile on component mount
+  useEffect(() => {
+    const profile = getUserProfile();
+    setUserProfile(profile);
+    updateRecommendations(profile);
+  }, []);
+
+  // Listen for localStorage changes from other components
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'userProfile') {
+        const newProfile = getUserProfile();
+        setUserProfile(newProfile);
+        updateRecommendations(newProfile);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Periodic check for profile changes (fallback)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const currentProfile = getUserProfile();
+      const currentProfileString = JSON.stringify(currentProfile);
+      const storedProfileString = JSON.stringify(userProfile);
+      
+      if (currentProfileString !== storedProfileString) {
+        setUserProfile(currentProfile);
+        updateRecommendations(currentProfile);
+      }
+    }, 2000); // Check every 2 seconds
+
+    return () => clearInterval(interval);
+  }, [userProfile]);
+
+  if (!jobOffers || jobOffers.length === 0) {
+    return (
+      <div className="p-6 text-center text-gray-500">
+        No job offers available
+      </div>
+    );
+  }
 
   const getScoreColor = (score) => {
     if (score >= 80) return 'text-green-600';
@@ -74,16 +188,34 @@ const JobRecommendationWidget = ({ userSkills = [], userLocation = "Casablanca",
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Recommended Jobs
+              {isUpdating && (
+                <span className="ml-2 text-sm text-blue-600 dark:text-blue-400">
+                  Updating...
+                </span>
+              )}
             </h3>
           </div>
         </div>
         
-        <button 
-          onClick={onViewAll}
-          className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium flex items-center space-x-1"
-        >
-          <span>View all jobs →</span>
-        </button>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={handleRefresh}
+            disabled={isUpdating}
+            className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors disabled:opacity-50"
+            title="Refresh recommendations"
+          >
+            <svg className={`w-4 h-4 ${isUpdating ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+          
+          <button 
+            onClick={onViewAll}
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium flex items-center space-x-1"
+          >
+            <span>View all jobs →</span>
+          </button>
+        </div>
       </div>
 
       {/* Job List */}
@@ -140,13 +272,32 @@ const JobRecommendationWidget = ({ userSkills = [], userLocation = "Casablanca",
                   )}
                 </div>
                 
+                {/* Match Reasons */}
+                {job.reasons && job.reasons.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {job.reasons.slice(0, 2).map((reason, index) => (
+                      <span 
+                        key={index}
+                        className="bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-xs px-2 py-0.5 rounded-full"
+                      >
+                        {reason}
+                      </span>
+                    ))}
+                    {job.reasons.length > 2 && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        +{job.reasons.length - 2} more
+                      </span>
+                    )}
+                  </div>
+                )}
+                
                 {/* Matched Skills */}
-                {job.matchedSkills.length > 0 && (
+                {job.matchedSkills && job.matchedSkills.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">
                     {job.matchedSkills.slice(0, 3).map((skill, index) => (
                       <span 
                         key={index}
-                        className="bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-xs px-2 py-0.5 rounded-full"
+                        className="bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs px-2 py-0.5 rounded-full"
                       >
                         {skill}
                       </span>
