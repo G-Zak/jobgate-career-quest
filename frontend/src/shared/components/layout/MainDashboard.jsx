@@ -3,7 +3,13 @@ import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  Cog6ToothIcon,
+  BellIcon,
+  QuestionMarkCircleIcon,
+  ArrowRightOnRectangleIcon,
+  SunIcon,
+  MoonIcon
 } from '@heroicons/react/24/outline';
 import Dashboard from '../../../features/candidate-dashboard/components/DashboardCandidat';
 import AvailableTests from '../../../features/skills-assessment/components/AvailableTests';
@@ -38,6 +44,8 @@ import AttemptsHistory from '../../../features/skills-assessment/components/Atte
 // Import new job recommendations and profile components
 import JobRecommendationsPage from '../../../features/job-recommendations/components/JobRecommendationsPage';
 import ProfilePage from '../../../features/profile/components/ProfilePage';
+// Import dark mode context
+import { useDarkMode } from '../../../contexts/DarkModeContext';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import { useScrollOnChange } from '../../utils/scrollUtils';
@@ -47,6 +55,7 @@ import betterImpressions from '../../../assets/images/ui/better_impressions.avif
 const MainDashboard = () => {
   const [activeSection, setActiveSection] = useState('applications');
   const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [currentTestFilter, setCurrentTestFilter] = useState(null);
   const [currentTestId, setCurrentTestId] = useState(null);
@@ -54,10 +63,30 @@ const MainDashboard = () => {
   const [selectedChallenge, setSelectedChallenge] = useState(null);
   const [currentTestInfo, setCurrentTestInfo] = useState(null);
   const [testResults, setTestResults] = useState(null);
+  
+  // Dark mode context
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
 
   // Universal scroll management using scroll utilities
   useScrollOnChange(activeSection, { smooth: true, attempts: 3 });
   useScrollOnChange(currentTestId, { smooth: true, attempts: 3 });
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserDropdown && !event.target.closest('.user-dropdown-container')) {
+        setShowUserDropdown(false);
+      }
+      if (showSkillsDropdown && !event.target.closest('.skills-validation-section')) {
+        setShowSkillsDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserDropdown, showSkillsDropdown]);
 
   // Lock body scroll on test views so only the test area scrolls
   useEffect(() => {
@@ -353,8 +382,109 @@ const MainDashboard = () => {
             </button>
           </nav>
 
-          {/* Right Avatar */}
-          <div className="user-avatar w-8 h-8 bg-gray-300 rounded-full"></div>
+          {/* Right User Dropdown */}
+          <div className="relative user-dropdown-container">
+            <button
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                YA
+              </div>
+            </button>
+            
+            {/* User Dropdown Menu */}
+            {showUserDropdown && (
+              <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+                {/* User Info */}
+                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                      YA
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white">Yassine</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">yassine@jobgate.com</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Navigation Links */}
+                <div className="py-2">
+                  <button
+                    onClick={() => {
+                      setActiveSection('mon-espace');
+                      setShowUserDropdown(false);
+                    }}
+                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    <UserCircleIcon className="w-4 h-4 mr-3" />
+                    Profile
+                  </button>
+                  <button className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <Cog6ToothIcon className="w-4 h-4 mr-3" />
+                    Settings
+                  </button>
+                  <button className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <BellIcon className="w-4 h-4 mr-3" />
+                    Notifications
+                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">3</span>
+                  </button>
+                </div>
+                
+                {/* Language Section */}
+                <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">LANGUAGE</p>
+                  <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                    <span className="mr-2">🌐</span>
+                    English
+                    <span className="ml-auto text-gray-500 dark:text-gray-400">EN</span>
+                  </div>
+                </div>
+                
+                {/* Appearance Section */}
+                <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">APPEARANCE</p>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleDarkMode();
+                    }}
+                    className="w-full flex items-center justify-between py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                  >
+                    <div className="flex items-center">
+                      {isDarkMode ? (
+                        <MoonIcon className="w-4 h-4 mr-3" />
+                      ) : (
+                        <SunIcon className="w-4 h-4 mr-3" />
+                      )}
+                      Dark Mode
+                    </div>
+                    <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      isDarkMode ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
+                    }`}>
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        isDarkMode ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </div>
+                  </button>
+                </div>
+                
+                {/* Support and Sign Out */}
+                <div className="py-2 border-t border-gray-200 dark:border-gray-700">
+                  <button className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <QuestionMarkCircleIcon className="w-4 h-4 mr-3" />
+                    Help & Support
+                  </button>
+                  <button className="w-full flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <ArrowRightOnRectangleIcon className="w-4 h-4 mr-3" />
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

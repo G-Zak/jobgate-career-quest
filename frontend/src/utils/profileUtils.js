@@ -4,12 +4,39 @@ export const defaultUserProfile = {
   id: 1,
   name: "Zakaria Guennani",
   email: "zakaria@example.com",
-  avatar: "avatar-3.png",
+  avatar: "https://i.pravatar.cc/300?img=placeholder",
   level: 3,
   overallScore: 82,
   xpPoints: 2480,
   nextLevelXP: 3000,
   skills: [],
+  skillsWithProficiency: [],
+  skillAssessments: {},
+  languages: ["Français", "Anglais", "Espagnol"],
+  about: "Développeur passionné avec plus de 5 ans d'expérience dans le développement d'applications web modernes. Spécialisé en React, Node.js et technologies cloud.",
+  resume: null,
+  education: [
+    {
+      school: "École Supérieure de Technologie",
+      program: "Master en Ingénierie Logicielle",
+      dateRange: "2020 - 2022",
+      description: "Spécialisation en développement d'applications web et mobile"
+    }
+  ],
+  experience: [
+    {
+      title: "Développeur Frontend Senior",
+      company: "TechCorp Solutions",
+      dateRange: "2022 - Présent",
+      description: "Développement d'applications React complexes et optimisation des performances"
+    },
+    {
+      title: "Développeur Full Stack",
+      company: "StartupXYZ",
+      dateRange: "2020 - 2022",
+      description: "Développement full-stack avec React, Node.js et MongoDB"
+    }
+  ],
   contact: {
     email: "zakaria@example.com",
     phone: "+212 6 12 34 56 78",

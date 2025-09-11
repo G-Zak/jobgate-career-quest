@@ -45,7 +45,13 @@ const ProfilePage = () => {
     contact: {
       ...defaultUserProfile.contact,
       ...(userData?.contact || {})
-    }
+    },
+    // Ensure arrays are always defined
+    languages: userData?.languages || defaultUserProfile.languages || [],
+    skills: userData?.skills || defaultUserProfile.skills || [],
+    skillsWithProficiency: userData?.skillsWithProficiency || defaultUserProfile.skillsWithProficiency || [],
+    education: userData?.education || defaultUserProfile.education || [],
+    experience: userData?.experience || defaultUserProfile.experience || []
   };
 
   // Save changes to localStorage

@@ -4,7 +4,6 @@ import { DarkModeProvider } from '../contexts/DarkModeContext';
 import MainDashboard from '../shared/components/layout/MainDashboard';
 import Dashboard from '../features/candidate-dashboard/components/DashboardCandidat';
 import { initializeScrollBehavior } from '../shared/utils/scrollUtils';
-import { DarkModeProvider } from '../contexts/DarkModeContext';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('dashboard');
