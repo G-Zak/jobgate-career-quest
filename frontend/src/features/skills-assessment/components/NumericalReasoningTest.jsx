@@ -1,16 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaChartLine, FaClock, FaStop, FaArrowRight, FaFlag, FaCalculator, FaQuestionCircle, FaTable, FaChartBar, FaCheckCircle, FaBrain, FaTimesCircle, FaPause, FaPlay, FaTimes, FaCog, FaSearch, FaLightbulb, FaPuzzlePiece } from 'react-icons/fa';
+import { FaChartLine, FaClock, FaStop, FaArrowRight, FaFlag, FaCalculator, FaQuestionCircle, FaTable, FaChartBar, FaCheckCircle, FaBrain, FaTimesCircle, FaPause, FaPlay, FaTimes, FaCog, FaSearch, FaLightbulb, FaPuzzlePiece, FaCheck } from 'react-icons/fa';
 import { getNumericalTestWithAnswers } from '../data/numericalTestSections';
 import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
 import { submitTestAttempt } from '../lib/submitHelper';
 import TestResultsPage from './TestResultsPage';
+import { getRuleFor } from '../testRules';
+import { buildAttempt } from '../lib/scoreUtils';
+import { useAttempts } from '../store/useAttempts';
 
 const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
+  const rule = getRuleFor(testId);
+  const { addAttempt } = useAttempts();
   const [testStep, setTestStep] = useState('test'); // Skip instructions - start directly with test
   const [currentSection, setCurrentSection] = useState(1);
   const [currentQuestion, setCurrentQuestion] = useState(1);
-  const [timeRemaining, setTimeRemaining] = useState(10 * 60); // 10 minutes per section
+  const [timeRemaining, setTimeRemaining] = useState(rule?.timeLimitMin * 60 || 20 * 60); // Use rule time limit
   const [answers, setAnswers] = useState({});
   const [testData, setTestData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -20,6 +25,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
   const [startedAt, setStartedAt] = useState(null);
   const [results, setResults] = useState(null);
   const timerRef = useRef(null);
+  const startedAtRef = useRef(Date.now());
 
   // Universal scroll management using scroll utilities
   useScrollToTop([], { smooth: true }); // Scroll on component mount
@@ -31,15 +37,23 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
     try {
       setLoading(true);
       const data = getNumericalTestWithAnswers();
-      setTestData(data);
-      setTimeRemaining(10 * 60); // 10 minutes per section
+      // Limit questions to rule's totalQuestions
+      const limitedData = {
+        ...data,
+        sections: data.sections.map(section => ({
+          ...section,
+          questions: section.questions.slice(0, rule?.totalQuestions || 20)
+        }))
+      };
+      setTestData(limitedData);
+      setTimeRemaining(rule?.timeLimitMin * 60 || 20 * 60);
       setStartedAt(new Date());
     } catch (error) {
       console.error('Error loading test data:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [rule]);
 
   // Timer countdown
   useEffect(() => {
@@ -47,7 +61,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
       timerRef.current = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev <= 1) {
-            handleNextSection();
+            handleTimeUp();
             return 0;
           }
           return prev - 1;
@@ -77,19 +91,25 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
     }
   };
 
-  // Handle test completion
-  const handleTestComplete = async () => {
+  // Handle timer expiry
+  const handleTimeUp = async () => {
     try {
       const endTime = new Date();
       const duration = Math.floor((endTime - startedAt) / 1000);
       
-      // Calculate score
-      const totalQuestions = testData?.sections?.reduce((total, section) => total + section.questions.length, 0) || 0;
+      // Calculate score using rule's totalQuestions
+      const totalQuestions = rule?.totalQuestions || 20;
       const correctAnswers = Object.values(answers).filter(answer => answer.isCorrect).length;
       const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
       
+      // Build attempt record using new scoring system
+      const attempt = buildAttempt(testId, totalQuestions, correctAnswers, startedAtRef.current, 'time');
+      
+      // Add attempt to store
+      addAttempt(attempt);
+      
       const testResults = {
-        testId: testId || 'numerical-reasoning-test',
+        testId: testId,
         testType: 'numerical-reasoning',
         score: score,
         totalQuestions: totalQuestions,
@@ -97,7 +117,52 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
         duration: duration,
         answers: answers,
         completedAt: endTime.toISOString(),
-        startedAt: startedAt?.toISOString()
+        startedAt: startedAt?.toISOString(),
+        attempt: attempt
+      };
+
+      // Submit to backend
+      try {
+        await submitTestAttempt(testResults);
+      } catch (error) {
+        console.error('Error submitting test attempt:', error);
+      }
+
+      setResults(testResults);
+      setTestStep('results');
+    } catch (error) {
+      console.error('Error handling time up:', error);
+    }
+  };
+
+  // Handle test completion
+  const handleTestComplete = async () => {
+    try {
+      const endTime = new Date();
+      const duration = Math.floor((endTime - startedAt) / 1000);
+      
+      // Calculate score using rule's totalQuestions
+      const totalQuestions = rule?.totalQuestions || 20;
+      const correctAnswers = Object.values(answers).filter(answer => answer.isCorrect).length;
+      const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+      
+      // Build attempt record using new scoring system
+      const attempt = buildAttempt(testId, totalQuestions, correctAnswers, startedAtRef.current, 'user');
+      
+      // Add attempt to store
+      addAttempt(attempt);
+      
+      const testResults = {
+        testId: testId,
+        testType: 'numerical-reasoning',
+        score: score,
+        totalQuestions: totalQuestions,
+        correctAnswers: correctAnswers,
+        duration: duration,
+        answers: answers,
+        completedAt: endTime.toISOString(),
+        startedAt: startedAt?.toISOString(),
+        attempt: attempt
       };
 
       // Submit to backend
@@ -135,7 +200,11 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
   };
 
   // Handle answer selection
-  const handleAnswerSelect = (questionId, answer, isCorrect) => {
+  const handleAnswerSelect = (questionId, answer) => {
+    // Find the question to get the correct answer
+    const question = currentSectionData?.questions?.find(q => q.question_id === questionId);
+    const isCorrect = question ? question.correct_answer === answer : false;
+    
     setAnswers(prev => ({
       ...prev,
       [questionId]: {
@@ -144,6 +213,22 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
         timestamp: new Date().toISOString()
       }
     }));
+  };
+
+  // Handle next question
+  const handleNext = () => {
+    if (currentQuestion < totalQuestions) {
+      setCurrentQuestion(prev => prev + 1);
+    } else {
+      handleNextSection();
+    }
+  };
+
+  // Handle previous question
+  const handlePrevious = () => {
+    if (currentQuestion > 1) {
+      setCurrentQuestion(prev => prev - 1);
+    }
   };
 
   // Show results page
@@ -201,7 +286,11 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
   const currentSectionData = testData?.sections?.[currentSection - 1];
   const currentQuestionData = currentSectionData?.questions?.[currentQuestion - 1];
   const totalSections = testData?.sections?.length || 0;
-  const totalQuestions = currentSectionData?.questions?.length || 0;
+  const totalQuestions = rule?.totalQuestions || 20;
+  
+  // Check if current question is answered for gated navigation
+  const currentQuestionAnswered = currentQuestionData ? 
+    answers[currentQuestionData.question_id]?.answer != null : false;
 
   if (!testData) {
     return (
@@ -775,21 +864,26 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                   <button
                     key={option.option_id}
                     onClick={() => handleAnswerSelect(question.question_id, option.option_id)}
-                    className={`p-4 rounded-lg border-2 transition-all duration-200 text-left ${
-                      answers[question.question_id] === option.option_id
-                        ? 'border-blue-600 bg-blue-50 text-blue-700'
+                    className={`p-4 rounded border-2 transition-all duration-200 text-left ${
+                      answers[question.question_id]?.answer === option.option_id
+                        ? 'border-blue-500 bg-blue-100 text-blue-800'
                         : 'border-gray-200 hover:border-blue-300 bg-white'
                     }`}
                   >
-                    <div className="flex items-center">
-                      <span className={`w-8 h-8 rounded-full border-2 flex items-center justify-center mr-3 text-sm font-medium
-                        ${answers[question.question_id] === option.option_id
-                          ? 'border-blue-600 bg-blue-600 text-white'
-                          : 'border-gray-300 text-gray-700'}`}
-                      >
-                        {option.option_id}
-                      </span>
-                      <span className="text-lg">{option.text}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center mr-3 text-sm font-bold
+                          ${answers[question.question_id]?.answer === option.option_id
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-200 text-gray-600'}`}
+                        >
+                          {option.option_id}
+                        </span>
+                        <span className="text-lg font-medium">{option.text}</span>
+                      </div>
+                      {answers[question.question_id]?.answer === option.option_id && (
+                        <FaCheck className="w-5 h-5 text-blue-500" />
+                      )}
                     </div>
                   </button>
                 ))}
@@ -800,9 +894,9 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
             <div className="flex justify-between items-center pt-6 border-t">
               <button
                 onClick={handlePrevious}
-                disabled={currentQuestion === 0}
+                disabled={currentQuestion === 1}
                 className={`flex items-center px-6 py-3 rounded-lg transition-colors ${
-                  currentQuestion === 0
+                  currentQuestion === 1
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : 'bg-gray-500 text-white hover:bg-gray-600'
                 }`}
@@ -812,15 +906,20 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
 
               <div className="text-center">
                 <p className="text-sm text-gray-600">
-                  {answers[question.question_id] ? 'Answer selected' : 'Select an answer'}
+                  {answers[question.question_id]?.answer ? 'Answer selected' : 'Select an answer'}
                 </p>
               </div>
 
               <button
                 onClick={handleNext}
-                className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                disabled={!currentQuestionAnswered}
+                className={`flex items-center px-6 py-3 rounded-lg transition-colors ${
+                  currentQuestionAnswered
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
               >
-                {currentQuestion === section.questions.length - 1 ? 'Complete Test' : 'Next'}
+                {currentQuestion === totalQuestions ? 'Complete Test' : 'Next'}
               </button>
             </div>
           </motion.div>

@@ -59,7 +59,7 @@ const unifiedTestsData = [
     category: "Logical Reasoning Tests",
     prefix: "LRT", 
     total: 3,
-    unlocked: [1, 2, 3],
+    unlocked: [1, 2, 3, 4, 5, 6, 7],
     icon: <FaCog className="text-purple-600" />,
     progress: 100,
     testType: "logical",
@@ -342,7 +342,7 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, onViewTestInfo, testFi
   if (currentPage === 'testInfo') {
     return (
       <TestInfoPage
-        testData={selectedTestData}
+        testId={selectedTestData?.id}
         onBackToDashboard={handleBackToDashboard}
         onStartTest={handleActualTestStart}
         onShowResults={handleShowResults}

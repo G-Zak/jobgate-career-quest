@@ -1,101 +1,43 @@
-/**
- * Unified scoring utilities for all test types
- */
-
-export function computeResultLabel(percentage) {
-  if (percentage >= 80) return 'Strong';
-  if (percentage >= 60) return 'Competent';
-  return 'Developing';
+export function computePercentage(correct, total) {
+  return total ? Math.round((correct / total) * 100) : 0;
 }
 
-export function buildAttemptPayload(input) {
-  const {
-    testId,
-    total,
-    correct,
-    startedAt,
-    finishedAt,
-    reason,
-    answersByQuestion = {},
-    sectionBreakdown = null,
-    language = 'en'
-  } = input;
-
-  const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
-  const duration = Math.max(0, Math.round((finishedAt - startedAt) / 1000));
-  
-  const result =
-    reason === 'aborted' ? 'aborted' :
-    reason === 'time' ? 'timeout' :
-    'completed';
-
+export function buildAttempt(testId, total, correct, startedAt, reason) {
+  const percentage = computePercentage(correct, total);
   return {
     test_id: String(testId),
-    test_version: 'v1',
-    language: language || 'en',
     total_questions: total,
-    correct: correct,
+    correct,
     percentage,
-    raw_score: percentage, // can later swap to IRT/standardized
     started_at: new Date(startedAt).toISOString(),
-    finished_at: new Date(finishedAt).toISOString(),
-    duration_seconds: duration,
-    result,
-    result_label: computeResultLabel(percentage),
-    payload: {
-      answersByQuestion: answersByQuestion || {},
-      sectionBreakdown: sectionBreakdown || null,
-      reason: reason
-    },
+    finished_at: new Date().toISOString(),
+    duration_seconds: Math.max(0, Math.round((Date.now() - startedAt) / 1000)),
+    result: reason === 'time' ? 'timeout' : reason === 'aborted' ? 'aborted' : 'completed',
   };
 }
 
-/**
- * Calculate score from answers and questions
- */
-export function calculateScore(answers, questions) {
-  if (!questions || questions.length === 0) {
-    return { correct: 0, total: 0, percentage: 0 };
-  }
-
-  let correct = 0;
-  const total = questions.length;
-
-  questions.forEach((question, index) => {
-    const userAnswer = answers[index] || answers[question.id] || answers[`q${index}`];
-    if (userAnswer && question.correct_answer) {
-      // Handle different answer formats
-      const correctAnswer = question.correct_answer.toString().toLowerCase();
-      const userAnswerNormalized = userAnswer.toString().toLowerCase();
-      
-      if (correctAnswer === userAnswerNormalized) {
-        correct++;
-      }
-    }
-  });
-
-  const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
-  
-  return { correct, total, percentage };
-}
-
-/**
- * Format duration for display
- */
 export function formatDuration(seconds) {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
 }
 
-/**
- * Get performance level based on percentage
- */
 export function getPerformanceLevel(percentage) {
-  if (percentage >= 90) return { label: 'Excellent', color: 'green', icon: '🏆' };
-  if (percentage >= 80) return { label: 'Strong', color: 'blue', icon: '⭐' };
-  if (percentage >= 70) return { label: 'Good', color: 'indigo', icon: '👍' };
-  if (percentage >= 60) return { label: 'Competent', color: 'yellow', icon: '✓' };
-  if (percentage >= 50) return { label: 'Fair', color: 'orange', icon: '📈' };
-  return { label: 'Developing', color: 'red', icon: '📚' };
+  if (percentage >= 90) return { level: 'Excellent', color: 'text-green-600', bgColor: 'bg-green-100' };
+  if (percentage >= 80) return { level: 'Very Good', color: 'text-green-500', bgColor: 'bg-green-50' };
+  if (percentage >= 70) return { level: 'Good', color: 'text-blue-600', bgColor: 'bg-blue-100' };
+  if (percentage >= 60) return { level: 'Satisfactory', color: 'text-yellow-600', bgColor: 'bg-yellow-100' };
+  if (percentage >= 50) return { level: 'Needs Improvement', color: 'text-orange-600', bgColor: 'bg-orange-100' };
+  return { level: 'Poor', color: 'text-red-600', bgColor: 'bg-red-100' };
+}
+
+export function buildAttemptPayload(testId, total, correct, startedAt, reason) {
+  return buildAttempt(testId, total, correct, startedAt, reason);
+}
+
+export function calculateScore(correct, total) {
+  return computePercentage(correct, total);
 }

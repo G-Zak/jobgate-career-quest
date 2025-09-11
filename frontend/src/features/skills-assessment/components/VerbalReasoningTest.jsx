@@ -26,8 +26,12 @@ import { getRandomizedTestByLegacyId, testManager } from '../data/verbalReasonin
 import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
 import { submitTestAttempt } from '../lib/submitHelper';
 import TestResultsPage from './TestResultsPage';
+import { getRuleFor, buildAttempt } from '../testRules';
+import { saveAttempt } from '../lib/attemptStorage';
 
 const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'english' }) => {
+  const rule = getRuleFor(testId);
+  
   // Determine starting section based on testId
   const getStartingSection = (testId) => {
     if (typeof testId === 'string') {
@@ -47,7 +51,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
   const [currentSection, setCurrentSection] = useState(startingSection);
   const [currentPassage, setCurrentPassage] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes
+  const [timeRemaining, setTimeRemaining] = useState(rule?.timeLimitMin * 60 || 20 * 60); // Use rule time limit
   const [answers, setAnswers] = useState({});
   const [testData, setTestData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -268,15 +272,36 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
 
   const handleSubmitTest = async () => {
     try {
-      // Submit the test using unified scoring
-      const result = await submitTestAttempt({
+      // Calculate score using rule's totalQuestions
+      const totalQuestions = rule?.totalQuestions || 10;
+      const correctAnswers = Object.values(answers).filter(answer => answer.isCorrect).length;
+      const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+      
+      // Build attempt record
+      const attempt = buildAttempt(testId, totalQuestions, correctAnswers, startedAt.getTime(), 'user');
+      
+      // Save attempt locally
+      saveAttempt(attempt);
+      
+      const result = {
         testId: testId || 'VRT',
-        testVersion: '1.0',
-        language: 'en',
-        answers,
-        testData,
-        startedAt
-      });
+        testType: 'verbal-reasoning',
+        score: score,
+        totalQuestions: totalQuestions,
+        correctAnswers: correctAnswers,
+        duration: Math.floor((Date.now() - startedAt.getTime()) / 1000),
+        answers: answers,
+        completedAt: new Date().toISOString(),
+        startedAt: startedAt?.toISOString(),
+        attempt: attempt
+      };
+      
+      // Submit to backend
+      try {
+        await submitTestAttempt(result);
+      } catch (error) {
+        console.error('Error submitting test attempt:', error);
+      }
       
       setResults(result);
       setTestStep('results');
@@ -497,7 +522,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
                     <div className="space-y-3">
                       {getCurrentQuestion()?.options?.map((option, index) => {
                         const isSelected = answers[`${currentSection}_${currentPassage}_${getCurrentQuestion()?.id}`] === option;
-                        const letters = ['A', 'B', 'C'];
+                        const letters = ['A', 'B', 'C', 'D', 'E'];
                         
                         return (
                           <motion.button

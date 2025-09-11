@@ -1,13 +1,14 @@
 import React from 'react';
 import ProfileHeader from './ProfileHeader';
 import DynamicBadges from './DynamicBadges';
-import DynamicSkillsPerformance from './DynamicSkillsPerformance';
+import SkillsPerformance from './SkillsPerformance';
 import TestTimeline from './TestTimeline';
-import JobRecommendationWidget from '../../job-recommendations/components/JobRecommendationWidget';
-import RecentTestResults from './RecentTestResults';
+import JobRecommendations from './JobRecommendations';
+import RecentTests from './RecentTests';
 import TestStatsWidget from './TestStatsWidget';
 import DynamicQuickStats from './DynamicQuickStats';
 import { useScrollToTop } from '../../../shared/utils/scrollUtils';
+import '../../../features/candidate-dashboard/styles/dashboard-design-system.css';
 
 const Dashboard = ({ onNavigateToSection }) => {
   // Universal scroll management
@@ -49,38 +50,23 @@ const Dashboard = ({ onNavigateToSection }) => {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8">
-        {/* Main Dashboard Content */}
-
+    <div className="min-h-screen bg-gray-50">
+      <div className="sa-container py-6">
         {/* Main Grid Layout */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
           {/* Left Column - Profile & Stats */}
-          <div className="xl:col-span-4 space-y-4 lg:space-y-6">
+          <div className="xl:col-span-4 sa-stack">
             <ProfileHeader user={userData} />
-            
-            {/* Dynamic Quick Stats */}
             <DynamicQuickStats />
-
-            {/* Test Stats Widget */}
             <TestStatsWidget />
-
-            {/* Recent Test Results */}
-            <RecentTestResults onViewAll={handleViewAllTests} />
+            <RecentTests onViewAll={handleViewAllTests} />
           </div>
 
           {/* Right Column - Main Content */}
-          <div className="xl:col-span-8 space-y-4 lg:space-y-6">
-            {/* Dynamic Badges Grid */}
+          <div className="xl:col-span-8 sa-stack">
             <DynamicBadges />
-            
-            {/* Dynamic Skills Performance */}
-            <DynamicSkillsPerformance />
-            
-            {/* Job Recommendations */}
-            <JobRecommendationWidget />
-            
-            {/* Test Timeline */}
+            <SkillsPerformance />
+            <JobRecommendations onViewAll={handleViewAllTests} />
             <TestTimeline onViewAll={handleViewAllTests} />
           </div>
         </div>

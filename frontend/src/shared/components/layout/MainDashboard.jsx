@@ -654,7 +654,7 @@ const MainDashboard = () => {
           ) : activeSection.startsWith('test-info-') ? (
             // Test Information Page
             <TestInfoPage 
-              testData={currentTestInfo}
+              testId={currentTestId}
               onStartTest={handleStartTestFromInfo}
               onBackToDashboard={handleBackToAssessments}
             />

@@ -1,13 +1,17 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FaFlag, FaClock, FaChartPie, FaSearch, FaInfoCircle, FaCheckCircle } from 'react-icons/fa';
+import { getRuleFor, getPrettyTitle } from '../testRules';
 
-const TestInfoPage = ({ testData, onBackToDashboard, onStartTest, onShowResults, extraInfoEnabled = false }) => {
-  if (!testData) {
+const TestInfoPage = ({ testId, onBackToDashboard, onStartTest, onShowResults, extraInfoEnabled = false }) => {
+  const rule = getRuleFor(testId);
+  
+  if (!rule) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Test not found</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Test info not available</h2>
+          <p className="text-gray-600 mb-4">Unknown test: {testId}</p>
           <button
             onClick={onBackToDashboard}
             className="px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
@@ -18,6 +22,7 @@ const TestInfoPage = ({ testData, onBackToDashboard, onStartTest, onShowResults,
       </div>
     );
   }
+
 
   const getDifficultyInfo = (difficulty) => {
     const difficultyMap = {
@@ -31,7 +36,7 @@ const TestInfoPage = ({ testData, onBackToDashboard, onStartTest, onShowResults,
     return difficultyMap[difficulty] || { label: 'Available', color: 'text-gray-600' };
   };
 
-  const difficultyInfo = getDifficultyInfo(testData.difficulty);
+  const difficultyInfo = getDifficultyInfo(rule.difficultyLabel);
 
   // Static test information based on test-information.md
   const getTestInfo = (testId) => {
@@ -91,36 +96,100 @@ const TestInfoPage = ({ testData, onBackToDashboard, onStartTest, onShowResults,
         additionalInfo: "This test evaluates your ability to understand and analyze workplace communications effectively."
       },
       'LRT1': {
-        title: "Basic Logical Reasoning",
-        subtitle: "Fundamental Logic & Patterns",
+        title: "Logical Reasoning Test 1",
+        subtitle: "Pattern Recognition & Logical Sequences",
         duration: "20 minutes",
         questions: "20",
-        format: "Multiple Choice",
-        instructions: "Identify logical patterns, sequences, and relationships in various problem types.",
+        format: "Multiple Choice (4 options)",
+        instructions: "This test assesses your logical reasoning ability through pattern recognition, sequence analysis, and logical problem-solving. You will encounter various types of logical problems that test your ability to identify patterns, relationships, and logical structures.",
         guidelines: [
-          "Look for underlying patterns and rules",
-          "Consider sequence progression (arithmetic, geometric, etc.)",
+          "Look for underlying patterns and rules in sequences",
+          "Consider arithmetic, geometric, and other progression types",
           "Analyze cause and effect relationships",
-          "Apply basic logical principles",
-          "Work systematically through each problem"
+          "Apply logical principles systematically",
+          "Work through each problem methodically"
         ],
-        additionalInfo: "This beginner-level test introduces fundamental logical reasoning concepts."
+        additionalInfo: "Mixed difficulty questions covering fundamental to intermediate logical reasoning concepts."
       },
       'LRT2': {
-        title: "Advanced Number Series",
-        subtitle: "Complex Numerical Patterns",
-        duration: "10 minutes",
+        title: "Logical Reasoning Test 2",
+        subtitle: "Advanced Pattern Analysis",
+        duration: "20 minutes",
         questions: "20",
-        format: "Multiple Choice (5 options)",
-        instructions: "Advanced number series questions with complex patterns including interruptions and alternating series.",
+        format: "Multiple Choice (4 options)",
+        instructions: "This test focuses on advanced logical reasoning patterns including complex sequences, spatial reasoning, and multi-step logical problems. You will encounter more challenging problems that require deeper analysis and pattern recognition.",
         guidelines: [
-          "Each question has a definite pattern",
-          "Some series may be interrupted by a periodic number (e.g., every third number)",
-          "Some patterns contain two alternating series",
-          "Look carefully for the pattern before choosing your answer",
-          "You will be choosing from five options instead of four"
+          "Look for complex patterns and relationships",
+          "Consider multiple variables and constraints",
+          "Analyze spatial and geometric patterns",
+          "Apply advanced logical principles",
+          "Work systematically through multi-step problems"
         ],
-        additionalInfo: "Example: In series 14, 16, 32, 18, 20, 32, 22, 24, 32 - the number 32 appears as every third number."
+        additionalInfo: "Mixed difficulty questions covering intermediate to advanced logical reasoning concepts."
+      },
+      'LRT3': {
+        title: "Logical Reasoning Test 3",
+        subtitle: "Expert-Level Logical Analysis",
+        duration: "20 minutes",
+        questions: "20",
+        format: "Multiple Choice (4 options)",
+        instructions: "This test presents expert-level logical reasoning challenges including abstract patterns, complex relationships, and advanced problem-solving scenarios. These questions test your ability to think critically and apply logical principles in sophisticated contexts.",
+        guidelines: [
+          "Identify abstract and non-obvious patterns",
+          "Consider multiple logical frameworks simultaneously",
+          "Analyze complex cause-and-effect relationships",
+          "Apply advanced reasoning strategies",
+          "Think creatively and systematically"
+        ],
+        additionalInfo: "Mixed difficulty questions covering advanced to expert-level logical reasoning concepts."
+      },
+      'SRT1': {
+        title: "Spatial Reasoning Test 1",
+        subtitle: "Shape Assembly & Pattern Recognition",
+        duration: "20 minutes",
+        questions: "20",
+        format: "Multiple Choice (4 options)",
+        instructions: "This test assesses your spatial reasoning ability through shape assembly, pattern recognition, and 3D visualization. You will be shown component shapes and need to identify which option shows the correct assembly when joined together by corresponding letters.",
+        guidelines: [
+          "Look carefully at the component shapes and their letters",
+          "Visualize how the shapes would look when assembled",
+          "Match the letters on corresponding sides",
+          "Consider the final target shape configuration",
+          "Work systematically through each question"
+        ],
+        additionalInfo: "Mixed difficulty questions covering fundamental to intermediate spatial reasoning concepts."
+      },
+      'SRT2': {
+        title: "Spatial Reasoning Test 2",
+        subtitle: "Advanced Spatial Analysis",
+        duration: "20 minutes",
+        questions: "20",
+        format: "Multiple Choice (4 options)",
+        instructions: "This test focuses on advanced spatial reasoning including complex shape transformations, 3D rotations, and spatial relationship analysis. You will encounter more challenging spatial problems that require deeper visualization skills.",
+        guidelines: [
+          "Analyze complex spatial relationships",
+          "Consider 3D rotations and transformations",
+          "Visualize shapes from different perspectives",
+          "Apply advanced spatial reasoning principles",
+          "Work methodically through each problem"
+        ],
+        additionalInfo: "Mixed difficulty questions covering intermediate to advanced spatial reasoning concepts."
+      },
+      'SRT3': {
+        title: "Spatial Reasoning Test 3",
+        subtitle: "Expert-Level Spatial Visualization",
+        duration: "20 minutes",
+        questions: "20",
+        format: "Multiple Choice (4 options)",
+        instructions: "This test presents expert-level spatial reasoning challenges including complex 3D manipulations, abstract spatial patterns, and advanced visualization scenarios. These questions test your ability to think spatially in sophisticated contexts.",
+        guidelines: [
+          "Master complex 3D spatial manipulations",
+          "Identify abstract spatial patterns and relationships",
+          "Apply expert-level visualization strategies",
+          "Think creatively about spatial problems",
+          "Work systematically through challenging scenarios"
+        ],
+        additionalInfo: "Mixed difficulty questions covering advanced to expert-level spatial reasoning concepts."
       }
     };
     
@@ -128,14 +197,14 @@ const TestInfoPage = ({ testData, onBackToDashboard, onStartTest, onShowResults,
   };
 
   // Get comprehensive test information
-  const testInfo = getTestInfo(testData.id);
+  const testInfo = getTestInfo(testId);
   
   // Use retrieved info if available, otherwise fall back to basic info
   const displayInfo = testInfo || {
-    title: testData.category || "Assessment Test",
-    subtitle: testData.description || "Assessment Test",
-    duration: testData.duration || "20 minutes",
-    questions: testData.questions || "20",
+    title: getPrettyTitle(testId),
+    subtitle: "Assessment Test",
+    duration: `${rule.timeLimitMin} minutes`,
+    questions: rule.totalQuestions.toString(),
     format: "Multiple Choice",
     instructions: "Follow the instructions for each question carefully. Select the best answer from the available options.",
     guidelines: [
@@ -272,7 +341,7 @@ const TestInfoPage = ({ testData, onBackToDashboard, onStartTest, onShowResults,
           </button>
           <div className="flex gap-4">
             <button
-              onClick={() => onStartTest(testData.id)}
+              onClick={() => onStartTest(testId)}
               className="px-8 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
             >
               Start Test
