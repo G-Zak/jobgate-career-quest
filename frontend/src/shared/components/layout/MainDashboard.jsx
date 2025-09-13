@@ -918,12 +918,7 @@ const MainDashboard = () => {
           </div>
         </div>
 
-        {/* Right Side Strip */}
-        <div className="right-sidebar w-18 flex justify-center">
-          <button className="floating-action-btn w-12 h-12 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center transition-colors sticky top-32">
-            <span className="btn-icon text-white font-bold text-xs">J</span>
-          </button>
-        </div>
+        
       </div>
     </div>
   );
