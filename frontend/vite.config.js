@@ -16,13 +16,13 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 5173,
+    port: 3000,
     strictPort: true,
     watch: {
       usePolling: true, // 👈 required in Docker
     },
     hmr: {
-      clientPort: 5173, // 👈 this allows hot reload to work correctly from outside the container
+      clientPort: 3000, // 👈 this allows hot reload to work correctly from outside the container
     }
   },
   build: {
