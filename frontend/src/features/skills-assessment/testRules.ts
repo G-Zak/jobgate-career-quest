@@ -9,6 +9,8 @@ export const TEST_RULES: Record<string, TestRule> = {
   numerical:         { timeLimitMin: 20, totalQuestions: 20, difficultyLabel: 'mixed' },
   situational:       { timeLimitMin: 20, totalQuestions: 20, difficultyLabel: 'mixed' },
 
+             { timeLimitMin: 35, totalQuestions: 25, difficultyLabel: 'mixed' }, // Blood Relations & Logical Puzzles
+
   // Verbal series - UNIFIED VRT1 (10Q / 20min from mixed difficulty pool)
   vrt1:              { timeLimitMin: 20, totalQuestions: 10, difficultyLabel: 'mixed' }, // Reading Comprehension
   vrt2:              { timeLimitMin: 25, totalQuestions: 25, difficultyLabel: 'mixed' }, // Analogies

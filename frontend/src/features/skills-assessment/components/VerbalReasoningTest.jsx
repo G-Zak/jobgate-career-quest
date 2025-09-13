@@ -76,6 +76,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
         
         let data;
         
+
         // VERBAL REASONING TESTS - Each with its own content
         if (testId === 'VRT1' || testId === '1' || testId === 1) {
           data = getRandomizedTestByLegacyId('VRT1'); // Reading Comprehension
@@ -87,7 +88,6 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
           data = getRandomizedTestByLegacyId('VRT6'); // Coding & Decoding (mapped to VRT6 data)
         } else if (testId === 'VRT5' || testId === '5' || testId === 5) {
           data = getRandomizedTestByLegacyId('VRT7'); // Blood Relations & Logical Puzzles (mapped to VRT7 data)
-
         } else {
           data = getVerbalTestSections();
         }
@@ -117,7 +117,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
 
   // Timer countdown
   useEffect(() => {
-    if (testStep === 'test' && timeRemaining > 0) {
+    if (testStep === 'test' && timeRemaining > 0 && !isPaused) {
       const timer = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev <= 1) {
@@ -130,7 +130,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
 
       return () => clearInterval(timer);
     }
-  }, [testStep, timeRemaining]);
+  }, [testStep, timeRemaining, isPaused]);
 
   // Helper functions
   const getSectionPassages = (section) => {
@@ -348,7 +348,6 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
     onBackToDashboard();
   };
 
-  
 
   // Loading state
   if (loading) {
@@ -453,7 +452,6 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
 
                   {/* Right: Timer & Controls */}
                   <div className="flex items-center space-x-4">
-            
                     
                     <div className={`text-right ${getTimeColor()}`}>
                       <div className="text-2xl font-bold font-mono">
@@ -572,7 +570,6 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
               </div>
             </div>
 
-            
 
             {/* Exit Confirmation */}
             <AnimatePresence>

@@ -40,12 +40,15 @@ const unifiedTestsData = [
   {
     category: "Verbal Reasoning Tests", 
     prefix: "VRT",
+
     total: 5,
     unlocked: [1, 2, 3, 4, 5],
+
     icon: <FaBrain className="text-emerald-600" />,
     progress: 100,
     testType: "verbal",
     tests: [
+
       { id: "VRT1", title: "VRT1 - Reading Comprehension", difficulty: "mixed", level: "Mixed Difficulty", duration: "20 min", questions: "10", badge: "�", color: "emerald", unlocked: true, description: "Comprehensive reading comprehension with mixed difficulty passages covering science, business, and management topics" },
       { id: "VRT2", title: "VRT2 - Analogies", difficulty: "expert", level: "Expert", duration: "25 min", questions: "25", badge: "🔗", color: "emerald", unlocked: true, description: "Comprehensive analogies across 9 different types" },
       { id: "VRT3", title: "VRT3 - Classification", difficulty: "expert", level: "Expert", duration: "25 min", questions: "25", badge: "🔍", color: "emerald", unlocked: true, description: "Classification (Odd-One-Out): words, pairs, numbers, letters" },
