@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaClock, FaCube, FaStop, FaArrowRight, FaFlag, FaSync, FaSearchPlus, FaExpand, FaEye, FaImage, FaLayerGroup, FaPause, FaPlay, FaTimes, FaCheckCircle } from 'react-icons/fa';
+import { FaClock, FaCube, FaStop, FaArrowRight, FaFlag, FaSync, FaSearchPlus, FaExpand, FaEye, FaImage, FaLayerGroup, FaPlay, FaTimes, FaCheckCircle } from 'react-icons/fa';
 import { getSpatialTestSections, getSpatialSection1, getSpatialSection2, getSpatialSection3, getSpatialSection4, getSpatialSection5, getSpatialSection6 } from '../data/spatialTestSections';
 import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
 import { submitTestAttempt } from '../lib/submitHelper';
@@ -18,8 +18,6 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isPaused, setIsPaused] = useState(false);
-  const [showPauseModal, setShowPauseModal] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
   const [startedAt, setStartedAt] = useState(null);
   const [results, setResults] = useState(null);
@@ -90,7 +88,7 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
 
   // Timer effect
   useEffect(() => {
-    if (testStep === 'test' && timeRemaining > 0 && !isPaused) {
+    if (testStep === 'test' && timeRemaining > 0) {
       const timer = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev <= 1) {
@@ -103,7 +101,7 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
 
       return () => clearInterval(timer);
     }
-  }, [testStep, timeRemaining, isPaused]);
+  }, [testStep, timeRemaining]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -184,20 +182,7 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
     }
   };
 
-  const handlePauseToggle = () => {
-    if (isPaused) {
-      setIsPaused(false);
-      setShowPauseModal(false);
-    } else {
-      setIsPaused(true);
-      setShowPauseModal(true);
-    }
-  };
-
-  const handleResume = () => {
-    setIsPaused(false);
-    setShowPauseModal(false);
-  };
+  
 
   const handleExitTest = () => {
     setShowExitModal(true);
@@ -305,13 +290,7 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
                   {formatTime(timeRemaining)}
                 </div>
               </div>
-              <button
-                onClick={handlePauseToggle}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-              >
-                {isPaused ? <FaPlay className="w-4 h-4" /> : <FaPause className="w-4 h-4" />}
-                <span className="font-medium">{isPaused ? 'Resume' : 'Pause'}</span>
-              </button>
+            
             </div>
           </div>
         </div>
@@ -442,44 +421,6 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
         </div>
       </div>
 
-      {/* Pause Modal */}
-      <AnimatePresence>
-        {showPauseModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl p-8 max-w-md mx-4 text-center"
-            >
-              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FaPause className="w-8 h-8 text-yellow-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Test Paused</h3>
-              <p className="text-gray-600 mb-6">Your progress has been saved. Click resume to continue.</p>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleResume}
-                  className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors"
-                >
-                  Resume Test
-                </button>
-                <button
-                  onClick={handleExitTest}
-                  className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-xl font-medium transition-colors"
-                >
-                  Exit Test
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Exit Modal */}
       <AnimatePresence>

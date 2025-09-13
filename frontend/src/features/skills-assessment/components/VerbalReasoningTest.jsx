@@ -11,7 +11,6 @@ import {
   FaFileAlt,
   FaCheckCircle,
   FaTimes,
-  FaPause,
   FaPlay,
   FaHome
 } from 'react-icons/fa';
@@ -56,7 +55,6 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
   const [testData, setTestData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isPaused, setIsPaused] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [startedAt, setStartedAt] = useState(null);
   const [results, setResults] = useState(null);
@@ -119,7 +117,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
 
   // Timer countdown
   useEffect(() => {
-    if (testStep === 'test' && timeRemaining > 0 && !isPaused) {
+    if (testStep === 'test' && timeRemaining > 0) {
       const timer = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev <= 1) {
@@ -132,7 +130,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
 
       return () => clearInterval(timer);
     }
-  }, [testStep, timeRemaining, isPaused]);
+  }, [testStep, timeRemaining]);
 
   // Helper functions
   const getSectionPassages = (section) => {
@@ -350,9 +348,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
     onBackToDashboard();
   };
 
-  const togglePause = () => {
-    setIsPaused(!isPaused);
-  };
+  
 
   // Loading state
   if (loading) {
@@ -457,16 +453,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
 
                   {/* Right: Timer & Controls */}
                   <div className="flex items-center space-x-4">
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={togglePause}
-                      className={`p-2 rounded-lg transition-colors ${
-                        isPaused ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
-                      {isPaused ? <FaPlay /> : <FaPause />}
-                    </motion.button>
+            
                     
                     <div className={`text-right ${getTimeColor()}`}>
                       <div className="text-2xl font-bold font-mono">
@@ -585,35 +572,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
               </div>
             </div>
 
-            {/* Pause Overlay */}
-            <AnimatePresence>
-              {isPaused && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center"
-                >
-                  <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.9, opacity: 0 }}
-                    className="bg-white rounded-2xl p-8 text-center max-w-md"
-                  >
-                    <FaPause className="text-4xl text-blue-600 mb-4 mx-auto" />
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">Test Paused</h3>
-                    <p className="text-gray-600 mb-6">Take your time. Click resume when ready.</p>
-                    <button
-                      onClick={togglePause}
-                      className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all"
-                    >
-                      <FaPlay className="inline mr-2" />
-                      Resume Test
-                    </button>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            
 
             {/* Exit Confirmation */}
             <AnimatePresence>
