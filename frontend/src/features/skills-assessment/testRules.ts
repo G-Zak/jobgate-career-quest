@@ -9,14 +9,12 @@ export const TEST_RULES: Record<string, TestRule> = {
   numerical:         { timeLimitMin: 20, totalQuestions: 20, difficultyLabel: 'mixed' },
   situational:       { timeLimitMin: 20, totalQuestions: 20, difficultyLabel: 'mixed' },
 
-  // Verbal series (each VRTx is 10Q / 20min)
-  vrt1:              { timeLimitMin: 20, totalQuestions: 10, difficultyLabel: 'mixed' },
-  vrt2:              { timeLimitMin: 20, totalQuestions: 10, difficultyLabel: 'mixed' },
-  vrt3:              { timeLimitMin: 20, totalQuestions: 10, difficultyLabel: 'mixed' },
-  vrt4:              { timeLimitMin: 25, totalQuestions: 25, difficultyLabel: 'mixed' }, // Analogies
-  vrt5:              { timeLimitMin: 25, totalQuestions: 25, difficultyLabel: 'mixed' }, // Classification
-  vrt6:              { timeLimitMin: 30, totalQuestions: 25, difficultyLabel: 'mixed' }, // Coding & Decoding
-  vrt7:              { timeLimitMin: 35, totalQuestions: 25, difficultyLabel: 'mixed' }, // Blood Relations & Logical Puzzles
+  // Verbal series - UNIFIED VRT1 (10Q / 20min from mixed difficulty pool)
+  vrt1:              { timeLimitMin: 20, totalQuestions: 10, difficultyLabel: 'mixed' }, // Reading Comprehension
+  vrt2:              { timeLimitMin: 25, totalQuestions: 25, difficultyLabel: 'mixed' }, // Analogies
+  vrt3:              { timeLimitMin: 25, totalQuestions: 25, difficultyLabel: 'mixed' }, // Classification
+  vrt4:              { timeLimitMin: 30, totalQuestions: 25, difficultyLabel: 'mixed' }, // Coding & Decoding
+  vrt5:              { timeLimitMin: 35, totalQuestions: 25, difficultyLabel: 'mixed' }, // Blood Relations & Logical Puzzles
 
   // Logical series (each LRTx is 20Q / 20min)
   lrt1:              { timeLimitMin: 20, totalQuestions: 20, difficultyLabel: 'mixed' },
@@ -87,9 +85,11 @@ export function getPrettyTitle(testId: string): string {
   const titles: Record<string, string> = {
     numerical: 'Numerical Reasoning Test',
     situational: 'Situational Judgment Test',
-    vrt1: 'Verbal Reasoning Test 1',
-    vrt2: 'Verbal Reasoning Test 2', 
-    vrt3: 'Verbal Reasoning Test 3',
+    vrt1: 'Verbal Reasoning Test 1 - Reading Comprehension',
+    vrt2: 'Verbal Reasoning Test 2 - Analogies',
+    vrt3: 'Verbal Reasoning Test 3 - Classification',
+    vrt4: 'Verbal Reasoning Test 4 - Coding & Decoding',
+    vrt5: 'Verbal Reasoning Test 5 - Blood Relations & Logical Puzzles',
     lrt1: 'Logical Reasoning Test 1',
     lrt2: 'Logical Reasoning Test 2',
     lrt3: 'Logical Reasoning Test 3',

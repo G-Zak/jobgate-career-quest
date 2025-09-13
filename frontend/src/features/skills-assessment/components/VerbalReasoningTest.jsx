@@ -78,23 +78,17 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
         
         let data;
         
-        // CONSOLIDATED READING COMPREHENSION TEST
-        if (testId === 'VRT-COMP' || testId === 'VRT_COMP' || testId === 'VRTCOMP') {
-          data = getRandomizedTestByLegacyId('VRT-COMP');
-        } else if (testId === 'VRT1' || testId === '1' || testId === 1) {
-          data = getRandomizedTestByLegacyId('VRT1');
+        // VERBAL REASONING TESTS - Each with its own content
+        if (testId === 'VRT1' || testId === '1' || testId === 1) {
+          data = getRandomizedTestByLegacyId('VRT1'); // Reading Comprehension
         } else if (testId === 'VRT2' || testId === '2' || testId === 2) {
-          data = getRandomizedTestByLegacyId('VRT2');
+          data = getRandomizedTestByLegacyId('VRT4'); // Analogies (mapped to VRT4 data)
         } else if (testId === 'VRT3' || testId === '3' || testId === 3) {
-          data = getRandomizedTestByLegacyId('VRT3');
+          data = getRandomizedTestByLegacyId('VRT5'); // Classification (mapped to VRT5 data)
         } else if (testId === 'VRT4' || testId === '4' || testId === 4) {
-          data = getRandomizedTestByLegacyId('VRT4');
+          data = getRandomizedTestByLegacyId('VRT6'); // Coding & Decoding (mapped to VRT6 data)
         } else if (testId === 'VRT5' || testId === '5' || testId === 5) {
-          data = getRandomizedTestByLegacyId('VRT5');
-        } else if (testId === 'VRT6' || testId === '6' || testId === 6) {
-          data = getRandomizedTestByLegacyId('VRT6');
-        } else if (testId === 'VRT7' || testId === '7' || testId === 7) {
-          data = getRandomizedTestByLegacyId('VRT7');
+          data = getRandomizedTestByLegacyId('VRT7'); // Blood Relations & Logical Puzzles (mapped to VRT7 data)
         } else {
           data = getVerbalTestSections();
         }

@@ -109,3 +109,13 @@ scripts/check-disk-space.bat
 .github/workflows/backend.yml__pycache__/
 *.py[cod]
 *.pyo
+scripts/debug-pandoc-converter.sh
+scripts/simple-wide-converter.sh
+scripts/universal-pandoc-converter-fixed.sh
+scripts/universal-pandoc-converter-improved.sh
+scripts/wide-format-converter.sh
+scripts/debug-pandoc-converter.sh
+scripts/simple-wide-converter.sh
+scripts/universal-pandoc-converter-fixed.sh
+scripts/universal-pandoc-converter-improved.sh
+scripts/wide-format-converter.sh
