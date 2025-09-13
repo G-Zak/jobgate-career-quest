@@ -89,6 +89,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
           data = getRandomizedTestByLegacyId('VRT6'); // Coding & Decoding (mapped to VRT6 data)
         } else if (testId === 'VRT5' || testId === '5' || testId === 5) {
           data = getRandomizedTestByLegacyId('VRT7'); // Blood Relations & Logical Puzzles (mapped to VRT7 data)
+
         } else {
           data = getVerbalTestSections();
         }

@@ -16,6 +16,7 @@ export const TEST_RULES: Record<string, TestRule> = {
   vrt4:              { timeLimitMin: 30, totalQuestions: 25, difficultyLabel: 'mixed' }, // Coding & Decoding
   vrt5:              { timeLimitMin: 35, totalQuestions: 25, difficultyLabel: 'mixed' }, // Blood Relations & Logical Puzzles
 
+
   // Logical series (each LRTx is 20Q / 20min)
   lrt1:              { timeLimitMin: 20, totalQuestions: 20, difficultyLabel: 'mixed' },
   lrt2:              { timeLimitMin: 20, totalQuestions: 20, difficultyLabel: 'mixed' },
@@ -90,6 +91,7 @@ export function getPrettyTitle(testId: string): string {
     vrt3: 'Verbal Reasoning Test 3 - Classification',
     vrt4: 'Verbal Reasoning Test 4 - Coding & Decoding',
     vrt5: 'Verbal Reasoning Test 5 - Blood Relations & Logical Puzzles',
+
     lrt1: 'Logical Reasoning Test 1',
     lrt2: 'Logical Reasoning Test 2',
     lrt3: 'Logical Reasoning Test 3',
