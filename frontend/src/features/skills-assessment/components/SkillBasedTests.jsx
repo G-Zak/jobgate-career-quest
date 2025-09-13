@@ -60,7 +60,7 @@ const SkillBasedTests = ({ userId, testId, skillId, onBackToDashboard }) => {
                         const testTitle = test.title.toLowerCase();
                         const testDescription = test.description.toLowerCase();
                         
-                        return test.test_type === 'technical' && (
+                        return test.test_type === 'technical' && test.is_active && (
                             testTitle.includes(skillName) ||
                             testDescription.includes(skillName) ||
                             (skillName === 'python' && (testTitle.includes('python') || testTitle.includes('django'))) ||
@@ -74,8 +74,8 @@ const SkillBasedTests = ({ userId, testId, skillId, onBackToDashboard }) => {
                     filteredTests = [];
                 }
             } else {
-                // Pas de skillId spécifique, montrer tous les tests techniques
-                filteredTests = allTests.filter(test => test.test_type === 'technical');
+                // Pas de skillId spécifique, montrer tous les tests techniques actifs
+                filteredTests = allTests.filter(test => test.test_type === 'technical' && test.is_active);
             }
             
             setAvailableTests(filteredTests);
