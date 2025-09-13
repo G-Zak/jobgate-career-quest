@@ -1,12 +1,273 @@
-// Data for the Numerical Reasoning Test
+// Data for the Numerical Reasoning Test - Morocco Localized
 // This file provides the questions, answers, and configuration for the test
 
+// Utility: shuffle an array (non-destructive)
+const shuffleArray = (arr) => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+// Select random questions with difficulty distribution
+const selectRandomQuestions = (questions, count) => {
+  const shuffled = shuffleArray(questions);
+  const selected = [];
+  const difficultyCounts = { easy: 0, medium: 0, hard: 0 };
+
+  for (const q of shuffled) {
+    const difficulty = q.complexity_score <= 2 ? 'easy' : q.complexity_score === 3 ? 'medium' : 'hard';
+    if (difficultyCounts[difficulty] < Math.ceil(count * (difficulty === 'easy' ? 0.3 : difficulty === 'medium' ? 0.5 : 0.2))) {
+      selected.push(q);
+      difficultyCounts[difficulty]++;
+      if (selected.length === count) break;
+    }
+  }
+
+  return selected;
+};
+
+// Build a deterministic pool of 60 Moroccan-localized numerical questions
+const buildNumericalQuestionPool = () => {
+  const pool = [];
+  let id = 1;
+
+  const add = ({ category, complexity_score, question, options, correct, explanation, extras = {} }) => {
+    pool.push({
+      question_id: id++,
+      category,
+      complexity_score,
+      question,
+      options: options.map((t, i) => ({ option_id: String.fromCharCode(65 + i), text: t })),
+      correct_answer: correct,
+      explanation,
+      ...extras
+    });
+  };
+
+  // Moroccan-localized questions with MAD currency, km, and Moroccan context
+  add({ 
+    category: 'Distance & Speed', 
+    complexity_score: 2, 
+    question: 'Ahmed drives from Casablanca to Rabat at 90 km/h. If the distance is 100 km, how long does the trip take?', 
+    options: ['1 hour 6 minutes', '1 hour 11 minutes', '1 hour 15 minutes', '1 hour 20 minutes'], 
+    correct: 'B', 
+    explanation: 'Time = Distance/Speed = 100/90 = 1.11 hours = 1 hour 6.6 minutes ≈ 1 hour 11 minutes.' 
+  });
+
+  add({ 
+    category: 'Percentages', 
+    complexity_score: 2, 
+    question: 'What is 15% of 200 MAD?', 
+    options: ['25 MAD', '30 MAD', '35 MAD', '40 MAD'], 
+    correct: 'B', 
+    explanation: '15% of 200 = 0.15 × 200 = 30 MAD.' 
+  });
+
+  add({ 
+    category: 'Percentages', 
+    complexity_score: 2, 
+    question: 'Fatima bought a dress for 800 MAD during a 25% discount sale. What was the original price?', 
+    options: ['1000 MAD', '1066 MAD', '1100 MAD', '1200 MAD'], 
+    correct: 'B', 
+    explanation: 'If 800 MAD is 75% of original price, then original = 800 ÷ 0.75 = 1066.67 MAD.' 
+  });
+
+  add({ 
+    category: 'Ratio and Proportion', 
+    complexity_score: 3, 
+    question: 'In a Moroccan company, the ratio of employees in Casablanca to Marrakech is 3:2. If there are 180 employees in Casablanca, how many are in Marrakech?', 
+    options: ['120', '135', '150', '160'], 
+    correct: 'A', 
+    explanation: 'Ratio 3:2 means if Casablanca has 3 parts = 180, then 1 part = 60. Marrakech = 2 × 60 = 120.' 
+  });
+
+  // Financial questions with Moroccan context
+  add({ 
+    category: 'Financial Calculations', 
+    complexity_score: 3, 
+    question: 'Omar deposits 10,000 MAD in a Moroccan bank at 4% annual simple interest. How much will he have after 3 years?', 
+    options: ['11,200 MAD', '11,500 MAD', '11,800 MAD', '12,000 MAD'], 
+    correct: 'A', 
+    explanation: 'Simple interest = 10,000 × 0.04 × 3 = 1,200 MAD. Total = 10,000 + 1,200 = 11,200 MAD.' 
+  });
+
+  add({ 
+    category: 'Business Calculations', 
+    complexity_score: 4, 
+    question: 'A Marrakech restaurant has monthly expenses of 45,000 MAD and revenue of 60,000 MAD. What is the profit margin?', 
+    options: ['20%', '25%', '30%', '33%'], 
+    correct: 'B', 
+    explanation: 'Profit = 60,000 - 45,000 = 15,000 MAD. Profit margin = (15,000 ÷ 60,000) × 100 = 25%.' 
+  });
+
+  add({ 
+    category: 'Data Interpretation', 
+    complexity_score: 3, 
+    question: 'Rabat office sales: Q1: 120,000 MAD, Q2: 150,000 MAD, Q3: 130,000 MAD. What is the average quarterly sales?', 
+    options: ['130,000 MAD', '133,333 MAD', '135,000 MAD', '140,000 MAD'], 
+    correct: 'B', 
+    explanation: 'Average = (120,000 + 150,000 + 130,000) ÷ 3 = 400,000 ÷ 3 = 133,333 MAD.' 
+  });
+
+  add({ 
+    category: 'Distance & Travel', 
+    complexity_score: 3, 
+    question: 'Youssef travels from Tangier to Fez (300 km) at 80 km/h, then from Fez to Meknes (60 km) at 60 km/h. What is his total travel time?', 
+    options: ['4.5 hours', '4.75 hours', '5 hours', '5.25 hours'], 
+    correct: 'B', 
+    explanation: 'Time1 = 300/80 = 3.75 hours. Time2 = 60/60 = 1 hour. Total = 3.75 + 1 = 4.75 hours.' 
+  });
+
+  add({ 
+    category: 'Percentages', 
+    complexity_score: 2, 
+    question: 'Laila spends 30% of her 8,000 MAD salary on rent. How much does she spend on rent?', 
+    options: ['2,200 MAD', '2,400 MAD', '2,600 MAD', '2,800 MAD'], 
+    correct: 'B', 
+    explanation: '30% of 8,000 = 0.30 × 8,000 = 2,400 MAD.' 
+  });
+
+  add({ 
+    category: 'Area Calculations', 
+    complexity_score: 4, 
+    question: 'A rectangular farm near Agadir is 500m long and 300m wide. What is its area in hectares?', 
+    options: ['12 hectares', '15 hectares', '18 hectares', '20 hectares'], 
+    correct: 'B', 
+    explanation: 'Area = 500 × 300 = 150,000 m². Converting to hectares: 150,000 ÷ 10,000 = 15 hectares.' 
+  });
+
+  // Generate more questions programmatically with Moroccan context
+  const moroccanCities = ['Casablanca', 'Rabat', 'Marrakech', 'Fez', 'Tangier', 'Agadir', 'Meknes', 'Oujda'];
+  const moroccanNames = ['Ahmed', 'Fatima', 'Omar', 'Aicha', 'Youssef', 'Khadija', 'Hassan', 'Amina', 'Rachid', 'Nadia'];
+  
+  const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+  const randomName = () => moroccanNames[rand(0, moroccanNames.length - 1)];
+  const randomCity = () => moroccanCities[rand(0, moroccanCities.length - 1)];
+
+  // Generate distance/speed questions
+  while (pool.length < 20) {
+    const speed = [60, 70, 80, 90, 100, 110, 120][rand(0, 6)];
+    const distance = [80, 100, 120, 150, 200, 250, 300][rand(0, 6)];
+    const time = distance / speed;
+    add({
+      category: 'Distance & Speed',
+      complexity_score: rand(2, 4),
+      question: `${randomName()} travels from ${randomCity()} to ${randomCity()} (${distance} km) at ${speed} km/h. How long does the journey take?`,
+      options: [
+        `${(time - 0.5).toFixed(1)} hours`,
+        `${time.toFixed(1)} hours`,
+        `${(time + 0.5).toFixed(1)} hours`,
+        `${(time + 1).toFixed(1)} hours`
+      ],
+      correct: 'B',
+      explanation: `Time = Distance ÷ Speed = ${distance} ÷ ${speed} = ${time.toFixed(1)} hours.`
+    });
+  }
+
+  // Generate financial questions with MAD
+  while (pool.length < 35) {
+    const principal = [5000, 8000, 10000, 15000, 20000, 25000][rand(0, 5)];
+    const rate = [3, 4, 5, 6, 7, 8][rand(0, 5)];
+    const years = [2, 3, 4, 5][rand(0, 3)];
+    const amount = principal * (1 + (rate / 100) * years);
+    add({
+      category: 'Financial Calculations',
+      complexity_score: rand(3, 4),
+      question: `${randomName()} invests ${principal.toLocaleString()} MAD at ${rate}% simple annual interest. What will the investment be worth after ${years} years?`,
+      options: [
+        `${Math.round(amount - 1000).toLocaleString()} MAD`,
+        `${Math.round(amount).toLocaleString()} MAD`,
+        `${Math.round(amount + 1000).toLocaleString()} MAD`,
+        `${Math.round(amount + 2000).toLocaleString()} MAD`
+      ],
+      correct: 'B',
+      explanation: `Simple interest: ${principal.toLocaleString()} × (1 + ${rate}% × ${years}) = ${Math.round(amount).toLocaleString()} MAD.`
+    });
+  }
+
+  // Generate percentage questions with Moroccan context
+  while (pool.length < 50) {
+    const salary = [6000, 7000, 8000, 9000, 10000, 12000, 15000][rand(0, 6)];
+    const percentage = [20, 25, 30, 35, 40][rand(0, 4)];
+    const amount = (salary * percentage) / 100;
+    const expenses = ['rent', 'transportation', 'food', 'savings'][rand(0, 3)];
+    add({
+      category: 'Percentages',
+      complexity_score: rand(2, 3),
+      question: `${randomName()} earns ${salary.toLocaleString()} MAD monthly and spends ${percentage}% on ${expenses}. How much is spent on ${expenses}?`,
+      options: [
+        `${Math.round(amount - 200).toLocaleString()} MAD`,
+        `${Math.round(amount).toLocaleString()} MAD`,
+        `${Math.round(amount + 200).toLocaleString()} MAD`,
+        `${Math.round(amount + 400).toLocaleString()} MAD`
+      ],
+      correct: 'B',
+      explanation: `${percentage}% of ${salary.toLocaleString()} = ${Math.round(amount).toLocaleString()} MAD.`
+    });
+  }
+
+  // Generate business data interpretation questions
+  while (pool.length < 60) {
+    if (pool.length % 2 === 0) {
+      const q1 = rand(80000, 200000);
+      const q2 = rand(90000, 220000);
+      const q3 = rand(85000, 210000);
+      const avg = Math.round((q1 + q2 + q3) / 3);
+      add({
+        category: 'Data Interpretation',
+        complexity_score: rand(3, 5),
+        question: `${randomCity()} branch sales: Q1: ${q1.toLocaleString()} MAD, Q2: ${q2.toLocaleString()} MAD, Q3: ${q3.toLocaleString()} MAD. What is the average quarterly sales?`,
+        options: [
+          `${Math.round(avg - 5000).toLocaleString()} MAD`,
+          `${avg.toLocaleString()} MAD`,
+          `${Math.round(avg + 5000).toLocaleString()} MAD`,
+          `${Math.round(avg + 10000).toLocaleString()} MAD`
+        ],
+        correct: 'B',
+        explanation: `Average = (${q1.toLocaleString()} + ${q2.toLocaleString()} + ${q3.toLocaleString()}) ÷ 3 = ${avg.toLocaleString()} MAD.`
+      });
+    } else {
+      const price = [500, 800, 1200, 1500, 2000][rand(0, 4)];
+      const discount = [10, 15, 20, 25, 30][rand(0, 4)];
+      const discountAmount = (price * discount) / 100;
+      const finalPrice = price - discountAmount;
+      add({
+        category: 'Business Calculations',
+        complexity_score: rand(2, 4),
+        question: `A shop in ${randomCity()} offers a ${discount}% discount on a product priced at ${price} MAD. What is the discounted price?`,
+        options: [
+          `${Math.round(finalPrice - 50)} MAD`,
+          `${Math.round(finalPrice)} MAD`,
+          `${Math.round(finalPrice + 50)} MAD`,
+          `${Math.round(finalPrice + 100)} MAD`
+        ],
+        correct: 'B',
+        explanation: `Discount = ${price} × ${discount}% = ${discountAmount} MAD. Final price = ${price} - ${discountAmount} = ${Math.round(finalPrice)} MAD.`
+      });
+    }
+  }
+
+  // Sanity: ensure each correct_answer exists among options
+  pool.forEach(item => {
+    if (!item.options.find(o => o.option_id === item.correct_answer)) {
+      item.correct_answer = 'A';
+    }
+  });
+
+  return pool;
+};
+
 export const getNumericalTestData = () => {
+  const pool = buildNumericalQuestionPool();
+  const selectedQuestions = selectRandomQuestions(pool, 20);
   return {
     title: 'Numerical Reasoning Test',
     description: 'Assess your ability to interpret and analyze numerical data',
-    duration_minutes: 25,
-    total_questions: 25,
+    duration_minutes: 20,
+    total_questions: 20,
     sections: [
       {
         id: 1,
@@ -15,463 +276,20 @@ export const getNumericalTestData = () => {
         intro_text: {
           title: 'Numerical Reasoning Test',
           instructions: [
-            'You will be presented with 25 numerical reasoning questions that test your ability to interpret data and perform calculations.',
+            'You will be presented with 20 numerical reasoning questions that test your ability to interpret data and perform calculations.',
             'Each question includes numerical information presented as tables, charts, or text.',
             'Analyze the data carefully before selecting your answer.',
-            'You have 25 minutes to complete all questions.',
+            'You have 20 minutes to complete all questions.',
             'Use a calculator if necessary for complex calculations.',
             'Once you select an answer and move to the next question, you cannot go back.',
             'Read all information carefully before making your selection.'
           ]
         },
         intro_image: '/assets/images/numerical/intro.png',
-        questions: [
-          // Basic Arithmetic Questions
-          {
-            question_id: 1,
-            category: "Basic Arithmetic",
-            complexity_score: 2,
-            question: "If a car travels at a speed of 60 miles per hour, how far will it travel in 2.5 hours?",
-            options: [
-              { option_id: "A", text: "120 miles" },
-              { option_id: "B", text: "150 miles" },
-              { option_id: "C", text: "180 miles" },
-              { option_id: "D", text: "200 miles" }
-            ],
-            correct_answer: "B",
-            explanation: "To find the distance, multiply the speed by the time: 60 miles/hour × 2.5 hours = 150 miles."
-          },
-          {
-            question_id: 2,
-            category: "Basic Arithmetic",
-            complexity_score: 2,
-            question: "What is the result of 15% of 240?",
-            options: [
-              { option_id: "A", text: "36" },
-              { option_id: "B", text: "42" },
-              { option_id: "C", text: "24" },
-              { option_id: "D", text: "30" }
-            ],
-            correct_answer: "A",
-            explanation: "To find 15% of 240, multiply 240 by 0.15: 240 × 0.15 = 36."
-          },
-          {
-            question_id: 3,
-            category: "Basic Arithmetic",
-            complexity_score: 2,
-            question: "If 15% of x is 45, what is the value of x?",
-            options: [
-              { option_id: "A", text: "300" },
-              { option_id: "B", text: "350" },
-              { option_id: "C", text: "400" },
-              { option_id: "D", text: "450" }
-            ],
-            correct_answer: "A",
-            explanation: "If 15% of x is 45, then 0.15x = 45. Solve for x: x = 45 ÷ 0.15 = 300."
-          },
-          {
-            question_id: 4,
-            category: "Basic Arithmetic",
-            complexity_score: 3,
-            question: "A machine can produce 140 units in 4 hours. At this rate, how many units can it produce in 7 hours?",
-            options: [
-              { option_id: "A", text: "200 units" },
-              { option_id: "B", text: "235 units" },
-              { option_id: "C", text: "245 units" },
-              { option_id: "D", text: "260 units" }
-            ],
-            correct_answer: "C",
-            explanation: "The rate is 140 units ÷ 4 hours = 35 units per hour. In 7 hours: 35 units/hour × 7 hours = 245 units."
-          },
-          {
-            question_id: 5,
-            category: "Basic Arithmetic",
-            complexity_score: 3,
-            question: "If a team of 8 people can complete a project in 12 days, how many days would it take 6 people to complete the same project?",
-            options: [
-              { option_id: "A", text: "9 days" },
-              { option_id: "B", text: "16 days" },
-              { option_id: "C", text: "18 days" },
-              { option_id: "D", text: "24 days" }
-            ],
-            correct_answer: "B",
-            explanation: "The total work is 8 people × 12 days = 96 person-days. With 6 people, it would take 96 ÷ 6 = 16 days."
-          },
-          
-          // Ratio and Proportion Questions
-          {
-            question_id: 6,
-            category: "Ratio and Proportion",
-            complexity_score: 3,
-            question: "A company's revenue increased from $2.4 million to $3 million in one year. What was the percentage increase?",
-            options: [
-              { option_id: "A", text: "20%" },
-              { option_id: "B", text: "25%" },
-              { option_id: "C", text: "30%" },
-              { option_id: "D", text: "35%" }
-            ],
-            correct_answer: "B",
-            explanation: "The increase was $3M - $2.4M = $0.6M. The percentage increase is (0.6 ÷ 2.4) × 100 = 25%."
-          },
-          {
-            question_id: 7,
-            category: "Ratio and Proportion",
-            complexity_score: 4,
-            question: "A company has 420 employees, and the ratio of male to female employees is 4:3. How many female employees are there?",
-            options: [
-              { option_id: "A", text: "160" },
-              { option_id: "B", text: "180" },
-              { option_id: "C", text: "240" },
-              { option_id: "D", text: "280" }
-            ],
-            correct_answer: "B",
-            explanation: "If the ratio is 4:3, then out of 7 parts, 3 are female. So, (3/7) × 420 = 180 female employees."
-          },
-          {
-            question_id: 8,
-            category: "Ratio and Proportion",
-            complexity_score: 2,
-            question: "If an item costs $80 with a 25% discount, what is the final price?",
-            options: [
-              { option_id: "A", text: "$55" },
-              { option_id: "B", text: "$60" },
-              { option_id: "C", text: "$65" },
-              { option_id: "D", text: "$70" }
-            ],
-            correct_answer: "B",
-            explanation: "A 25% discount means the item will cost 75% of the original price: $80 × 0.75 = $60."
-          },
-          {
-            question_id: 9,
-            category: "Ratio and Proportion",
-            complexity_score: 4,
-            question: "If a recipe requires 2.5 cups of flour to make 20 cookies, how many cups of flour are needed to make 32 cookies?",
-            options: [
-              { option_id: "A", text: "3.2 cups" },
-              { option_id: "B", text: "4 cups" },
-              { option_id: "C", text: "4.5 cups" },
-              { option_id: "D", text: "5 cups" }
-            ],
-            correct_answer: "B",
-            explanation: "We can set up a proportion: 2.5 cups / 20 cookies = x cups / 32 cookies. Cross multiply: 2.5 × 32 = 20 × x, so x = (2.5 × 32) ÷ 20 = 4 cups."
-          },
-          {
-            question_id: 10,
-            category: "Ratio and Proportion",
-            complexity_score: 3,
-            question: "In a class, the ratio of boys to girls is 5:7. If there are 35 boys, how many girls are there?",
-            options: [
-              { option_id: "A", text: "45" },
-              { option_id: "B", text: "49" },
-              { option_id: "C", text: "42" },
-              { option_id: "D", text: "56" }
-            ],
-            correct_answer: "B",
-            explanation: "If the ratio of boys to girls is 5:7, and there are 35 boys, then: 5 parts = 35 boys, so 1 part = 7 boys. Therefore, 7 parts (girls) = 7 × 7 = 49 girls."
-          },
-          
-          // Data Interpretation Questions
-          {
-            question_id: 11,
-            category: "Data Interpretation",
-            complexity_score: 3,
-            data_type: "table",
-            table_data: {
-              title: "Sales by Department",
-              headers: ["Department", "Q1", "Q2", "Q3", "Q4", "Total"],
-              rows: [
-                ["Electronics", "$82,500", "$78,300", "$85,700", "$97,200", "$343,700"],
-                ["Clothing", "$65,800", "$72,400", "$68,900", "$84,500", "$291,600"],
-                ["Home Goods", "$45,200", "$48,700", "$51,300", "$60,100", "$205,300"],
-                ["Groceries", "$128,400", "$130,600", "$132,800", "$142,900", "$534,700"]
-              ]
-            },
-            question: "In which quarter did the Electronics department see the highest sales?",
-            options: [
-              { option_id: "A", text: "Q1" },
-              { option_id: "B", text: "Q2" },
-              { option_id: "C", text: "Q3" },
-              { option_id: "D", text: "Q4" }
-            ],
-            correct_answer: "D",
-            explanation: "The Electronics department sales were: Q1: $82,500, Q2: $78,300, Q3: $85,700, Q4: $97,200. The highest sales were in Q4 at $97,200."
-          },
-          {
-            question_id: 12,
-            category: "Data Interpretation",
-            complexity_score: 4,
-            data_type: "chart",
-            chart_data: {
-              type: "bar_chart",
-              title: "Quarterly Sales",
-            },
-            image: "/assets/images/numerical/bar_chart_quarterly_sales.png",
-            question: "If the total sales for the year were $1.2 million, approximately what percentage of annual sales occurred in Q3?",
-            options: [
-              { option_id: "A", text: "20%" },
-              { option_id: "B", text: "25%" },
-              { option_id: "C", text: "30%" },
-              { option_id: "D", text: "35%" }
-            ],
-            correct_answer: "B",
-            explanation: "From the chart, Q3 sales were $300,000. The percentage is (300,000 ÷ 1,200,000) × 100 = 25%."
-          },
-          {
-            question_id: 13,
-            category: "Data Interpretation",
-            complexity_score: 3,
-            data_type: "chart",
-            chart_data: {
-              type: "pie_chart",
-              title: "Market Share",
-            },
-            image: "/assets/images/numerical/pie_chart_market_share.png",
-            question: "If the total market size is $5 billion, what is the approximate market share in dollars for Company B?",
-            options: [
-              { option_id: "A", text: "$1 billion" },
-              { option_id: "B", text: "$1.25 billion" },
-              { option_id: "C", text: "$1.5 billion" },
-              { option_id: "D", text: "$1.75 billion" }
-            ],
-            correct_answer: "C",
-            explanation: "Company B has approximately 30% market share according to the chart. So, 30% of $5 billion is $1.5 billion."
-          },
-          {
-            question_id: 14,
-            category: "Data Interpretation",
-            complexity_score: 4,
-            data_type: "chart",
-            chart_data: {
-              type: "line_chart",
-              title: "Website Visitors",
-            },
-            image: "/assets/images/numerical/line_chart_website_visitors.png",
-            question: "What was the approximate percentage increase in website visitors from January to March?",
-            options: [
-              { option_id: "A", text: "25%" },
-              { option_id: "B", text: "33%" },
-              { option_id: "C", text: "50%" },
-              { option_id: "D", text: "75%" }
-            ],
-            correct_answer: "C",
-            explanation: "January had approximately 40,000 visitors, and March had approximately 60,000 visitors. The increase is (60,000 - 40,000) ÷ 40,000 × 100 = 50%."
-          },
-          {
-            question_id: 15,
-            category: "Data Interpretation",
-            complexity_score: 3,
-            data_type: "table",
-            table_data: {
-              title: "Project Budget Allocation",
-              headers: ["Department", "Budget ($)", "Spent ($)", "Remaining (%)"],
-              rows: [
-                ["Research", "120,000", "84,000", "?"],
-                ["Development", "200,000", "150,000", "?"],
-                ["Marketing", "80,000", "72,000", "?"],
-                ["Operations", "150,000", "90,000", "?"]
-              ]
-            },
-            question: "What percentage of the Development department's budget remains unspent?",
-            options: [
-              { option_id: "A", text: "20%" },
-              { option_id: "B", text: "25%" },
-              { option_id: "C", text: "30%" },
-              { option_id: "D", text: "35%" }
-            ],
-            correct_answer: "B",
-            explanation: "Development spent $150,000 out of $200,000. Remaining: $200,000 - $150,000 = $50,000. As a percentage: ($50,000 ÷ $200,000) × 100 = 25%."
-          },
-          {
-            question_id: 16,
-            category: "Data Interpretation",
-            complexity_score: 5,
-            data_type: "chart",
-            chart_data: {
-              type: "bar_chart",
-              title: "Book Sales",
-            },
-            image: "/assets/images/numerical/bar_chart_book_sales.png",
-            question: "If sales in 2021 were 20% higher than in 2020, and 15% lower than in 2022, what was the percentage increase from 2020 to 2022?",
-            options: [
-              { option_id: "A", text: "32%" },
-              { option_id: "B", text: "35%" },
-              { option_id: "C", text: "38%" },
-              { option_id: "D", text: "41.2%" }
-            ],
-            correct_answer: "D",
-            explanation: "Let's say sales in 2020 were x. Then 2021 sales were 1.2x, and 2022 sales were 1.2x ÷ 0.85 ≈ 1.412x. So the increase from 2020 to 2022 is approximately 41.2%."
-          },
-          {
-            question_id: 17,
-            category: "Data Interpretation",
-            complexity_score: 4,
-            data_type: "table",
-            table_data: {
-              title: "Monthly Expenses for a Small Business",
-              headers: ["Category", "January ($)", "February ($)", "March ($)", "Quarter Average ($)"],
-              rows: [
-                ["Rent", "2,000", "2,000", "2,000", "2,000"],
-                ["Utilities", "450", "480", "430", "453.33"],
-                ["Salaries", "8,500", "8,500", "9,200", "8,733.33"],
-                ["Marketing", "1,200", "1,500", "1,800", "1,500"],
-                ["Supplies", "750", "620", "840", "736.67"]
-              ]
-            },
-            question: "By what percentage did marketing expenses increase from January to March?",
-            options: [
-              { option_id: "A", text: "33.3%" },
-              { option_id: "B", text: "50%" },
-              { option_id: "C", text: "60%" },
-              { option_id: "D", text: "25%" }
-            ],
-            correct_answer: "B",
-            explanation: "January marketing expenses were $1,200, and March expenses were $1,800. The increase is ($1,800 - $1,200) ÷ $1,200 × 100 = 50%."
-          },
-          {
-            question_id: 18,
-            category: "Data Interpretation",
-            complexity_score: 4,
-            data_type: "chart",
-            chart_data: {
-              type: "line_chart",
-              title: "Stock Prices",
-            },
-            image: "/assets/images/numerical/line_chart_stock_prices.png",
-            question: "If an investor bought 300 shares of Company X in February and sold them all in May, what would be the approximate profit or loss?",
-            options: [
-              { option_id: "A", text: "$600 loss" },
-              { option_id: "B", text: "$600 profit" },
-              { option_id: "C", text: "$900 profit" },
-              { option_id: "D", text: "$1,500 profit" }
-            ],
-            correct_answer: "C",
-            explanation: "From the chart, Company X's stock price was approximately $45 in February and $48 in May. The profit would be ($48 - $45) × 300 shares = $900 profit."
-          },
-          
-          // Financial Calculations Questions
-          {
-            question_id: 19,
-            category: "Financial Calculations",
-            complexity_score: 3,
-            question: "An investment of $5,000 grows to $6,200 after 2 years. What is the annual growth rate, assuming simple interest?",
-            options: [
-              { option_id: "A", text: "10%" },
-              { option_id: "B", text: "12%" },
-              { option_id: "C", text: "15%" },
-              { option_id: "D", text: "24%" }
-            ],
-            correct_answer: "B",
-            explanation: "The growth is $6,200 - $5,000 = $1,200. Simple interest rate: ($1,200 ÷ $5,000) ÷ 2 years = 0.12 or 12% per year."
-          },
-          {
-            question_id: 20,
-            category: "Financial Calculations",
-            complexity_score: 4,
-            question: "If a company's monthly expenses are $45,000 and its revenue is $60,000, what is its profit margin?",
-            options: [
-              { option_id: "A", text: "15%" },
-              { option_id: "B", text: "25%" },
-              { option_id: "C", text: "33.3%" },
-              { option_id: "D", text: "75%" }
-            ],
-            correct_answer: "B",
-            explanation: "The profit is $60,000 - $45,000 = $15,000. The profit margin is ($15,000 ÷ $60,000) × 100 = 25%."
-          },
-          {
-            question_id: 21,
-            category: "Financial Calculations",
-            complexity_score: 3,
-            question: "A bank offers a savings account with an annual interest rate of 3%, compounded monthly. If $10,000 is deposited, how much will be in the account after 2 years (rounded to the nearest dollar)?",
-            options: [
-              { option_id: "A", text: "$10,600" },
-              { option_id: "B", text: "$10,609" },
-              { option_id: "C", text: "$10,618" },
-              { option_id: "D", text: "$10,627" }
-            ],
-            correct_answer: "C",
-            explanation: "Using the compound interest formula: P(1+r/n)^(nt) = $10,000(1+0.03/12)^(12*2) ≈ $10,618."
-          },
-          {
-            question_id: 22,
-            category: "Financial Calculations",
-            complexity_score: 4,
-            question: "A house was purchased for $320,000 and sold years later for $416,000. If the annual appreciation rate was 6.75%, approximately how many years was the house owned?",
-            options: [
-              { option_id: "A", text: "3 years" },
-              { option_id: "B", text: "4 years" },
-              { option_id: "C", text: "5 years" },
-              { option_id: "D", text: "6 years" }
-            ],
-            correct_answer: "B",
-            explanation: "Using the formula: Future Value = Present Value × (1 + rate)^time. $416,000 = $320,000 × (1 + 0.0675)^t. Solving for t: t = ln(416,000/320,000)/ln(1.0675) ≈ 4 years."
-          },
-          {
-            question_id: 23,
-            category: "Financial Calculations",
-            complexity_score: 5,
-            question: "A loan of $15,000 is taken at an annual interest rate of 8%, to be repaid in 3 equal annual installments. What is the approximate amount of each annual payment?",
-            options: [
-              { option_id: "A", text: "$5,786" },
-              { option_id: "B", text: "$5,852" },
-              { option_id: "C", text: "$5,921" },
-              { option_id: "D", text: "$6,000" }
-            ],
-            correct_answer: "A",
-            explanation: "Using the formula for equal loan payments: PMT = P × r × (1+r)^n/((1+r)^n-1), where P = $15,000, r = 0.08, n = 3. PMT = $15,000 × 0.08 × (1.08)^3/((1.08)^3-1) ≈ $5,786."
-          },
-          {
-            question_id: 24,
-            category: "Financial Calculations",
-            complexity_score: 3,
-            question: "A company had $50,000 in cash reserves on January 1st. It earns $8,000 monthly and spends $6,500 monthly. What will be the cash reserves on December 31st?",
-            options: [
-              { option_id: "A", text: "$65,500" },
-              { option_id: "B", text: "$68,000" },
-              { option_id: "C", text: "$68,500" },
-              { option_id: "D", text: "$70,000" }
-            ],
-            correct_answer: "B",
-            explanation: "Monthly net gain = $8,000 - $6,500 = $1,500. Over 12 months: $1,500 × 12 = $18,000. Final reserves = $50,000 + $18,000 = $68,000.",
-            time_limit: 90,
-            points: 3,
-            metadata: { created_date: "2025-08-27", difficulty_rating: 7.0, average_time: 85, success_rate: 0.38 }
-          },
-          {
-            question_id: 25,
-            category: "Data Interpretation",
-            complexity_score: 3,
-            data_type: "table",
-            table_data: {
-              title: "Monthly Sales by Region ($000s)",
-              headers: ["Region", "January", "February", "March"],
-              rows: [
-                ["North", 120, 130, 145],
-                ["South", 95, 105, 110],
-                ["East", 105, 100, 115],
-                ["West", 130, 135, 140]
-              ]
-            },
-            question: "What was the percentage increase in total sales from January to March?",
-            options: [
-              { option_id: "A", text: "11.1%" },
-              { option_id: "B", text: "12.5%" },
-              { option_id: "C", text: "13.3%" },
-              { option_id: "D", text: "15.0%" }
-            ],
-            correct_answer: "C",
-            explanation: "January total: 120+95+105+130=450. March total: 145+110+115+140=510. Percentage increase: (510-450)/450×100=13.3%",
-            time_limit: 75,
-            points: 2,
-            metadata: { created_date: "2025-08-27", difficulty_rating: 5.5, average_time: 65, success_rate: 0.53 }
-          }
-        ]
+        questions: selectedQuestions
       }
     ]
   };
 };
 
-// Function to get test data with answers (for instructor view)
-export const getNumericalTestWithAnswers = () => {
-  const testData = getNumericalTestData();
-  return testData;
-};
+export const getNumericalTestWithAnswers = () => getNumericalTestData();

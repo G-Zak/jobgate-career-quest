@@ -1,5 +1,4 @@
 import React from 'react';
-import Instructions from './Instructions';
 import QuestionCard from './QuestionCard';
 
 const TestContent = ({ 
@@ -31,27 +30,14 @@ const TestContent = ({
 
   return (
     <div className="flex-1 px-4">
-      {step === 'instructions' && (
-        <Instructions 
-          onStart={() => setStep('question')} 
-          testType={testType}
-          testTitle={testTitle}
-          description={description}
-          duration={duration}
-          questionCount={questionCount}
-          specificInstructions={specificInstructions}
-        />
-      )}
-
-      {step === 'question' && (
-        <QuestionCard
-          questionNumber={currentQuestion}
-          questionText={questions[currentQuestion]?.question || "What is the result of 25 × 4 + 16 ÷ 2?"}
-          options={questions[currentQuestion]?.options || ['104', '108', '112', '100', '120']}
-          onSelect={handleAnswer}
-          onNext={handleNext}
-        />
-      )}
+      {/* Always show questions - no more instructions step */}
+      <QuestionCard
+        questionNumber={currentQuestion}
+        questionText={questions[currentQuestion]?.question || "What is the result of 25 × 4 + 16 ÷ 2?"}
+        options={questions[currentQuestion]?.options || ['104', '108', '112', '100', '120']}
+        onSelect={handleAnswer}
+        onNext={handleNext}
+      />
     </div>
   );
 };

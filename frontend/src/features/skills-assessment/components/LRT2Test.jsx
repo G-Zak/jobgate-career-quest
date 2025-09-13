@@ -5,7 +5,7 @@ import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop
 import { getLRT2TestSections } from '../data/lrt2TestSections';
 
 const LRT2Test = ({ onBackToDashboard }) => {
-  const [testStep, setTestStep] = useState('instructions'); // instructions, test, results
+  const [testStep, setTestStep] = useState('test'); // Skip instructions - start directly with test
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [timeRemaining, setTimeRemaining] = useState(10 * 60); // 10 minutes
   const [answers, setAnswers] = useState({});

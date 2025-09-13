@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { CheckCircle, Target, Award, Briefcase } from 'lucide-react';
 
 const DynamicQuickStats = () => {
   const [stats, setStats] = useState({
@@ -49,13 +50,21 @@ const DynamicQuickStats = () => {
     }
   };
 
+  const getScoreColor = (score) => {
+    if (score >= 80) return 'sa-stat-value-success';
+    if (score >= 60) return 'sa-stat-value-warning';
+    return 'sa-stat-value-danger';
+  };
+
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
-        <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">Quick Stats</h3>
-        <div className="animate-pulse space-y-3 lg:space-y-4">
+      <div className="sa-card sa-fade-in">
+        <div className="sa-card-header">
+          <h3 className="sa-heading-2">Quick Stats</h3>
+        </div>
+        <div className="animate-pulse sa-stack">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="flex items-center justify-between">
+            <div key={i} className="sa-stat-item">
               <div className="h-4 bg-gray-200 rounded w-2/3"></div>
               <div className="h-4 bg-gray-200 rounded w-8"></div>
             </div>
@@ -66,29 +75,28 @@ const DynamicQuickStats = () => {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
-      <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">Quick Stats</h3>
-      <div className="space-y-3 lg:space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="text-gray-600 text-sm lg:text-base">Tests Complétés</span>
-          <span className="font-semibold text-gray-900 text-sm lg:text-base">{stats.testsCompleted}</span>
+    <div className="sa-card sa-fade-in">
+      <div className="sa-card-header">
+        <h3 className="sa-heading-2">Quick Stats</h3>
+      </div>
+      <div className="sa-stack">
+        <div className="sa-stat-item">
+          <span className="sa-stat-label">Tests Complétés</span>
+          <span className="sa-stat-value">{stats.testsCompleted}</span>
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-gray-600 text-sm lg:text-base">Score Moyen</span>
-          <span className={`font-semibold text-sm lg:text-base ${
-            stats.averageScore >= 80 ? 'text-green-600' : 
-            stats.averageScore >= 60 ? 'text-yellow-600' : 'text-red-600'
-          }`}>
+        <div className="sa-stat-item">
+          <span className="sa-stat-label">Score Moyen</span>
+          <span className={`sa-stat-value ${getScoreColor(stats.averageScore)}`}>
             {stats.averageScore}%
           </span>
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-gray-600 text-sm lg:text-base">Compétences Validées</span>
-          <span className="font-semibold text-blue-600 text-sm lg:text-base">{stats.skillsValidated}</span>
+        <div className="sa-stat-item">
+          <span className="sa-stat-label">Compétences Validées</span>
+          <span className="sa-stat-value sa-stat-value-primary">{stats.skillsValidated}</span>
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-gray-600 text-sm lg:text-base">Job Matches</span>
-          <span className="font-semibold text-purple-600 text-sm lg:text-base">{stats.jobMatches}</span>
+        <div className="sa-stat-item">
+          <span className="sa-stat-label">Job Matches</span>
+          <span className="sa-stat-value sa-stat-value-primary">{stats.jobMatches}</span>
         </div>
       </div>
     </div>

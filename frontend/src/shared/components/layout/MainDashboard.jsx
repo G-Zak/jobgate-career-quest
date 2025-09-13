@@ -3,15 +3,23 @@ import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  Cog6ToothIcon,
+  BellIcon,
+  QuestionMarkCircleIcon,
+  ArrowRightOnRectangleIcon,
+  SunIcon,
+  MoonIcon
 } from '@heroicons/react/24/outline';
-import { useDarkMode } from '../../../contexts/DarkModeContext';
 import Dashboard from '../../../features/candidate-dashboard/components/DashboardCandidat';
 import AvailableTests from '../../../features/skills-assessment/components/AvailableTests';
+import TestInfoPage from '../../../features/skills-assessment/components/TestInfoPage';
+import UnifiedTestRunnerShell from '../../../features/skills-assessment/components/UnifiedTestRunnerShell';
+import TestResultsPage from '../../../features/skills-assessment/components/TestResultsPage';
 import TechnicalTests from '../../../features/skills-assessment/components/TechnicalTests';
 import TestLayout from '../../../features/skills-assessment/components/TestLayout';
 import VerbalReasoningTest from '../../../features/skills-assessment/components/VerbalReasoningTest';
-import ProfilePage from '../../../features/profile/components/ProfilePage';
+import NumericalReasoningTest from '../../../features/skills-assessment/components/NumericalReasoningTest';
 import SpatialReasoningTest from '../../../features/skills-assessment/components/SpatialReasoningTest';
 import DiagrammaticReasoningTest from '../../../features/skills-assessment/components/DiagrammaticReasoningTest';
 import AbstractReasoningTest from '../../../features/skills-assessment/components/AbstractReasoningTest';
@@ -27,11 +35,17 @@ import SkillBasedTests from '../../../features/skills-assessment/components/Skil
 import TestAdministration from '../../../features/skills-assessment/components/TestAdministration';
 import TestDebugPage from '../../../features/skills-assessment/components/TestDebugPage';
 import TestHistoryDashboard from '../../../features/candidate-dashboard/components/TestHistoryDashboard';
-import JobRecommendationsPage from '../../../features/job-recommendations/components/JobRecommendationsPage';
 import { ChallengesList, ChallengeDetail, CodingDashboard } from '../../../features/coding-challenges/components';
 import DebugChallenges from '../../../features/coding-challenges/components/DebugChallenges';
 import SkillTestsOverview from '../../../features/skills-assessment/components/SkillTestsOverview';
 import PracticalTests from '../../../features/coding-challenges/components/PracticalTests';
+import AssessmentDashboardMetrics from '../../../features/skills-assessment/components/AssessmentDashboardMetrics';
+import AttemptsHistory from '../../../features/skills-assessment/components/AttemptsHistory';
+// Import new job recommendations and profile components
+import JobRecommendationsPage from '../../../features/job-recommendations/components/JobRecommendationsPage';
+import ProfilePage from '../../../features/profile/components/ProfilePage';
+// Import dark mode context
+import { useDarkMode } from '../../../contexts/DarkModeContext';
 import jobgateLogo from '../../../assets/images/ui/JOBGATE LOGO.png';
 import formationEnLigne from '../../../assets/images/ui/formation_en_ligne.avif';
 import { useScrollOnChange } from '../../utils/scrollUtils';
@@ -39,15 +53,19 @@ import formationTechnique from '../../../assets/images/ui/formation_technique.av
 import betterImpressions from '../../../assets/images/ui/better_impressions.avif';
 
 const MainDashboard = () => {
-  const { isDarkMode, toggleDarkMode } = useDarkMode();
   const [activeSection, setActiveSection] = useState('applications');
   const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
-  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [currentTestFilter, setCurrentTestFilter] = useState(null);
   const [currentTestId, setCurrentTestId] = useState(null);
   const [currentSkillId, setCurrentSkillId] = useState(null);
   const [selectedChallenge, setSelectedChallenge] = useState(null);
+  const [currentTestInfo, setCurrentTestInfo] = useState(null);
+  const [testResults, setTestResults] = useState(null);
+  
+  // Dark mode context
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
 
   // Universal scroll management using scroll utilities
   useScrollOnChange(activeSection, { smooth: true, attempts: 3 });
@@ -56,10 +74,10 @@ const MainDashboard = () => {
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (!event.target.closest('.profile-dropdown-container')) {
-        setShowProfileDropdown(false);
+      if (showUserDropdown && !event.target.closest('.user-dropdown-container')) {
+        setShowUserDropdown(false);
       }
-      if (!event.target.closest('#skills-validation')) {
+      if (showSkillsDropdown && !event.target.closest('.skills-validation-section')) {
         setShowSkillsDropdown(false);
       }
     };
@@ -68,12 +86,13 @@ const MainDashboard = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [showUserDropdown, showSkillsDropdown]);
 
   // Lock body scroll on test views so only the test area scrolls
   useEffect(() => {
     const isTestView = (
       activeSection === 'spatial-reasoning-test' ||
+      activeSection === 'numerical-reasoning-test' ||
       activeSection === 'diagrammatic-reasoning-test' ||
       activeSection === 'abstract-reasoning-test' ||
       activeSection === 'logical-reasoning-test' ||
@@ -102,23 +121,17 @@ const MainDashboard = () => {
     'abstract': 'abstract-tests',
     'diagrammatic': 'diagrammatic-tests',
     'spatial': 'spatial-tests',
-    'cognitive assessment': 'cognitive-tests',
-    'personality': 'personality-tests',
     'situational': 'situational-tests',
     'technical': 'technical-tests',
-    'accelerated learning': 'learning-tests'
   };
 
   const skillCategories = [
-    'Accelerated Learning',
     'Numerical', 
     'Verbal',
     'Logical',
     'Abstract',
     'Diagrammatic',
     'Spatial',
-    'Cognitive Assessment',
-    'Personality',
     'Situational',
     'Technical'
   ];
@@ -135,8 +148,40 @@ const MainDashboard = () => {
     
     // Set the filter based on the skill category
     setCurrentTestFilter(normalizedSkill);
-    setActiveSection('available-tests');
+    setActiveSection('assessments');
     // Keep dropdown open - don't close it automatically
+  };
+
+  // New unified routing handlers
+  const handleViewTestInfo = (testId, testInfo) => {
+    console.log('=== handleViewTestInfo called ===');
+    console.log('testId:', testId);
+    console.log('testInfo:', testInfo);
+    setCurrentTestId(testId);
+    setCurrentTestInfo(testInfo);
+    setActiveSection(`test-info-${testId}`);
+    console.log('Set activeSection to:', `test-info-${testId}`);
+  };
+
+  const handleStartTestFromInfo = (testId) => {
+    setActiveSection(`test-run-${testId}`);
+  };
+
+  const handleTestComplete = (results) => {
+    setTestResults(results);
+    setActiveSection(`test-results-${currentTestId}`);
+  };
+
+  const handleBackToAssessments = () => {
+    setActiveSection('assessments');
+    setCurrentTestId(null);
+    setCurrentTestInfo(null);
+    setTestResults(null);
+  };
+
+  const handleRetakeTest = (testId) => {
+    setTestResults(null);
+    setActiveSection(`test-run-${testId}`);
   };
 
   const handleStartTest = (testId, skillId = null) => {
@@ -150,6 +195,10 @@ const MainDashboard = () => {
     const isVerbalFilterAndNumber = (currentTestFilter === 'verbal' && typeof testId === 'number');
     const isStringWithVerbal = (typeof testId === 'string' && testId.toLowerCase().includes('verbal'));
     const isVRTString = (typeof testId === 'string' && testId.startsWith('VRT'));
+    
+    const isNumericalFilterAndNumber = (currentTestFilter === 'numerical' && typeof testId === 'number');
+    const isStringWithNumerical = (typeof testId === 'string' && testId.toLowerCase().includes('numerical'));
+    const isNRTString = (typeof testId === 'string' && testId.startsWith('NRT'));
     
     const isSpatialFilterAndNumber = (currentTestFilter === 'spatial' && typeof testId === 'number');
     const isStringWithSpatial = (typeof testId === 'string' && testId.toLowerCase().includes('spatial'));
@@ -173,6 +222,9 @@ const MainDashboard = () => {
     console.log('isVerbalFilterAndNumber:', isVerbalFilterAndNumber);
     console.log('isStringWithVerbal:', isStringWithVerbal);
     console.log('isVRTString:', isVRTString);
+    console.log('isNumericalFilterAndNumber:', isNumericalFilterAndNumber);
+    console.log('isStringWithNumerical:', isStringWithNumerical);
+    console.log('isNRTString:', isNRTString);
     console.log('isSpatialFilterAndNumber:', isSpatialFilterAndNumber);
     console.log('isStringWithSpatial:', isStringWithSpatial);
     console.log('isSRTString:', isSRTString);
@@ -204,6 +256,10 @@ const MainDashboard = () => {
       const language = testId.toString().includes('_FRENCH') ? 'french' : 'english';
       console.log('✅ Routing to verbal reasoning test with language:', language);
       setActiveSection(`verbal-reasoning-test-${language}`);
+    } else if (isNumericalFilterAndNumber || isStringWithNumerical || isNRTString) {
+      // Handle numerical reasoning tests
+      console.log('✅ Routing to numerical reasoning test');
+      setActiveSection('numerical-reasoning-test');
     } else if (isSpatialFilterAndNumber || isStringWithSpatial || isSRTString) {
       // Handle spatial reasoning tests
       console.log('✅ Routing to spatial reasoning test');
@@ -263,9 +319,9 @@ const MainDashboard = () => {
   };
 
   return (
-    <div id="dashboard-root" className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div id="dashboard-root" className="min-h-screen bg-gray-50">
       {/* Top Header Bar */}
-      <div id="app-header" className="header-bar h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-12 fixed top-0 left-0 right-0 z-20">
+      <div id="app-header" className="header-bar h-16 bg-white border-b border-gray-200 px-12 fixed top-0 left-0 right-0 z-20">
         <div className="header-content h-full flex items-center justify-between max-w-screen-2xl mx-auto">
           {/* Logo */}
           <div className="logo-container flex items-center">
@@ -283,7 +339,7 @@ const MainDashboard = () => {
               className={`nav-button text-base font-medium transition-colors pb-1 ${
                 activeSection === 'dashboard' 
                   ? 'text-blue-500 border-b-2 border-blue-500' 
-                  : 'text-gray-700 dark:text-gray-300 hover:text-blue-500'
+                  : 'text-gray-700 hover:text-blue-500'
               }`}
             >
               Tableau de bord
@@ -294,7 +350,7 @@ const MainDashboard = () => {
               className={`nav-button text-base font-medium transition-colors pb-1 ${
                 activeSection === 'jobs' 
                   ? 'text-blue-500 border-b-2 border-blue-500' 
-                  : 'text-gray-700 dark:text-gray-300 hover:text-blue-500'
+                  : 'text-gray-700 hover:text-blue-500'
               }`}
             >
               Offres d'emploi
@@ -305,165 +361,122 @@ const MainDashboard = () => {
               className={`nav-button text-base font-medium transition-colors pb-1 ${
                 activeSection === 'career' 
                   ? 'text-blue-500 border-b-2 border-blue-500' 
-                  : 'text-gray-700 dark:text-gray-300 hover:text-blue-500'
+                  : 'text-gray-700 hover:text-blue-500'
               }`}
             >
               Conseils de carrière
             </button>
+            
+            <button 
+              onClick={() => setActiveSection('mon-espace')}
+              className={`nav-button text-base font-medium transition-colors pb-1 ${
+                activeSection === 'mon-espace' 
+                  ? 'text-blue-500 border-b-2 border-blue-500' 
+                  : 'text-gray-700 hover:text-blue-500'
+              }`}
+            >
+              Mon Profil
+            </button>
           </nav>
 
-          {/* Right Avatar */}
-          <div className="relative profile-dropdown-container">
-            <button 
-              onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-              className="user-avatar w-8 h-8 bg-gray-300 rounded-full hover:bg-gray-400 transition-colors flex items-center justify-center"
+          {/* Right User Dropdown */}
+          <div className="relative user-dropdown-container">
+            <button
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
-              <UserCircleIcon className="w-6 h-6 text-gray-600" />
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                YA
+              </div>
             </button>
             
-            {/* Profile Dropdown */}
-            {showProfileDropdown && (
-              <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
-                {/* User Info Header */}
-                <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+            {/* User Dropdown Menu */}
+            {showUserDropdown && (
+              <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+                {/* User Info */}
+                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
                       YA
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">Yassine</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">yassine@jobgate.com</p>
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white">Yassine</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">yassine@jobgate.com</p>
                     </div>
                   </div>
                 </div>
-
-                {/* Menu Items */}
+                
+                {/* Navigation Links */}
                 <div className="py-2">
-                  {/* Profile */}
                   <button
                     onClick={() => {
-                      setActiveSection('profile');
-                      setShowProfileDropdown(false);
+                      setActiveSection('mon-espace');
+                      setShowUserDropdown(false);
                     }}
-                    className="w-full flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
-                    <UserCircleIcon className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
-                    <span>Profile</span>
+                    <UserCircleIcon className="w-4 h-4 mr-3" />
+                    Profile
                   </button>
-
-                  {/* Settings */}
-                  <button
-                    onClick={() => {
-                      setActiveSection('settings');
-                      setShowProfileDropdown(false);
-                    }}
-                    className="w-full flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <svg className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span>Settings</span>
+                  <button className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <Cog6ToothIcon className="w-4 h-4 mr-3" />
+                    Settings
                   </button>
-
-                  {/* Notifications */}
-                  <button
-                    onClick={() => {
-                      setActiveSection('notifications');
-                      setShowProfileDropdown(false);
-                    }}
-                    className="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <div className="flex items-center">
-                      <svg className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>Notifications</span>
-                    </div>
-                    <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center">3</span>
+                  <button className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <BellIcon className="w-4 h-4 mr-3" />
+                    Notifications
+                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">3</span>
                   </button>
-
-                  {/* Language Section */}
-                  <div className="px-4 py-2">
-                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">LANGUAGE</p>
+                </div>
+                
+                {/* Language Section */}
+                <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">LANGUAGE</p>
+                  <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                    <span className="mr-2">🌐</span>
+                    English
+                    <span className="ml-auto text-gray-500 dark:text-gray-400">EN</span>
                   </div>
-                  
-                  <button
-                    onClick={() => {
-                      console.log('Language settings');
-                      setShowProfileDropdown(false);
-                    }}
-                    className="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <div className="flex items-center">
-                      <svg className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                      </svg>
-                      <span>English</span>
-                    </div>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">EN</span>
-                  </button>
-
-                  {/* Appearance Section */}
-                  <div className="px-4 py-2 mt-2">
-                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">APPEARANCE</p>
-                  </div>
-
+                </div>
+                
+                {/* Appearance Section */}
+                <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">APPEARANCE</p>
                   <button
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       toggleDarkMode();
                     }}
-                    className="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="w-full flex items-center justify-between py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                   >
                     <div className="flex items-center">
-                      <svg className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                      </svg>
-                      <span>Dark Mode</span>
+                      {isDarkMode ? (
+                        <MoonIcon className="w-4 h-4 mr-3" />
+                      ) : (
+                        <SunIcon className="w-4 h-4 mr-3" />
+                      )}
+                      Dark Mode
                     </div>
-                    <div 
-                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${isDarkMode ? 'bg-blue-600' : 'bg-gray-200'}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleDarkMode();
-                      }}
-                    >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ${isDarkMode ? 'translate-x-4' : 'translate-x-0.5'}`}></span>
+                    <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      isDarkMode ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
+                    }`}>
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        isDarkMode ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
                     </div>
                   </button>
-
-                  {/* Help & Support */}
-                  <button
-                    onClick={() => {
-                      setActiveSection('help');
-                      setShowProfileDropdown(false);
-                    }}
-                    className="w-full flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <svg className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Help & Support</span>
+                </div>
+                
+                {/* Support and Sign Out */}
+                <div className="py-2 border-t border-gray-200 dark:border-gray-700">
+                  <button className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <QuestionMarkCircleIcon className="w-4 h-4 mr-3" />
+                    Help & Support
                   </button>
-
-                  {/* Divider */}
-                  <div className="border-t border-gray-100 dark:border-gray-700 my-2"></div>
-
-                  {/* Sign Out */}
-                  <button
-                    onClick={() => {
-                      console.log('Sign out');
-                      setShowProfileDropdown(false);
-                    }}
-                    className="w-full flex items-center px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                  >
-                    <svg className="w-4 h-4 mr-3 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    <span>Sign Out</span>
+                  <button className="w-full flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <ArrowRightOnRectangleIcon className="w-4 h-4 mr-3" />
+                    Sign Out
                   </button>
                 </div>
               </div>
@@ -475,7 +488,7 @@ const MainDashboard = () => {
       <div id="dashboard-layout" className="main-layout flex max-w-screen-2xl mx-auto px-12 pt-28 gap-8 items-start">
         {/* Left Navigation Strip */}
         <div id="sidebar" className="sidebar-navigation w-72">
-          <div className="sidebar-card w-72 bg-white dark:bg-gray-800 rounded-xl shadow-sm fixed top-28 h-[calc(100vh-8rem)] overflow-y-auto z-10">
+          <div className="sidebar-card w-72 bg-white rounded-xl shadow-sm fixed top-28 h-[calc(100vh-8rem)] overflow-y-auto z-10">
             {/* Primary Navigation */}
             <div className="primary-nav-section p-6 space-y-3">
               <button 
@@ -550,6 +563,8 @@ const MainDashboard = () => {
 
             {/* Additional Navigation Items */}
             <div className="secondary-nav-section p-6 space-y-3">
+
+              
               <button 
                 onClick={() => setActiveSection('skills-management')}
                 className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
@@ -572,60 +587,20 @@ const MainDashboard = () => {
                 Tests par Compétences
               </button>
               
-              <button 
-                onClick={() => setActiveSection('practical-tests')}
-                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
-                  activeSection === 'practical-tests'
-                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                    : 'text-gray-700 hover:bg-blue-50'
-                }`}
-              >
-                Tests Pratiques
-              </button>
-              
-              <button 
-                onClick={() => setActiveSection('coding-challenges')}
-                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
-                  activeSection === 'coding-challenges' || activeSection === 'coding-dashboard' || activeSection.startsWith('challenge-')
-                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                    : 'text-gray-700 hover:bg-blue-50'
-                }`}
-              >
-                Debug: Défis
-              </button>
-              
-              <button 
-                onClick={() => setActiveSection('technical-assessment')}
-                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
-                  activeSection === 'technical-assessment'
-                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                    : 'text-gray-700 hover:bg-blue-50'
-                }`}
-              >
-                Debug: QCM Skills
-              </button>
+
+
               
               {/* Test adaptatif supprimé - tests créés par l'admin */}
               
               {/* Administration supprimée - tests créés par l'admin Django */}
               
-              <button 
-                onClick={() => setActiveSection('test-debug')}
-                className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
-                  activeSection === 'test-debug'
-                    ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                    : 'text-gray-700 hover:bg-blue-50'
-                }`}
-              >
-                Debug Tests API
-              </button>
               
               <button 
-                onClick={() => setActiveSection('profile')}
+                onClick={() => setActiveSection('mon-espace')}
                 className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
-                  activeSection === 'profile'
+                  activeSection === 'mon-espace'
                     ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700'
+                    : 'text-gray-700 hover:bg-blue-50'
                 }`}
               >
                 Mon espace
@@ -660,53 +635,84 @@ const MainDashboard = () => {
         <div id="main-content" className="main-content-area flex-1 max-w-4xl">
           {/* Scrollable Content Container */}
           <div className="h-[calc(100vh-7rem)] overflow-y-auto overflow-x-hidden">
-            {/* Debug info (hidden by default) */}
-            {false && (
-              <div style={{position: 'fixed', top: 0, right: 0, background: 'yellow', padding: '10px', zIndex: 9999, fontSize: '12px'}}>
-                ActiveSection: {activeSection}<br/>
-                CurrentTestId: {currentTestId}<br/>
-                CurrentTestFilter: {currentTestFilter}
-              </div>
-            )}
           
           {activeSection === 'dashboard' ? (
-            <Dashboard onNavigateToSection={setActiveSection} />
+            <div className="space-y-6">
+              <Dashboard onNavigateToSection={setActiveSection} />
+              <AssessmentDashboardMetrics />
+            </div>
+          ) : activeSection === 'assessments' ? (
+            // Unified Assessment Dashboard
+            <AvailableTests 
+              onBackToDashboard={() => setActiveSection('applications')} 
+              onViewTestInfo={handleViewTestInfo}
+              testFilter={currentTestFilter}
+            />
+          ) : activeSection.startsWith('test-info-') ? (
+            // Test Information Page
+            <TestInfoPage 
+              testId={currentTestId}
+              onStartTest={handleStartTestFromInfo}
+              onBackToDashboard={handleBackToAssessments}
+            />
+          ) : activeSection.startsWith('test-run-') ? (
+            // Unified Test Runner
+            <UnifiedTestRunnerShell
+              testId={currentTestId}
+              testInfo={currentTestInfo}
+              onTestComplete={handleTestComplete}
+              onAbortTest={handleBackToAssessments}
+            />
+          ) : activeSection.startsWith('test-results-') ? (
+            // Test Results Page
+            <TestResultsPage 
+              testId={currentTestId}
+              results={testResults}
+              onBackToDashboard={handleBackToAssessments}
+              onRetakeTest={handleRetakeTest}
+            />
           ) : activeSection === 'test-session' ? (
             <TestLayout />
           ) : activeSection.startsWith('verbal-reasoning-test') ? (
             <VerbalReasoningTest 
-              onBackToDashboard={() => setActiveSection('available-tests')} 
+              onBackToDashboard={() => setActiveSection('assessments')} 
               language={activeSection.includes('french') ? 'french' : 'english'}
+              testId={currentTestId}
+            />
+          ) : activeSection === 'numerical-reasoning-test' ? (
+            <NumericalReasoningTest 
+              onBack={() => setActiveSection('assessments')} 
+              onComplete={() => setActiveSection('assessments')}
               testId={currentTestId}
             />
           ) : activeSection === 'spatial-reasoning-test' ? (
             <SpatialReasoningTest 
-              onBackToDashboard={() => setActiveSection('available-tests')} 
+              onBackToDashboard={() => setActiveSection('assessments')} 
               testId={currentTestId}
             />
           ) : activeSection === 'diagrammatic-reasoning-test' ? (
             <DiagrammaticReasoningTest 
-              onBackToDashboard={() => setActiveSection('available-tests')} 
+              onBackToDashboard={() => setActiveSection('assessments')} 
               testId={currentTestId}
             />
           ) : activeSection === 'abstract-reasoning-test' ? (
             <AbstractReasoningTest 
-              onBackToDashboard={() => setActiveSection('available-tests')} 
+              onBackToDashboard={() => setActiveSection('assessments')} 
               testId={currentTestId}
             />
           ) : activeSection === 'logical-reasoning-test' ? (
             <LogicalReasoningTest 
-              onBackToDashboard={() => setActiveSection('available-tests')} 
+              onBackToDashboard={() => setActiveSection('assessments')} 
               testId={currentTestId}
             />
           ) : activeSection === 'lrt2-test' ? (
             <LRT2Test 
-              onBackToDashboard={() => setActiveSection('available-tests')} 
+              onBackToDashboard={() => setActiveSection('assessments')} 
               testId={currentTestId}
             />
           ) : activeSection === 'lrt3-test' ? (
             <LRT3Test 
-              onBackToDashboard={() => setActiveSection('available-tests')} 
+              onBackToDashboard={() => setActiveSection('assessments')} 
               testId={currentTestId}
             />
           ) : activeSection === 'skills-management' ? (
@@ -731,12 +737,12 @@ const MainDashboard = () => {
             />
           ) : activeSection === 'situational-judgment-test' ? (
             <SituationalJudgmentTest 
-              onBackToDashboard={() => setActiveSection('available-tests')}
+              onBackToDashboard={() => setActiveSection('assessments')}
               testId={currentTestId}
             />
           ) : activeSection === 'master-sjt' ? (
             <MasterSJTTest 
-              onClose={() => setActiveSection('available-tests')}
+              onClose={() => setActiveSection('assessments')}
             />
           ) : activeSection === 'test-administration' ? (
             <TestAdministration 
@@ -745,13 +751,13 @@ const MainDashboard = () => {
           ) : activeSection === 'test-debug' ? (
             <TestDebugPage />
           ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
-            // Show AvailableTests for most test categories
+            // Legacy test routing (keeping for compatibility)
             activeSection === 'technical-tests' ? (
               <TechnicalTests onBackToDashboard={() => setActiveSection('applications')} />
             ) : (
               <AvailableTests 
                 onBackToDashboard={() => setActiveSection('applications')} 
-                onStartTest={handleStartTest}
+                onViewTestInfo={handleViewTestInfo}
                 testFilter={currentTestFilter}
               />
             )
@@ -775,21 +781,19 @@ const MainDashboard = () => {
                   Les exercices d'évaluation et de pratique interactifs seront disponibles ici. Cette évaluation de catégorie de compétences est prête à commencer.
                 </p>
                 <button 
-                  onClick={() => setActiveSection('available-tests')}
+                  onClick={() => setActiveSection('assessments')}
                   className="start-assessment-btn bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-sm transition-colors"
                 >
                   Commencer l'évaluation
                 </button>
               </div>
             </div>
-          ) : activeSection === 'profile' ? (
+          ) : activeSection === 'mon-espace' ? (
             <ProfilePage />
           ) : activeSection === 'offres-recommandees' ? (
             <JobRecommendationsPage />
           ) : activeSection === 'historique-tests' ? (
-            <TestHistoryDashboard />
-          ) : activeSection === 'profile' ? (
-            <ProfilePage />
+            <AttemptsHistory />
           ) : activeSection === 'coding-challenges' ? (
             <ChallengesList onSelectChallenge={handleSelectChallenge} />
           ) : activeSection === 'coding-dashboard' ? (

@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
 import json
 
 # Create your models here.
@@ -258,3 +259,42 @@ class CodingSession(models.Model):
     class Meta:
         unique_together = [('user', 'challenge')]
         ordering = ['-last_activity']
+
+
+class TestAttempt(models.Model):
+    """
+    Unified test attempt tracking for all test types
+    """
+    ATTEMPT_RESULT = (
+        ('completed', 'completed'),
+        ('aborted', 'aborted'),
+        ('timeout', 'timeout'),
+    )
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='test_attempts')
+    test_id = models.CharField(max_length=64, db_index=True)          # e.g. 'verbal','abstract'
+    test_version = models.CharField(max_length=32, blank=True, null=True)
+    language = models.CharField(max_length=8, default='en')
+
+    total_questions = models.PositiveIntegerField()
+    correct = models.PositiveIntegerField()
+    percentage = models.PositiveIntegerField()
+    raw_score = models.FloatField(default=0.0)                         # optional normalized score
+
+    started_at = models.DateTimeField()
+    finished_at = models.DateTimeField()
+    duration_seconds = models.PositiveIntegerField()
+
+    result = models.CharField(max_length=16, choices=ATTEMPT_RESULT, default='completed')
+    result_label = models.CharField(max_length=32, blank=True, null=True)  # e.g. 'Pass', 'Level B'
+
+    payload = models.JSONField(default=dict)  # answers, section breakdown, any metadata
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['user','test_id','created_at'])]
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.test_id} ({self.percentage}%) - {self.result}"

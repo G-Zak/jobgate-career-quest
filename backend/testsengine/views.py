@@ -7,14 +7,15 @@ from django.utils import timezone
 from django.db.models import Q, Count, Avg, Max
 from .models import (
     Test, Question, TestSession, TestAnswer, 
-    CodingChallenge, CodingSubmission, CodingSession
+    CodingChallenge, CodingSubmission, CodingSession, TestAttempt
 )
 from .serializers import (
     TestSerializer, QuestionSerializer, TestSessionSerializer, 
     TestAnswerSerializer, SubmitAnswerSerializer,
     CodingChallengeListSerializer, CodingChallengeDetailSerializer,
     CodingSubmissionSerializer, CodingSubmissionDetailSerializer,
-    CodingSessionSerializer, SubmitCodeSerializer, SaveCodeSerializer
+    CodingSessionSerializer, SubmitCodeSerializer, SaveCodeSerializer,
+    TestAttemptSerializer
 )
 from .services.code_executor import CodeExecutor
 
@@ -545,4 +546,94 @@ class CodingSessionViewSet(viewsets.ModelViewSet):
             'active_sessions': active_sessions,
             'completion_rate': round((completed_sessions / total_sessions) * 100, 1) if total_sessions > 0 else 0,
             'average_completion_time_minutes': avg_time.total_seconds() / 60 if avg_time else None
+        })
+
+
+class TestAttemptViewSet(viewsets.ModelViewSet):
+    """ViewSet for unified test attempt tracking across all test types"""
+    
+    serializer_class = TestAttemptSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Return attempts for the authenticated user"""
+        return TestAttempt.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        """Auto-assign the authenticated user when creating an attempt"""
+        serializer.save(user=self.request.user)
+    
+    @action(detail=False, methods=['get'])
+    def by_test(self, request):
+        """Get attempts grouped by test type"""
+        test_id = request.query_params.get('test_id')
+        if test_id:
+            attempts = self.get_queryset().filter(test_id=test_id)
+        else:
+            attempts = self.get_queryset()
+        
+        serializer = self.get_serializer(attempts, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def metrics(self, request):
+        """Get user's assessment metrics"""
+        attempts = self.get_queryset()
+        
+        # Group by test_id for best scores and last attempts
+        test_metrics = {}
+        for attempt in attempts:
+            test_id = attempt.test_id
+            if test_id not in test_metrics:
+                test_metrics[test_id] = {
+                    'attempts': [],
+                    'best_percentage': 0,
+                    'last_percentage': 0,
+                    'completed_count': 0
+                }
+            
+            test_metrics[test_id]['attempts'].append(attempt)
+            
+            # Update best score
+            if attempt.percentage > test_metrics[test_id]['best_percentage']:
+                test_metrics[test_id]['best_percentage'] = attempt.percentage
+            
+            # Count completed attempts
+            if attempt.result in ['completed', 'timeout']:
+                test_metrics[test_id]['completed_count'] += 1
+        
+        # Calculate last scores and overall metrics
+        total_attempts = attempts.count()
+        completed_tests = 0
+        percentage_sum = 0
+        percentage_count = 0
+        
+        best_by_test = {}
+        last_by_test = {}
+        
+        for test_id, data in test_metrics.items():
+            # Sort by created_at desc to get last attempt
+            data['attempts'].sort(key=lambda x: x.created_at, reverse=True)
+            if data['attempts']:
+                last_by_test[test_id] = data['attempts'][0].percentage
+            
+            best_by_test[test_id] = data['best_percentage']
+            
+            if data['completed_count'] > 0:
+                completed_tests += 1
+            
+            # Add to average calculation
+            for attempt in data['attempts']:
+                if attempt.result in ['completed', 'timeout']:
+                    percentage_sum += attempt.percentage
+                    percentage_count += 1
+        
+        avg_percentage = round(percentage_sum / percentage_count) if percentage_count > 0 else 0
+        
+        return Response({
+            'total_attempts': total_attempts,
+            'tests_completed': completed_tests,
+            'avg_percentage': avg_percentage,
+            'best_by_test': best_by_test,
+            'last_by_test': last_by_test
         })
