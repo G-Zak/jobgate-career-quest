@@ -40,19 +40,18 @@ const unifiedTestsData = [
   {
     category: "Verbal Reasoning Tests", 
     prefix: "VRT",
-    total: 7,
-    unlocked: [1, 2, 3, 4, 5, 6, 7],
+    total: 5,
+    unlocked: [1, 2, 3, 4, 5],
     icon: <FaBrain className="text-emerald-600" />,
     progress: 100,
     testType: "verbal",
     tests: [
-      { id: "VRT1", title: "VRT1", difficulty: "mixed", level: "Mixed Difficulty", duration: "25 min", questions: "8 passages", badge: "�", color: "emerald", unlocked: true, description: "Comprehensive reading comprehension test with randomized passages" },
-      { id: "VRT2", title: "VRT2", difficulty: "medium", level: "Intermediate", duration: "25 min", questions: "25", badge: "�", color: "emerald", unlocked: true, description: "Business & professional reading comprehension" },
-      { id: "VRT3", title: "VRT3", difficulty: "hard", level: "Advanced", duration: "30 min", questions: "30", badge: "�", color: "emerald", unlocked: true, description: "Management & leadership comprehension" },
-      { id: "VRT4", title: "VRT4", difficulty: "expert", level: "Expert", duration: "25 min", questions: "30", badge: "🔗", color: "emerald", unlocked: true, description: "Comprehensive analogies across 9 different types" },
-      { id: "VRT5", title: "VRT5", difficulty: "expert", level: "Expert", duration: "25 min", questions: "25", badge: "🔍", color: "emerald", unlocked: true, description: "Classification (Odd-One-Out): words, pairs, numbers, letters" },
-      { id: "VRT6", title: "VRT6", difficulty: "expert", level: "Master", duration: "30 min", questions: "25", badge: "🔐", color: "emerald", unlocked: true, description: "Coding & Decoding: crack patterns, codes, and ciphers" },
-      { id: "VRT7", title: "VRT7", difficulty: "expert", level: "Master", duration: "35 min", questions: "25", badge: "🧩", color: "emerald", unlocked: true, description: "Blood Relations & Logical Puzzles: advanced reasoning challenges" }
+      { id: "VRT1", title: "VRT1 - Reading Comprehension", difficulty: "mixed", level: "Mixed Difficulty", duration: "20 min", questions: "10", badge: "�", color: "emerald", unlocked: true, description: "Comprehensive reading comprehension with mixed difficulty passages covering science, business, and management topics" },
+      { id: "VRT2", title: "VRT2 - Analogies", difficulty: "expert", level: "Expert", duration: "25 min", questions: "25", badge: "🔗", color: "emerald", unlocked: true, description: "Comprehensive analogies across 9 different types" },
+      { id: "VRT3", title: "VRT3 - Classification", difficulty: "expert", level: "Expert", duration: "25 min", questions: "25", badge: "🔍", color: "emerald", unlocked: true, description: "Classification (Odd-One-Out): words, pairs, numbers, letters" },
+      { id: "VRT4", title: "VRT4 - Coding & Decoding", difficulty: "expert", level: "Master", duration: "30 min", questions: "25", badge: "🔐", color: "emerald", unlocked: true, description: "Coding & Decoding: crack patterns, codes, and ciphers" },
+      { id: "VRT5", title: "VRT5 - Blood Relations & Logical Puzzles", difficulty: "expert", level: "Master", duration: "35 min", questions: "25", badge: "🧩", color: "emerald", unlocked: true, description: "Blood Relations & Logical Puzzles: advanced reasoning challenges" }
+
     ]
   },
   {
