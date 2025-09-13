@@ -121,11 +121,8 @@ const MainDashboard = () => {
     'abstract': 'abstract-tests',
     'diagrammatic': 'diagrammatic-tests',
     'spatial': 'spatial-tests',
-    'cognitive assessment': 'cognitive-tests',
-    'personality': 'personality-tests',
     'situational': 'situational-tests',
     'technical': 'technical-tests',
-    'accelerated learning': 'learning-tests'
   };
 
   const skillCategories = [

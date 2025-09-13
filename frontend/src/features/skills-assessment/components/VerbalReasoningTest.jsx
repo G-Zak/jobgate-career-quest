@@ -11,7 +11,6 @@ import {
   FaFileAlt,
   FaCheckCircle,
   FaTimes,
-  FaPause,
   FaPlay,
   FaHome
 } from 'react-icons/fa';
@@ -56,7 +55,6 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
   const [testData, setTestData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isPaused, setIsPaused] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [startedAt, setStartedAt] = useState(null);
   const [results, setResults] = useState(null);
@@ -78,23 +76,18 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
         
         let data;
         
-        // CONSOLIDATED READING COMPREHENSION TEST
-        if (testId === 'VRT-COMP' || testId === 'VRT_COMP' || testId === 'VRTCOMP') {
-          data = getRandomizedTestByLegacyId('VRT-COMP');
-        } else if (testId === 'VRT1' || testId === '1' || testId === 1) {
-          data = getRandomizedTestByLegacyId('VRT1');
+
+        // VERBAL REASONING TESTS - Each with its own content
+        if (testId === 'VRT1' || testId === '1' || testId === 1) {
+          data = getRandomizedTestByLegacyId('VRT1'); // Reading Comprehension
         } else if (testId === 'VRT2' || testId === '2' || testId === 2) {
-          data = getRandomizedTestByLegacyId('VRT2');
+          data = getRandomizedTestByLegacyId('VRT4'); // Analogies (mapped to VRT4 data)
         } else if (testId === 'VRT3' || testId === '3' || testId === 3) {
-          data = getRandomizedTestByLegacyId('VRT3');
+          data = getRandomizedTestByLegacyId('VRT5'); // Classification (mapped to VRT5 data)
         } else if (testId === 'VRT4' || testId === '4' || testId === 4) {
-          data = getRandomizedTestByLegacyId('VRT4');
+          data = getRandomizedTestByLegacyId('VRT6'); // Coding & Decoding (mapped to VRT6 data)
         } else if (testId === 'VRT5' || testId === '5' || testId === 5) {
-          data = getRandomizedTestByLegacyId('VRT5');
-        } else if (testId === 'VRT6' || testId === '6' || testId === 6) {
-          data = getRandomizedTestByLegacyId('VRT6');
-        } else if (testId === 'VRT7' || testId === '7' || testId === 7) {
-          data = getRandomizedTestByLegacyId('VRT7');
+          data = getRandomizedTestByLegacyId('VRT7'); // Blood Relations & Logical Puzzles (mapped to VRT7 data)
         } else {
           data = getVerbalTestSections();
         }
@@ -355,9 +348,6 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
     onBackToDashboard();
   };
 
-  const togglePause = () => {
-    setIsPaused(!isPaused);
-  };
 
   // Loading state
   if (loading) {
@@ -462,16 +452,6 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
 
                   {/* Right: Timer & Controls */}
                   <div className="flex items-center space-x-4">
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={togglePause}
-                      className={`p-2 rounded-lg transition-colors ${
-                        isPaused ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
-                      {isPaused ? <FaPlay /> : <FaPause />}
-                    </motion.button>
                     
                     <div className={`text-right ${getTimeColor()}`}>
                       <div className="text-2xl font-bold font-mono">
@@ -590,35 +570,6 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
               </div>
             </div>
 
-            {/* Pause Overlay */}
-            <AnimatePresence>
-              {isPaused && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center"
-                >
-                  <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.9, opacity: 0 }}
-                    className="bg-white rounded-2xl p-8 text-center max-w-md"
-                  >
-                    <FaPause className="text-4xl text-blue-600 mb-4 mx-auto" />
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">Test Paused</h3>
-                    <p className="text-gray-600 mb-6">Take your time. Click resume when ready.</p>
-                    <button
-                      onClick={togglePause}
-                      className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all"
-                    >
-                      <FaPlay className="inline mr-2" />
-                      Resume Test
-                    </button>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
             {/* Exit Confirmation */}
             <AnimatePresence>

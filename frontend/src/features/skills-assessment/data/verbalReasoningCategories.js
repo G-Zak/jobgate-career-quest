@@ -474,9 +474,16 @@ function selectRandomPassages(pool, count) {
   return shuffled.slice(0, count);
 }
 
-// Generate randomized reading comprehension tests
-export function getRandomizedReadingComprehensionBasic(questionCount = 3) {
-  const selectedPassages = selectRandomPassages(readingComprehensionBasic, questionCount);
+// Generate randomized reading comprehension tests - UNIFIED VRT1
+export function getRandomizedReadingComprehensionBasic(questionCount = 10) {
+  // Combine all reading comprehension pools (VRT1, VRT2, VRT3)
+  const allPassages = [
+    ...readingComprehensionBasic,
+    ...readingComprehensionIntermediate, 
+    ...readingComprehensionAdvanced
+  ];
+  
+  const selectedPassages = selectRandomPassages(allPassages, questionCount);
   
   // Renumber questions sequentially
   let questionNumber = 1;
@@ -490,14 +497,14 @@ export function getRandomizedReadingComprehensionBasic(questionCount = 3) {
 
   return {
     id: "VRT1",
-    title: "Verbal Reasoning Test 1 - Reading Comprehension (Basic)",
-    description: "Basic level reading comprehension with science and nature topics",
+    title: "Verbal Reasoning Test - Reading Comprehension",
+    description: "Comprehensive reading comprehension with mixed difficulty passages covering science, business, and management topics",
     timeLimit: 20,
     sections: [
       {
         id: 1,
-        title: "Reading Comprehension - Basic Level",
-        description: "Read each passage carefully and answer the questions based on the information provided.",
+        title: "Reading Comprehension - Mixed Difficulty",
+        description: "Read each passage carefully and answer the questions based on the information provided. Passages cover basic to advanced topics.",
         passages: processedPassages
       }
     ]
@@ -619,22 +626,22 @@ import { getRandomizedVRT7Test } from './verbalBloodRelationsLogicalPuzzlesVRT7_
 // ==========================================
 
 export const verbalReasoningCategories = {
-  // CONSOLIDATED READING COMPREHENSION
+  // UNIFIED READING COMPREHENSION (VRT1)
   readingComprehension: {
     id: "reading_comprehension",
     name: "Reading Comprehension",
     description: "Tests ability to understand, analyze, and interpret written passages across all difficulty levels",
     levels: {
-      consolidated: {
-        name: "Comprehensive Reading Test",
-        testId: "VRT-COMP",
-        description: "Mixed difficulty passages covering science, business, and management topics with anti-cheating randomization",
+      unified: {
+        name: "Verbal Reasoning Test - Reading Comprehension",
+        testId: "VRT1",
+        description: "Comprehensive reading comprehension with mixed difficulty passages covering science, business, and management topics",
         questionPool: "combined", // Uses all three pools combined
-        defaultQuestionCount: 8,
-        timeLimit: 25,
-        getRandomizedTest: getRandomizedReadingComprehensionConsolidated
+        defaultQuestionCount: 10,
+        timeLimit: 20,
+        getRandomizedTest: getRandomizedReadingComprehensionBasic
       },
-      // Legacy individual tests (kept for backward compatibility)
+      // Legacy individual tests (kept for backward compatibility but deprecated)
       basic: {
         name: "Basic Level",
         testId: "VRT1",
