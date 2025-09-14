@@ -88,7 +88,7 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
 
   // Timer effect
   useEffect(() => {
-    if (testStep === 'test' && timeRemaining > 0 && !isPaused) {
+    if (testStep === 'test' && timeRemaining > 0) {
       const timer = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev <= 1) {
@@ -101,7 +101,7 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
 
       return () => clearInterval(timer);
     }
-  }, [testStep, timeRemaining, isPaused]);
+  }, [testStep, timeRemaining]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -289,8 +289,6 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
                   {formatTime(timeRemaining)}
                 </div>
               </div>
-
-            
             </div>
           </div>
         </div>
@@ -420,7 +418,6 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
           </div>
         </div>
       </div>
-
       {/* Exit Modal */}
       <AnimatePresence>
         {showExitModal && (

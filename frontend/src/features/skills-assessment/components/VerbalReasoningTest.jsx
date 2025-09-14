@@ -75,7 +75,6 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
         setError(null);
         
         let data;
-        
 
         // VERBAL REASONING TESTS - Each with its own content
         if (testId === 'VRT1' || testId === '1' || testId === 1) {
@@ -117,7 +116,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
 
   // Timer countdown
   useEffect(() => {
-    if (testStep === 'test' && timeRemaining > 0 && !isPaused) {
+    if (testStep === 'test' && timeRemaining > 0) {
       const timer = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev <= 1) {
@@ -130,7 +129,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
 
       return () => clearInterval(timer);
     }
-  }, [testStep, timeRemaining, isPaused]);
+  }, [testStep, timeRemaining]);
 
   // Helper functions
   const getSectionPassages = (section) => {
@@ -348,7 +347,6 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
     onBackToDashboard();
   };
 
-
   // Loading state
   if (loading) {
     return (
@@ -451,8 +449,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
                   </div>
 
                   {/* Right: Timer & Controls */}
-                  <div className="flex items-center space-x-4">
-                    
+                  <div className="flex items-center space-x-4">                    
                     <div className={`text-right ${getTimeColor()}`}>
                       <div className="text-2xl font-bold font-mono">
                         <FaClock className="inline mr-2" />
@@ -569,8 +566,6 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
                 </section>
               </div>
             </div>
-
-
             {/* Exit Confirmation */}
             <AnimatePresence>
               {showExitConfirm && (
