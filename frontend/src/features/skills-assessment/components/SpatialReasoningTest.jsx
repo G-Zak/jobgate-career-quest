@@ -182,7 +182,6 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
     }
   };
 
-  
 
   const handleExitTest = () => {
     setShowExitModal(true);
@@ -290,7 +289,6 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
                   {formatTime(timeRemaining)}
                 </div>
               </div>
-            
             </div>
           </div>
         </div>
@@ -420,8 +418,6 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
           </div>
         </div>
       </div>
-
-
       {/* Exit Modal */}
       <AnimatePresence>
         {showExitModal && (
