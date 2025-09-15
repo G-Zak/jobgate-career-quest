@@ -7,6 +7,7 @@ import { submitTestAttempt } from '../lib/submitHelper';
 import TestResultsPage from './TestResultsPage';
 import { getRuleFor, buildAttempt } from '../testRules';
 import { saveAttempt } from '../lib/attemptStorage';
+import { useUniversalScoring } from '../hooks/useUniversalScoring';
 
 const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
   const rule = getRuleFor(testId);
@@ -27,12 +28,28 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
   useTestScrollToTop(testStep, 'logical-test-scroll', { smooth: true, attempts: 5 });
   useQuestionScrollToTop(currentQuestionIndex, testStep, 'logical-test-scroll');
 
+  // Universal scoring hook
+  const {
+    scoringSystem,
+    isInitialized: scoringInitialized,
+    startQuestion,
+    recordAnswer,
+    getFormattedResults,
+    getScoreBreakdown,
+    getQuestionTimings,
+    completeTest
+  } = useUniversalScoring('logical', questions, null, {
+    enableConsoleLogging: true,
+    logPrefix: '🧠',
+    autoStartTest: false
+  });
+
   // Load and prepare questions
   useEffect(() => {
     try {
       setLoading(true);
       const data = getLogicalTestSections();
-      
+
       // Flatten all questions from all sections
       const allQuestions = [];
       data?.sections?.forEach(section => {
@@ -45,11 +62,11 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
           });
         }
       });
-      
+
       // Shuffle and limit to rule's totalQuestions
       const shuffled = allQuestions.sort(() => Math.random() - 0.5);
       const limitedQuestions = shuffled.slice(0, rule?.totalQuestions || 20);
-      
+
       setQuestions(limitedQuestions);
       setTimeRemaining(rule?.timeLimitMin * 60 || 20 * 60);
       setStartedAt(new Date());
@@ -59,6 +76,21 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
       setLoading(false);
     }
   }, [rule]);
+
+  // Start test when scoring system is ready
+  useEffect(() => {
+    if (scoringSystem && scoringInitialized && questions.length > 0) {
+      console.log('🧠 Starting logical test with universal scoring');
+      scoringSystem.startTest();
+    }
+  }, [scoringSystem, scoringInitialized, questions]);
+
+  // Start question timer when question changes
+  useEffect(() => {
+    if (questions[currentQuestionIndex] && scoringSystem) {
+      startQuestion(questions[currentQuestionIndex].question_id);
+    }
+  }, [currentQuestionIndex, questions, scoringSystem, startQuestion]);
 
   // Timer countdown
   useEffect(() => {
@@ -84,6 +116,9 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
   };
 
   const handleAnswerSelect = (questionId, answer) => {
+    // Record answer in universal scoring system
+    recordAnswer(questionId, answer);
+
     setAnswers(prev => ({
       ...prev,
       [questionId]: answer
@@ -92,7 +127,7 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
 
   const handleNextQuestion = () => {
     const totalQuestions = rule?.totalQuestions || 20;
-    
+
     if (currentQuestionIndex + 1 >= totalQuestions) {
       handleFinishTest();
     } else {
@@ -114,8 +149,34 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
       const percentage = Math.round((correctAnswers / totalQuestions) * 100);
       const finishedAt = new Date();
       const duration = Math.round((finishedAt - startedAt) / 1000);
-      
-      console.log(`Results: ${correctAnswers}/${totalQuestions} (${percentage}%)`);
+
+      // Console logging for backend scoring verification
+      console.group('✅ Logical Test Complete - Backend Scoring Verification');
+      console.log('🕐 End Time:', finishedAt);
+      console.log('⏱️ Duration:', duration, 'seconds');
+      console.log('📊 Final Answers:', answers);
+      console.log('⚙️ Scoring System Available:', !!scoringSystem);
+
+      // Get results from universal scoring system
+      let universalResults = null;
+      if (scoringSystem) {
+        universalResults = getFormattedResults();
+        console.log('🎯 Universal Results:', universalResults);
+        console.log('📈 Score Breakdown:', getScoreBreakdown());
+        console.log('⏱️ Question Timings:', getQuestionTimings());
+      }
+
+      // Complete the test in universal scoring system
+      if (scoringSystem) {
+        completeTest();
+      }
+
+      console.log('📊 Final Score Calculation:', {
+        totalQuestions,
+        correctAnswers,
+        percentage,
+        universalScoring: !!universalResults
+      });
 
       const attempt = buildAttempt({
         testId: testId,
@@ -135,10 +196,16 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
         total: totalQuestions,
         percentage,
         duration,
-        result: percentage >= 70 ? 'pass' : 'fail'
+        result: percentage >= 70 ? 'pass' : 'fail',
+        // Include universal scoring results if available
+        universalResults: universalResults,
+        scoringSystem: scoringSystem
       };
 
+      console.log('📋 Final Test Results:', result);
+
       try {
+        console.log('🚀 Submitting to backend...');
         await submitTestAttempt({
           testId: testId,
           testVersion: '1.0',
@@ -147,10 +214,13 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
           testData: { questions },
           startedAt
         });
+        console.log('✅ Backend submission successful');
       } catch (submitError) {
-        console.error('Error submitting to backend:', submitError);
+        console.error('❌ Error submitting to backend:', submitError);
       }
-      
+
+      console.groupEnd();
+
       setResults(result);
       console.log('Setting testStep to results');
       setTestStep('results');
@@ -237,12 +307,23 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
   if (testStep === 'results') {
     return (
       <TestResultsPage
-        results={results}
+        testResults={results}
+        results={results?.universalResults || results}
         testType="logical"
         testId={testId}
         answers={answers}
         testData={{ questions }}
         onBackToDashboard={onBackToDashboard}
+        onRetakeTest={() => {
+          setTestStep('test');
+          setCurrentQuestionIndex(0);
+          setAnswers({});
+          setTimeRemaining(rule?.timeLimitMin * 60 || 20 * 60);
+          setResults(null);
+          setStartedAt(new Date());
+        }}
+        showUniversalResults={!!results?.universalResults}
+        scoringSystem={scoringSystem}
       />
     );
   }
@@ -336,18 +417,16 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={() => handleAnswerSelect(currentQuestion.id, optionLetter)}
-                    className={`w-full text-left p-6 rounded-xl border-2 transition-all duration-200 ${
-                      isSelected
+                    className={`w-full text-left p-6 rounded-xl border-2 transition-all duration-200 ${isSelected
                         ? 'border-blue-500 bg-blue-50 shadow-lg shadow-blue-100'
                         : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                        isSelected
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${isSelected
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-200 text-gray-600'
-                      }`}>
+                        }`}>
                         {optionLetter}
                       </div>
                       <span className="text-gray-800 font-medium">{option}</span>
@@ -364,11 +443,10 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
             <button
               onClick={handlePreviousQuestion}
               disabled={currentQuestionIndex === 0}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
-                currentQuestionIndex === 0
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${currentQuestionIndex === 0
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+                }`}
             >
               <FaArrowRight className="w-4 h-4 rotate-180" />
               Previous
@@ -383,11 +461,10 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
               whileTap={{ scale: isAnswered ? 0.95 : 1 }}
               onClick={handleNextQuestion}
               disabled={!isAnswered}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
-                isAnswered
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${isAnswered
                   ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg hover:from-blue-700 hover:to-blue-800 hover:shadow-xl'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
+                }`}
             >
               {isLastQuestion ? 'Complete Test' : 'Next'}
               <FaArrowRight />

@@ -1,3 +1,27 @@
+// Import scoring system utilities
+import { enhanceQuestionsWithScoring } from '../lib/scoringSystem.js';
+
+/**
+ * Default score weight configuration for logical test questions
+ */
+const DEFAULT_LOGICAL_SCORE_WEIGHT = {
+  base: 5,
+  difficultyBonus: 2,
+  timeFactor: 1
+};
+
+/**
+ * Helper function to add scoring weights to questions
+ * @param {Array} questions - Array of question objects
+ * @returns {Array} Questions with scoring weights added
+ */
+function addScoringWeights(questions) {
+  return questions.map(question => ({
+    ...question,
+    scoreWeight: question.scoreWeight || DEFAULT_LOGICAL_SCORE_WEIGHT
+  }));
+}
+
 // Logical Reasoning Test Data Structure
 export const getLogicalTestSections = () => {
   return {
@@ -5,8 +29,15 @@ export const getLogicalTestSections = () => {
     description: "Evaluate your logical thinking and reasoning abilities through various problem-solving scenarios.",
     totalQuestions: 60,
     totalTime: 30, // 30 minutes total (10 min per section)
+    // Global scoring configuration for the test
+    scoringConfig: {
+      timeWeight: 0.3,
+      difficultyWeight: 0.5,
+      accuracyWeight: 0.2
+    },
     sections: [
       getLogicalSection1(),
+      getLogicalSection2(),
       getLogicalSection3(),
       getLogicalSection4()
     ]
@@ -19,30 +50,39 @@ export const getLogicalSection1 = () => {
     title: "Number Series",
     description: "Questions that test your ability to reason with numbers and identify patterns in numerical sequences.",
     instructions: "Analyze the number sequences and identify the pattern to determine the next number in the series.",
-    timeLimit: 10, // 10 minutes
-    questions: generateLogicalSection1Questions()
+    timeLimit: 10, // 15 minutes
+    questions: addScoringWeights(generateLogicalSection1Questions())
   };
 };
-
-export const getLogicalSection3 = () => {
+export const getLogicalSection2 = () => {
   return {
     id: 2,
+    title: "Advanced Number Series",
+    description: "Challenging number series questions that require deeper analysis of sequences.",
+    instructions: "Analyze each series carefully and determine the next numbers in the pattern.",
+    timeLimit: 15,
+    questions: addScoringWeights(generateLogicalSection2Questions())
+  };
+};
+export const getLogicalSection3 = () => {
+  return {
+    id: 3,
     title: "Additional Number Series Practice",
     description: "Additional practice with number series questions to strengthen your pattern recognition skills.",
     instructions: "This set will give you additional practice dealing with number series questions. Look carefully for the pattern, and then choose which pair of numbers comes next.",
-    timeLimit: 10, // 10 minutes
-    questions: generateLogicalSection3Questions()
+    timeLimit: 15,
+    questions: addScoringWeights(generateLogicalSection3Questions())
   };
 };
 
 export const getLogicalSection4 = () => {
   return {
-    id: 3,
+    id: 4,
     title: "Problem Solving",
     description: "Complex logical problems that require systematic thinking and problem-solving strategies.",
     instructions: "Solve complex logical problems using systematic thinking and problem-solving strategies.",
-    timeLimit: 10, // 10 minutes
-    questions: generateLogicalSection4Questions()
+    timeLimit: 15,
+    questions: addScoringWeights(generateLogicalSection4Questions())
   };
 };
 
@@ -56,7 +96,12 @@ function generateLogicalSection1Questions() {
       options: ["11", "12", "13", "14"],
       correct_answer: "b",
       difficulty: 1,
-      section: 1
+      section: 1,
+      scoreWeight: {
+        base: 5,
+        difficultyBonus: 2,
+        timeFactor: 1
+      }
     },
     {
       id: `logical_1_2`,
@@ -65,7 +110,12 @@ function generateLogicalSection1Questions() {
       options: ["26", "28", "30", "32"],
       correct_answer: "b",
       difficulty: 1,
-      section: 1
+      section: 1,
+      scoreWeight: {
+        base: 5,
+        difficultyBonus: 2,
+        timeFactor: 1
+      }
     },
     {
       id: `logical_1_3`,

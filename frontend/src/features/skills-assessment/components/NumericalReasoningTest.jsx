@@ -8,6 +8,8 @@ import TestResultsPage from './TestResultsPage';
 import { getRuleFor } from '../testRules';
 import { buildAttempt } from '../lib/scoreUtils';
 import { useAttempts } from '../store/useAttempts';
+import { createTestScoringIntegration, formatUniversalResults } from '../lib/universalScoringIntegration';
+import { useUniversalScoring } from '../hooks/useUniversalScoring';
 
 const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
   const rule = getRuleFor(testId);
@@ -32,6 +34,30 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
   useTestScrollToTop(testStep, 'numerical-test-scroll', { smooth: true, attempts: 5 }); // Scroll on test step changes
   useQuestionScrollToTop(currentQuestion, testStep, 'numerical-test-scroll'); // Scroll on question changes
 
+  // Get current section and question data (moved up to avoid temporal dead zone)
+  const currentSectionData = testData?.sections?.[currentSection - 1];
+  const currentQuestionData = currentSectionData?.questions?.[currentQuestion - 1];
+  const totalSections = testData?.sections?.length || 0;
+  const totalQuestions = rule?.totalQuestions || 20;
+
+  // Universal scoring hook
+  const allQuestions = testData?.sections?.flatMap(section => section.questions) || [];
+  const {
+    scoringSystem,
+    isInitialized: scoringInitialized,
+    startQuestion,
+    recordAnswer,
+    getFormattedResults,
+    getScoreBreakdown,
+    getQuestionTimings,
+    completeTest,
+    getTestResultsForSubmission
+  } = useUniversalScoring('numerical', allQuestions, testData?.scoringConfig, {
+    enableConsoleLogging: true,
+    logPrefix: '🔢',
+    autoStartTest: false
+  });
+
   // Load test data
   useEffect(() => {
     try {
@@ -48,12 +74,28 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
       setTestData(limitedData);
       setTimeRemaining(rule?.timeLimitMin * 60 || 20 * 60);
       setStartedAt(new Date());
+      startedAtRef.current = Date.now();
     } catch (error) {
       console.error('Error loading test data:', error);
     } finally {
       setLoading(false);
     }
   }, [rule]);
+
+  // Start test when scoring system is ready
+  useEffect(() => {
+    if (scoringSystem && scoringInitialized && testData) {
+      console.log('🔢 Starting numerical test with universal scoring');
+      scoringSystem.startTest();
+    }
+  }, [scoringSystem, scoringInitialized, testData]);
+
+  // Start question timer when question changes
+  useEffect(() => {
+    if (currentQuestionData && scoringSystem) {
+      startQuestion(currentQuestionData.question_id);
+    }
+  }, [currentQuestion, currentQuestionData, scoringSystem, startQuestion]);
 
   // Timer countdown
   useEffect(() => {
@@ -96,18 +138,46 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
     try {
       const endTime = new Date();
       const duration = Math.floor((endTime - startedAt) / 1000);
-      
-      // Calculate score using rule's totalQuestions
+
+      // Console logging for backend scoring verification
+      console.group('⏰ Test Time Up - Backend Scoring Verification');
+      console.log('🕐 End Time:', endTime);
+      console.log('⏱️ Duration:', duration, 'seconds');
+      console.log('📊 Current Answers:', answers);
+      console.log('⚙️ Scoring System Available:', !!scoringSystem);
+
+      // Get results from universal scoring system
+      let universalResults = null;
+      if (scoringSystem) {
+        universalResults = getFormattedResults();
+        console.log('🎯 Universal Results:', universalResults);
+        console.log('📈 Score Breakdown:', getScoreBreakdown());
+        console.log('⏱️ Question Timings:', getQuestionTimings());
+      }
+
+      // Fallback to simple scoring if universal scoring not available
       const totalQuestions = rule?.totalQuestions || 20;
       const correctAnswers = Object.values(answers).filter(answer => answer.isCorrect).length;
-      const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
-      
+      const score = universalResults ? universalResults.percentage : (totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0);
+
+      console.log('📊 Final Score Calculation:', {
+        totalQuestions,
+        correctAnswers,
+        score,
+        universalScoring: !!universalResults
+      });
+
+      // Complete the test in universal scoring system
+      if (scoringSystem) {
+        completeTest();
+      }
+
       // Build attempt record using new scoring system
       const attempt = buildAttempt(testId, totalQuestions, correctAnswers, startedAtRef.current, 'time');
-      
+
       // Add attempt to store
       addAttempt(attempt);
-      
+
       const testResults = {
         testId: testId,
         testType: 'numerical-reasoning',
@@ -118,15 +188,24 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
         answers: answers,
         completedAt: endTime.toISOString(),
         startedAt: startedAt?.toISOString(),
-        attempt: attempt
+        attempt: attempt,
+        // Include universal scoring results if available
+        universalResults: universalResults,
+        scoringSystem: scoringSystem
       };
+
+      console.log('📋 Final Test Results:', testResults);
 
       // Submit to backend
       try {
+        console.log('🚀 Submitting to backend...');
         await submitTestAttempt(testResults);
+        console.log('✅ Backend submission successful');
       } catch (error) {
-        console.error('Error submitting test attempt:', error);
+        console.error('❌ Error submitting test attempt:', error);
       }
+
+      console.groupEnd();
 
       setResults(testResults);
       setTestStep('results');
@@ -140,18 +219,46 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
     try {
       const endTime = new Date();
       const duration = Math.floor((endTime - startedAt) / 1000);
-      
+
+      // Console logging for backend scoring verification
+      console.group('✅ Test Complete - Backend Scoring Verification');
+      console.log('🕐 End Time:', endTime);
+      console.log('⏱️ Duration:', duration, 'seconds');
+      console.log('📊 Final Answers:', answers);
+      console.log('⚙️ Scoring System Available:', !!scoringSystem);
+
+      // Get results from universal scoring system
+      let universalResults = null;
+      if (scoringSystem) {
+        universalResults = getFormattedResults();
+        console.log('🎯 Universal Results:', universalResults);
+        console.log('📈 Score Breakdown:', getScoreBreakdown());
+        console.log('⏱️ Question Timings:', getQuestionTimings());
+      }
+
       // Calculate score using rule's totalQuestions
       const totalQuestions = rule?.totalQuestions || 20;
       const correctAnswers = Object.values(answers).filter(answer => answer.isCorrect).length;
-      const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
-      
+      const score = universalResults ? universalResults.percentage : (totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0);
+
+      console.log('📊 Final Score Calculation:', {
+        totalQuestions,
+        correctAnswers,
+        score,
+        universalScoring: !!universalResults
+      });
+
+      // Complete the test in universal scoring system
+      if (scoringSystem) {
+        completeTest();
+      }
+
       // Build attempt record using new scoring system
       const attempt = buildAttempt(testId, totalQuestions, correctAnswers, startedAtRef.current, 'user');
-      
+
       // Add attempt to store
       addAttempt(attempt);
-      
+
       const testResults = {
         testId: testId,
         testType: 'numerical-reasoning',
@@ -162,15 +269,24 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
         answers: answers,
         completedAt: endTime.toISOString(),
         startedAt: startedAt?.toISOString(),
-        attempt: attempt
+        attempt: attempt,
+        // Include universal scoring results if available
+        universalResults: universalResults,
+        scoringSystem: scoringSystem
       };
+
+      console.log('📋 Final Test Results:', testResults);
 
       // Submit to backend
       try {
+        console.log('🚀 Submitting to backend...');
         await submitTestAttempt(testResults);
+        console.log('✅ Backend submission successful');
       } catch (error) {
-        console.error('Error submitting test attempt:', error);
+        console.error('❌ Error submitting test attempt:', error);
       }
+
+      console.groupEnd();
 
       setResults(testResults);
       setTestStep('results');
@@ -204,7 +320,10 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
     // Find the question to get the correct answer
     const question = currentSectionData?.questions?.find(q => q.question_id === questionId);
     const isCorrect = question ? question.correct_answer === answer : false;
-    
+
+    // Record answer in universal scoring system
+    recordAnswer(questionId, answer);
+
     setAnswers(prev => ({
       ...prev,
       [questionId]: {
@@ -236,7 +355,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
     return (
       <TestResultsPage
         testResults={results}
-        results={results}
+        results={results?.universalResults || results}
         testType="numerical-reasoning"
         testId={testId}
         answers={answers}
@@ -251,6 +370,8 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
           setResults(null);
           setStartedAt(new Date());
         }}
+        showUniversalResults={!!results?.universalResults}
+        scoringSystem={scoringSystem}
       />
     );
   }
@@ -282,14 +403,8 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
     );
   }
 
-  // Get current section and question data
-  const currentSectionData = testData?.sections?.[currentSection - 1];
-  const currentQuestionData = currentSectionData?.questions?.[currentQuestion - 1];
-  const totalSections = testData?.sections?.length || 0;
-  const totalQuestions = rule?.totalQuestions || 20;
-  
   // Check if current question is answered for gated navigation
-  const currentQuestionAnswered = currentQuestionData ? 
+  const currentQuestionAnswered = currentQuestionData ?
     answers[currentQuestionData.question_id]?.answer != null : false;
 
   if (!testData) {
@@ -303,13 +418,13 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
     );
   }
 
-  // Only try to access section and question data if testData exists and test isn't completed
-  const section = testData?.sections?.[currentSection - 1];
-  const question = section?.questions?.[currentQuestion - 1];
+  // Use the already defined variables
+  const section = currentSectionData;
+  const question = currentQuestionData;
 
   if (false) { // Disabled instructions - use TestInfoPage instead
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="min-h-screen bg-gradient-to-br from-blue-50 to-green-100 p-6"
@@ -328,8 +443,8 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
             {/* Instructions Image */}
             {section.intro_image && (
               <div className="mb-8 text-center">
-                <img 
-                  src={section.intro_image} 
+                <img
+                  src={section.intro_image}
                   alt="Numerical Reasoning Instructions"
                   className="max-w-full h-auto mx-auto rounded-lg shadow-md"
                   style={{ maxHeight: '300px' }}
@@ -403,7 +518,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
 
   const renderDataVisual = (question) => {
     if (!question) return null;
-    
+
     if (question.data_type === 'chart') {
       // Create custom chart visualizations
       return (
@@ -414,7 +529,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
             {question.chart_data?.type === 'bar_chart' && (
               <div>
                 <div className="text-xl font-bold text-blue-600 mb-3 text-center">Bar Chart: {question.chart_data.title}</div>
-                
+
                 {/* Book Sales Chart */}
                 {question.chart_data.title === 'Book Sales' && (
                   <div>
@@ -438,7 +553,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                     <p className="text-center text-sm text-gray-700">Annual Book Sales by Year (in millions of dollars)</p>
                   </div>
                 )}
-                
+
                 {/* Quarterly Sales Chart */}
                 {question.chart_data.title === 'Quarterly Sales' && (
                   <div>
@@ -469,12 +584,12 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                 )}
               </div>
             )}
-            
+
             {/* PIE CHART */}
             {question.chart_data?.type === 'pie_chart' && (
               <div>
                 <div className="text-xl font-bold text-blue-600 mb-3 text-center">Pie Chart: {question.chart_data.title}</div>
-                
+
                 {/* Market Share Chart */}
                 {question.chart_data.title === 'Market Share' && (
                   <div className="flex flex-col items-center">
@@ -490,7 +605,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                         <path d="M50,50 L29.5,95.5 A50,50 0 0,1 50,0 z" fill="#EF4444"></path>
                       </svg>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-center">
                       <div className="flex items-center">
                         <div className="w-4 h-4 bg-blue-500 mr-2"></div>
@@ -513,12 +628,12 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                 )}
               </div>
             )}
-            
+
             {/* LINE CHARTS */}
             {question.chart_data?.type === 'line_chart' && (
               <div>
                 <div className="text-xl font-bold text-blue-600 mb-3 text-center">Line Chart: {question.chart_data.title}</div>
-                
+
                 {/* Website Visitors Chart */}
                 {question.chart_data.title === 'Website Visitors' && (
                   <div>
@@ -532,13 +647,13 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                         <span>20K</span>
                         <span>0</span>
                       </div>
-                      
+
                       {/* Points and lines */}
                       <svg className="w-full h-full" viewBox="0 0 700 400">
-                        <polyline 
-                          points="50,300 150,270 250,200 350,150 450,90 550,70 650,50" 
-                          fill="none" 
-                          stroke="#3B82F6" 
+                        <polyline
+                          points="50,300 150,270 250,200 350,150 450,90 550,70 650,50"
+                          fill="none"
+                          stroke="#3B82F6"
                           strokeWidth="4"
                         />
                         <circle cx="50" cy="300" r="8" fill="#3B82F6" />
@@ -548,7 +663,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                         <circle cx="450" cy="90" r="8" fill="#3B82F6" />
                         <circle cx="550" cy="70" r="8" fill="#3B82F6" />
                         <circle cx="650" cy="50" r="8" fill="#3B82F6" />
-                        
+
                         {/* Values */}
                         <text x="50" y="325" fontSize="12" fill="#4B5563" textAnchor="middle">Jan</text>
                         <text x="150" y="325" fontSize="12" fill="#4B5563" textAnchor="middle">Feb</text>
@@ -557,7 +672,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                         <text x="450" y="325" fontSize="12" fill="#4B5563" textAnchor="middle">May</text>
                         <text x="550" y="325" fontSize="12" fill="#4B5563" textAnchor="middle">Jun</text>
                         <text x="650" y="325" fontSize="12" fill="#4B5563" textAnchor="middle">Jul</text>
-                        
+
                         <text x="50" y="280" fontSize="12" fill="#4B5563" textAnchor="middle">40K</text>
                         <text x="150" y="250" fontSize="12" fill="#4B5563" textAnchor="middle">45K</text>
                         <text x="250" y="180" fontSize="12" fill="#4B5563" textAnchor="middle">60K</text>
@@ -570,7 +685,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                     <p className="text-center text-sm text-gray-700 mt-6">Monthly Website Visitors (January through July)</p>
                   </div>
                 )}
-                
+
                 {/* Stock Prices Chart */}
                 {question.chart_data.title === 'Stock Prices' && (
                   <div>
@@ -583,13 +698,13 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                         <span>$35</span>
                         <span>$0</span>
                       </div>
-                      
+
                       {/* Points and lines */}
                       <svg className="w-full h-full" viewBox="0 0 500 400">
-                        <polyline 
-                          points="50,200 150,100 250,150 350,50 450,30" 
-                          fill="none" 
-                          stroke="#EF4444" 
+                        <polyline
+                          points="50,200 150,100 250,150 350,50 450,30"
+                          fill="none"
+                          stroke="#EF4444"
                           strokeWidth="4"
                         />
                         <circle cx="50" cy="200" r="8" fill="#EF4444" />
@@ -597,14 +712,14 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                         <circle cx="250" cy="150" r="8" fill="#EF4444" />
                         <circle cx="350" cy="50" r="8" fill="#EF4444" />
                         <circle cx="450" cy="30" r="8" fill="#EF4444" />
-                        
+
                         {/* Values */}
                         <text x="50" y="325" fontSize="12" fill="#4B5563" textAnchor="middle">Jan</text>
                         <text x="150" y="325" fontSize="12" fill="#4B5563" textAnchor="middle">Feb</text>
                         <text x="250" y="325" fontSize="12" fill="#4B5563" textAnchor="middle">Mar</text>
                         <text x="350" y="325" fontSize="12" fill="#4B5563" textAnchor="middle">Apr</text>
                         <text x="450" y="325" fontSize="12" fill="#4B5563" textAnchor="middle">May</text>
-                        
+
                         <text x="50" y="180" fontSize="12" fill="#4B5563" textAnchor="middle">$40</text>
                         <text x="150" y="80" fontSize="12" fill="#4B5563" textAnchor="middle">$45</text>
                         <text x="250" y="130" fontSize="12" fill="#4B5563" textAnchor="middle">$43</text>
@@ -668,12 +783,12 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
       }
       return count;
     }, 0);
-    
+
     const scorePercentage = Math.round((correctCount / section.questions.length) * 100);
     const timeSpentFormatted = formatTime(testData.duration_minutes * 60 - timeRemaining);
-    
+
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 p-6"
@@ -688,13 +803,13 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
                 </svg>
               </div>
-              
+
               <h2 className="text-3xl font-bold text-gray-900 mb-2">Test Completed!</h2>
               <p className="text-gray-600 mb-8">
                 Your Numerical Reasoning test has been submitted successfully.
               </p>
             </div>
-            
+
             {/* Score Bar - Matching the image exactly */}
             <div className="mb-4 bg-purple-50 rounded-lg p-4">
               <div className="flex justify-between items-center mb-2">
@@ -702,13 +817,13 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                 <span className="text-sm font-medium text-purple-600">{scorePercentage}%</span>
               </div>
               <div className="w-full bg-purple-100 rounded-full h-2">
-                <div 
-                  className="bg-purple-600 h-2 rounded-full" 
+                <div
+                  className="bg-purple-600 h-2 rounded-full"
                   style={{ width: `${scorePercentage}%` }}
                 ></div>
               </div>
             </div>
-            
+
             {/* Score Details - Exactly as in the image */}
             <div className="grid grid-cols-2 gap-8 text-center mb-6">
               <div>
@@ -724,11 +839,11 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                 <p className="text-gray-600">Time Spent</p>
               </div>
             </div>
-            
+
             <p className="text-center text-gray-600 mb-8">
               Your results will be processed and added to your profile.
             </p>
-            
+
             <button
               onClick={() => {
                 // Calculate and pass the results directly
@@ -739,7 +854,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                   }
                   return count;
                 }, 0);
-                
+
                 const results = {
                   testType: 'Numerical Reasoning',
                   sectionTitle: section.title,
@@ -755,7 +870,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                   timeSpent: testData.duration_minutes * 60 - timeRemaining,
                   completed: true
                 };
-                
+
                 if (onComplete) {
                   onComplete(results);
                 } else if (typeof onBack === 'function') {
@@ -773,7 +888,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
       </motion.div>
     );
   }
-  
+
   return (
     <div id="numerical-test-scroll" className="min-h-screen bg-gray-50">
       {/* Test Header */}
@@ -794,18 +909,17 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               {/* Timer */}
               <div className="flex items-center space-x-2 px-3 py-2 bg-gray-100 rounded-lg">
                 <FaClock className="text-blue-600" />
-                <span className={`font-mono text-lg font-semibold ${
-                  timeRemaining < 300 ? 'text-red-600' : 'text-gray-700'
-                }`}>
+                <span className={`font-mono text-lg font-semibold ${timeRemaining < 300 ? 'text-red-600' : 'text-gray-700'
+                  }`}>
                   {formatTime(timeRemaining)}
                 </span>
               </div>
-              
+
               {/* Pause Button */}
               <button
                 onClick={handlePause}
@@ -813,11 +927,11 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
               >
                 <FaPause className="w-5 h-5" />
               </button>
-              
+
               {/* Progress Indicator */}
               <div className="flex items-center space-x-2">
                 <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div 
+                  <div
                     className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${(currentQuestion / totalQuestions) * 100}%` }}
                   ></div>
@@ -852,23 +966,22 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                   Complexity: {question?.complexity_score || 3}/5
                 </span>
               </div>
-              
+
               <p className="text-lg text-gray-700 mb-6">{question?.question}</p>
-              
+
               {/* Display data visuals if present */}
               {question && (question.data_type === 'chart' || question.data_type === 'table') && renderDataVisual(question)}
-              
+
               {/* Answer Options */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                 {question?.options?.map((option) => (
                   <button
                     key={option.option_id}
                     onClick={() => handleAnswerSelect(question.question_id, option.option_id)}
-                    className={`p-4 rounded border-2 transition-all duration-200 text-left ${
-                      answers[question.question_id]?.answer === option.option_id
-                        ? 'border-blue-500 bg-blue-100 text-blue-800'
-                        : 'border-gray-200 hover:border-blue-300 bg-white'
-                    }`}
+                    className={`p-4 rounded border-2 transition-all duration-200 text-left ${answers[question.question_id]?.answer === option.option_id
+                      ? 'border-blue-500 bg-blue-100 text-blue-800'
+                      : 'border-gray-200 hover:border-blue-300 bg-white'
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
@@ -895,11 +1008,10 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
               <button
                 onClick={handlePrevious}
                 disabled={currentQuestion === 1}
-                className={`flex items-center px-6 py-3 rounded-lg transition-colors ${
-                  currentQuestion === 1
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-gray-500 text-white hover:bg-gray-600'
-                }`}
+                className={`flex items-center px-6 py-3 rounded-lg transition-colors ${currentQuestion === 1
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-gray-500 text-white hover:bg-gray-600'
+                  }`}
               >
                 Previous
               </button>
@@ -913,11 +1025,10 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
               <button
                 onClick={handleNext}
                 disabled={!currentQuestionAnswered}
-                className={`flex items-center px-6 py-3 rounded-lg transition-colors ${
-                  currentQuestionAnswered
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
+                className={`flex items-center px-6 py-3 rounded-lg transition-colors ${currentQuestionAnswered
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
               >
                 {currentQuestion === totalQuestions ? 'Complete Test' : 'Next'}
               </button>
