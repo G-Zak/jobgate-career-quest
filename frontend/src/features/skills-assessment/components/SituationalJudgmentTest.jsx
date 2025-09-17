@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaUsers, FaSearchPlus } from "react-icons/fa";
@@ -30,17 +30,58 @@ export default function SituationalJudgmentTest({ onBackToDashboard, onComplete,
   const currentAnswered = current && answers[current.id] != null;
   const isLast = idx + 1 >= rule.totalQuestions;
 
+  // Scroll to top function
+  const scrollToTop = () => {
+    // Target the main scrollable container in MainDashboard
+    const mainScrollContainer = document.querySelector('.main-content-area .overflow-y-auto');
+    if (mainScrollContainer) {
+      // Smooth scroll to top
+      mainScrollContainer.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    } else {
+      // Fallback to window scroll
+      window.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
+  // Controlled scroll timing - only scroll when question actually changes
+  useEffect(() => {
+    if (idx > 0) {
+      // Small delay to ensure DOM has updated after question change
+      const timer = setTimeout(() => {
+        scrollToTop();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [idx]);
+
   function onSelect(optionId) {
     if (!current) return;
     setAnswers((s) => ({ ...s, [current.id]: optionId }));
   }
 
   function onPrev() { 
-    if (idx > 0) setIdx((i) => i - 1); 
+    if (idx > 0) {
+      setIdx((i) => i - 1);
+      // Smooth scroll to top after navigation
+      setTimeout(() => scrollToTop(), 150);
+    }
   }
   
   function onNext() { 
-    if (!isLast) setIdx((i) => i + 1); 
+    if (!isLast) {
+      setIdx((i) => i + 1);
+      // Smooth scroll to top after navigation
+      setTimeout(() => scrollToTop(), 150);
+    }
   }
 
   function computeScore() {
@@ -58,6 +99,7 @@ export default function SituationalJudgmentTest({ onBackToDashboard, onComplete,
 
   function onAbort() {
     if (!window.confirm("Abort the test and return to the dashboard?")) return;
+    scrollToTop();
     if (onBackToDashboard) {
       onBackToDashboard();
     } else {
@@ -67,6 +109,7 @@ export default function SituationalJudgmentTest({ onBackToDashboard, onComplete,
 
   function onSubmit({ reason }) {
     const { correct, total, percentage } = computeScore();
+    scrollToTop();
     
     // Build attempt record
     const attempt = buildAttempt(testId, total, correct, startedAtRef.current, reason);
@@ -125,6 +168,7 @@ export default function SituationalJudgmentTest({ onBackToDashboard, onComplete,
       canNext={!!currentAnswered}
       sectionIndex={null}
       sectionTotal={null}
+      hidePauseButton={true}
     >
       {/* Single vertical stack (no side-by-side) */}
       <div className="flex flex-col gap-6" ref={containerRef}>
