@@ -366,8 +366,8 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                   <img 
                     src={section.intro_image} 
                     alt="Numerical Reasoning Instructions"
-                    className="max-w-lg max-h-80 w-auto h-auto mx-auto rounded-lg shadow-md object-contain"
-                    style={{ maxWidth: '480px', maxHeight: '320px' }}
+                    className="max-w-xl max-h-96 w-auto h-auto mx-auto rounded-lg shadow-md object-contain"
+                    style={{ maxWidth: '528px', maxHeight: '352px' }}
                   />
                 </div>
               </div>

@@ -361,8 +361,8 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
                     <img
                       src={currentQuestion.question_image}
                       alt={`Question ${currentQuestionIndex + 1}`}
-                      className="max-w-lg max-h-96 w-auto h-auto rounded-lg shadow-sm object-contain"
-                      style={{ maxWidth: '480px', maxHeight: '384px' }}
+                      className="max-w-xl max-h-[28rem] w-auto h-auto rounded-lg shadow-sm object-contain"
+                      style={{ maxWidth: '528px', maxHeight: '422px' }}
                       onError={(e) => {
                         e.target.style.display = 'none';
                       }}

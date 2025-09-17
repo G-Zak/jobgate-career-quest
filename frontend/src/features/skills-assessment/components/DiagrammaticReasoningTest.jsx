@@ -497,8 +497,8 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
                           <img 
                             src={getCurrentQuestion().question_image} 
                             alt={`Diagrammatic pattern ${getCurrentQuestion()?.id || ''}`}
-                            className="max-w-lg max-h-96 w-auto h-auto rounded-lg object-contain"
-                            style={{ maxWidth: '480px', maxHeight: '384px' }}
+                            className="max-w-xl max-h-[28rem] w-auto h-auto rounded-lg object-contain"
+                            style={{ maxWidth: '528px', maxHeight: '422px' }}
                             onError={(e) => {
                               e.target.style.display = 'none';
                               e.target.nextElementSibling.style.display = 'flex';
