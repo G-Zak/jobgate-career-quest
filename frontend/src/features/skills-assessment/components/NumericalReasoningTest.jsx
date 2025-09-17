@@ -775,7 +775,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
   }
   
   return (
-    <div id="numerical-test-scroll" className="min-h-screen bg-gray-50">
+    <div id="numerical-test-scroll" className="bg-gray-50">
       {/* Test Header */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 py-4">
