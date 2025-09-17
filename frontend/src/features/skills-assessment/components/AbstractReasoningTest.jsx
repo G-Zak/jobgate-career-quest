@@ -418,16 +418,18 @@ const AbstractReasoningTest = ({ onBackToDashboard }) => {
                   {getCurrentQuestion()?.image && (
                     <div className="mb-8 text-center">
                       <div className="inline-block bg-white rounded-xl p-4 shadow-md border">
-                        <img 
-                          src={getCurrentQuestion().image} 
-                          alt={`Abstract pattern ${getCurrentQuestion()?.id || ''}`}
-                          className="max-w-full h-auto mx-auto rounded-lg"
-                          style={{ maxHeight: '400px' }}
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextElementSibling.style.display = 'flex';
-                          }}
-                        />
+                        <div className="flex justify-center">
+                          <img 
+                            src={getCurrentQuestion().image} 
+                            alt={`Abstract pattern ${getCurrentQuestion()?.id || ''}`}
+                            className="max-w-sm max-h-80 w-auto h-auto rounded-lg object-contain"
+                            style={{ maxWidth: '400px', maxHeight: '320px' }}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextElementSibling.style.display = 'flex';
+                            }}
+                          />
+                        </div>
                         <div className="hidden items-center justify-center w-full h-48 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
                           <div className="text-center">
                             <FaImage className="text-gray-400 text-3xl mx-auto mb-2" />

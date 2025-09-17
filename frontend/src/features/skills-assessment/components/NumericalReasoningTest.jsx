@@ -362,12 +362,14 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
             {/* Instructions Image */}
             {section.intro_image && (
               <div className="mb-8 text-center">
-                <img 
-                  src={section.intro_image} 
-                  alt="Numerical Reasoning Instructions"
-                  className="max-w-full h-auto mx-auto rounded-lg shadow-md"
-                  style={{ maxHeight: '300px' }}
-                />
+                <div className="flex justify-center">
+                  <img 
+                    src={section.intro_image} 
+                    alt="Numerical Reasoning Instructions"
+                    className="max-w-sm max-h-64 w-auto h-auto mx-auto rounded-lg shadow-md object-contain"
+                    style={{ maxWidth: '400px', maxHeight: '256px' }}
+                  />
+                </div>
               </div>
             )}
 

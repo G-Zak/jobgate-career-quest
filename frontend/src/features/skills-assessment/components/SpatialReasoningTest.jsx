@@ -357,14 +357,17 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
             {currentQuestion?.question_image && (
               <div className="mb-6">
                 <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
-                  <img
-                    src={currentQuestion.question_image}
-                    alt={`Question ${currentQuestionIndex + 1}`}
-                    className="max-w-full h-auto mx-auto rounded-lg shadow-sm"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
+                  <div className="flex justify-center">
+                    <img
+                      src={currentQuestion.question_image}
+                      alt={`Question ${currentQuestionIndex + 1}`}
+                      className="max-w-sm max-h-80 w-auto h-auto rounded-lg shadow-sm object-contain"
+                      style={{ maxWidth: '400px', maxHeight: '320px' }}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             )}
