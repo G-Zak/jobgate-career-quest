@@ -446,24 +446,31 @@ const AbstractReasoningTest = ({ onBackToDashboard }) => {
                       <FaSearchPlus className="mr-2 text-orange-600" />
                       Select the correct answer:
                     </h4>
-                    <div className="grid grid-cols-5 gap-4 w-full">
-                      {getCurrentQuestion()?.options?.map((option) => (
-                        <motion.button
-                          key={option}
-                          onClick={() => handleAnswerSelect(getCurrentQuestion().id, option.toLowerCase())}
-                          className={`w-full h-16 rounded-lg border-2 transition-all duration-200 flex items-center justify-center ${
-                            answers[getCurrentQuestion().id] === option.toLowerCase()
-                              ? 'border-orange-500 bg-orange-500 text-white shadow-lg'
-                              : 'border-gray-300 hover:border-orange-400 hover:bg-orange-50 hover:shadow-md'
-                          }`}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <span className="text-2xl font-bold">
-                            {option}
-                          </span>
-                        </motion.button>
-                      ))}
+                    <div className="flex justify-center gap-4 w-full">
+                      {getCurrentQuestion()?.options?.map((option) => {
+                        const optionsCount = getCurrentQuestion()?.options?.length || 0;
+                        
+                        // Calculate width based on number of options
+                        const buttonWidth = optionsCount <= 3 ? 'w-20' : optionsCount === 4 ? 'w-16' : 'w-12';
+                        
+                        return (
+                          <motion.button
+                            key={option}
+                            onClick={() => handleAnswerSelect(getCurrentQuestion().id, option.toLowerCase())}
+                            className={`${buttonWidth} h-16 rounded-lg border-2 transition-all duration-200 flex items-center justify-center ${
+                              answers[getCurrentQuestion().id] === option.toLowerCase()
+                                ? 'border-orange-500 bg-orange-500 text-white shadow-lg'
+                                : 'border-gray-300 hover:border-orange-400 hover:bg-orange-50 hover:shadow-md'
+                            }`}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <span className="text-2xl font-bold">
+                              {option}
+                            </span>
+                          </motion.button>
+                        );
+                      })}
                     </div>
                   </div>
 

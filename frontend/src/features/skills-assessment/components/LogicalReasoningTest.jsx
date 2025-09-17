@@ -359,10 +359,14 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
             </div>
 
             {/* Answer Options */}
-            <div className="grid grid-cols-5 gap-4 w-full">
+            <div className="flex justify-center gap-4 w-full">
               {currentQuestion?.options?.map((option, index) => {
                 const optionLetter = String.fromCharCode(65 + index);
                 const isSelected = answers[currentQuestion.id] === optionLetter;
+                const optionsCount = currentQuestion?.options?.length || 0;
+                
+                // Calculate width based on number of options
+                const buttonWidth = optionsCount <= 3 ? 'w-20' : optionsCount === 4 ? 'w-16' : 'w-12';
 
                 return (
                   <motion.button
@@ -370,7 +374,7 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleAnswerSelect(currentQuestion.id, optionLetter)}
-                    className={`w-full h-16 rounded-lg border-2 transition-all duration-200 flex items-center justify-center ${
+                    className={`${buttonWidth} h-16 rounded-lg border-2 transition-all duration-200 flex items-center justify-center ${
                       isSelected
                         ? 'border-blue-500 bg-blue-500 text-white shadow-lg'
                         : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md'
