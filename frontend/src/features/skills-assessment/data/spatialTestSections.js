@@ -37,8 +37,17 @@ export const getSpatialSection1 = () => ({
       total_questions: 40,
       questions: [
         // All 40 questions for Section 1: Shape Assembly
+        // Section 1 Answer Key: Q1-Q40
         ...Array.from({ length: 40 }, (_, index) => {
           const questionId = index + 1;
+          // Answer key for Section 1: Q1-Q40
+          const answerKey = [
+            "B", "D", "A", "E", "D", "B", "A", "C", "A", "C", // Q1-Q10
+            "D", "B", "E", "A", "C", "D", "E", "A", "C", "B", // Q11-Q20
+            "E", "E", "C", "C", "E", "B", "E", "D", "E", "A", // Q21-Q30
+            "E", "C", "E", "B", "C", "B", "A", "D", "E", "A"  // Q31-Q40
+          ];
+          
           return {
             id: questionId,
             question_text: `Which option shows the correct assembly of these shapes?`,
@@ -51,7 +60,7 @@ export const getSpatialSection1 = () => ({
               { id: "D", text: "Option D" },
               { id: "E", text: "Option E" }
             ],
-            correct_answer: "A", // TODO: Update with actual correct answers from your book
+            correct_answer: answerKey[questionId - 1],
             order: questionId,
             complexity_score: Math.min(5, Math.floor((questionId - 1) / 8) + 1) // Gradually increase difficulty (1-5)
           };

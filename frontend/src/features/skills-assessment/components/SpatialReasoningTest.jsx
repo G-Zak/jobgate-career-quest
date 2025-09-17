@@ -144,6 +144,25 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
     }));
   };
 
+  // Calculate current score
+  const calculateCurrentScore = () => {
+    const allQuestions = rule?.sections?.flatMap(section => section.questions) || [];
+    let correctAnswers = 0;
+    
+    allQuestions.forEach(question => {
+      const userAnswer = answers[question.id];
+      if (userAnswer && userAnswer === question.correct_answer) {
+        correctAnswers++;
+      }
+    });
+    
+    return {
+      correct: correctAnswers,
+      total: allQuestions.length,
+      percentage: allQuestions.length > 0 ? Math.round((correctAnswers / allQuestions.length) * 100) : 0
+    };
+  };
+
   const handleNextQuestion = () => {
     const totalQuestions = rule?.totalQuestions || 20;
     
@@ -169,7 +188,18 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
   const handleFinishTest = async () => {
     try {
       const totalQuestions = rule?.totalQuestions || 20;
-      const correctAnswers = Object.values(answers).filter(answer => answer === true).length;
+      
+      // Calculate correct answers by comparing user answers with correct answers
+      let correctAnswers = 0;
+      const allQuestions = rule?.sections?.flatMap(section => section.questions) || [];
+      
+      allQuestions.forEach(question => {
+        const userAnswer = answers[question.id];
+        if (userAnswer && userAnswer === question.correct_answer) {
+          correctAnswers++;
+        }
+      });
+      
       const percentage = Math.round((correctAnswers / totalQuestions) * 100);
       const finishedAt = new Date();
       const duration = Math.round((finishedAt - startedAt) / 1000);
@@ -317,6 +347,12 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
             </div>
 
             <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="text-sm text-gray-500">Score</div>
+                <div className="text-lg font-bold text-green-600">
+                  {calculateCurrentScore().correct}/{calculateCurrentScore().total} ({calculateCurrentScore().percentage}%)
+                </div>
+              </div>
               <div className="text-right">
                 <div className="text-sm text-gray-500">Time Remaining</div>
                 <div className={`text-lg font-bold font-mono ${timeRemaining <= 60 ? 'text-red-500' : 'text-blue-600'}`}>
