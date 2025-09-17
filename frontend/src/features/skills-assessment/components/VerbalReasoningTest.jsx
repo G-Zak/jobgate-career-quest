@@ -530,7 +530,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
                     </p>
                     
                     {/* Answer Options */}
-                    <div className="flex flex-wrap gap-3 justify-center">
+                    <div className="grid grid-cols-5 gap-4 w-full">
                       {getCurrentQuestion()?.options?.map((option, index) => {
                         const isSelected = answers[`${currentSection}_${currentPassage}_${getCurrentQuestion()?.id}`] === option;
                         const letters = ['A', 'B', 'C', 'D', 'E'];
@@ -538,16 +538,16 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
                         return (
                           <motion.button
                             key={option}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className={`w-12 h-12 rounded-full border-2 transition-all duration-200 flex items-center justify-center ${
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className={`w-full h-16 rounded-lg border-2 transition-all duration-200 flex items-center justify-center ${
                               isSelected 
                                 ? 'border-blue-500 bg-blue-500 text-white shadow-lg' 
                                 : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md'
                             }`}
                             onClick={() => handleAnswerSelect(getCurrentQuestion()?.id, option)}
                           >
-                            <span className="text-lg font-bold">
+                            <span className="text-2xl font-bold">
                               {letters[index]}
                             </span>
                           </motion.button>

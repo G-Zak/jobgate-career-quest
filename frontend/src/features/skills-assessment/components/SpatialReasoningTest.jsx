@@ -385,7 +385,7 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
             </div>
 
             {/* Answer Options */}
-            <div className="flex flex-wrap gap-3 justify-center">
+            <div className="grid grid-cols-5 gap-4 w-full">
               {currentQuestion?.options?.map((option, index) => {
                 const optionLetter = option.id || String.fromCharCode(65 + index);
                 const isSelected = answers[currentQuestion.id] === optionLetter;
@@ -393,16 +393,16 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
                 return (
                   <motion.button
                     key={index}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => handleAnswerSelect(currentQuestion.id, optionLetter)}
-                    className={`w-12 h-12 rounded-full border-2 transition-all duration-200 flex items-center justify-center ${
+                    className={`w-full h-16 rounded-lg border-2 transition-all duration-200 flex items-center justify-center ${
                       isSelected
                         ? 'border-blue-500 bg-blue-500 text-white shadow-lg'
                         : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md'
                     }`}
                   >
-                    <span className="text-lg font-bold">
+                    <span className="text-2xl font-bold">
                       {optionLetter}
                     </span>
                   </motion.button>

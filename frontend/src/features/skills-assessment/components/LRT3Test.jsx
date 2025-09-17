@@ -290,7 +290,7 @@ const LRT3Test = ({ onBackToDashboard }) => {
                   </p>
 
                   {/* Options */}
-                  <div className="flex flex-wrap gap-3 justify-center">
+                  <div className="grid grid-cols-5 gap-4 w-full">
                     {getCurrentQuestion()?.options?.map((option, index) => {
                       const optionLetter = String.fromCharCode(97 + index); // a, b, c, d, e
                       const isSelected = answers[getCurrentQuestion()?.id] === optionLetter;
@@ -299,13 +299,13 @@ const LRT3Test = ({ onBackToDashboard }) => {
                         <button
                           key={index}
                           onClick={() => handleAnswerSelect(optionLetter)}
-                          className={`w-12 h-12 rounded-full border-2 transition-all duration-200 flex items-center justify-center ${
+                          className={`w-full h-16 rounded-lg border-2 transition-all duration-200 flex items-center justify-center ${
                             isSelected 
                               ? 'border-blue-500 bg-blue-500 text-white shadow-lg' 
                               : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md'
                           }`}
                         >
-                          <span className="text-lg font-bold">
+                          <span className="text-2xl font-bold">
                             {optionLetter.toUpperCase()}
                           </span>
                         </button>
