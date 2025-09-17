@@ -46,7 +46,10 @@ export default function SituationalJudgmentTest({ onBackToDashboard, onComplete,
   function computeScore() {
     let correct = 0;
     for (const q of questions) {
-      if (q.correct && answers[q.id] === q.correct) correct++;
+      // Check if user answer matches the correct answer index
+      if (answers[q.id] !== undefined && answers[q.id] === q.correct) {
+        correct++;
+      }
     }
     const total = rule.totalQuestions;
     const percentage = total ? Math.round((correct / total) * 100) : 0;
