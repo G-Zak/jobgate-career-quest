@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaFlag, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, FaSearchPlus, FaLayerGroup, FaImage, FaPause, FaPlay, FaTimes, FaSitemap, FaProjectDiagram } from 'react-icons/fa';
-import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
+// Removed complex scroll utilities - using simple scrollToTop function instead
 import { getDiagrammaticTestSections, getDiagrammaticSection1, getDiagrammaticSection2 } from '../data/diagrammaticTestSections';
 import { submitTestAttempt } from '../lib/submitHelper';
 import TestResultsPage from './TestResultsPage';
@@ -36,10 +36,38 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
   const [startedAt, setStartedAt] = useState(null);
   const [results, setResults] = useState(null);
 
-  // Universal scroll management using scroll utilities
-  useScrollToTop([], { smooth: true }); // Scroll on component mount
-  useTestScrollToTop(testStep, 'diagrammatic-test-scroll', { smooth: true, attempts: 5 }); // Scroll on test step changes
-  useQuestionScrollToTop(currentQuestion, testStep, 'diagrammatic-test-scroll'); // Scroll on question changes
+  // Smooth scroll-to-top function - only called on navigation
+  const scrollToTop = () => {
+    // Target the main scrollable container in MainDashboard
+    const mainScrollContainer = document.querySelector('.main-content-area .overflow-y-auto');
+    if (mainScrollContainer) {
+      // Smooth scroll to top
+      mainScrollContainer.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    } else {
+      // Fallback to window scroll
+      window.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
+  // Only scroll to top when question changes (not on every render)
+  useEffect(() => {
+    if (testStep === 'test' && currentQuestion > 0) {
+      // Small delay to ensure DOM has updated after question change
+      const timer = setTimeout(() => {
+        scrollToTop();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentQuestion, testStep]);
 
   // Load test data
   useEffect(() => {
@@ -97,15 +125,8 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
   const handleStartTest = () => {
     setTestStep('test');
     
-    // Use scroll utility for immediate scroll on test start
-    setTimeout(() => {
-      scrollToTop({
-        container: 'diagrammatic-test-scroll',
-        forceImmediate: true,
-        attempts: 3,
-        delay: 50
-      });
-    }, 100);
+    // Scroll to top when test starts
+    setTimeout(() => scrollToTop(), 100);
   };
 
   const handleAnswerSelect = (questionId, answer) => {
@@ -129,6 +150,9 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
         handleFinishTest();
       }
     }
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => scrollToTop(), 150);
   };
 
   const handlePreviousQuestion = () => {
@@ -142,6 +166,9 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
         setCurrentQuestion(prevSection.total_questions);
       }
     }
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => scrollToTop(), 150);
   };
 
   const handleFinishTest = async () => {
