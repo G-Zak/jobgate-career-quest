@@ -530,7 +530,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
                     </p>
                     
                     {/* Answer Options */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="flex flex-wrap gap-3 justify-center">
                       {getCurrentQuestion()?.options?.map((option, index) => {
                         const isSelected = answers[`${currentSection}_${currentPassage}_${getCurrentQuestion()?.id}`] === option;
                         const letters = ['A', 'B', 'C', 'D', 'E'];
@@ -538,26 +538,18 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
                         return (
                           <motion.button
                             key={option}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className={`p-3 text-left rounded-lg border-2 transition-all duration-200 ${
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className={`w-12 h-12 rounded-full border-2 transition-all duration-200 flex items-center justify-center ${
                               isSelected 
-                                ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-md' 
-                                : 'border-gray-200 hover:border-blue-300 hover:bg-blue-25 hover:shadow-sm'
+                                ? 'border-blue-500 bg-blue-500 text-white shadow-lg' 
+                                : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md'
                             }`}
                             onClick={() => handleAnswerSelect(getCurrentQuestion()?.id, option)}
                           >
-                            <div className="flex items-center">
-                              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-3 text-xs font-bold ${
-                                isSelected 
-                                  ? 'border-blue-500 bg-blue-500 text-white' 
-                                  : 'border-gray-300 text-gray-500'
-                              }`}>
-                                {letters[index]}
-                              </div>
-                              <span className="font-medium text-sm flex-1 truncate">{option}</span>
-                              {isSelected && <FaCheckCircle className="ml-2 text-blue-500 text-sm" />}
-                            </div>
+                            <span className="text-lg font-bold">
+                              {letters[index]}
+                            </span>
                           </motion.button>
                         );
                       })}

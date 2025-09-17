@@ -521,28 +521,22 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
                       <FaSearchPlus className="mr-2 text-purple-600" />
                       Select the correct answer:
                     </h4>
-                    <div className={`grid gap-3 ${getCurrentQuestion()?.options?.length === 5 ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' : 'grid-cols-2 sm:grid-cols-4'}`}>
+                    <div className="flex flex-wrap gap-3 justify-center">
                       {getCurrentQuestion()?.options?.map((option) => (
                         <motion.button
                           key={option.id}
                           onClick={() => handleAnswerSelect(getCurrentQuestion().id, option.id)}
-                          className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                          className={`w-12 h-12 rounded-full border-2 transition-all duration-200 flex items-center justify-center ${
                             answers[`${currentSection}_${getCurrentQuestion().id}`] === option.id
-                              ? 'border-purple-500 bg-purple-50 shadow-lg'
-                              : 'border-gray-200 hover:border-purple-300 bg-white hover:shadow-md'
+                              ? 'border-purple-500 bg-purple-500 text-white shadow-lg'
+                              : 'border-gray-300 hover:border-purple-400 hover:bg-purple-50 hover:shadow-md'
                           }`}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                         >
-                          <div className="flex items-center justify-center h-10">
-                            <span className={`text-xl font-bold ${
-                              answers[`${currentSection}_${getCurrentQuestion().id}`] === option.id
-                                ? 'text-purple-600'
-                                : 'text-gray-700'
-                            }`}>
-                              {option.id}
-                            </span>
-                          </div>
+                          <span className="text-lg font-bold">
+                            {option.id}
+                          </span>
                         </motion.button>
                       ))}
                     </div>

@@ -446,28 +446,22 @@ const AbstractReasoningTest = ({ onBackToDashboard }) => {
                       <FaSearchPlus className="mr-2 text-orange-600" />
                       Select the correct answer:
                     </h4>
-                    <div className={`grid gap-3 ${getCurrentQuestion()?.options?.length === 5 ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' : 'grid-cols-2 sm:grid-cols-4'}`}>
+                    <div className="flex flex-wrap gap-3 justify-center">
                       {getCurrentQuestion()?.options?.map((option) => (
                         <motion.button
                           key={option}
                           onClick={() => handleAnswerSelect(getCurrentQuestion().id, option.toLowerCase())}
-                          className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                          className={`w-12 h-12 rounded-full border-2 transition-all duration-200 flex items-center justify-center ${
                             answers[getCurrentQuestion().id] === option.toLowerCase()
-                              ? 'border-orange-500 bg-orange-50 shadow-lg'
-                              : 'border-gray-200 hover:border-orange-300 bg-white hover:shadow-md'
+                              ? 'border-orange-500 bg-orange-500 text-white shadow-lg'
+                              : 'border-gray-300 hover:border-orange-400 hover:bg-orange-50 hover:shadow-md'
                           }`}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                         >
-                          <div className="flex items-center justify-center h-10">
-                            <span className={`text-xl font-bold ${
-                              answers[getCurrentQuestion().id] === option.toLowerCase()
-                                ? 'text-orange-600'
-                                : 'text-gray-700'
-                            }`}>
-                              {option}
-                            </span>
-                          </div>
+                          <span className="text-lg font-bold">
+                            {option}
+                          </span>
                         </motion.button>
                       ))}
                     </div>
