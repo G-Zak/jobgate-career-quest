@@ -14,7 +14,8 @@ const UnifiedTestRunnerShell = ({
   canNext,
   sectionIndex,
   sectionTotal,
-  children
+  children,
+  hidePauseButton = false
 }) => {
   const [timeRemaining, setTimeRemaining] = useState(meta.timeLimit * 60); // Convert minutes to seconds
   const [isPaused, setIsPaused] = useState(false);
@@ -111,13 +112,15 @@ const UnifiedTestRunnerShell = ({
                   {formatTime(timeRemaining)}
                 </div>
               </div>
-              <button
-                onClick={handlePauseToggle}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-              >
-                {isPaused ? <FaPlay className="w-4 h-4" /> : <FaPause className="w-4 h-4" />}
-                <span className="font-medium">{isPaused ? 'Resume' : 'Pause'}</span>
-              </button>
+              {!hidePauseButton && (
+                <button
+                  onClick={handlePauseToggle}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  {isPaused ? <FaPlay className="w-4 h-4" /> : <FaPause className="w-4 h-4" />}
+                  <span className="font-medium">{isPaused ? 'Resume' : 'Pause'}</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
