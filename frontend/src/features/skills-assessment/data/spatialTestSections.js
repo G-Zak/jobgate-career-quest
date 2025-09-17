@@ -113,8 +113,19 @@ export const getSpatialSection2 = () => ({
       total_questions: 40,
       questions: [
         // All 40 questions for Section 2: Mental Rotation
+        // Section 2 Answer Key: Q1-Q40 (Note: These correspond to Q27-Q40 in the overall test)
         ...Array.from({ length: 40 }, (_, index) => {
           const questionId = index + 1;
+          // Answer key for Section 2: Q1-Q40 (Mental Rotation)
+          // Based on provided answers for Q27-Q40: C,B,D,D,A,A,B,C,B,C,C,A,B,C
+          // These are the first 14 answers for Section 2 (Q1-Q14)
+          const answerKey = [
+            "C", "B", "D", "D", "A", "A", "B", "C", "B", "C", // Q1-Q10
+            "C", "A", "B", "C", "A", "A", "A", "A", "A", "A", // Q11-Q20 (placeholder for remaining)
+            "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", // Q21-Q30 (placeholder)
+            "A", "A", "A", "A", "A", "A", "A", "A", "A", "A"  // Q31-Q40 (placeholder)
+          ];
+          
           return {
             id: questionId,
             question_text: `Which option shows both objects rotated with the dot in the correct position?`,
@@ -126,7 +137,7 @@ export const getSpatialSection2 = () => ({
               { id: "C", text: "Option C" },
               { id: "D", text: "Option D" }
             ],
-            correct_answer: "A", // TODO: Update with actual correct answers from your book
+            correct_answer: answerKey[questionId - 1],
             order: questionId,
             complexity_score: Math.min(5, Math.floor((questionId - 1) / 8) + 1) // Gradually increase difficulty (1-5)
           };
