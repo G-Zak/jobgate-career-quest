@@ -22,7 +22,7 @@ import {
   verbalReasoningCategories 
 } from '../data/verbalReasoningCategories';
 import { getRandomizedTestByLegacyId, testManager } from '../data/verbalReasoningTestManager';
-import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
+// Removed complex scroll utilities - using simple scrollToTop function instead
 import { submitTestAttempt } from '../lib/submitHelper';
 import TestResultsPage from './TestResultsPage';
 import { getRuleFor, buildAttempt } from '../testRules';
@@ -61,11 +61,38 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
 
   const testContainerRef = useRef(null);
 
-  // Universal scroll management
-  useScrollToTop([], { smooth: true });
-  useTestScrollToTop(testStep, testContainerRef, { smooth: true, attempts: 5 });
-  useTestScrollToTop(currentSection, testContainerRef, { smooth: true, attempts: 3 });
-  useQuestionScrollToTop(currentQuestion, testStep, testContainerRef);
+  // Smooth scroll-to-top function - only called on navigation
+  const scrollToTop = () => {
+    // Target the main scrollable container in MainDashboard
+    const mainScrollContainer = document.querySelector('.main-content-area .overflow-y-auto');
+    if (mainScrollContainer) {
+      // Smooth scroll to top
+      mainScrollContainer.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    } else {
+      // Fallback to window scroll
+      window.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
+  // Only scroll to top when question changes (not on every render)
+  useEffect(() => {
+    if (testStep === 'test' && currentQuestion > 0) {
+      // Small delay to ensure DOM has updated after question change
+      const timer = setTimeout(() => {
+        scrollToTop();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentQuestion, currentPassage]);
 
   // Load verbal reasoning test data
   useEffect(() => {
@@ -248,6 +275,9 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
     } else {
       setCurrentQuestion(prev => prev + 1);
     }
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => scrollToTop(), 150);
   };
 
   const handlePrevQuestion = () => {
@@ -260,6 +290,9 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
       const prevPassage = passages[currentPassage - 1];
       setCurrentQuestion(((prevPassage?.questions?.length) || 1) - 1);
     }
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => scrollToTop(), 150);
   };
 
   const handleSubmitTest = async () => {
@@ -344,13 +377,14 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
   };
 
   const confirmExit = () => {
+    scrollToTop();
     onBackToDashboard();
   };
 
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -378,7 +412,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center">
+      <div className="bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -400,7 +434,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100" ref={testContainerRef}>
+    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100" ref={testContainerRef}>
       <AnimatePresence mode="wait">
         {testStep === 'test' && (
           <motion.div
@@ -408,7 +442,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="min-h-screen"
+            className=""
           >
             {/* Modern Test Header */}
             <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
