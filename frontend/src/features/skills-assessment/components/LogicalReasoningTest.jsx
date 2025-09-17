@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaBrain, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, FaFlag, FaCog, FaSearch, FaLightbulb, FaPuzzlePiece, FaPause, FaPlay, FaTimes } from 'react-icons/fa';
-import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
+// Removed complex scroll utilities - using simple scrollToTop function instead
 import { getLogicalTestSections } from '../data/logicalTestSections';
 import { submitTestAttempt } from '../lib/submitHelper';
 import TestResultsPage from './TestResultsPage';
@@ -22,10 +22,38 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
   const [startedAt, setStartedAt] = useState(null);
   const [results, setResults] = useState(null);
 
-  // Universal scroll management
-  useScrollToTop([], { smooth: true });
-  useTestScrollToTop(testStep, 'logical-test-scroll', { smooth: true, attempts: 5 });
-  useQuestionScrollToTop(currentQuestionIndex, testStep, 'logical-test-scroll');
+  // Smooth scroll-to-top function - only called on navigation
+  const scrollToTop = () => {
+    // Target the main scrollable container in MainDashboard
+    const mainScrollContainer = document.querySelector('.main-content-area .overflow-y-auto');
+    if (mainScrollContainer) {
+      // Smooth scroll to top
+      mainScrollContainer.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    } else {
+      // Fallback to window scroll
+      window.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
+  // Only scroll to top when question changes (not on every render)
+  useEffect(() => {
+    if (testStep === 'test' && currentQuestionIndex > 0) {
+      // Small delay to ensure DOM has updated after question change
+      const timer = setTimeout(() => {
+        scrollToTop();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentQuestionIndex, testStep]);
 
   // Load and prepare questions
   useEffect(() => {
@@ -98,12 +126,18 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
     } else {
       setCurrentQuestionIndex(prev => prev + 1);
     }
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => scrollToTop(), 150);
   };
 
   const handlePreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1);
     }
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => scrollToTop(), 150);
   };
 
   const handleFinishTest = async () => {
@@ -325,35 +359,44 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
             </div>
 
             {/* Answer Options */}
-            <div className="space-y-3">
+            <div role="radiogroup" aria-labelledby={`q-${currentQuestion.id}-label`} className="grid gap-4">
               {currentQuestion?.options?.map((option, index) => {
                 const optionLetter = String.fromCharCode(65 + index);
                 const isSelected = answers[currentQuestion.id] === optionLetter;
 
                 return (
-                  <motion.button
+                  <motion.label
                     key={index}
+                    className={`w-full rounded-xl border-2 px-6 py-4 cursor-pointer transition-all duration-200 ${
+                      isSelected 
+                        ? "border-blue-500 bg-blue-50 text-blue-700 shadow-lg" 
+                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md"
+                    }`}
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
-                    onClick={() => handleAnswerSelect(currentQuestion.id, optionLetter)}
-                    className={`w-full text-left p-6 rounded-xl border-2 transition-all duration-200 ${
-                      isSelected
-                        ? 'border-blue-500 bg-blue-50 shadow-lg shadow-blue-100'
-                        : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                    }`}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                        isSelected
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-200 text-gray-600'
-                      }`}>
-                        {optionLetter}
+                    <input
+                      type="radio"
+                      name={`q-${currentQuestion.id}`}
+                      value={optionLetter}
+                      className="sr-only"
+                      checked={isSelected}
+                      onChange={() => handleAnswerSelect(currentQuestion.id, optionLetter)}
+                    />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 text-sm font-bold ${
+                          isSelected 
+                            ? 'bg-blue-500 text-white' 
+                            : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          {optionLetter}
+                        </span>
+                        <span className="text-lg font-medium">{option}</span>
                       </div>
-                      <span className="text-gray-800 font-medium">{option}</span>
-                      {isSelected && <FaCheckCircle className="ml-auto text-blue-500" />}
+                      {isSelected && <FaCheckCircle className="w-5 h-5 text-blue-500" />}
                     </div>
-                  </motion.button>
+                  </motion.label>
                 );
               })}
             </div>

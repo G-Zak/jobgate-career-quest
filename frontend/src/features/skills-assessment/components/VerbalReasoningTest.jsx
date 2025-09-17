@@ -530,35 +530,44 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
                     </p>
                     
                     {/* Answer Options */}
-                    <div className="space-y-3">
+                    <div role="radiogroup" aria-labelledby={`q-${getCurrentQuestion()?.id}-label`} className="grid gap-4">
                       {getCurrentQuestion()?.options?.map((option, index) => {
                         const isSelected = answers[`${currentSection}_${currentPassage}_${getCurrentQuestion()?.id}`] === option;
                         const letters = ['A', 'B', 'C', 'D', 'E'];
                         
                         return (
-                          <motion.button
+                          <motion.label
                             key={option}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className={`w-full p-4 text-left rounded-xl border-2 transition-all duration-200 ${
+                            className={`w-full rounded-xl border-2 px-6 py-4 cursor-pointer transition-all duration-200 ${
                               isSelected 
-                                ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-md' 
-                                : 'border-gray-200 hover:border-blue-300 hover:bg-blue-25 hover:shadow-sm'
+                                ? "border-blue-500 bg-blue-50 text-blue-700 shadow-lg" 
+                                : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md"
                             }`}
-                            onClick={() => handleAnswerSelect(getCurrentQuestion()?.id, option)}
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
                           >
-                            <div className="flex items-center">
-                              <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center mr-4 text-sm font-bold ${
-                                isSelected 
-                                  ? 'border-blue-500 bg-blue-500 text-white' 
-                                  : 'border-gray-300 text-gray-500'
-                              }`}>
-                                {letters[index]}
+                            <input
+                              type="radio"
+                              name={`q-${getCurrentQuestion()?.id}`}
+                              value={option}
+                              className="sr-only"
+                              checked={isSelected}
+                              onChange={() => handleAnswerSelect(getCurrentQuestion()?.id, option)}
+                            />
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <span className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 text-sm font-bold ${
+                                  isSelected 
+                                    ? 'bg-blue-500 text-white' 
+                                    : 'bg-gray-200 text-gray-600'
+                                }`}>
+                                  {letters[index]}
+                                </span>
+                                <span className="text-lg font-medium">{option}</span>
                               </div>
-                              <span className="font-medium">{option}</span>
-                              {isSelected && <FaCheckCircle className="ml-auto text-blue-500" />}
+                              {isSelected && <FaCheckCircle className="w-5 h-5 text-blue-500" />}
                             </div>
-                          </motion.button>
+                          </motion.label>
                         );
                       })}
                     </div>

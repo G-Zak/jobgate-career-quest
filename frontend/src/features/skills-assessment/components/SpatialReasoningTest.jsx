@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaCube, FaStop, FaArrowRight, FaFlag, FaSync, FaSearchPlus, FaExpand, FaEye, FaImage, FaLayerGroup, FaPlay, FaTimes, FaCheckCircle } from 'react-icons/fa';
 import { getSpatialTestSections, getSpatialSection1, getSpatialSection2, getSpatialSection3, getSpatialSection4, getSpatialSection5, getSpatialSection6 } from '../data/spatialTestSections';
-import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
+// Removed complex scroll utilities - using simple scrollToTop function instead
 import { submitTestAttempt } from '../lib/submitHelper';
 import TestResultsPage from './TestResultsPage';
 import { getRuleFor, buildAttempt } from '../testRules';
@@ -24,10 +24,38 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
 
   const testContainerRef = useRef(null);
 
-  // Universal scroll management
-  useScrollToTop([], { smooth: true });
-  useTestScrollToTop(testStep, testContainerRef, { smooth: true, attempts: 5 });
-  useQuestionScrollToTop(currentQuestionIndex, testStep, testContainerRef);
+  // Smooth scroll-to-top function - only called on navigation
+  const scrollToTop = () => {
+    // Target the main scrollable container in MainDashboard
+    const mainScrollContainer = document.querySelector('.main-content-area .overflow-y-auto');
+    if (mainScrollContainer) {
+      // Smooth scroll to top
+      mainScrollContainer.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    } else {
+      // Fallback to window scroll
+      window.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
+  // Only scroll to top when question changes (not on every render)
+  useEffect(() => {
+    if (testStep === 'test' && currentQuestionIndex > 0) {
+      // Small delay to ensure DOM has updated after question change
+      const timer = setTimeout(() => {
+        scrollToTop();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentQuestionIndex, testStep]);
 
   // Load spatial reasoning test data and select 20 questions
   useEffect(() => {
@@ -124,12 +152,18 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
     } else {
       setCurrentQuestionIndex(prev => prev + 1);
     }
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => scrollToTop(), 150);
   };
 
   const handlePreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1);
     }
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => scrollToTop(), 150);
   };
 
   const handleFinishTest = async () => {
@@ -323,14 +357,17 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
             {currentQuestion?.question_image && (
               <div className="mb-6">
                 <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
-                  <img
-                    src={currentQuestion.question_image}
-                    alt={`Question ${currentQuestionIndex + 1}`}
-                    className="max-w-full h-auto mx-auto rounded-lg shadow-sm"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
+                  <div className="flex justify-center">
+                    <img
+                      src={currentQuestion.question_image}
+                      alt={`Question ${currentQuestionIndex + 1}`}
+                      className="max-w-xl max-h-[28rem] w-auto h-auto rounded-lg shadow-sm object-contain"
+                      style={{ maxWidth: '528px', maxHeight: '422px' }}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -348,34 +385,30 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
             </div>
 
             {/* Answer Options */}
-            <div className="space-y-3">
+            <div className="flex justify-center gap-4 w-full">
               {currentQuestion?.options?.map((option, index) => {
                 const optionLetter = option.id || String.fromCharCode(65 + index);
                 const isSelected = answers[currentQuestion.id] === optionLetter;
+                const optionsCount = currentQuestion?.options?.length || 0;
+                
+                // Calculate width based on number of options
+                const buttonWidth = optionsCount <= 3 ? 'w-20' : optionsCount === 4 ? 'w-16' : 'w-12';
 
                 return (
                   <motion.button
                     key={index}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => handleAnswerSelect(currentQuestion.id, optionLetter)}
-                    className={`w-full text-left p-6 rounded-xl border-2 transition-all duration-200 ${
+                    className={`${buttonWidth} h-16 rounded-lg border-2 transition-all duration-200 flex items-center justify-center ${
                       isSelected
-                        ? 'border-blue-500 bg-blue-50 shadow-lg shadow-blue-100'
-                        : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                        ? 'border-blue-500 bg-blue-500 text-white shadow-lg'
+                        : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md'
                     }`}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                        isSelected
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-200 text-gray-600'
-                      }`}>
-                        {optionLetter}
-                      </div>
-                      <span className="text-gray-800 font-medium">{option.text || option}</span>
-                      {isSelected && <FaCheckCircle className="ml-auto text-blue-500" />}
-                    </div>
+                    <span className="text-2xl font-bold">
+                      {optionLetter}
+                    </span>
                   </motion.button>
                 );
               })}
