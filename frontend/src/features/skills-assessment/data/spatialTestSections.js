@@ -37,8 +37,17 @@ export const getSpatialSection1 = () => ({
       total_questions: 40,
       questions: [
         // All 40 questions for Section 1: Shape Assembly
+        // Section 1 Answer Key: Q1-Q40
         ...Array.from({ length: 40 }, (_, index) => {
           const questionId = index + 1;
+          // Answer key for Section 1: Q1-Q40
+          const answerKey = [
+            "B", "D", "A", "E", "D", "B", "A", "C", "A", "C", // Q1-Q10
+            "D", "B", "E", "A", "C", "D", "E", "A", "C", "B", // Q11-Q20
+            "E", "E", "C", "C", "E", "B", "E", "D", "E", "A", // Q21-Q30
+            "E", "C", "E", "B", "C", "B", "A", "D", "E", "A"  // Q31-Q40
+          ];
+          
           return {
             id: questionId,
             question_text: `Which option shows the correct assembly of these shapes?`,
@@ -51,7 +60,7 @@ export const getSpatialSection1 = () => ({
               { id: "D", text: "Option D" },
               { id: "E", text: "Option E" }
             ],
-            correct_answer: "A", // TODO: Update with actual correct answers from your book
+            correct_answer: answerKey[questionId - 1],
             order: questionId,
             complexity_score: Math.min(5, Math.floor((questionId - 1) / 8) + 1) // Gradually increase difficulty (1-5)
           };
@@ -104,8 +113,18 @@ export const getSpatialSection2 = () => ({
       total_questions: 40,
       questions: [
         // All 40 questions for Section 2: Mental Rotation
+        // Section 2 Answer Key: Q1-Q40 (Note: These correspond to Q27-Q40 in the overall test)
         ...Array.from({ length: 40 }, (_, index) => {
           const questionId = index + 1;
+          // Answer key for Section 2: Q1-Q40 (Mental Rotation)
+          // Complete answer key for all 40 questions
+          const answerKey = [
+            "B", "C", "C", "C", "A", "B", "B", "C", "B", "A", // Q1-Q10
+            "C", "B", "A", "D", "B", "D", "A", "C", "B", "C", // Q11-Q20
+            "A", "D", "B", "A", "A", "B", "C", "B", "D", "D", // Q21-Q30
+            "A", "A", "B", "C", "B", "C", "C", "A", "B", "C"  // Q31-Q40
+          ];
+          
           return {
             id: questionId,
             question_text: `Which option shows both objects rotated with the dot in the correct position?`,
@@ -117,7 +136,7 @@ export const getSpatialSection2 = () => ({
               { id: "C", text: "Option C" },
               { id: "D", text: "Option D" }
             ],
-            correct_answer: "A", // TODO: Update with actual correct answers from your book
+            correct_answer: answerKey[questionId - 1],
             order: questionId,
             complexity_score: Math.min(5, Math.floor((questionId - 1) / 8) + 1) // Gradually increase difficulty (1-5)
           };
@@ -208,15 +227,24 @@ export const getSpatialSection3 = () => ({
       total_questions: 40,
       questions: [
         // All 40 questions for Section 3: Spatial Visualization
+        // Section 3 Answer Key: Q1-Q40 (Spatial Visualization)
         ...Array.from({ length: 40 }, (_, index) => {
           const questionId = index + 1;
+          // Answer key for Section 3: Q1-Q40 (Spatial Visualization)
+          const answerKey = [
+            "C", "B", "C", "D", "A", "A", "B", "C", "B", "A", // Q1-Q10
+            "C", "D", "A", "B", "C", "A", "D", "A", "C", "B", // Q11-Q20
+            "A", "C", "D", "D", "C", "B", "A", "D", "C", "A", // Q21-Q30
+            "B", "C", "D", "A", "B", "C", "A", "D", "C", "A"  // Q31-Q40
+          ];
+          
           return {
             id: questionId,
             question_text: `Which option correctly completes the 3D pattern or arrangement?`,
             context: "Analyze the spatial arrangement and identify the missing element that completes the pattern.",
             question_image: `/src/assets/images/spatial/questions/section_3/question_${questionId}.png`,
             options: ["A", "B", "C", "D"],
-            correct_answer: "A", // TODO: Update with actual correct answers from your book
+            correct_answer: answerKey[questionId - 1],
             order: questionId,
             complexity_score: Math.min(5, Math.floor((questionId - 1) / 8) + 1) // Gradually increase difficulty (1-5)
           };
@@ -258,15 +286,24 @@ export const getSpatialSection4 = () => ({
       total_questions: 40,
       questions: [
         // All 40 questions for Section 4: Figure Identification
+        // Section 4 Answer Key: Q1-Q40 (Figure Identification)
         ...Array.from({ length: 40 }, (_, index) => {
           const questionId = index + 1;
+          // Answer key for Section 4: Q1-Q40 (Figure Identification)
+          const answerKey = [
+            "C", "B", "A", "B", "A", "C", "A", "D", "B", "C", // Q1-Q10
+            "A", "D", "A", "B", "A", "C", "D", "A", "B", "A", // Q11-Q20
+            "C", "D", "B", "B", "A", "C", "D", "C", "B", "C", // Q21-Q30
+            "A", "D", "C", "A", "B", "D", "C", "A", "B", "A"  // Q31-Q40
+          ];
+          
           return {
             id: questionId,
             question_text: `Which of the 4 figures presented (A, B, C or D) is identical to the first?`,
             context: "Look at the first figure and identify which of the four options (A, B, C, or D) is identical to it when rotated.",
             question_image: `/src/assets/images/spatial/questions/section_4/question_${questionId}.png`,
             options: ["A", "B", "C", "D"],
-            correct_answer: "A", // TODO: Update with actual correct answers from your book
+            correct_answer: answerKey[questionId - 1],
             order: questionId,
             complexity_score: Math.min(5, Math.floor((questionId - 1) / 8) + 1) // Gradually increase difficulty (1-5)
           };
@@ -312,15 +349,22 @@ export const getSpatialSection5 = () => ({
       total_questions: 20,
       questions: [
         // All 20 questions for Section 5: Rotation Recognition
+        // Section 5 Answer Key: Q1-Q20 (Rotation Recognition)
         ...Array.from({ length: 20 }, (_, index) => {
           const questionId = index + 1;
+          // Answer key for Section 5: Q1-Q20 (Rotation Recognition)
+          const answerKey = [
+            "B", "A", "C", "E", "B", "C", "A", "D", "B", "C", // Q1-Q10
+            "A", "E", "A", "D", "B", "E", "D", "A", "C", "B"  // Q11-Q20
+          ];
+          
           return {
             id: questionId,
             question_text: `Which of the Answer figures is a rotation of the Question figure?`,
             context: "Mentally rotate the question figure in your head and identify which of the answer figures matches when rotated.",
             question_image: `/src/assets/images/spatial/questions/section_5/question_${questionId}.png`,
             options: ["A", "B", "C", "D", "E"],
-            correct_answer: "E", // TODO: Update with actual correct answers from your book (based on your attachment, E is correct)
+            correct_answer: answerKey[questionId - 1],
             order: questionId,
             complexity_score: Math.min(5, Math.floor((questionId - 1) / 4) + 1) // Gradually increase difficulty (1-5)
           };
@@ -365,15 +409,22 @@ export const getSpatialSection6 = () => ({
       total_questions: 20,
       questions: [
         // All 20 questions for Section 6: Component Assembly
+        // Section 6 Answer Key: Q1-Q20 (Component Assembly)
         ...Array.from({ length: 20 }, (_, index) => {
           const questionId = index + 1;
+          // Answer key for Section 6: Q1-Q20 (Component Assembly)
+          const answerKey = [
+            "A", "B", "B", "D", "C", "D", "A", "C", "A", "A", // Q1-Q10
+            "A", "C", "A", "B", "A", "A", "A", "C", "A", "D"  // Q11-Q20
+          ];
+          
           return {
             id: questionId,
             question_text: `Which of the COMPONENT SHAPES can be made from the COMPONENT PARTS?`,
             context: "Visually and mentally identify which component shape can be assembled from the given component parts. Shapes can be rotated.",
             question_image: `/src/assets/images/spatial/questions/section_6/question_${questionId}.png`,
             options: ["A", "B", "C", "D"],
-            correct_answer: "A", // TODO: Update with actual correct answers from your book (based on your attachment, A is correct)
+            correct_answer: answerKey[questionId - 1],
             order: questionId,
             complexity_score: Math.min(5, Math.floor((questionId - 1) / 4) + 1) // Gradually increase difficulty (1-5)
           };
