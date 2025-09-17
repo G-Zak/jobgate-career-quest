@@ -290,7 +290,7 @@ const LRT2Test = ({ onBackToDashboard }) => {
                   </p>
 
                   {/* Options */}
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {getCurrentQuestion()?.options?.map((option, index) => {
                       const optionLetter = String.fromCharCode(97 + index); // a, b, c, d, e
                       const isSelected = answers[getCurrentQuestion()?.id] === optionLetter;
@@ -299,21 +299,21 @@ const LRT2Test = ({ onBackToDashboard }) => {
                         <button
                           key={index}
                           onClick={() => handleAnswerSelect(optionLetter)}
-                          className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
+                          className={`p-3 text-left rounded-lg border-2 transition-all duration-200 ${
                             isSelected 
                               ? 'border-blue-500 bg-blue-50 text-blue-700' 
                               : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                           }`}
                         >
-                          <div className="flex items-center space-x-3">
-                            <span className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-medium ${
+                          <div className="flex items-center">
+                            <span className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-medium mr-3 ${
                               isSelected 
                                 ? 'border-blue-500 bg-blue-500 text-white' 
                                 : 'border-gray-300 text-gray-600'
                             }`}>
                               {optionLetter.toUpperCase()}
                             </span>
-                            <span className="text-gray-800">{option}</span>
+                            <span className="text-gray-800 text-sm flex-1 truncate">{option}</span>
                           </div>
                         </button>
                       );

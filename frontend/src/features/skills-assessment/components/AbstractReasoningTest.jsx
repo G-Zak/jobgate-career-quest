@@ -446,12 +446,12 @@ const AbstractReasoningTest = ({ onBackToDashboard }) => {
                       <FaSearchPlus className="mr-2 text-orange-600" />
                       Select the correct answer:
                     </h4>
-                    <div className={`grid gap-4 ${getCurrentQuestion()?.options?.length === 5 ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4'}`}>
+                    <div className={`grid gap-3 ${getCurrentQuestion()?.options?.length === 5 ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' : 'grid-cols-2 sm:grid-cols-4'}`}>
                       {getCurrentQuestion()?.options?.map((option) => (
                         <motion.button
                           key={option}
                           onClick={() => handleAnswerSelect(getCurrentQuestion().id, option.toLowerCase())}
-                          className={`p-6 rounded-xl border-2 transition-all duration-200 ${
+                          className={`p-4 rounded-lg border-2 transition-all duration-200 ${
                             answers[getCurrentQuestion().id] === option.toLowerCase()
                               ? 'border-orange-500 bg-orange-50 shadow-lg'
                               : 'border-gray-200 hover:border-orange-300 bg-white hover:shadow-md'
@@ -459,8 +459,8 @@ const AbstractReasoningTest = ({ onBackToDashboard }) => {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                          <div className="flex items-center justify-center h-12">
-                            <span className={`text-2xl font-bold ${
+                          <div className="flex items-center justify-center h-10">
+                            <span className={`text-xl font-bold ${
                               answers[getCurrentQuestion().id] === option.toLowerCase()
                                 ? 'text-orange-600'
                                 : 'text-gray-700'

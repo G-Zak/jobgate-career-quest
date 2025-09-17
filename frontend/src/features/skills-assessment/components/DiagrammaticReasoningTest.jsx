@@ -521,12 +521,12 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
                       <FaSearchPlus className="mr-2 text-purple-600" />
                       Select the correct answer:
                     </h4>
-                    <div className={`grid gap-4 ${getCurrentQuestion()?.options?.length === 5 ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4'}`}>
+                    <div className={`grid gap-3 ${getCurrentQuestion()?.options?.length === 5 ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' : 'grid-cols-2 sm:grid-cols-4'}`}>
                       {getCurrentQuestion()?.options?.map((option) => (
                         <motion.button
                           key={option.id}
                           onClick={() => handleAnswerSelect(getCurrentQuestion().id, option.id)}
-                          className={`p-6 rounded-xl border-2 transition-all duration-200 ${
+                          className={`p-4 rounded-lg border-2 transition-all duration-200 ${
                             answers[`${currentSection}_${getCurrentQuestion().id}`] === option.id
                               ? 'border-purple-500 bg-purple-50 shadow-lg'
                               : 'border-gray-200 hover:border-purple-300 bg-white hover:shadow-md'
@@ -534,8 +534,8 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                          <div className="flex items-center justify-center h-12">
-                            <span className={`text-2xl font-bold ${
+                          <div className="flex items-center justify-center h-10">
+                            <span className={`text-xl font-bold ${
                               answers[`${currentSection}_${getCurrentQuestion().id}`] === option.id
                                 ? 'text-purple-600'
                                 : 'text-gray-700'

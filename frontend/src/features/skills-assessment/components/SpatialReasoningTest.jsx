@@ -385,7 +385,7 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
             </div>
 
             {/* Answer Options */}
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {currentQuestion?.options?.map((option, index) => {
                 const optionLetter = option.id || String.fromCharCode(65 + index);
                 const isSelected = answers[currentQuestion.id] === optionLetter;
@@ -396,22 +396,22 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={() => handleAnswerSelect(currentQuestion.id, optionLetter)}
-                    className={`w-full text-left p-6 rounded-xl border-2 transition-all duration-200 ${
+                    className={`p-3 text-left rounded-lg border-2 transition-all duration-200 ${
                       isSelected
                         ? 'border-blue-500 bg-blue-50 shadow-lg shadow-blue-100'
                         : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
                     }`}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                    <div className="flex items-center">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mr-3 ${
                         isSelected
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-200 text-gray-600'
                       }`}>
                         {optionLetter}
                       </div>
-                      <span className="text-gray-800 font-medium">{option.text || option}</span>
-                      {isSelected && <FaCheckCircle className="ml-auto text-blue-500" />}
+                      <span className="text-gray-800 font-medium text-sm flex-1 truncate">{option.text || option}</span>
+                      {isSelected && <FaCheckCircle className="ml-2 text-blue-500 text-sm" />}
                     </div>
                   </motion.button>
                 );

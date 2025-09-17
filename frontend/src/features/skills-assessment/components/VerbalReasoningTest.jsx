@@ -530,7 +530,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
                     </p>
                     
                     {/* Answer Options */}
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {getCurrentQuestion()?.options?.map((option, index) => {
                         const isSelected = answers[`${currentSection}_${currentPassage}_${getCurrentQuestion()?.id}`] === option;
                         const letters = ['A', 'B', 'C', 'D', 'E'];
@@ -540,7 +540,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
                             key={option}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className={`w-full p-4 text-left rounded-xl border-2 transition-all duration-200 ${
+                            className={`p-3 text-left rounded-lg border-2 transition-all duration-200 ${
                               isSelected 
                                 ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-md' 
                                 : 'border-gray-200 hover:border-blue-300 hover:bg-blue-25 hover:shadow-sm'
@@ -548,15 +548,15 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
                             onClick={() => handleAnswerSelect(getCurrentQuestion()?.id, option)}
                           >
                             <div className="flex items-center">
-                              <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center mr-4 text-sm font-bold ${
+                              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-3 text-xs font-bold ${
                                 isSelected 
                                   ? 'border-blue-500 bg-blue-500 text-white' 
                                   : 'border-gray-300 text-gray-500'
                               }`}>
                                 {letters[index]}
                               </div>
-                              <span className="font-medium">{option}</span>
-                              {isSelected && <FaCheckCircle className="ml-auto text-blue-500" />}
+                              <span className="font-medium text-sm flex-1 truncate">{option}</span>
+                              {isSelected && <FaCheckCircle className="ml-2 text-blue-500 text-sm" />}
                             </div>
                           </motion.button>
                         );
