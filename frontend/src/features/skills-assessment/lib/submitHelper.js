@@ -1,91 +1,72 @@
-import { buildAttemptPayload, calculateScore } from '../lib/scoreUtils';
-import { postAttempt } from '../api/attemptsApi';
-import assessmentStore from '../store/useAssessmentStore';
+/**
+ * MIGRATED: Backend-only submission helper
+ * 
+ * This file has been completely migrated to use backend APIs only.
+ * All frontend scoring logic has been removed.
+ * 
+ * DEPRECATED: Use backendSubmissionHelper.js instead
+ */
+
+import { submitTestAttempt as backendSubmitTest } from './backendSubmissionHelper';
 
 /**
- * Unified test submission handler for all test types
+ * @deprecated Use backendSubmissionHelper.submitTestAttempt instead
+ * Legacy wrapper for backward compatibility during migration
  */
-export async function submitTestAttempt({
-  testId,
-  testData,
-  answers,
-  startedAt,
-  finishedAt = Date.now(),
-  reason = 'user',
-  language = 'en',
-  sectionBreakdown = null,
-  onSuccess = null,
-  onError = null
-}) {
-  try {
-    // Calculate score from answers and test data
-    const { correct, total } = calculateScore(answers, testData);
-    
-    // Build the attempt payload
-    const payload = buildAttemptPayload({
-      testId,
-      total,
-      correct,
-      startedAt,
-      finishedAt,
-      reason,
-      answersByQuestion: answers,
+export async function submitTestAttempt(params) {
+  console.warn('submitTestAttempt from submitHelper is deprecated. Use backendSubmissionHelper instead.');
+  
+  // Map old parameters to new format
+  const {
+    testId,
+    testData, // Not used in backend version
+    answers,
+    startedAt,
+    finishedAt = Date.now(),
+    reason = 'user',
+    language = 'en',
+    sectionBreakdown = null, // Not used in backend version
+    onSuccess = null,
+    onError = null
+  } = params;
+
+  // Use backend submission
+  return backendSubmitTest({
+    testId,
+    answers,
+    startedAt,
+    finishedAt,
+    reason,
+    metadata: {
+      language,
       sectionBreakdown,
-      language
-    });
-
-    console.log('Submitting test attempt:', payload);
-
-    // Try to save to backend
-    let savedAttempt;
-    try {
-      savedAttempt = await postAttempt(payload);
-      console.log('Successfully saved attempt to backend:', savedAttempt);
-    } catch (backendError) {
-      console.warn('Backend save failed, storing locally:', backendError);
-      // Still proceed with local storage and UI updates
-      savedAttempt = { ...payload, id: `local_${Date.now()}` };
-    }
-
-    // Update local store immediately (for UI responsiveness)
-    assessmentStore.addAttempt(savedAttempt);
-
-    // Call success callback with results
-    if (onSuccess) {
-      onSuccess({
-        attempt: savedAttempt,
-        percentage: payload.percentage,
-        correct,
-        total,
-        resultLabel: payload.result_label
-      });
-    }
-
-    return savedAttempt;
-
-  } catch (error) {
-    console.error('Error submitting test attempt:', error);
-    
-    if (onError) {
-      onError(error);
-    } else {
-      // Default error handling - still create a minimal local record
-      const fallbackPayload = {
-        test_id: String(testId),
-        percentage: 0,
-        correct: 0,
-        total_questions: testData?.length || 0,
-        result: 'aborted',
-        created_at: new Date().toISOString(),
-        id: `error_${Date.now()}`
-      };
-      
-      assessmentStore.addAttempt(fallbackPayload);
-    }
-    
-    throw error;
-  }
+      migrationSource: 'legacy_submitHelper'
+    },
+    onSuccess,
+    onError
+  });
 }
+
+/**
+ * @deprecated This function is no longer needed with backend scoring
+ * @throws {Error} Always throws error - use backend API instead
+ */
+export function calculateScore() {
+  throw new Error('calculateScore() is deprecated. Backend handles all scoring.');
+}
+
+/**
+ * @deprecated This function is no longer needed with backend scoring
+ * @throws {Error} Always throws error - use backend API instead
+ */
+export function buildAttemptPayload() {
+  throw new Error('buildAttemptPayload() is deprecated. Backend handles all attempt building.');
+}
+
+// Export the legacy wrapper for backward compatibility
+export default {
+  submitTestAttempt
+};
 
 /**
  * Extract answers from different test component formats

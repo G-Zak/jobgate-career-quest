@@ -1,0 +1,8 @@
+{
+  "filename": "backup_full_20250919_023422.sql.gz",
+  "backup_type": "full",
+  "created_at": "20250919_023422",
+  "size_bytes": 80068,
+  "tables": "all",
+  "compression": true
+}

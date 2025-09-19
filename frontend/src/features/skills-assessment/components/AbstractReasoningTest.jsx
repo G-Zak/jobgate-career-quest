@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import backendApi from '../api/backendApi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaFlag, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, FaSearchPlus, FaLayerGroup, FaImage, FaPause, FaPlay, FaTimes } from 'react-icons/fa';
 // Removed complex scroll utilities - using simple scrollToTop function instead
 import { getAbstractTestWithAnswers } from '../data/abstractTestSections';
-import { submitTestAttempt } from '../lib/submitHelper';
+import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
 import TestResultsPage from './TestResultsPage';
 
 const AbstractReasoningTest = ({ onBackToDashboard }) => {

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import backendApi from '../api/backendApi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaFlag, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, FaSearchPlus, FaLayerGroup, FaImage, FaPause, FaPlay, FaTimes, FaSitemap, FaProjectDiagram } from 'react-icons/fa';
 // Removed complex scroll utilities - using simple scrollToTop function instead
 import { getDiagrammaticTestSections, getDiagrammaticSection1, getDiagrammaticSection2 } from '../data/diagrammaticTestSections';
-import { submitTestAttempt } from '../lib/submitHelper';
+import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
 import TestResultsPage from './TestResultsPage';
 
 const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {

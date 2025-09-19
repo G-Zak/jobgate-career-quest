@@ -200,7 +200,7 @@ export const testConfiguration = {
   // DEVELOPMENT & TESTING
   // ==========================================
   development: {
-    debugMode: process.env.NODE_ENV === 'development',
+    debugMode: import.meta.env.DEV,
     showQuestionIds: false,
     showCorrectAnswers: false,
     bypassTimeLimit: false,
@@ -264,41 +264,24 @@ export const getPoolSizeRequirements = (difficulty) => {
 };
 
 /**
- * Calculate score with bonuses and penalties
+ * DEPRECATED: Frontend scoring functions removed
+ * All scoring is now handled by the backend API
  */
-export const calculateFinalScore = (rawScore, timeSpent, totalTime, wrongAnswers = 0) => {
-  let finalScore = rawScore;
-  
-  // Apply time bonus
-  if (testConfiguration.scoring.timeBonus.enabled) {
-    const timeRatio = timeSpent / totalTime;
-    if (timeRatio < testConfiguration.scoring.timeBonus.bonusThreshold) {
-      const bonus = (testConfiguration.scoring.timeBonus.bonusThreshold - timeRatio) * 
-                   testConfiguration.scoring.timeBonus.maxBonus;
-      finalScore += Math.min(bonus, testConfiguration.scoring.timeBonus.maxBonus);
-    }
-  }
 
-  // Apply penalty for wrong answers (if enabled)
-  if (testConfiguration.scoring.penaltyForGuessing.enabled) {
-    const penalty = wrongAnswers * testConfiguration.scoring.penaltyForGuessing.penaltyRate;
-    finalScore = Math.max(0, finalScore - penalty);
-  }
-
-  return Math.min(100, Math.round(finalScore * 100) / 100);
+/**
+ * @deprecated Use backend API for score calculation
+ * @throws {Error} Always throws error - use backend API instead
+ */
+export const calculateFinalScore = () => {
+  throw new Error('calculateFinalScore() is deprecated. Use backend API for scoring.');
 };
 
 /**
- * Get grade based on score
+ * @deprecated Use backend API for grade calculation
+ * @throws {Error} Always throws error - use backend API instead
  */
-export const getGrade = (score) => {
-  const scale = testConfiguration.scoring.gradingScale;
-  
-  if (score >= scale.excellent) return 'Excellent';
-  if (score >= scale.good) return 'Good';
-  if (score >= scale.satisfactory) return 'Satisfactory';
-  if (score >= scale.needsImprovement) return 'Needs Improvement';
-  return 'Unsatisfactory';
+export const getGrade = () => {
+  throw new Error('getGrade() is deprecated. Use backend API for scoring.');
 };
 
 export default testConfiguration;

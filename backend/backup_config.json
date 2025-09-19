@@ -1,0 +1,60 @@
+{
+  "backup_directory": "backups",
+  "retention_days": 30,
+  "compression": true,
+  "verify_backups": true,
+  "log_level": "INFO",
+  "pg_dump_path": "pg_dump",
+  "pg_restore_path": "pg_restore",
+  "psql_path": "psql",
+  "backup_schedule": {
+    "enabled": true,
+    "full_backup_days": ["sunday"],
+    "incremental_backup_days": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"],
+    "backup_time": "02:00",
+    "timezone": "UTC"
+  },
+  "notifications": {
+    "enabled": true,
+    "email": {
+      "smtp_server": "localhost",
+      "smtp_port": 587,
+      "username": "",
+      "password": "",
+      "from_email": "backup@jobgate-career-quest.com",
+      "to_emails": ["admin@jobgate-career-quest.com"]
+    },
+    "webhook": {
+      "enabled": false,
+      "url": "",
+      "timeout": 30
+    }
+  },
+  "encryption": {
+    "enabled": false,
+    "algorithm": "AES256",
+    "key_file": "backup_encryption.key"
+  },
+  "storage": {
+    "local": {
+      "enabled": true,
+      "path": "backups"
+    },
+    "s3": {
+      "enabled": false,
+      "bucket": "",
+      "region": "us-east-1",
+      "access_key": "",
+      "secret_key": "",
+      "prefix": "postgresql-backups/"
+    },
+    "ftp": {
+      "enabled": false,
+      "host": "",
+      "port": 21,
+      "username": "",
+      "password": "",
+      "directory": "/backups"
+    }
+  }
+}

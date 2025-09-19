@@ -24,12 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 def get_database_config():
     """
     Returns database configuration based on environment variables.
-    Defaults to SQLite for development, PostgreSQL for production.
+    Defaults to PostgreSQL for consistent development and production environment.
     """
     
     # Check if we're in production mode
     is_production = config('ENVIRONMENT', default='development') == 'production'
-    use_postgresql = config('USE_POSTGRESQL', default=False, cast=bool) or is_production
+    # Default to PostgreSQL for consistent scoring system behavior
+    use_postgresql = config('USE_POSTGRESQL', default=True, cast=bool)
     
     if use_postgresql:
         # PostgreSQL with Django's built-in connection pooling
@@ -45,8 +46,11 @@ def get_database_config():
                 'CONN_MAX_AGE': config('DB_CONN_MAX_AGE', default=600, cast=int),
                 'CONN_HEALTH_CHECKS': config('DB_CONN_HEALTH_CHECKS', default=True, cast=bool),
                 'OPTIONS': {
-                    'MAX_CONNS': config('DB_MAX_CONNS', default=20, cast=int),
-                    'MIN_CONNS': config('DB_MIN_CONNS', default=5, cast=int),
+                    # PostgreSQL connection options for scoring system
+                    'connect_timeout': 10,
+                    'application_name': 'jobgate_career_quest',
+                    # Optimize for scoring calculations
+                    'sslmode': 'prefer',
                 },
                 'TEST': {
                     'NAME': config('DB_TEST_NAME', default='test_jobgate_career_quest'),

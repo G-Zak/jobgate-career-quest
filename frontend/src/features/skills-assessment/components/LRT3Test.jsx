@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaBrain, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, FaFlag, FaPuzzlePiece } from 'react-icons/fa';
-// Removed complex scroll utilities - using simple scrollToTop function instead
+import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
 import { getLRT3TestSections } from '../data/lrt3TestSections';
 
 const LRT3Test = ({ onBackToDashboard }) => {

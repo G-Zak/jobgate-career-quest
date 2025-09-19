@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import backendApi from '../api/backendApi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaCube, FaStop, FaArrowRight, FaFlag, FaSync, FaSearchPlus, FaExpand, FaEye, FaImage, FaLayerGroup, FaPlay, FaTimes, FaCheckCircle } from 'react-icons/fa';
 import { getSpatialTestSections, getSpatialSection1, getSpatialSection2, getSpatialSection3, getSpatialSection4, getSpatialSection5, getSpatialSection6 } from '../data/spatialTestSections';
 // Removed complex scroll utilities - using simple scrollToTop function instead
-import { submitTestAttempt } from '../lib/submitHelper';
+import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
 import TestResultsPage from './TestResultsPage';
 import { getRuleFor, buildAttempt } from '../testRules';
 import { saveAttempt } from '../lib/attemptStorage';
@@ -145,16 +146,11 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
   };
 
   // Calculate current score
+  // REMOVED: calculateCurrentScore() - use backend API instead
   const calculateCurrentScore = () => {
-    const allQuestions = rule?.sections?.flatMap(section => section.questions) || [];
-    let correctAnswers = 0;
-    
-    allQuestions.forEach(question => {
-      const userAnswer = answers[question.id];
-      if (userAnswer && userAnswer === question.correct_answer) {
-        correctAnswers++;
-      }
-    });
+    const correctAnswers = allQuestions.filter(question => 
+      answers[question.id] === question.correctAnswer
+    ).length;
     
     return {
       correct: correctAnswers,
@@ -347,12 +343,6 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div className="text-sm text-gray-500">Score</div>
-                <div className="text-lg font-bold text-green-600">
-                  {calculateCurrentScore().correct}/{calculateCurrentScore().total} ({calculateCurrentScore().percentage}%)
-                </div>
-              </div>
               <div className="text-right">
                 <div className="text-sm text-gray-500">Time Remaining</div>
                 <div className={`text-lg font-bold font-mono ${timeRemaining <= 60 ? 'text-red-500' : 'text-blue-600'}`}>

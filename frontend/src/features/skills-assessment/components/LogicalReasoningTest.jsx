@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import backendApi from '../api/backendApi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaBrain, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, FaFlag, FaCog, FaSearch, FaLightbulb, FaPuzzlePiece, FaPause, FaPlay, FaTimes } from 'react-icons/fa';
 // Removed complex scroll utilities - using simple scrollToTop function instead
 import { getLogicalTestSections } from '../data/logicalTestSections';
-import { submitTestAttempt } from '../lib/submitHelper';
+import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
 import TestResultsPage from './TestResultsPage';
 import { getRuleFor, buildAttempt } from '../testRules';
 import { saveAttempt } from '../lib/attemptStorage';
