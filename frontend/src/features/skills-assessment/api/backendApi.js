@@ -95,7 +95,7 @@ class BackendApiService {
         submission_metadata: {
           browser: navigator.userAgent,
           device: this.getDeviceType(),
-          timestamp: new Date().toISOString(),
+          session_id: `sjt_${Date.now()}`,
           ...metadata
         }
       };

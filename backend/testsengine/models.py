@@ -431,7 +431,9 @@ class TestSubmission(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE, 
-        related_name='test_submissions'
+        related_name='test_submissions',
+        null=True,
+        blank=True
     )
     test = models.ForeignKey(
         Test, 

@@ -75,7 +75,8 @@ class ScoringService:
             ValidationError: If answers_data is invalid
             ValueError: If scoring calculation fails
         """
-        logger.info(f"Starting scoring for user {user.username} on test {test.title}")
+        user_identifier = user.username if user else "anonymous"
+        logger.info(f"Starting scoring for user {user_identifier} on test {test.title}")
         
         # Validate inputs
         self._validate_submission_data(test, answers_data, time_taken_seconds)
@@ -122,10 +123,12 @@ class ScoringService:
                               time_taken_seconds: int) -> TestSubmission:
         """Create TestSubmission record"""
         
+        user_identifier = user.username if user else "anonymous"
+        
         # Check for existing submission (one per user per test)
         existing_submission = TestSubmission.objects.filter(user=user, test=test).first()
         if existing_submission:
-            logger.warning(f"Overwriting existing submission for user {user.username} on test {test.title}")
+            logger.warning(f"Overwriting existing submission for user {user_identifier} on test {test.title}")
             existing_submission.delete()
         
         submission = TestSubmission.objects.create(

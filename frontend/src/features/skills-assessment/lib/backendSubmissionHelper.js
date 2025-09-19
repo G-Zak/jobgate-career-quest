@@ -39,10 +39,7 @@ export async function submitTestAttempt({
       testId,
       answers,
       timeTakenSeconds,
-      {
-        submission_reason: reason,
-        ...metadata
-      }
+      metadata
     );
 
     console.log('Backend submission successful:', submissionResult);

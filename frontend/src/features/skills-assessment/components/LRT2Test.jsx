@@ -2,34 +2,65 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaBrain, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, FaFlag, FaSearch } from 'react-icons/fa';
 import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils'; // Fixed import
-import { getLRT2TestSections } from '../data/lrt2TestSections';
+// Removed frontend data imports - using backend API instead
+import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
+import TestResultsPage from './TestResultsPage';
 
-const LRT2Test = ({ onBackToDashboard }) => {
-  const [testStep, setTestStep] = useState('test'); // Skip instructions - start directly with test
+const LRT2Test = ({ onBackToDashboard, testId = 'lrt2' }) => {
+  // Map frontend test ID to backend database ID
+  const getBackendTestId = (frontendId) => {
+    const testIdMapping = {
+      'lrt2': '31', // Default to Inductive Logic
+      'LRT2': '31',
+      'logical_inductive': '31',
+      'inductive': '31'
+    };
+    return testIdMapping[frontendId] || frontendId || '31'; // Default to Inductive Logic
+  };
+  
+  const backendTestId = getBackendTestId(testId);
+  
+  const [testStep, setTestStep] = useState('loading');
   const [currentQuestion, setCurrentQuestion] = useState(1);
-  const [timeRemaining, setTimeRemaining] = useState(10 * 60); // 10 minutes
+  const [timeRemaining, setTimeRemaining] = useState(30 * 60); // 30 minutes default
   const [answers, setAnswers] = useState({});
-  const [testData, setTestData] = useState(null);
+  const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [startedAt, setStartedAt] = useState(null);
+  const [results, setResults] = useState(null);
 
   // Universal scroll management using scroll utilities
   useScrollToTop([], { smooth: true }); // Scroll on component mount
   useTestScrollToTop(testStep, 'lrt2-test-scroll', { smooth: true, attempts: 5 }); // Scroll on test step changes
   useQuestionScrollToTop(currentQuestion, testStep, 'lrt2-test-scroll'); // Scroll on question changes
 
-  // Load test data
+  // Initialize test with backend API
   useEffect(() => {
-    try {
-      setLoading(true);
-      const data = getLRT2TestSections();
-      setTestData(data);
-      setTimeRemaining(10 * 60); // 10 minutes
-    } catch (error) {
-      console.error('Error loading test data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    const initializeTest = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch test questions from backend (secure - no correct answers)
+        const fetchedQuestions = await fetchTestQuestions(backendTestId);
+        setQuestions(fetchedQuestions);
+        
+        setTimeRemaining(30 * 60); // 30 minutes default
+        setStartedAt(new Date());
+        setTestStep('test');
+        
+      } catch (error) {
+        console.error('Failed to initialize test:', error);
+        setError('Failed to load test questions. Please try again.');
+        setTestStep('error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeTest();
+  }, [backendTestId]);
 
   // Timer countdown
   useEffect(() => {
@@ -55,15 +86,10 @@ const LRT2Test = ({ onBackToDashboard }) => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  // Get current section data
-  const getCurrentSection = () => {
-    return testData?.sections?.[0]; // Only one section for LRT2
-  };
-
   // Get current question data
   const getCurrentQuestion = () => {
-    const section = getCurrentSection();
-    return section?.questions?.[currentQuestion - 1];
+    if (!questions || !Array.isArray(questions) || questions.length === 0) return null;
+    return questions[currentQuestion - 1] || null;
   };
 
   // Handle answer selection
@@ -79,7 +105,7 @@ const LRT2Test = ({ onBackToDashboard }) => {
 
   // Handle next question
   const handleNextQuestion = () => {
-    if (currentQuestion < 20) {
+    if (currentQuestion < questions.length) {
       setCurrentQuestion(prev => prev + 1);
     } else {
       handleFinishTest();
@@ -94,39 +120,39 @@ const LRT2Test = ({ onBackToDashboard }) => {
   };
 
   // Handle finish test
-  const handleFinishTest = () => {
-    setTestStep('results');
-    scrollToTop('lrt2-test-scroll');
+  const handleFinishTest = async () => {
+    try {
+      // Submit to backend for scoring
+      const result = await submitTestAttempt({
+        testId: backendTestId,
+        answers,
+        startedAt: startedAt,
+        finishedAt: Date.now(),
+        reason: 'user',
+        metadata: {
+          testType: 'logical_reasoning_lrt2',
+          totalQuestions: questions.length,
+          currentQuestion: currentQuestion
+        },
+        onSuccess: (data) => {
+          console.log('Test submitted successfully:', data);
+          setResults(data.score);
+          setTestStep('results');
+          scrollToTop('lrt2-test-scroll');
+        },
+        onError: (error) => {
+          console.error('Test submission failed:', error);
+          setError(`Submission failed: ${error.message}`);
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error finishing test:', error);
+      setError('Failed to submit test. Please try again.');
+    }
   };
 
-  // Calculate results
-  const calculateResults = () => {
-    const section = getCurrentSection();
-    if (!section) return { score: 0, total: 0, percentage: 0, passed: false };
 
-    let correct = 0;
-    const total = section.questions.length;
-
-    section.questions.forEach(question => {
-      const userAnswer = answers[question.id];
-      if (userAnswer === question.correct_answer) {
-        correct++;
-      }
-    });
-
-    const percentage = Math.round((correct / total) * 100);
-    const passed = percentage >= 70; // 70% passing grade
-
-    return { score: correct, total, percentage, passed };
-  };
-
-  // Start test
-  const handleStartTest = () => {
-    setTestStep('test');
-    setCurrentQuestion(1);
-    setTimeRemaining(10 * 60);
-    scrollToTop('lrt2-test-scroll');
-  };
 
   if (loading) {
     return (
@@ -139,16 +165,23 @@ const LRT2Test = ({ onBackToDashboard }) => {
     );
   }
 
-  if (!testData) {
+  // Error state
+  if (testStep === 'error') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
+      <div className="bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center min-h-screen">
+        <div className="text-center max-w-md mx-auto p-6">
           <FaTimesCircle className="text-6xl text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Error Loading Test</h2>
-          <p className="text-gray-600 mb-4">Unable to load test data. Please try again.</p>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Error Loading Test</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Try Again
+          </button>
           <button
             onClick={onBackToDashboard}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors ml-4"
           >
             Back to Dashboard
           </button>
@@ -157,68 +190,24 @@ const LRT2Test = ({ onBackToDashboard }) => {
     );
   }
 
+  // Results step - delegate to TestResultsPage
+  if (testStep === 'results') {
+    return (
+      <TestResultsPage
+        results={results}
+        testType="logical"
+        testId={testId}
+        answers={answers}
+        testData={{ questions }}
+        onBackToDashboard={onBackToDashboard}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div id="lrt2-test-scroll" className="container mx-auto px-4 py-8">
         
-        {/* Instructions */}
-        {testStep === 'instructions' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-4xl mx-auto"
-          >
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <div className="text-center mb-8">
-                <FaSearch className="text-6xl text-blue-600 mx-auto mb-4" />
-                <h1 className="text-4xl font-bold text-gray-800 mb-2">{testData.title}</h1>
-                <p className="text-xl text-gray-600">{testData.description}</p>
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-6 mb-8">
-                <div className="text-center p-6 bg-blue-50 rounded-lg">
-                  <FaFlag className="text-3xl text-blue-600 mx-auto mb-2" />
-                  <h3 className="font-semibold text-gray-800">Questions</h3>
-                  <p className="text-2xl font-bold text-blue-600">{testData.totalQuestions}</p>
-                </div>
-                <div className="text-center p-6 bg-green-50 rounded-lg">
-                  <FaClock className="text-3xl text-green-600 mx-auto mb-2" />
-                  <h3 className="font-semibold text-gray-800">Time Limit</h3>
-                  <p className="text-2xl font-bold text-green-600">{testData.totalTime} minutes</p>
-                </div>
-                <div className="text-center p-6 bg-purple-50 rounded-lg">
-                  <FaBrain className="text-3xl text-purple-600 mx-auto mb-2" />
-                  <h3 className="font-semibold text-gray-800">Section</h3>
-                  <p className="text-2xl font-bold text-purple-600">Advanced Number Series</p>
-                </div>
-              </div>
-
-              <div className="mb-8">
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">Instructions:</h3>
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <p className="text-gray-700 leading-relaxed">
-                    {getCurrentSection()?.instructions}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <button
-                  onClick={onBackToDashboard}
-                  className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  Back to Dashboard
-                </button>
-                <button
-                  onClick={handleStartTest}
-                  className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-                >
-                  Start Test
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
 
         {/* Test */}
         {testStep === 'test' && (
@@ -231,8 +220,8 @@ const LRT2Test = ({ onBackToDashboard }) => {
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
               <div className="flex justify-between items-center">
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-800">LRT2 - Advanced Number Series</h1>
-                  <p className="text-gray-600">Advanced number series questions with complex patterns</p>
+                  <h1 className="text-2xl font-bold text-gray-800">LRT2 - Inductive Logic</h1>
+                  <p className="text-gray-600">Inductive reasoning and pattern recognition</p>
                 </div>
                 <div className="text-right">
                   <div className="flex items-center space-x-2 text-lg font-semibold">
@@ -249,12 +238,12 @@ const LRT2Test = ({ onBackToDashboard }) => {
               <div className="mt-4">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium text-gray-700">Progress</span>
-                  <span className="text-sm font-medium text-gray-700">{Math.round((currentQuestion / 20) * 100)}%</span>
+                  <span className="text-sm font-medium text-gray-700">{Math.round((currentQuestion / questions.length) * 100)}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(currentQuestion / 20) * 100}%` }}
+                    style={{ width: `${(currentQuestion / questions.length) * 100}%` }}
                   ></div>
                 </div>
               </div>
@@ -277,22 +266,29 @@ const LRT2Test = ({ onBackToDashboard }) => {
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">Question {currentQuestion}</h3>
-                      <p className="text-sm text-gray-500">Advanced Number Series</p>
+                      <p className="text-sm text-gray-500">Inductive Logic</p>
                     </div>
                   </div>
-                  <span className="text-sm text-gray-500">{currentQuestion} of 20</span>
+                  <span className="text-sm text-gray-500">{currentQuestion} of {questions.length}</span>
                 </div>
 
                 {/* Question */}
                 <div className="mb-8">
                   <p className="text-lg text-gray-800 leading-relaxed mb-6">
-                    {getCurrentQuestion()?.question}
+                    {getCurrentQuestion()?.question_text}
                   </p>
+                  {getCurrentQuestion()?.context && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                      <p className="text-sm text-blue-800 font-medium">
+                        <strong>Context:</strong> {getCurrentQuestion().context}
+                      </p>
+                    </div>
+                  )}
 
                   {/* Options */}
                   <div className="flex justify-center gap-4 w-full">
                     {getCurrentQuestion()?.options?.map((option, index) => {
-                      const optionLetter = String.fromCharCode(97 + index); // a, b, c, d, e
+                      const optionLetter = String.fromCharCode(65 + index); // A, B, C, D, E
                       const isSelected = answers[getCurrentQuestion()?.id] === optionLetter;
                       const optionsCount = getCurrentQuestion()?.options?.length || 0;
                       

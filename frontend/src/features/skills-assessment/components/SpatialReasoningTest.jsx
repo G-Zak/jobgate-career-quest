@@ -2,19 +2,42 @@ import React, { useState, useEffect, useRef } from 'react';
 import backendApi from '../api/backendApi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaCube, FaStop, FaArrowRight, FaFlag, FaSync, FaSearchPlus, FaExpand, FaEye, FaImage, FaLayerGroup, FaPlay, FaTimes, FaCheckCircle } from 'react-icons/fa';
-import { getSpatialTestSections, getSpatialSection1, getSpatialSection2, getSpatialSection3, getSpatialSection4, getSpatialSection5, getSpatialSection6 } from '../data/spatialTestSections';
-// Removed complex scroll utilities - using simple scrollToTop function instead
+// Removed frontend data imports - using backend API instead
 import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
 import TestResultsPage from './TestResultsPage';
-import { getRuleFor, buildAttempt } from '../testRules';
-import { saveAttempt } from '../lib/attemptStorage';
 
 const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
-  const rule = getRuleFor(testId);
+  // Map frontend test ID to backend database ID
+  const getBackendTestId = (frontendId) => {
+    const testIdMapping = {
+      'spatial': '15', // Default to Shape Assembly
+      'spatial_shape': '15',
+      'spatial_rotation': '16',
+      'spatial_visualization': '17',
+      'spatial_identification': '18',
+      'spatial_pattern': '19',
+      'spatial_relations': '20',
+      'SR1': '15',
+      'SR2': '16',
+      'SR3': '17',
+      'SR4': '18',
+      'SR5': '19',
+      'SR6': '20',
+      'SRT1': '15', // Add SRT mappings
+      'SRT2': '16',
+      'SRT3': '17',
+      'SRT4': '18',
+      'SRT5': '19',
+      'SRT6': '20'
+    };
+    return testIdMapping[frontendId] || frontendId || '15'; // Default to Shape Assembly
+  };
   
-  const [testStep, setTestStep] = useState('test');
+  const backendTestId = getBackendTestId(testId);
+  
+  const [testStep, setTestStep] = useState('loading');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [timeRemaining, setTimeRemaining] = useState(rule?.timeLimitMin * 60 || 20 * 60);
+  const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes default
   const [answers, setAnswers] = useState({});
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,62 +81,32 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
     }
   }, [currentQuestionIndex, testStep]);
 
-  // Load spatial reasoning test data and select 20 questions
+  // Initialize test with backend API
   useEffect(() => {
-    const loadSpatialTestData = async () => {
+    const initializeTest = async () => {
       try {
         setLoading(true);
         setError(null);
+
+        // Fetch test questions from backend (secure - no correct answers)
+        const fetchedQuestions = await fetchTestQuestions(backendTestId);
+        setQuestions(fetchedQuestions);
         
-        let data;
-        if (testId === 'SRT1') {
-          data = getSpatialSection1();
-        } else if (testId === 'SRT2') {
-          data = getSpatialSection2();
-        } else if (testId === 'SRT3') {
-          data = getSpatialSection3();
-        } else if (testId === 'SRT4') {
-          data = getSpatialSection4();
-        } else if (testId === 'SRT5') {
-          data = getSpatialSection5();
-        } else if (testId === 'SRT6') {
-          data = getSpatialSection6();
-        } else {
-          data = getSpatialTestSections();
-        }
-        
-        // If data has sections, select 20 questions from the first section
-        if (data.sections && data.sections.length > 0) {
-          const section = data.sections[0]; // Use first section
-          const allQuestions = section.questions || [];
-          
-          // Randomly select 20 questions from the available 40
-          const shuffled = allQuestions.sort(() => Math.random() - 0.5);
-          const selectedQuestions = shuffled.slice(0, rule?.totalQuestions || 20);
-          
-          setQuestions(selectedQuestions);
-        } else if (data.questions) {
-          // If data has direct questions, select 20
-          const allQuestions = data.questions;
-          const shuffled = allQuestions.sort(() => Math.random() - 0.5);
-          const selectedQuestions = shuffled.slice(0, rule?.totalQuestions || 20);
-          
-          setQuestions(selectedQuestions);
-        }
-        
-        setTimeRemaining(rule?.timeLimitMin * 60 || 20 * 60);
+        setTimeRemaining(20 * 60); // 20 minutes default
         setStartedAt(new Date());
+        setTestStep('test');
         
       } catch (error) {
-        console.error('Error loading spatial test data:', error);
-        setError(error.message);
+        console.error('Failed to initialize test:', error);
+        setError('Failed to load test questions. Please try again.');
+        setTestStep('error');
       } finally {
         setLoading(false);
       }
     };
 
-    loadSpatialTestData();
-  }, [testId, rule]);
+    initializeTest();
+  }, [backendTestId]);
 
   // Timer effect
   useEffect(() => {
@@ -160,7 +153,7 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
   };
 
   const handleNextQuestion = () => {
-    const totalQuestions = rule?.totalQuestions || 20;
+    const totalQuestions = questions.length;
     
     if (currentQuestionIndex + 1 >= totalQuestions) {
       handleFinishTest();
@@ -183,62 +176,33 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
 
   const handleFinishTest = async () => {
     try {
-      const totalQuestions = rule?.totalQuestions || 20;
-      
-      // Calculate correct answers by comparing user answers with correct answers
-      let correctAnswers = 0;
-      const allQuestions = rule?.sections?.flatMap(section => section.questions) || [];
-      
-      allQuestions.forEach(question => {
-        const userAnswer = answers[question.id];
-        if (userAnswer && userAnswer === question.correct_answer) {
-          correctAnswers++;
+      // Submit to backend for scoring
+      const result = await submitTestAttempt({
+        testId: backendTestId,
+        answers,
+        startedAt: startedAt,
+        finishedAt: Date.now(),
+        reason: 'user',
+        metadata: {
+          testType: 'spatial_reasoning',
+          totalQuestions: questions.length,
+          currentQuestion: currentQuestionIndex + 1
+        },
+        onSuccess: (data) => {
+          console.log('Test submitted successfully:', data);
+          setResults(data.score);
+          setTestStep('results');
+          scrollToTop();
+        },
+        onError: (error) => {
+          console.error('Test submission failed:', error);
+          setError(`Submission failed: ${error.message}`);
         }
       });
       
-      const percentage = Math.round((correctAnswers / totalQuestions) * 100);
-      const finishedAt = new Date();
-      const duration = Math.round((finishedAt - startedAt) / 1000);
-
-      const attempt = buildAttempt({
-        testId: testId,
-        totalQuestions,
-        correct: correctAnswers,
-        percentage,
-        startedAt,
-        finishedAt,
-        duration
-      });
-
-      saveAttempt(attempt);
-
-      const result = {
-        score: correctAnswers,
-        correct: correctAnswers,
-        total: totalQuestions,
-        percentage,
-        duration,
-        result: percentage >= 70 ? 'pass' : 'fail'
-      };
-
-      try {
-        await submitTestAttempt({
-          testId: testId,
-          testVersion: '1.0',
-          language: 'en',
-          answers,
-          testData: { questions },
-          startedAt
-        });
-      } catch (submitError) {
-        console.error('Error submitting to backend:', submitError);
-      }
-      
-      setResults(result);
-      setTestStep('results');
     } catch (error) {
       console.error('Error finishing test:', error);
-      setTestStep('results');
+      setError('Failed to submit test. Please try again.');
     }
   };
 
@@ -252,7 +216,8 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
   };
 
   const getCurrentQuestion = () => {
-    return questions[currentQuestionIndex];
+    if (!questions || !Array.isArray(questions) || questions.length === 0) return null;
+    return questions[currentQuestionIndex] || null;
   };
 
   const getTotalAnswered = () => {
@@ -316,8 +281,8 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
   }
 
   const currentQuestion = getCurrentQuestion();
-  const isLastQuestion = currentQuestionIndex + 1 >= (rule?.totalQuestions || 20);
-  const isAnswered = answers[currentQuestion?.id] != null;
+  const isLastQuestion = questions && Array.isArray(questions) ? currentQuestionIndex + 1 >= questions.length : false;
+  const isAnswered = currentQuestion ? answers[currentQuestion.id] != null : false;
 
   return (
     <div className="bg-gray-50" ref={testContainerRef}>

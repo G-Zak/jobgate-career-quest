@@ -2,35 +2,34 @@ import React, { useState, useEffect } from 'react';
 import backendApi from '../api/backendApi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaFlag, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, FaSearchPlus, FaLayerGroup, FaImage, FaPause, FaPlay, FaTimes, FaSitemap, FaProjectDiagram } from 'react-icons/fa';
-// Removed complex scroll utilities - using simple scrollToTop function instead
-import { getDiagrammaticTestSections, getDiagrammaticSection1, getDiagrammaticSection2 } from '../data/diagrammaticTestSections';
+// Removed frontend data imports - using backend API instead
 import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
 import TestResultsPage from './TestResultsPage';
 
 const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
-  // Determine starting section based on testId
-  const getStartingSection = (testId) => {
-    if (typeof testId === 'string') {
-      if (testId === 'DRT1') return 1;
-      if (testId === 'DRT2') return 2;
-      const match = testId.match(/DRT(\d+)/);
-      if (match) {
-        const sectionNum = parseInt(match[1]);
-        return sectionNum <= 2 ? sectionNum : 1;
-      }
-    }
-    return 1;
+  // Map frontend test ID to backend database ID
+  const getBackendTestId = (frontendId) => {
+    const testIdMapping = {
+      'diagrammatic': '24', // Default to Pattern Recognition
+      'diagrammatic_pattern': '24',
+      'diagrammatic_logic': '25',
+      'diagrammatic_network': '26',
+      'DRT1': '24',
+      'DRT2': '25',
+      'DRT3': '26'
+    };
+    return testIdMapping[frontendId] || frontendId || '24'; // Default to Pattern Recognition
   };
+  
+  const backendTestId = getBackendTestId(testId);
 
-  const startingSection = getStartingSection(testId);
-
-  const [testStep, setTestStep] = useState('test'); // Skip instructions - start directly with test
-  const [currentSection, setCurrentSection] = useState(startingSection);
+  const [testStep, setTestStep] = useState('loading');
   const [currentQuestion, setCurrentQuestion] = useState(1);
-  const [timeRemaining, setTimeRemaining] = useState(45 * 60); // 45 minutes for diagrammatic reasoning
+  const [timeRemaining, setTimeRemaining] = useState(30 * 60); // 30 minutes default
   const [answers, setAnswers] = useState({});
-  const [testData, setTestData] = useState(null);
+  const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
@@ -70,35 +69,32 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
     }
   }, [currentQuestion, testStep]);
 
-  // Load test data
+  // Initialize test with backend API
   useEffect(() => {
-    try {
-      setLoading(true);
-      let data;
-      if (testId === 'DRT1') {
-        data = getDiagrammaticSection1();
-      } else if (testId === 'DRT2') {
-        data = getDiagrammaticSection2();
-      } else {
-        data = getDiagrammaticTestSections();
+    const initializeTest = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch test questions from backend (secure - no correct answers)
+        const fetchedQuestions = await fetchTestQuestions(backendTestId);
+        setQuestions(fetchedQuestions);
+        
+        setTimeRemaining(30 * 60); // 30 minutes default
+        setStartedAt(new Date());
+        setTestStep('test');
+        
+      } catch (error) {
+        console.error('Failed to initialize test:', error);
+        setError('Failed to load test questions. Please try again.');
+        setTestStep('error');
+      } finally {
+        setLoading(false);
       }
-      
-      setTestData(data);
-      setStartedAt(new Date());
-      
-      // Set timer based on the starting section
-      if (data.sections && data.sections[startingSection - 1]) {
-        const sectionDuration = data.sections[startingSection - 1].duration_minutes * 60;
-        setTimeRemaining(sectionDuration);
-      } else {
-        setTimeRemaining(data.duration_minutes * 60);
-      }
-    } catch (error) {
-      console.error('Error loading test data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [startingSection, testId]);
+    };
+
+    initializeTest();
+  }, [backendTestId]);
 
   // Timer countdown
   useEffect(() => {
@@ -133,23 +129,15 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
   const handleAnswerSelect = (questionId, answer) => {
     setAnswers(prev => ({
       ...prev,
-      [`${currentSection}_${questionId}`]: answer
+      [questionId]: answer
     }));
   };
 
   const handleNextQuestion = () => {
-    const currentSectionData = getCurrentSection();
-    if (currentQuestion < currentSectionData.total_questions) {
+    if (currentQuestion < questions.length) {
       setCurrentQuestion(prev => prev + 1);
     } else {
-      // Move to next section or finish test
-      const nextSection = testData.sections?.find(s => s.id === currentSection + 1);
-      if (nextSection) {
-        setCurrentSection(currentSection + 1);
-        setCurrentQuestion(1);
-      } else {
-        handleFinishTest();
-      }
+      handleFinishTest();
     }
     
     // Smooth scroll to top after navigation
@@ -174,24 +162,33 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
 
   const handleFinishTest = async () => {
     try {
-      // Generate the testId based on the current section or provided testId
-      const finalTestId = testId || `DRT${currentSection}`;
-      
-      // Submit the test using unified scoring
+      // Submit to backend for scoring
       const result = await submitTestAttempt({
-        testId: finalTestId,
-        testVersion: '1.0',
-        language: 'en',
+        testId: backendTestId,
         answers,
-        testData,
-        startedAt
+        startedAt: startedAt,
+        finishedAt: Date.now(),
+        reason: 'user',
+        metadata: {
+          testType: 'diagrammatic_reasoning',
+          totalQuestions: questions.length,
+          currentQuestion: currentQuestion
+        },
+        onSuccess: (data) => {
+          console.log('Test submitted successfully:', data);
+          setResults(data.score);
+          setTestStep('results');
+          scrollToTop();
+        },
+        onError: (error) => {
+          console.error('Test submission failed:', error);
+          setError(`Submission failed: ${error.message}`);
+        }
       });
       
-      setResults(result);
-      setTestStep('results');
     } catch (error) {
-      console.error('Error submitting test:', error);
-      setTestStep('results'); // Still show results even if submission fails
+      console.error('Error finishing test:', error);
+      setError('Failed to submit test. Please try again.');
     }
   };
 
@@ -228,13 +225,9 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
     }
   };
 
-  const getCurrentSection = () => {
-    return testData?.sections?.find(section => section.id === currentSection);
-  };
-
   const getCurrentQuestion = () => {
-    const section = getCurrentSection();
-    return section?.questions?.find(q => q.order === currentQuestion);
+    if (!questions || !Array.isArray(questions) || questions.length === 0) return null;
+    return questions[currentQuestion - 1] || null;
   };
 
   const getTotalAnswered = () => {
@@ -242,21 +235,7 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
   };
 
   const getTotalQuestions = () => {
-    return testData?.sections?.reduce((total, section) => total + section.total_questions, 0) || 0;
-  };
-
-  const getGlobalQuestionNumber = () => {
-    if (!testData?.sections) return currentQuestion;
-    
-    let globalNum = 0;
-    for (let i = 0; i < testData.sections.length; i++) {
-      const section = testData.sections[i];
-      if (section.id === currentSection) {
-        return globalNum + currentQuestion;
-      }
-      globalNum += section.total_questions;
-    }
-    return globalNum + currentQuestion;
+    return questions && Array.isArray(questions) ? questions.length : 0;
   };
 
   if (loading) {
@@ -275,22 +254,27 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
     );
   }
 
-  if (!testData) {
+  // Error state
+  if (testStep === 'error') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 flex items-center justify-center">
+      <div className="bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center min-h-screen">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center max-w-md"
+          className="text-center max-w-md mx-auto p-6"
         >
-          <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <FaTimesCircle className="w-12 h-12 text-red-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Test Unavailable</h2>
-          <p className="text-gray-600 mb-8">Unable to load the test data. Please try again later.</p>
+          <FaTimes className="text-red-500 text-6xl mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Error Loading Test</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Try Again
+          </button>
           <button
             onClick={onBackToDashboard}
-            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors font-medium"
+            className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors ml-4"
           >
             Back to Dashboard
           </button>
@@ -301,54 +285,14 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
 
   // Results step - delegate to TestResultsPage
   if (testStep === 'results') {
-    const sections = testData.sections || [testData];
-    if (!sections.length) return null;
-
-    let correctCount = 0;
-    let totalQuestions = 0;
-
-    sections.forEach(section => {
-      section.questions?.forEach(question => {
-        totalQuestions++;
-        const answerKey = `${section.id}_${question.id}`;
-        if (answers[answerKey] === question.correct_answer) {
-          correctCount++;
-        }
-      });
-    });
-
-    const results = {
-      testType: 'Diagrammatic Reasoning',
-      totalQuestions: totalQuestions,
-      answeredQuestions: Object.keys(answers).length,
-      correctAnswers: correctCount,
-      score: Math.round((correctCount / totalQuestions) * 100),
-      timeSpent: (45 * 60) - timeRemaining, // 45 minutes base time
-      timeTaken: formatTime((45 * 60) - timeRemaining),
-      totalTime: formatTime(45 * 60),
-      answers: answers,
-      correctAnswersList: sections.reduce((acc, section) => {
-        section.questions?.forEach(q => {
-          acc[`${section.id}_${q.id}`] = q.correct_answer;
-        });
-        return acc;
-      }, {}),
-      complexity: 'High',
-      averageComplexity: sections.reduce((sum, section) => {
-        const sectionComplexity = section.questions?.reduce((sSum, q) => sSum + (q.complexity_score || 3), 0) || 0;
-        return sum + sectionComplexity;
-      }, 0) / totalQuestions
-    };
-
     return (
       <TestResultsPage
         results={results}
         testType="diagrammatic"
-        testId={testId || `DRT${currentSection}`}
+        testId={testId}
         answers={answers}
-        testData={testData}
+        testData={{ questions }}
         onBackToDashboard={onBackToDashboard}
-        onRetakeTest={() => window.location.reload()}
       />
     );
   }
@@ -377,7 +321,7 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
                   Diagrammatic Reasoning Test
                 </div>
                 <div className="text-sm text-gray-600">
-                  Question {getGlobalQuestionNumber()} of {getTotalQuestions()}
+                  Question {currentQuestion} of {getTotalQuestions()}
                 </div>
               </div>
             </div>
@@ -416,17 +360,17 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
                   <FaProjectDiagram className="text-purple-600" />
                   <div>
                     <h2 className="text-2xl font-bold text-gray-800">
-                      {getCurrentSection()?.title || 'Diagrammatic Analysis'}
+                      Diagrammatic Analysis
                     </h2>
                     <p className="text-gray-600 mt-1">
-                      {getCurrentSection()?.description || 'Analyze diagrams and identify logical patterns'}
+                      Analyze diagrams and identify logical patterns
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm text-gray-500">Progress</div>
                   <div className="text-2xl font-bold text-purple-600">
-                    {getGlobalQuestionNumber()}/{getTotalQuestions()}
+                    {currentQuestion}/{getTotalQuestions()}
                   </div>
                 </div>
               </div>
@@ -435,13 +379,13 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
               <div className="relative">
                 <div className="flex justify-between text-sm text-gray-600 mb-2">
                   <span>Progress</span>
-                  <span>{Math.round((getGlobalQuestionNumber() / getTotalQuestions()) * 100)}%</span>
+                  <span>{Math.round((currentQuestion / getTotalQuestions()) * 100)}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                   <motion.div
                     className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full"
                     initial={{ width: 0 }}
-                    animate={{ width: `${(getGlobalQuestionNumber() / getTotalQuestions()) * 100}%` }}
+                    animate={{ width: `${(currentQuestion / getTotalQuestions()) * 100}%` }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
                   />
                 </div>
@@ -455,7 +399,7 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
             {/* Question Card */}
             <AnimatePresence mode="wait">
               <motion.div
-                key={`${currentSection}_${currentQuestion}`}
+                key={currentQuestion}
                 className="bg-white rounded-2xl shadow-lg border border-white/20 overflow-hidden"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -491,12 +435,12 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
                   )}
 
                   {/* Question Image */}
-                  {getCurrentQuestion()?.question_image && (
+                  {getCurrentQuestion()?.main_image && (
                     <div className="mb-8 text-center">
                       <div className="inline-block bg-white rounded-xl p-4 shadow-md border">
                         <div className="flex justify-center">
                           <img 
-                            src={getCurrentQuestion().question_image} 
+                            src={getCurrentQuestion().main_image} 
                             alt={`Diagrammatic pattern ${getCurrentQuestion()?.id || ''}`}
                             className="max-w-xl max-h-[28rem] w-auto h-auto rounded-lg object-contain"
                             style={{ maxWidth: '528px', maxHeight: '422px' }}
@@ -531,10 +475,10 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
                         
                         return (
                           <motion.button
-                            key={option.id}
-                            onClick={() => handleAnswerSelect(getCurrentQuestion().id, option.id)}
+                            key={option}
+                            onClick={() => handleAnswerSelect(getCurrentQuestion().id, option)}
                             className={`${buttonWidth} h-16 rounded-lg border-2 transition-all duration-200 flex items-center justify-center ${
-                              answers[`${currentSection}_${getCurrentQuestion().id}`] === option.id
+                              answers[getCurrentQuestion().id] === option
                                 ? 'border-purple-500 bg-purple-500 text-white shadow-lg'
                                 : 'border-gray-300 hover:border-purple-400 hover:bg-purple-50 hover:shadow-md'
                             }`}
@@ -542,7 +486,7 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
                             whileTap={{ scale: 0.98 }}
                           >
                             <span className="text-2xl font-bold">
-                              {option.id}
+                              {option}
                             </span>
                           </motion.button>
                         );

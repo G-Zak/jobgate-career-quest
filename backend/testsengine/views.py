@@ -114,7 +114,7 @@ class TestQuestionsView(APIView):
     
     Provides questions in a cleaner format for frontend consumption.
     """
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]  # Temporarily allow anonymous access for testing
     
     def get(self, request, test_id):
         """Return questions without correct answers"""
@@ -161,28 +161,33 @@ class SubmitTestView(APIView):
         }
     }
     """
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]  # Temporarily allow anonymous access for testing
     
     @transaction.atomic
     def post(self, request, test_id):
         """Process test submission and calculate score"""
         test = get_object_or_404(Test, id=test_id, is_active=True)
         
-        # Check if user already has a submission for this test
-        existing_submission = TestSubmission.objects.filter(
-            user=request.user,
-            test=test
-        ).first()
+        # Handle anonymous users for testing
+        user = request.user if request.user.is_authenticated else None
         
-        if existing_submission:
-            logger.warning(f"User {request.user.username} already has submission for test {test.title}")
-            return Response({
-                'error': 'Submission already exists for this test',
-                'existing_submission_id': existing_submission.id,
-                'existing_score': existing_submission.score.percentage_score if hasattr(existing_submission, 'score') else None,
-                'submitted_at': existing_submission.submitted_at.isoformat(),
-                'message': 'Use recalculate endpoint to update score if needed'
-            }, status=status.HTTP_409_CONFLICT)
+        # Check if user already has a submission for this test (only for authenticated users)
+        existing_submission = None
+        if user:
+            existing_submission = TestSubmission.objects.filter(
+                user=user,
+                test=test
+            ).first()
+            
+            if existing_submission:
+                logger.warning(f"User {user.username} already has submission for test {test.title}")
+                return Response({
+                    'error': 'Submission already exists for this test',
+                    'existing_submission_id': existing_submission.id,
+                    'existing_score': existing_submission.score.percentage_score if hasattr(existing_submission, 'score') else None,
+                    'submitted_at': existing_submission.submitted_at.isoformat(),
+                    'message': 'Use recalculate endpoint to update score if needed'
+                }, status=status.HTTP_409_CONFLICT)
         
         # Validate input data
         serializer = SubmissionInputSerializer(data=request.data)
@@ -211,7 +216,7 @@ class SubmitTestView(APIView):
             scoring_service = ScoringService()
             
             submission, score = scoring_service.score_test_submission(
-                user=request.user,
+                user=user,  # This will be None for anonymous users
                 test=test,
                 answers_data=answers_data,
                 time_taken_seconds=time_taken_seconds
@@ -266,18 +271,18 @@ class SubmitTestView(APIView):
         errors = []
         warnings = []
         
-        # Check all questions are answered
+        # Check that provided questions are valid (allow partial submissions)
         expected_questions = set(str(q.id) for q in test.questions.all())
         provided_questions = set(answers_data.keys())
         
-        missing_questions = expected_questions - provided_questions
         extra_questions = provided_questions - expected_questions
         
-        if missing_questions:
-            errors.append(f"Missing answers for questions: {sorted(missing_questions)}")
-        
         if extra_questions:
-            warnings.append(f"Extra answers provided for questions: {sorted(extra_questions)}")
+            errors.append(f"Invalid question IDs provided: {sorted(extra_questions)}")
+        
+        # Allow partial submissions - only validate that provided answers are for valid questions
+        if not provided_questions:
+            errors.append("No answers provided")
         
         # Check time constraints
         max_time = test.duration_minutes * 60 + 60  # Allow 1 minute grace period

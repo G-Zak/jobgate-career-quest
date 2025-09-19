@@ -2,21 +2,35 @@ import React, { useState, useEffect, useMemo } from 'react';
 import backendApi from '../api/backendApi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaBrain, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, FaFlag, FaCog, FaSearch, FaLightbulb, FaPuzzlePiece, FaPause, FaPlay, FaTimes } from 'react-icons/fa';
-// Removed complex scroll utilities - using simple scrollToTop function instead
-import { getLogicalTestSections } from '../data/logicalTestSections';
+// Removed frontend data imports - using backend API instead
 import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
 import TestResultsPage from './TestResultsPage';
-import { getRuleFor, buildAttempt } from '../testRules';
-import { saveAttempt } from '../lib/attemptStorage';
 
 const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
-  const rule = getRuleFor(testId);
-  const [testStep, setTestStep] = useState('test');
+  // Map frontend test ID to backend database ID
+  const getBackendTestId = (frontendId) => {
+    const testIdMapping = {
+      'lrt1': '30', // Default to Deductive Logic
+      'logical': '30',
+      'logical_deductive': '30',
+      'logical_inductive': '31',
+      'logical_critical': '32',
+      'LRT1': '30',
+      'LRT2': '31',
+      'LRT3': '32'
+    };
+    return testIdMapping[frontendId] || frontendId || '30'; // Default to Deductive Logic
+  };
+  
+  const backendTestId = getBackendTestId(testId);
+  
+  const [testStep, setTestStep] = useState('loading');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [timeRemaining, setTimeRemaining] = useState(rule?.timeLimitMin * 60 || 20 * 60);
+  const [timeRemaining, setTimeRemaining] = useState(25 * 60); // 25 minutes default
   const [answers, setAnswers] = useState({});
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
@@ -56,38 +70,32 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
     }
   }, [currentQuestionIndex, testStep]);
 
-  // Load and prepare questions
+  // Initialize test with backend API
   useEffect(() => {
-    try {
-      setLoading(true);
-      const data = getLogicalTestSections();
-      
-      // Flatten all questions from all sections
-      const allQuestions = [];
-      data?.sections?.forEach(section => {
-        if (section.questions) {
-          section.questions.forEach(question => {
-            allQuestions.push({
-              ...question,
-              sectionTitle: section.title
-            });
-          });
-        }
-      });
-      
-      // Shuffle and limit to rule's totalQuestions
-      const shuffled = allQuestions.sort(() => Math.random() - 0.5);
-      const limitedQuestions = shuffled.slice(0, rule?.totalQuestions || 20);
-      
-      setQuestions(limitedQuestions);
-      setTimeRemaining(rule?.timeLimitMin * 60 || 20 * 60);
-      setStartedAt(new Date());
-    } catch (error) {
-      console.error('Error loading test data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [rule]);
+    const initializeTest = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch test questions from backend (secure - no correct answers)
+        const fetchedQuestions = await fetchTestQuestions(backendTestId);
+        setQuestions(fetchedQuestions);
+        
+        setTimeRemaining(25 * 60); // 25 minutes default
+        setStartedAt(new Date());
+        setTestStep('test');
+        
+      } catch (error) {
+        console.error('Failed to initialize test:', error);
+        setError('Failed to load test questions. Please try again.');
+        setTestStep('error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeTest();
+  }, [backendTestId]);
 
   // Timer countdown
   useEffect(() => {
@@ -120,9 +128,7 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
   };
 
   const handleNextQuestion = () => {
-    const totalQuestions = rule?.totalQuestions || 20;
-    
-    if (currentQuestionIndex + 1 >= totalQuestions) {
+    if (currentQuestionIndex + 1 >= questions.length) {
       handleFinishTest();
     } else {
       setCurrentQuestionIndex(prev => prev + 1);
@@ -142,56 +148,34 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
   };
 
   const handleFinishTest = async () => {
-    console.log('handleFinishTest called');
     try {
-      const totalQuestions = rule?.totalQuestions || 20;
-      const correctAnswers = Object.values(answers).filter(answer => answer === true).length;
-      const percentage = Math.round((correctAnswers / totalQuestions) * 100);
-      const finishedAt = new Date();
-      const duration = Math.round((finishedAt - startedAt) / 1000);
-      
-      console.log(`Results: ${correctAnswers}/${totalQuestions} (${percentage}%)`);
-
-      const attempt = buildAttempt({
-        testId: testId,
-        totalQuestions,
-        correct: correctAnswers,
-        percentage,
-        startedAt,
-        finishedAt,
-        duration
+      // Submit to backend for scoring
+      const result = await submitTestAttempt({
+        testId: backendTestId,
+        answers,
+        startedAt: startedAt,
+        finishedAt: Date.now(),
+        reason: 'user',
+        metadata: {
+          testType: 'logical_reasoning',
+          totalQuestions: questions.length,
+          currentQuestion: currentQuestionIndex + 1
+        },
+        onSuccess: (data) => {
+          console.log('Test submitted successfully:', data);
+          setResults(data.score);
+          setTestStep('results');
+          scrollToTop();
+        },
+        onError: (error) => {
+          console.error('Test submission failed:', error);
+          setError(`Submission failed: ${error.message}`);
+        }
       });
-
-      saveAttempt(attempt);
-
-      const result = {
-        score: correctAnswers,
-        correct: correctAnswers,
-        total: totalQuestions,
-        percentage,
-        duration,
-        result: percentage >= 70 ? 'pass' : 'fail'
-      };
-
-      try {
-        await submitTestAttempt({
-          testId: testId,
-          testVersion: '1.0',
-          language: 'en',
-          answers,
-          testData: { questions },
-          startedAt
-        });
-      } catch (submitError) {
-        console.error('Error submitting to backend:', submitError);
-      }
       
-      setResults(result);
-      console.log('Setting testStep to results');
-      setTestStep('results');
     } catch (error) {
       console.error('Error finishing test:', error);
-      setTestStep('results');
+      setError('Failed to submit test. Please try again.');
     }
   };
 
@@ -219,26 +203,55 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
   };
 
   const getCurrentQuestion = () => {
-    return questions[currentQuestionIndex];
+    if (!questions || !Array.isArray(questions) || questions.length === 0) return null;
+    return questions[currentQuestionIndex] || null;
   };
 
   const getTotalAnswered = () => {
     return Object.keys(answers).length;
   };
 
+  // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FaBrain className="w-8 h-8 text-blue-600 animate-pulse" />
-          </div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading Test</h2>
-          <p className="text-gray-600">Preparing your assessment...</p>
+          <p className="text-gray-600">Preparing your logical reasoning assessment...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (testStep === 'error') {
+    return (
+      <div className="bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center min-h-screen">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center max-w-md mx-auto p-6"
+        >
+          <FaTimes className="text-red-500 text-6xl mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Error Loading Test</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Try Again
+          </button>
+          <button
+            onClick={onBackToDashboard}
+            className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors ml-4"
+          >
+            Back to Dashboard
+          </button>
         </motion.div>
       </div>
     );
@@ -283,7 +296,7 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
   }
 
   const currentQuestion = getCurrentQuestion();
-  const isLastQuestion = currentQuestionIndex + 1 >= (rule?.totalQuestions || 20);
+  const isLastQuestion = currentQuestionIndex + 1 >= questions.length;
   const isAnswered = answers[currentQuestion?.id] != null;
 
   return (
@@ -305,7 +318,7 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
                 Logical Reasoning Test
               </div>
               <div className="text-sm text-gray-600">
-                Question {currentQuestionIndex + 1} of {rule?.totalQuestions || 20}
+                Question {currentQuestionIndex + 1} of {questions.length}
               </div>
             </div>
 
@@ -342,12 +355,12 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
                   Question {currentQuestionIndex + 1}
                 </h3>
                 <p className="text-gray-600">
-                  {currentQuestion?.sectionTitle || 'Logical Reasoning'}
+                  {currentQuestion?.question_type || 'Logical Reasoning'}
                 </p>
               </div>
             </div>
             <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-              {currentQuestionIndex + 1} of {rule?.totalQuestions || 20}
+              {currentQuestionIndex + 1} of {questions.length}
             </div>
           </div>
 
@@ -355,8 +368,15 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
           <div className="mb-8">
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 mb-6">
               <h4 className="text-lg font-medium text-gray-800 leading-relaxed">
-                {currentQuestion?.question}
+                {currentQuestion?.question_text}
               </h4>
+              {currentQuestion?.context && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                  <p className="text-sm text-blue-800 font-medium">
+                    <strong>Context:</strong> {currentQuestion.context}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Answer Options */}

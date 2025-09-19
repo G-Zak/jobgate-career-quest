@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { FaCheckCircle, FaTrophy, FaRedo, FaArrowLeft, FaClock, FaChartLine } from 'react-icons/fa';
 import { formatDuration, getPerformanceLevel } from '../lib/scoreUtils';
@@ -15,14 +15,16 @@ const TestResultsPage = ({
   onRetakeTest 
 }) => {
   const { addAttempt } = useAssessmentStore();
+  const hasAddedAttempt = useRef(false);
 
   // Use results from unified scoring if available, otherwise fallback to legacy testResults
   const finalResults = results || testResults;
 
   useEffect(() => {
-    // If we have results from unified scoring, make sure it's in the store
-    if (results && results.attempt) {
+    // If we have results from unified scoring, make sure it's in the store (only once)
+    if (results && results.attempt && !hasAddedAttempt.current) {
       addAttempt(results.attempt);
+      hasAddedAttempt.current = true;
     }
   }, [results, addAttempt]);
 
