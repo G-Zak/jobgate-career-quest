@@ -24,4 +24,6 @@ urlpatterns = [
     path("", include("testsengine.urls")),
     # Expose skills API (skills, candidates, technical tests, results) under /api/
     path("", include("skills.urls")),
+    # Expose recommendation API under /api/
+    path("api/recommendations/", include("recommendation.urls")),
 ]
