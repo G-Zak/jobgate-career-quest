@@ -1,18 +1,21 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaCheckCircle, FaTrophy, FaRedo, FaArrowLeft, FaClock, FaChartLine } from 'react-icons/fa';
+import { FaCheckCircle, FaTrophy, FaRedo, FaArrowLeft, FaClock, FaChartLine, FaBrain, FaStar, FaAward, FaMedal } from 'react-icons/fa';
 import { formatDuration, getPerformanceLevel } from '../lib/scoreUtils';
 import { useAssessmentStore } from '../store/useAssessmentStore';
+import { formatUniversalResults } from '../lib/universalScoringIntegration';
 
-const TestResultsPage = ({ 
-  testResults, 
+const TestResultsPage = ({
+  testResults,
   results, // From unified scoring system
   testType,
   testId,
   answers,
   testData,
-  onBackToDashboard, 
-  onRetakeTest 
+  onBackToDashboard,
+  onRetakeTest,
+  showUniversalResults = false,
+  scoringSystem = null
 }) => {
   const { addAttempt } = useAssessmentStore();
 
@@ -20,11 +23,38 @@ const TestResultsPage = ({
   const finalResults = results || testResults;
 
   useEffect(() => {
+    // Console logging for backend scoring verification
+    console.group('🎯 Test Results - Backend Scoring Verification');
+    console.log('📊 Final Results:', finalResults);
+    console.log('🔧 Test Type:', testType);
+    console.log('🆔 Test ID:', testId);
+    console.log('📝 Answers:', answers);
+    console.log('⚙️ Scoring System:', scoringSystem);
+    console.log('🌐 Show Universal Results:', showUniversalResults);
+
+    if (scoringSystem) {
+      console.log('📈 Universal Scoring Results:', scoringSystem.getResults());
+      console.log('⏱️ Question Timings:', scoringSystem.getQuestionTimings());
+      console.log('🎯 Score Breakdown:', scoringSystem.getScoreBreakdown());
+    }
+
+    if (results) {
+      console.log('✅ Universal Results Available:', results);
+      console.log('📊 Score Details:', {
+        correct: results.correct,
+        total: results.total,
+        percentage: results.percentage,
+        resultLabel: results.resultLabel
+      });
+    }
+
+    console.groupEnd();
+
     // If we have results from unified scoring, make sure it's in the store
     if (results && results.attempt) {
       addAttempt(results.attempt);
     }
-  }, [results, addAttempt]);
+  }, [results, addAttempt, testType, testId, answers, scoringSystem, showUniversalResults]);
 
   if (!finalResults) {
     return (
@@ -46,15 +76,27 @@ const TestResultsPage = ({
   const extractResultData = () => {
     if (results) {
       // From unified scoring system
-      return {
+      const universalData = {
         testId: testId || results.attempt?.test_id || 'unknown',
         score: results.correct || 0,
         totalQuestions: results.total || 0,
         percentage: results.percentage || 0,
         timeSpent: results.attempt?.duration_seconds || 0,
         resultLabel: results.resultLabel || results.attempt?.result_label || 'Completed',
-        isPassed: results.percentage >= 70
+        isPassed: results.percentage >= 70,
+        // Universal scoring specific data
+        universalScoring: true,
+        scoreBreakdown: results.scoreBreakdown || null,
+        difficultyBreakdown: results.difficultyBreakdown || null,
+        timeEfficiency: results.timeEfficiency || null,
+        averageTimePerQuestion: results.averageTimePerQuestion || null,
+        performanceLevel: results.performanceLevel || null
       };
+
+      // Log universal scoring details
+      console.log('🎯 Universal Scoring Data:', universalData);
+
+      return universalData;
     } else {
       // Legacy format
       return {
@@ -64,7 +106,8 @@ const TestResultsPage = ({
         percentage: finalResults.percentage || 0,
         timeSpent: finalResults.timeSpent || 0,
         resultLabel: finalResults.resultLabel || 'Completed',
-        isPassed: finalResults.isPassed || finalResults.percentage >= 70
+        isPassed: finalResults.isPassed || finalResults.percentage >= 70,
+        universalScoring: false
       };
     }
   };
@@ -89,7 +132,7 @@ const TestResultsPage = ({
     const titleMap = {
       'NRT': 'Numerical Reasoning',
       'VRT': 'Verbal Reasoning',
-      'LRT': 'Logical Reasoning', 
+      'LRT': 'Logical Reasoning',
       'ART': 'Abstract Reasoning',
       'DRT': 'Diagrammatic Reasoning',
       'SRT': 'Spatial Reasoning',
@@ -128,7 +171,7 @@ const TestResultsPage = ({
               </div>
             </div>
           </motion.div>
-          
+
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -137,7 +180,7 @@ const TestResultsPage = ({
           >
             Test Complete!
           </motion.h1>
-          
+
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -149,7 +192,7 @@ const TestResultsPage = ({
         </div>
 
         {/* Results Cards */}
-        <div className="grid grid-cols-3 gap-6 px-8 pb-8">
+        <div className={`grid gap-6 px-8 pb-8 ${resultData.universalScoring ? 'grid-cols-2' : 'grid-cols-3'}`}>
           {/* Score */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -161,6 +204,11 @@ const TestResultsPage = ({
             <p className="text-3xl font-bold text-blue-600">
               {resultData.score}/{resultData.totalQuestions}
             </p>
+            {resultData.universalScoring && resultData.scoreBreakdown && (
+              <p className="text-sm text-blue-500 mt-1">
+                +{resultData.scoreBreakdown.difficultyBonus || 0} difficulty bonus
+              </p>
+            )}
           </motion.div>
 
           {/* Percentage */}
@@ -174,6 +222,11 @@ const TestResultsPage = ({
             <p className="text-3xl font-bold text-green-600">
               {resultData.percentage}%
             </p>
+            {resultData.universalScoring && resultData.timeEfficiency && (
+              <p className="text-sm text-green-500 mt-1">
+                {resultData.timeEfficiency}% time efficiency
+              </p>
+            )}
           </motion.div>
 
           {/* Result */}
@@ -187,6 +240,11 @@ const TestResultsPage = ({
             <p className={`text-2xl font-bold ${resultStatus.color}`}>
               {resultStatus.text}
             </p>
+            {resultData.universalScoring && resultData.performanceLevel && (
+              <p className="text-sm text-gray-600 mt-1">
+                {resultData.performanceLevel}
+              </p>
+            )}
           </motion.div>
         </div>
 
@@ -208,6 +266,59 @@ const TestResultsPage = ({
               </p>
             </motion.div>
           </div>
+        )}
+
+        {/* Universal Scoring Details */}
+        {resultData.universalScoring && (resultData.difficultyBreakdown || resultData.averageTimePerQuestion) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.85 }}
+            className="mx-8 mb-6 p-6 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg"
+          >
+            <div className="flex items-center mb-4">
+              <FaBrain className="text-purple-600 mr-3" />
+              <h4 className="font-semibold text-purple-800">Advanced Scoring Analysis</h4>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {resultData.difficultyBreakdown && (
+                <div className="bg-white p-4 rounded-lg">
+                  <h5 className="font-medium text-gray-800 mb-2 flex items-center">
+                    <FaStar className="text-yellow-500 mr-2" />
+                    Difficulty Performance
+                  </h5>
+                  <div className="space-y-1">
+                    {Object.entries(resultData.difficultyBreakdown).map(([level, count]) => (
+                      <div key={level} className="flex justify-between text-sm">
+                        <span className="text-gray-600">Level {level}:</span>
+                        <span className="font-medium">{count} questions</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {resultData.averageTimePerQuestion && (
+                <div className="bg-white p-4 rounded-lg">
+                  <h5 className="font-medium text-gray-800 mb-2 flex items-center">
+                    <FaClock className="text-blue-500 mr-2" />
+                    Time Analysis
+                  </h5>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Avg per question:</span>
+                      <span className="font-medium">{Math.round(resultData.averageTimePerQuestion)}s</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Total time:</span>
+                      <span className="font-medium">{formatDuration(resultData.timeSpent)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
         )}
 
         {/* Performance Message */}

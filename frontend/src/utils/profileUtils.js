@@ -1,50 +1,30 @@
 // Profile utilities for managing user profile data
 
 export const defaultUserProfile = {
-  id: 1,
-  name: "Zakaria Guennani",
-  email: "zakaria@example.com",
+  id: null,
+  name: "Utilisateur",
+  email: "user@example.com",
   avatar: "https://i.pravatar.cc/300?img=placeholder",
-  level: 3,
-  overallScore: 82,
-  xpPoints: 2480,
-  nextLevelXP: 3000,
+  level: 1,
+  overallScore: 0,
+  xpPoints: 0,
+  nextLevelXP: 1000,
   skills: [],
   skillsWithProficiency: [],
   skillAssessments: {},
-  languages: ["Français", "Anglais", "Espagnol"],
-  about: "Développeur passionné avec plus de 5 ans d'expérience dans le développement d'applications web modernes. Spécialisé en React, Node.js et technologies cloud.",
+  languages: ["Français"],
+  about: "Profil utilisateur",
   resume: null,
-  education: [
-    {
-      school: "École Supérieure de Technologie",
-      program: "Master en Ingénierie Logicielle",
-      dateRange: "2020 - 2022",
-      description: "Spécialisation en développement d'applications web et mobile"
-    }
-  ],
-  experience: [
-    {
-      title: "Développeur Frontend Senior",
-      company: "TechCorp Solutions",
-      dateRange: "2022 - Présent",
-      description: "Développement d'applications React complexes et optimisation des performances"
-    },
-    {
-      title: "Développeur Full Stack",
-      company: "StartupXYZ",
-      dateRange: "2020 - 2022",
-      description: "Développement full-stack avec React, Node.js et MongoDB"
-    }
-  ],
+  education: [],
+  experience: [],
   contact: {
-    email: "zakaria@example.com",
-    phone: "+212 6 12 34 56 78",
-    location: "Casablanca, Maroc",
-    linkedin: "https://linkedin.com/in/zakaria-guennani",
-    website: "https://zakaria.dev"
+    email: "user@example.com",
+    phone: "",
+    location: "",
+    linkedin: "",
+    website: ""
   },
-  bio: "Développeur passionné par les technologies web et l'innovation. Toujours en quête de nouveaux défis et d'opportunités d'apprentissage.",
+  bio: "Profil utilisateur",
   preferences: {
     notifications: true,
     darkMode: false,
@@ -54,8 +34,26 @@ export const defaultUserProfile = {
   updatedAt: new Date().toISOString()
 };
 
-export const loadUserProfile = (userId = 1) => {
+export const loadUserProfile = (userId = null) => {
   try {
+    // If no userId provided, try to find any saved profile
+    if (!userId) {
+      // Look for any userProfile_* key in localStorage
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('userProfile_')) {
+          const saved = localStorage.getItem(key);
+          if (saved) {
+            const profile = JSON.parse(saved);
+            if (profile && profile.id) {
+              return profile;
+            }
+          }
+        }
+      }
+      return defaultUserProfile;
+    }
+
     const saved = localStorage.getItem(`userProfile_${userId}`);
     if (saved) {
       return JSON.parse(saved);
@@ -74,6 +72,12 @@ export const saveUserProfile = (profile) => {
       updatedAt: new Date().toISOString()
     };
     localStorage.setItem(`userProfile_${profile.id}`, JSON.stringify(profileToSave));
+
+    // Trigger profile update event for real-time updates
+    window.dispatchEvent(new CustomEvent('profileUpdated', {
+      detail: { profile: profileToSave }
+    }));
+
     return true;
   } catch (error) {
     console.error('Error saving user profile:', error);
@@ -81,12 +85,13 @@ export const saveUserProfile = (profile) => {
   }
 };
 
-export const updateUserSkills = (userId, skills) => {
+export const updateUserSkills = (userId, skills, skillsWithProficiency = null) => {
   try {
     const profile = loadUserProfile(userId);
     const updatedProfile = {
       ...profile,
       skills: skills,
+      skillsWithProficiency: skillsWithProficiency || profile.skillsWithProficiency || [],
       updatedAt: new Date().toISOString()
     };
     return saveUserProfile(updatedProfile);
@@ -96,11 +101,42 @@ export const updateUserSkills = (userId, skills) => {
   }
 };
 
+// Enhanced function to update skills with proficiency
+export const updateUserSkillsWithProficiency = async (userId, skillsWithProficiency) => {
+  try {
+    const profile = loadUserProfile(userId);
+    const skillNames = skillsWithProficiency.map(skill => skill.name);
+    const updatedProfile = {
+      ...profile,
+      skills: skillNames,
+      skillsWithProficiency: skillsWithProficiency,
+      updatedAt: new Date().toISOString()
+    };
+
+    // Save to localStorage first (immediate)
+    const localSaveSuccess = saveUserProfile(updatedProfile);
+
+    // Also save to database (async)
+    try {
+      const { profileApiService } = await import('../services/profileApi.js');
+      await profileApiService.updateUserSkills(userId || 1, skillNames, skillsWithProficiency);
+      console.log('Skills with proficiency saved to database successfully');
+    } catch (dbError) {
+      console.warn('Database save failed, but localStorage save succeeded:', dbError);
+    }
+
+    return localSaveSuccess;
+  } catch (error) {
+    console.error('Error updating user skills with proficiency:', error);
+    return false;
+  }
+};
+
 export const addUserSkill = (userId, skill) => {
   try {
     const profile = loadUserProfile(userId);
     const skills = profile.skills || [];
-    
+
     if (!skills.find(s => s.id === skill.id)) {
       const updatedSkills = [...skills, skill];
       return updateUserSkills(userId, updatedSkills);
@@ -138,6 +174,32 @@ export const updateUserPreferences = (userId, preferences) => {
     return saveUserProfile(updatedProfile);
   } catch (error) {
     console.error('Error updating user preferences:', error);
+    return false;
+  }
+};
+
+export const getCurrentUserId = () => {
+  try {
+    const profile = loadUserProfile();
+    return profile?.id || null;
+  } catch (error) {
+    console.error('Error getting current user ID:', error);
+    return null;
+  }
+};
+
+export const clearUserProfile = () => {
+  try {
+    // Clear all userProfile_* keys
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('userProfile_')) {
+        localStorage.removeItem(key);
+      }
+    }
+    return true;
+  } catch (error) {
+    console.error('Error clearing user profile:', error);
     return false;
   }
 };

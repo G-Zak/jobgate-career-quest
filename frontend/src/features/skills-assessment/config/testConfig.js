@@ -200,7 +200,7 @@ export const testConfiguration = {
   // DEVELOPMENT & TESTING
   // ==========================================
   development: {
-    debugMode: process.env.NODE_ENV === 'development',
+    debugMode: import.meta.env.DEV,
     showQuestionIds: false,
     showCorrectAnswers: false,
     bypassTimeLimit: false,
@@ -225,7 +225,7 @@ export const getTestConfig = (testId) => {
       testId
     };
   }
-  
+
   // Check static tests
   if (testConfiguration.testVariants.static[testId]) {
     return {
@@ -268,13 +268,13 @@ export const getPoolSizeRequirements = (difficulty) => {
  */
 export const calculateFinalScore = (rawScore, timeSpent, totalTime, wrongAnswers = 0) => {
   let finalScore = rawScore;
-  
+
   // Apply time bonus
   if (testConfiguration.scoring.timeBonus.enabled) {
     const timeRatio = timeSpent / totalTime;
     if (timeRatio < testConfiguration.scoring.timeBonus.bonusThreshold) {
-      const bonus = (testConfiguration.scoring.timeBonus.bonusThreshold - timeRatio) * 
-                   testConfiguration.scoring.timeBonus.maxBonus;
+      const bonus = (testConfiguration.scoring.timeBonus.bonusThreshold - timeRatio) *
+        testConfiguration.scoring.timeBonus.maxBonus;
       finalScore += Math.min(bonus, testConfiguration.scoring.timeBonus.maxBonus);
     }
   }
@@ -293,7 +293,7 @@ export const calculateFinalScore = (rawScore, timeSpent, totalTime, wrongAnswers
  */
 export const getGrade = (score) => {
   const scale = testConfiguration.scoring.gradingScale;
-  
+
   if (score >= scale.excellent) return 'Excellent';
   if (score >= scale.good) return 'Good';
   if (score >= scale.satisfactory) return 'Satisfactory';

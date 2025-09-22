@@ -32,12 +32,14 @@ class CandidateProfileViewSet(viewsets.ModelViewSet):
         """Mettre à jour les compétences d'un candidat"""
         candidate_id = request.data.get('candidate_id', 1)  # Par défaut candidat 1
         skill_ids = request.data.get('skill_ids', [])
+        skills_with_proficiency = request.data.get('skills_with_proficiency', [])
         
         # Créer ou récupérer le profil candidat
         candidate, created = CandidateProfile.objects.get_or_create(
             id=candidate_id,
             defaults={
-                'name': f'Candidat {candidate_id}',
+                'first_name': f'Candidat',
+                'last_name': f'{candidate_id}',
                 'email': f'candidat{candidate_id}@example.com'
             }
         )
@@ -45,6 +47,11 @@ class CandidateProfileViewSet(viewsets.ModelViewSet):
         # Mettre à jour les compétences
         skills = Skill.objects.filter(id__in=skill_ids)
         candidate.skills.set(skills)
+        
+        # Mettre à jour les compétences avec niveau de maîtrise
+        if skills_with_proficiency:
+            candidate.skills_with_proficiency = skills_with_proficiency
+            candidate.save()
         
         return Response({
             'message': 'Compétences mises à jour avec succès',
@@ -87,6 +94,28 @@ class CandidateProfileViewSet(viewsets.ModelViewSet):
             candidate.skills.remove(skill)
             return Response({'message': 'Compétence supprimée'})
         return Response({'error': 'skill_id requis'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['post'])
+    def upload_photo(self, request, pk=None):
+        """Upload profile photo"""
+        candidate = self.get_object()
+        photo = request.FILES.get('photo')
+        if photo:
+            candidate.photo = photo
+            candidate.save()
+            return Response({'message': 'Photo uploaded successfully'})
+        return Response({'error': 'No photo provided'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['post'])
+    def remove_photo(self, request, pk=None):
+        """Remove profile photo"""
+        candidate = self.get_object()
+        if candidate.photo:
+            candidate.photo.delete()
+            candidate.photo = None
+            candidate.save()
+            return Response({'message': 'Photo removed successfully'})
+        return Response({'message': 'No photo to remove'})
 
 class TechnicalTestViewSet(viewsets.ModelViewSet):
     queryset = TechnicalTest.objects.filter(is_active=True)
