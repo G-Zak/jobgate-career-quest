@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ChartBarIcon, 
-  TrendingUpIcon, 
+  ArrowTrendingUpIcon, 
   UserGroupIcon,
   ChevronDownIcon,
   CheckCircleIcon,
@@ -143,7 +143,7 @@ const EmployabilityScore = () => {
             
             {/* Score Change */}
             <div className="flex items-center space-x-2">
-              <TrendingUpIcon className={`w-4 h-4 ${isImproving ? 'text-green-600' : 'text-red-600'}`} />
+              <ArrowTrendingUpIcon className={`w-4 h-4 ${isImproving ? 'text-green-600' : 'text-red-600'}`} />
               <span className={`text-sm font-medium ${isImproving ? 'text-green-600' : 'text-red-600'}`}>
                 {isImproving ? '+' : ''}{scoreChange} points
               </span>

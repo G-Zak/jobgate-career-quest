@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { 
   UserGroupIcon, 
-  TrendingUpIcon, 
-  TrendingDownIcon,
+  ArrowTrendingUpIcon, 
+  ArrowTrendingDownIcon,
   MinusIcon,
   ChevronRightIcon,
   LightBulbIcon,
@@ -232,7 +232,7 @@ const Benchmarks = () => {
               {/* Improvement */}
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                 <div className="flex items-center space-x-2">
-                  <TrendingUpIcon className="w-4 h-4 text-green-600" />
+                  <ArrowTrendingUpIcon className="w-4 h-4 text-green-600" />
                   <span className="text-sm text-gray-600">Improvement</span>
                 </div>
                 <span className="text-sm font-medium text-green-600">{item.improvement} points</span>

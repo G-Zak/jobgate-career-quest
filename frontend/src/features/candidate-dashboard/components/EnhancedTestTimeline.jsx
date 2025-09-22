@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { 
   ClockIcon, 
   TrophyIcon, 
-  TrendingUpIcon, 
-  TrendingDownIcon,
+  ArrowTrendingUpIcon, 
+  ArrowTrendingDownIcon,
   MinusIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -125,8 +125,8 @@ const EnhancedTestTimeline = () => {
   };
 
   const getScoreChangeIcon = (change) => {
-    if (change > 0) return <TrendingUpIcon className="w-4 h-4 text-green-600" />;
-    if (change < 0) return <TrendingDownIcon className="w-4 h-4 text-red-600" />;
+    if (change > 0) return <ArrowTrendingUpIcon className="w-4 h-4 text-green-600" />;
+    if (change < 0) return <ArrowTrendingDownIcon className="w-4 h-4 text-red-600" />;
     return <MinusIcon className="w-4 h-4 text-gray-400" />;
   };
 
@@ -140,7 +140,7 @@ const EnhancedTestTimeline = () => {
     switch (type) {
       case 'milestone_reached': return <TrophyIcon className="w-5 h-5 text-yellow-600" />;
       case 'test_completed': return <CheckCircleIcon className="w-5 h-5 text-blue-600" />;
-      case 'skill_improvement': return <TrendingUpIcon className="w-5 h-5 text-green-600" />;
+      case 'skill_improvement': return <ArrowTrendingUpIcon className="w-5 h-5 text-green-600" />;
       default: return <ClockIcon className="w-5 h-5 text-gray-600" />;
     }
   };

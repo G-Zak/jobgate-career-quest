@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ChartBarIcon, 
-  TrendingUpIcon, 
-  TrendingDownIcon,
+  ArrowTrendingUpIcon, 
+  ArrowTrendingDownIcon,
   MinusIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -117,8 +117,8 @@ const CareerReadinessBreakdown = () => {
 
   const getTrendIcon = (current, previous) => {
     const change = current - previous;
-    if (change > 0) return <TrendingUpIcon className="w-4 h-4 text-green-600" />;
-    if (change < 0) return <TrendingDownIcon className="w-4 h-4 text-red-600" />;
+    if (change > 0) return <ArrowTrendingUpIcon className="w-4 h-4 text-green-600" />;
+    if (change < 0) return <ArrowTrendingDownIcon className="w-4 h-4 text-red-600" />;
     return <MinusIcon className="w-4 h-4 text-gray-400" />;
   };
 
