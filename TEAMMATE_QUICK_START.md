@@ -17,16 +17,28 @@ git clone https://github.com/G-Zak/jobgate-career-quest.git
 cd jobgate-career-quest
 ```
 
-### Step 2: Start Everything
+### Step 2: Start Everything with Database
 ```bash
-# Windows
-setup_docker_windows.bat
+# Windows (includes database setup)
+setup_database_windows.bat
+
+# Linux/Mac (includes database setup)
+./setup_database.sh
 
 # OR manually
 docker-compose up -d
 ```
 
-### Step 3: Access the Application
+### Step 3: Verify Database Setup
+```bash
+# Check database is loaded with data
+python verify_database.py
+
+# OR check manually
+docker-compose exec backend python manage.py shell -c "from testsengine.models import Question; print(f'Questions: {Question.objects.count()}')"
+```
+
+### Step 4: Access the Application
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8000
 - **Admin Panel**: http://localhost:8000/admin

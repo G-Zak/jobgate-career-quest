@@ -33,10 +33,18 @@
 - [ ] **Frontend loads** - No errors in browser console
 - [ ] **Backend responds** - API endpoints work
 - [ ] **Database connected** - Admin panel accessible
+- [ ] **Database loaded** - 1,200+ questions available
 - [ ] **Tests available** - Can see test categories
 - [ ] **Can start a test** - Test interface loads
 - [ ] **Can submit test** - Scoring works
 - [ ] **Test history** - Results are saved
+
+### Database Verification
+- [ ] **Database running** - `docker-compose ps` shows db as "Up"
+- [ ] **Data loaded** - `python verify_database.py` shows 1000+ questions
+- [ ] **Admin accessible** - http://localhost:8000/admin loads
+- [ ] **API data** - http://localhost:8000/api/tests/ returns test data
+- [ ] **Questions count** - Admin panel shows questions and tests
 
 ### Development Features
 - [ ] **Hot reload works** - Code changes reflect
