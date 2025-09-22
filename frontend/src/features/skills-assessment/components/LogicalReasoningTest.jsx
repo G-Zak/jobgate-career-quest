@@ -29,15 +29,15 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
     const mainScrollContainer = document.querySelector('.main-content-area .overflow-y-auto');
     if (mainScrollContainer) {
       // Smooth scroll to top
-      mainScrollContainer.scrollTo({ 
-        top: 0, 
+      mainScrollContainer.scrollTo({
+        top: 0,
         behavior: 'smooth',
         block: 'start'
       });
     } else {
       // Fallback to window scroll
-      window.scrollTo({ 
-        top: 0, 
+      window.scrollTo({
+        top: 0,
         behavior: 'smooth',
         block: 'start'
       });
@@ -51,7 +51,7 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
       const timer = setTimeout(() => {
         scrollToTop();
       }, 100);
-      
+
       return () => clearTimeout(timer);
     }
   }, [currentQuestionIndex, testStep]);
@@ -161,7 +161,7 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
     } else {
       setCurrentQuestionIndex(prev => prev + 1);
     }
-    
+
     // Smooth scroll to top after navigation
     setTimeout(() => scrollToTop(), 150);
   };
@@ -170,7 +170,7 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1);
     }
-    
+
     // Smooth scroll to top after navigation
     setTimeout(() => scrollToTop(), 150);
   };
@@ -448,15 +448,13 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
                 return (
                   <motion.label
                     key={index}
-                    className={`w-full rounded-xl border-2 px-6 py-4 cursor-pointer transition-all duration-200 ${
-                      isSelected 
-                        ? "border-blue-500 bg-blue-50 text-blue-700 shadow-lg" 
+                    className={`w-full rounded-xl border-2 px-6 py-4 cursor-pointer transition-all duration-200 ${isSelected
+                        ? "border-blue-500 bg-blue-50 text-blue-700 shadow-lg"
                         : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md"
-                    }`}
+                      }`}
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
-
-              
+                  >
                     <input
                       type="radio"
                       name={`q-${currentQuestion.id}`}
@@ -467,11 +465,10 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
                     />
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <span className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 text-sm font-bold ${
-                          isSelected 
-                            ? 'bg-blue-500 text-white' 
+                        <span className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 text-sm font-bold ${isSelected
+                            ? 'bg-blue-500 text-white'
                             : 'bg-gray-200 text-gray-600'
-                        }`}>
+                          }`}>
                           {optionLetter}
                         </span>
                         <span className="text-lg font-medium">{option}</span>
@@ -490,8 +487,8 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
               onClick={handlePreviousQuestion}
               disabled={currentQuestionIndex === 0}
               className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${currentQuestionIndex === 0
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
             >
               <FaArrowRight className="w-4 h-4 rotate-180" />
@@ -508,8 +505,8 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
               onClick={handleNextQuestion}
               disabled={!isAnswered}
               className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${isAnswered
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg hover:from-blue-700 hover:to-blue-800 hover:shadow-xl'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg hover:from-blue-700 hover:to-blue-800 hover:shadow-xl'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
             >
               {isLastQuestion ? 'Complete Test' : 'Next'}
