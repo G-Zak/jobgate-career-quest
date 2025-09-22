@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from django.shortcuts import get_object_or_404
 from .models import Skill, CandidateProfile, TechnicalTest, TestQuestion, TestResult
 from .serializers import (
@@ -11,6 +12,7 @@ from .serializers import (
 class SkillViewSet(viewsets.ModelViewSet):
     queryset = Skill.objects.all()
     serializer_class = SkillSerializer
+    permission_classes = [AllowAny]
     
     @action(detail=False, methods=['get'])
     def by_category(self, request):
@@ -26,6 +28,7 @@ class SkillViewSet(viewsets.ModelViewSet):
 class CandidateProfileViewSet(viewsets.ModelViewSet):
     queryset = CandidateProfile.objects.all()
     serializer_class = CandidateProfileSerializer
+    permission_classes = [AllowAny]
     
     @action(detail=False, methods=['post'])
     def update_skills(self, request):
