@@ -367,7 +367,7 @@ class TestHistoryAdmin(admin.ModelAdmin):
         'session_id', 'user', 'test_name', 'test_category', 'percentage_score', 
         'grade_letter', 'passed', 'duration_formatted', 'date_taken'
     ]
-    list_filter = ['test__test_type', 'passed', 'date_taken', 'is_completed']
+    list_filter = ['test__test_type', 'date_taken', 'is_completed']
     search_fields = ['user__username', 'test__title', 'test__test_type']
     readonly_fields = ['session_id', 'date_taken', 'test_name', 'test_category', 'grade_letter', 'passed']
     ordering = ['-date_taken']
