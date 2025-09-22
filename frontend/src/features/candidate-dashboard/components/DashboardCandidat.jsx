@@ -7,6 +7,12 @@ import JobRecommendations from './JobRecommendations';
 import RecentTests from './RecentTests';
 import TestStatsWidget from './TestStatsWidget';
 import DynamicQuickStats from './DynamicQuickStats';
+// New components for Employability Score dashboard
+import EmployabilityScore from './EmployabilityScore';
+import CareerReadinessBreakdown from './CareerReadinessBreakdown';
+import Benchmarks from './Benchmarks';
+import EnhancedJobRecommendations from './EnhancedJobRecommendations';
+import EnhancedTestTimeline from './EnhancedTestTimeline';
 import { useScrollToTop } from '../../../shared/utils/scrollUtils';
 import '../../../features/candidate-dashboard/styles/dashboard-design-system.css';
 
@@ -52,6 +58,11 @@ const Dashboard = ({ onNavigateToSection }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="sa-container py-6">
+        {/* Top Section - Employability Score (Hero Area) */}
+        <div className="mb-6">
+          <EmployabilityScore />
+        </div>
+
         {/* Main Grid Layout */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
           {/* Left Column - Profile & Stats */}
@@ -64,10 +75,17 @@ const Dashboard = ({ onNavigateToSection }) => {
 
           {/* Right Column - Main Content */}
           <div className="xl:col-span-8 sa-stack">
-            <DynamicBadges />
-            <SkillsPerformance />
-            <JobRecommendations onViewAll={handleViewAllTests} />
-            <TestTimeline onViewAll={handleViewAllTests} />
+            {/* Career Readiness Analysis */}
+            <CareerReadinessBreakdown />
+            
+            {/* Benchmarks & Recommendations */}
+            <Benchmarks />
+            
+            {/* Enhanced Job Recommendations */}
+            <EnhancedJobRecommendations onViewAll={handleViewAllTests} />
+            
+            {/* Enhanced Test Timeline with Milestones */}
+            <EnhancedTestTimeline onViewAll={handleViewAllTests} />
           </div>
         </div>
       </div>
