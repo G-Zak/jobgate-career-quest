@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaBrain, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, FaFlag, FaPuzzlePiece } from 'react-icons/fa';
-import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
+// Removed complex scroll utilities - using simple scrollToTop function instead
 import { getLRT3TestSections } from '../data/lrt3TestSections';
 
 const LRT3Test = ({ onBackToDashboard }) => {
@@ -290,31 +290,28 @@ const LRT3Test = ({ onBackToDashboard }) => {
                   </p>
 
                   {/* Options */}
-                  <div className="space-y-3">
+                  <div className="flex justify-center gap-4 w-full">
                     {getCurrentQuestion()?.options?.map((option, index) => {
                       const optionLetter = String.fromCharCode(97 + index); // a, b, c, d, e
                       const isSelected = answers[getCurrentQuestion()?.id] === optionLetter;
+                      const optionsCount = getCurrentQuestion()?.options?.length || 0;
+                      
+                      // Calculate width based on number of options
+                      const buttonWidth = optionsCount <= 3 ? 'w-20' : optionsCount === 4 ? 'w-16' : 'w-12';
                       
                       return (
                         <button
                           key={index}
                           onClick={() => handleAnswerSelect(optionLetter)}
-                          className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
+                          className={`${buttonWidth} h-16 rounded-lg border-2 transition-all duration-200 flex items-center justify-center ${
                             isSelected 
-                              ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                              ? 'border-blue-500 bg-blue-500 text-white shadow-lg' 
+                              : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md'
                           }`}
                         >
-                          <div className="flex items-center space-x-3">
-                            <span className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-medium ${
-                              isSelected 
-                                ? 'border-blue-500 bg-blue-500 text-white' 
-                                : 'border-gray-300 text-gray-600'
-                            }`}>
-                              {optionLetter.toUpperCase()}
-                            </span>
-                            <span className="text-gray-800">{option}</span>
-                          </div>
+                          <span className="text-2xl font-bold">
+                            {optionLetter.toUpperCase()}
+                          </span>
                         </button>
                       );
                     })}

@@ -335,7 +335,7 @@ const MainDashboard = () => {
   };
 
   return (
-    <div id="dashboard-root" className="min-h-screen bg-gray-50">
+    <div id="dashboard-root" className="bg-gray-50">
       {/* Top Header Bar */}
       <div id="app-header" className="header-bar h-16 bg-white border-b border-gray-200 px-12 fixed top-0 left-0 right-0 z-20">
         <div className="header-content h-full flex items-center justify-between max-w-screen-2xl mx-auto">

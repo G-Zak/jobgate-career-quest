@@ -8,7 +8,7 @@ const TestInfoPage = ({ testId, onBackToDashboard, onStartTest, onShowResults, e
   
   if (!rule) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Test info not available</h2>
           <p className="text-gray-600 mb-4">Unknown test: {testId}</p>
@@ -217,7 +217,7 @@ const TestInfoPage = ({ testId, onBackToDashboard, onStartTest, onShowResults, e
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-0">
+    <div className="bg-gray-50 flex items-center justify-center p-0">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

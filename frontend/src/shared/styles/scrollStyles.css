@@ -11,9 +11,11 @@ html {
 .content-scroll,
 #test-content,
 #verbal-test-scroll,
-#spatial-test-scroll {
+#spatial-test-scroll,
+.main-content-area .overflow-y-auto {
   scroll-behavior: smooth;
   overflow-y: auto;
+  scroll-padding-top: 20px;
 }
 
 /* Enhanced scrollbar styling for scroll containers */

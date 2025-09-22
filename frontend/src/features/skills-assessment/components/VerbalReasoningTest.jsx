@@ -22,7 +22,7 @@ import {
   verbalReasoningCategories 
 } from '../data/verbalReasoningCategories';
 import { getRandomizedTestByLegacyId, testManager } from '../data/verbalReasoningTestManager';
-import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
+// Removed complex scroll utilities - using simple scrollToTop function instead
 import { submitTestAttempt } from '../lib/submitHelper';
 import TestResultsPage from './TestResultsPage';
 import { getRuleFor, buildAttempt } from '../testRules';
@@ -61,11 +61,38 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
 
   const testContainerRef = useRef(null);
 
-  // Universal scroll management
-  useScrollToTop([], { smooth: true });
-  useTestScrollToTop(testStep, testContainerRef, { smooth: true, attempts: 5 });
-  useTestScrollToTop(currentSection, testContainerRef, { smooth: true, attempts: 3 });
-  useQuestionScrollToTop(currentQuestion, testStep, testContainerRef);
+  // Smooth scroll-to-top function - only called on navigation
+  const scrollToTop = () => {
+    // Target the main scrollable container in MainDashboard
+    const mainScrollContainer = document.querySelector('.main-content-area .overflow-y-auto');
+    if (mainScrollContainer) {
+      // Smooth scroll to top
+      mainScrollContainer.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    } else {
+      // Fallback to window scroll
+      window.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
+  // Only scroll to top when question changes (not on every render)
+  useEffect(() => {
+    if (testStep === 'test' && currentQuestion > 0) {
+      // Small delay to ensure DOM has updated after question change
+      const timer = setTimeout(() => {
+        scrollToTop();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentQuestion, currentPassage]);
 
   // Load verbal reasoning test data
   useEffect(() => {
@@ -248,6 +275,9 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
     } else {
       setCurrentQuestion(prev => prev + 1);
     }
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => scrollToTop(), 150);
   };
 
   const handlePrevQuestion = () => {
@@ -260,6 +290,9 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
       const prevPassage = passages[currentPassage - 1];
       setCurrentQuestion(((prevPassage?.questions?.length) || 1) - 1);
     }
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => scrollToTop(), 150);
   };
 
   const handleSubmitTest = async () => {
@@ -344,13 +377,14 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
   };
 
   const confirmExit = () => {
+    scrollToTop();
     onBackToDashboard();
   };
 
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -378,7 +412,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center">
+      <div className="bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -400,7 +434,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100" ref={testContainerRef}>
+    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100" ref={testContainerRef}>
       <AnimatePresence mode="wait">
         {testStep === 'test' && (
           <motion.div
@@ -408,7 +442,7 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="min-h-screen"
+            className=""
           >
             {/* Modern Test Header */}
             <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
@@ -496,35 +530,44 @@ const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'eng
                     </p>
                     
                     {/* Answer Options */}
-                    <div className="space-y-3">
+                    <div role="radiogroup" aria-labelledby={`q-${getCurrentQuestion()?.id}-label`} className="grid gap-4">
                       {getCurrentQuestion()?.options?.map((option, index) => {
                         const isSelected = answers[`${currentSection}_${currentPassage}_${getCurrentQuestion()?.id}`] === option;
                         const letters = ['A', 'B', 'C', 'D', 'E'];
                         
                         return (
-                          <motion.button
+                          <motion.label
                             key={option}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className={`w-full p-4 text-left rounded-xl border-2 transition-all duration-200 ${
+                            className={`w-full rounded-xl border-2 px-6 py-4 cursor-pointer transition-all duration-200 ${
                               isSelected 
-                                ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-md' 
-                                : 'border-gray-200 hover:border-blue-300 hover:bg-blue-25 hover:shadow-sm'
+                                ? "border-blue-500 bg-blue-50 text-blue-700 shadow-lg" 
+                                : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md"
                             }`}
-                            onClick={() => handleAnswerSelect(getCurrentQuestion()?.id, option)}
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
                           >
-                            <div className="flex items-center">
-                              <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center mr-4 text-sm font-bold ${
-                                isSelected 
-                                  ? 'border-blue-500 bg-blue-500 text-white' 
-                                  : 'border-gray-300 text-gray-500'
-                              }`}>
-                                {letters[index]}
+                            <input
+                              type="radio"
+                              name={`q-${getCurrentQuestion()?.id}`}
+                              value={option}
+                              className="sr-only"
+                              checked={isSelected}
+                              onChange={() => handleAnswerSelect(getCurrentQuestion()?.id, option)}
+                            />
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <span className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 text-sm font-bold ${
+                                  isSelected 
+                                    ? 'bg-blue-500 text-white' 
+                                    : 'bg-gray-200 text-gray-600'
+                                }`}>
+                                  {letters[index]}
+                                </span>
+                                <span className="text-lg font-medium">{option}</span>
                               </div>
-                              <span className="font-medium">{option}</span>
-                              {isSelected && <FaCheckCircle className="ml-auto text-blue-500" />}
+                              {isSelected && <FaCheckCircle className="w-5 h-5 text-blue-500" />}
                             </div>
-                          </motion.button>
+                          </motion.label>
                         );
                       })}
                     </div>

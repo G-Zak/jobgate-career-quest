@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaChartLine, FaClock, FaStop, FaArrowRight, FaFlag, FaCalculator, FaQuestionCircle, FaTable, FaChartBar, FaCheckCircle, FaBrain, FaTimesCircle, FaPause, FaPlay, FaTimes, FaCog, FaSearch, FaLightbulb, FaPuzzlePiece, FaCheck } from 'react-icons/fa';
 import { getNumericalTestWithAnswers } from '../data/numericalTestSections';
-import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
+// Removed complex scroll utilities - using simple scrollToTop function instead
 import { submitTestAttempt } from '../lib/submitHelper';
 import TestResultsPage from './TestResultsPage';
 import { getRuleFor } from '../testRules';
@@ -29,10 +29,38 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
   const timerRef = useRef(null);
   const startedAtRef = useRef(Date.now());
 
-  // Universal scroll management using scroll utilities
-  useScrollToTop([], { smooth: true }); // Scroll on component mount
-  useTestScrollToTop(testStep, 'numerical-test-scroll', { smooth: true, attempts: 5 }); // Scroll on test step changes
-  useQuestionScrollToTop(currentQuestion, testStep, 'numerical-test-scroll'); // Scroll on question changes
+  // Smooth scroll-to-top function - only called on navigation
+  const scrollToTop = () => {
+    // Target the main scrollable container in MainDashboard
+    const mainScrollContainer = document.querySelector('.main-content-area .overflow-y-auto');
+    if (mainScrollContainer) {
+      // Smooth scroll to top
+      mainScrollContainer.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    } else {
+      // Fallback to window scroll
+      window.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
+  // Only scroll to top when question changes (not on every render)
+  useEffect(() => {
+    if (testStep === 'test' && currentQuestion > 0) {
+      // Small delay to ensure DOM has updated after question change
+      const timer = setTimeout(() => {
+        scrollToTop();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentQuestion, testStep]);
 
   // Get current section and question data (moved up to avoid temporal dead zone)
   const currentSectionData = testData?.sections?.[currentSection - 1];
@@ -341,6 +369,9 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
     } else {
       handleNextSection();
     }
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => scrollToTop(), 150);
   };
 
   // Handle previous question
@@ -348,6 +379,9 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
     if (currentQuestion > 1) {
       setCurrentQuestion(prev => prev - 1);
     }
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => scrollToTop(), 150);
   };
 
   // Show results page
@@ -443,12 +477,15 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
             {/* Instructions Image */}
             {section.intro_image && (
               <div className="mb-8 text-center">
-                <img
-                  src={section.intro_image}
-                  alt="Numerical Reasoning Instructions"
-                  className="max-w-full h-auto mx-auto rounded-lg shadow-md"
-                  style={{ maxHeight: '300px' }}
-                />
+
+                <div className="flex justify-center">
+                  <img 
+                    src={section.intro_image} 
+                    alt="Numerical Reasoning Instructions"
+                    className="max-w-xl max-h-96 w-auto h-auto mx-auto rounded-lg shadow-md object-contain"
+                    style={{ maxWidth: '528px', maxHeight: '352px' }}
+                  />
+                </div>
               </div>
             )}
 
@@ -890,7 +927,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
   }
 
   return (
-    <div id="numerical-test-scroll" className="min-h-screen bg-gray-50">
+    <div id="numerical-test-scroll" className="bg-gray-50">
       {/* Test Header */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 py-4">

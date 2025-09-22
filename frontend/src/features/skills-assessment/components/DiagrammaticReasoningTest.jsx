@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaFlag, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, FaSearchPlus, FaLayerGroup, FaImage, FaPause, FaPlay, FaTimes, FaSitemap, FaProjectDiagram } from 'react-icons/fa';
-import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
+// Removed complex scroll utilities - using simple scrollToTop function instead
 import { getDiagrammaticTestSections, getDiagrammaticSection1, getDiagrammaticSection2 } from '../data/diagrammaticTestSections';
 import { submitTestAttempt } from '../lib/submitHelper';
 import TestResultsPage from './TestResultsPage';
@@ -36,10 +36,38 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
   const [startedAt, setStartedAt] = useState(null);
   const [results, setResults] = useState(null);
 
-  // Universal scroll management using scroll utilities
-  useScrollToTop([], { smooth: true }); // Scroll on component mount
-  useTestScrollToTop(testStep, 'diagrammatic-test-scroll', { smooth: true, attempts: 5 }); // Scroll on test step changes
-  useQuestionScrollToTop(currentQuestion, testStep, 'diagrammatic-test-scroll'); // Scroll on question changes
+  // Smooth scroll-to-top function - only called on navigation
+  const scrollToTop = () => {
+    // Target the main scrollable container in MainDashboard
+    const mainScrollContainer = document.querySelector('.main-content-area .overflow-y-auto');
+    if (mainScrollContainer) {
+      // Smooth scroll to top
+      mainScrollContainer.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    } else {
+      // Fallback to window scroll
+      window.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
+  // Only scroll to top when question changes (not on every render)
+  useEffect(() => {
+    if (testStep === 'test' && currentQuestion > 0) {
+      // Small delay to ensure DOM has updated after question change
+      const timer = setTimeout(() => {
+        scrollToTop();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentQuestion, testStep]);
 
   // Load test data
   useEffect(() => {
@@ -97,15 +125,8 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
   const handleStartTest = () => {
     setTestStep('test');
     
-    // Use scroll utility for immediate scroll on test start
-    setTimeout(() => {
-      scrollToTop({
-        container: 'diagrammatic-test-scroll',
-        forceImmediate: true,
-        attempts: 3,
-        delay: 50
-      });
-    }, 100);
+    // Scroll to top when test starts
+    setTimeout(() => scrollToTop(), 100);
   };
 
   const handleAnswerSelect = (questionId, answer) => {
@@ -129,6 +150,9 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
         handleFinishTest();
       }
     }
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => scrollToTop(), 150);
   };
 
   const handlePreviousQuestion = () => {
@@ -142,6 +166,9 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
         setCurrentQuestion(prevSection.total_questions);
       }
     }
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => scrollToTop(), 150);
   };
 
   const handleFinishTest = async () => {
@@ -466,16 +493,18 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
                   {getCurrentQuestion()?.question_image && (
                     <div className="mb-8 text-center">
                       <div className="inline-block bg-white rounded-xl p-4 shadow-md border">
-                        <img 
-                          src={getCurrentQuestion().question_image} 
-                          alt={`Diagrammatic pattern ${getCurrentQuestion()?.id || ''}`}
-                          className="max-w-full h-auto mx-auto rounded-lg"
-                          style={{ maxHeight: '400px' }}
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextElementSibling.style.display = 'flex';
-                          }}
-                        />
+                        <div className="flex justify-center">
+                          <img 
+                            src={getCurrentQuestion().question_image} 
+                            alt={`Diagrammatic pattern ${getCurrentQuestion()?.id || ''}`}
+                            className="max-w-xl max-h-[28rem] w-auto h-auto rounded-lg object-contain"
+                            style={{ maxWidth: '528px', maxHeight: '422px' }}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextElementSibling.style.display = 'flex';
+                            }}
+                          />
+                        </div>
                         <div className="hidden items-center justify-center w-full h-48 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
                           <div className="text-center">
                             <FaImage className="text-gray-400 text-3xl mx-auto mb-2" />
@@ -492,30 +521,31 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
                       <FaSearchPlus className="mr-2 text-purple-600" />
                       Select the correct answer:
                     </h4>
-                    <div className={`grid gap-4 ${getCurrentQuestion()?.options?.length === 5 ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4'}`}>
-                      {getCurrentQuestion()?.options?.map((option) => (
-                        <motion.button
-                          key={option.id}
-                          onClick={() => handleAnswerSelect(getCurrentQuestion().id, option.id)}
-                          className={`p-6 rounded-xl border-2 transition-all duration-200 ${
-                            answers[`${currentSection}_${getCurrentQuestion().id}`] === option.id
-                              ? 'border-purple-500 bg-purple-50 shadow-lg'
-                              : 'border-gray-200 hover:border-purple-300 bg-white hover:shadow-md'
-                          }`}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <div className="flex items-center justify-center h-12">
-                            <span className={`text-2xl font-bold ${
+                    <div className="flex justify-center gap-4 w-full">
+                      {getCurrentQuestion()?.options?.map((option) => {
+                        const optionsCount = getCurrentQuestion()?.options?.length || 0;
+                        
+                        // Calculate width based on number of options
+                        const buttonWidth = optionsCount <= 3 ? 'w-20' : optionsCount === 4 ? 'w-16' : 'w-12';
+                        
+                        return (
+                          <motion.button
+                            key={option.id}
+                            onClick={() => handleAnswerSelect(getCurrentQuestion().id, option.id)}
+                            className={`${buttonWidth} h-16 rounded-lg border-2 transition-all duration-200 flex items-center justify-center ${
                               answers[`${currentSection}_${getCurrentQuestion().id}`] === option.id
-                                ? 'text-purple-600'
-                                : 'text-gray-700'
-                            }`}>
+                                ? 'border-purple-500 bg-purple-500 text-white shadow-lg'
+                                : 'border-gray-300 hover:border-purple-400 hover:bg-purple-50 hover:shadow-md'
+                            }`}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <span className="text-2xl font-bold">
                               {option.id}
                             </span>
-                          </div>
-                        </motion.button>
-                      ))}
+                          </motion.button>
+                        );
+                      })}
                     </div>
                   </div>
 
