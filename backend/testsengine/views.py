@@ -117,7 +117,7 @@ class TestQuestionsView(APIView):
     permission_classes = [permissions.AllowAny]  # Temporarily allow anonymous access for testing
     
     def get(self, request, test_id):
-        """Return random questions without correct answers"""
+        """Return random questions without correct answers - 21 questions (7 passages × 3 questions)"""
         test = get_object_or_404(Test, id=test_id, is_active=True)
         
         # Get all questions
@@ -129,20 +129,9 @@ class TestQuestionsView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # For numerical test (ID 21), logical tests (30, 31, 32), diagrammatic tests (24, 25), and abstract test (10), return random questions with balanced difficulty
-        if test_id == 21:  # Numerical test
-            questions = self._get_balanced_random_questions(all_questions, 20)
-        elif test_id in [30, 31, 32]:  # Logical tests
-            questions = self._get_balanced_random_questions(all_questions, 20)
-        elif test_id in [24, 25]:  # Diagrammatic tests (DRT1, DRT2)
-            questions = self._get_balanced_random_questions(all_questions, 20)
-        elif test_id == 4:  # Situational Judgment Test
-            questions = self._get_balanced_random_questions(all_questions, 20)
-        elif test_id == 10:  # Abstract test (ART1)
-            questions = self._get_balanced_random_questions(all_questions, 20)
-        else:
-            # For other tests, return all questions in order
-            questions = all_questions.order_by('order')
+        # For all tests, return 21 random questions (7 passages × 3 questions each)
+        # This ensures anti-cheating by randomizing questions each time
+        questions = self._get_random_21_questions(all_questions, test_id)
         
         serializer = QuestionForTestSerializer(questions, many=True)
         
@@ -155,46 +144,121 @@ class TestQuestionsView(APIView):
             'questions': serializer.data,
             'fetched_at': timezone.now().isoformat(),
             'security_note': 'Correct answers are not included - submit for scoring',
-            'random_selection': test_id in [4, 10, 21, 24, 25, 30, 31, 32]  # Indicate if questions were randomly selected
+            'random_selection': True,  # All tests now use random selection for anti-cheating
+            'selection_info': '21 questions randomly selected from available pool (7 passages × 3 questions)'
         })
     
-    def _get_balanced_random_questions(self, all_questions, target_count=20):
-        """Get 20 random questions with balanced difficulty distribution"""
+    def _get_random_21_questions(self, all_questions, test_id):
+        """Get 21 random questions (7 passages × 3 questions) for anti-cheating"""
+        import random
+        
+        # Convert to list for easier manipulation
+        questions_list = list(all_questions)
+        
+        if len(questions_list) <= 21:
+            # If we have 21 or fewer questions, return all of them
+            random.shuffle(questions_list)
+            return questions_list
+        
+        # For reading comprehension tests, try to group by passages
+        if test_id == 1:  # VRT1 - Reading Comprehension
+            return self._get_random_reading_comprehension_questions(questions_list)
+        else:
+            # For other tests, select 21 random questions with balanced difficulty
+            return self._get_balanced_random_21_questions(questions_list)
+    
+    def _get_random_reading_comprehension_questions(self, all_questions):
+        """Get 21 random reading comprehension questions (7 passages × 3 questions)"""
+        import random
+        
+        # Group questions by passage
+        passages = {}
+        for question in all_questions:
+            passage_text = question.passage or "No passage"
+            if passage_text not in passages:
+                passages[passage_text] = []
+            passages[passage_text].append(question)
+        
+        # Select 7 random passages
+        available_passages = list(passages.keys())
+        if len(available_passages) <= 7:
+            selected_passages = available_passages
+        else:
+            selected_passages = random.sample(available_passages, 7)
+        
+        # Select 3 questions from each selected passage
+        selected_questions = []
+        for passage in selected_passages:
+            passage_questions = passages[passage]
+            if len(passage_questions) >= 3:
+                # Select first 3 questions from this passage (maintain order)
+                selected_questions.extend(passage_questions[:3])
+            else:
+                # If less than 3 questions, take all and fill from other passages
+                selected_questions.extend(passage_questions)
+                remaining_needed = 3 - len(passage_questions)
+                # Fill remaining from other passages
+                other_questions = [q for p, qs in passages.items() if p != passage for q in qs]
+                if other_questions:
+                    selected_questions.extend(random.sample(other_questions, min(remaining_needed, len(other_questions))))
+        
+        # If we still don't have 21 questions, fill with random questions
+        if len(selected_questions) < 21:
+            remaining_questions = [q for q in all_questions if q not in selected_questions]
+            needed = 21 - len(selected_questions)
+            if remaining_questions:
+                selected_questions.extend(random.sample(remaining_questions, min(needed, len(remaining_questions))))
+        
+        # DO NOT shuffle - keep questions grouped by passage for proper reading comprehension flow
+        return selected_questions[:21]  # Ensure exactly 21 questions
+    
+    def _get_balanced_random_21_questions(self, all_questions):
+        """Get 21 random questions with balanced difficulty distribution"""
         import random
         
         # Separate questions by difficulty
-        easy_questions = list(all_questions.filter(difficulty_level='easy'))
-        medium_questions = list(all_questions.filter(difficulty_level='medium'))
-        hard_questions = list(all_questions.filter(difficulty_level='hard'))
+        easy_questions = [q for q in all_questions if q.difficulty_level == 'easy']
+        medium_questions = [q for q in all_questions if q.difficulty_level == 'medium']
+        hard_questions = [q for q in all_questions if q.difficulty_level == 'hard']
         
         # Calculate how many questions to select from each difficulty
-        # Target distribution: 8 easy, 7 medium, 5 hard (total 20)
+        # Target distribution: 8 easy, 8 medium, 5 hard (total 21)
         easy_count = min(8, len(easy_questions))
-        medium_count = min(7, len(medium_questions))
+        medium_count = min(8, len(medium_questions))
         hard_count = min(5, len(hard_questions))
         
         # If we don't have enough questions in some categories, redistribute
-        remaining = target_count - (easy_count + medium_count + hard_count)
+        remaining = 21 - (easy_count + medium_count + hard_count)
         if remaining > 0:
             if len(easy_questions) > easy_count:
                 easy_count += min(remaining, len(easy_questions) - easy_count)
-                remaining = target_count - (easy_count + medium_count + hard_count)
+                remaining = 21 - (easy_count + medium_count + hard_count)
             if remaining > 0 and len(medium_questions) > medium_count:
                 medium_count += min(remaining, len(medium_questions) - medium_count)
-                remaining = target_count - (easy_count + medium_count + hard_count)
+                remaining = 21 - (easy_count + medium_count + hard_count)
             if remaining > 0 and len(hard_questions) > hard_count:
                 hard_count += min(remaining, len(hard_questions) - hard_count)
         
         # Randomly select questions from each difficulty level
         selected_questions = []
-        selected_questions.extend(random.sample(easy_questions, easy_count))
-        selected_questions.extend(random.sample(medium_questions, medium_count))
-        selected_questions.extend(random.sample(hard_questions, hard_count))
+        if easy_count > 0 and easy_questions:
+            selected_questions.extend(random.sample(easy_questions, easy_count))
+        if medium_count > 0 and medium_questions:
+            selected_questions.extend(random.sample(medium_questions, medium_count))
+        if hard_count > 0 and hard_questions:
+            selected_questions.extend(random.sample(hard_questions, hard_count))
+        
+        # If we still don't have 21 questions, fill with any remaining questions
+        if len(selected_questions) < 21:
+            remaining_questions = [q for q in all_questions if q not in selected_questions]
+            needed = 21 - len(selected_questions)
+            if remaining_questions:
+                selected_questions.extend(random.sample(remaining_questions, min(needed, len(remaining_questions))))
         
         # Shuffle the final selection to randomize order
         random.shuffle(selected_questions)
         
-        return selected_questions
+        return selected_questions[:21]  # Ensure exactly 21 questions
 
 
 class SubmitTestView(APIView):

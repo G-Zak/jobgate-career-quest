@@ -96,7 +96,13 @@ class BackendApiService {
           browser: navigator.userAgent,
           device: this.getDeviceType(),
           session_id: `sjt_${Date.now()}`,
-          ...metadata
+          // Only include allowed metadata keys
+          ...(metadata.browser && { browser: metadata.browser }),
+          ...(metadata.device && { device: metadata.device }),
+          ...(metadata.session_id && { session_id: metadata.session_id }),
+          ...(metadata.user_agent && { user_agent: metadata.user_agent }),
+          ...(metadata.screen_resolution && { screen_resolution: metadata.screen_resolution }),
+          ...(metadata.timezone && { timezone: metadata.timezone })
         }
       };
 

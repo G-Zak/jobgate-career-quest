@@ -28,6 +28,8 @@ class QuestionForTestSerializer(serializers.ModelSerializer):
             'id',
             'question_type', 
             'question_text',
+            'passage',
+            'context',
             'options',
             'order',
             'difficulty_level',  # Shown for transparency
@@ -48,6 +50,26 @@ class QuestionForTestSerializer(serializers.ModelSerializer):
             
         # Add coefficient for transparency (frontend can show difficulty weighting)
         data['scoring_coefficient'] = instance.scoring_coefficient
+        
+        # For SJT tests (test_id = 4), include QuestionOption data instead of JSON options
+        if instance.test_id == 4:
+            try:
+                from .question_option_model import QuestionOption
+                question_options = QuestionOption.objects.filter(question=instance).order_by('option_letter')
+                if question_options.exists():
+                    # Replace the JSON options with QuestionOption data
+                    data['options'] = [
+                        {
+                            'option_id': opt.option_letter,
+                            'text': opt.option_text,
+                            'value': opt.option_letter,
+                            'score_value': opt.score_value
+                        }
+                        for opt in question_options
+                    ]
+            except ImportError:
+                # Fallback to JSON options if QuestionOption model not available
+                pass
         
         return data
 

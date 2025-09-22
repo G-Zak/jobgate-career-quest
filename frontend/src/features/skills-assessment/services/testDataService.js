@@ -5,14 +5,12 @@ class TestDataService {
   // Map frontend test IDs to backend test IDs
   static getBackendTestId(frontendTestId) {
     const testIdMapping = {
-      'VRT1': 5,   // Verbal Reasoning Test 1
-      'VRT2': 6,   // Verbal Reasoning Test 2  
-      'VRT3': 7,   // Verbal Reasoning Test 3
-      'VRT4': 8,   // Verbal Reasoning Test 4
-      'VRT5': 5,   // Map VRT5 to existing VRT1
-      'VRT6': 6,   // Map VRT6 to existing VRT2
-      'VRT7': 7,   // Map VRT7 to existing VRT3
-      'SJT1': 4,   // Situational Judgment Test
+      'VRT1': 1,   // Reading Comprehension Test
+      'VRT2': 2,   // Verbal Reasoning Test 2 - Analogies
+      'VRT3': 3,   // Verbal Reasoning Test 3 - Classification
+      'VRT4': 4,   // Verbal Reasoning Test 4 - Coding & Decoding
+      'VRT5': 5,   // Verbal Reasoning Test 5 - Blood Relations
+      'SJT1': 30,  // Situational Judgment Test
       'NRT1': 21,  // Numerical Reasoning Test - Basic Arithmetic
       'ART1': 10,  // Abstract Reasoning Test
       'SRT1': 11,  // Spatial Reasoning Test
@@ -50,7 +48,7 @@ class TestDataService {
         id: question.id,
         question_id: question.id, // Map id to question_id for frontend compatibility
         question_text: question.question_text,
-        passage_text: question.context || question.passage_text,
+        passage_text: question.passage || question.context || question.passage_text,
         scenario: question.context || question.scenario,
         options: (question.options || []).map((option, optionIndex) => {
           // Transform string options to objects with option_id
@@ -267,7 +265,7 @@ class TestDataService {
   static async submitTestAnswers(frontendTestId, answers, timeTaken) {
     try {
       const backendTestId = this.getBackendTestId(frontendTestId);
-      const response = await backendApi.submitTest(backendTestId, answers, timeTaken);
+      const response = await backendApi.submitTestAnswers(backendTestId, answers, timeTaken);
       return response;
     } catch (error) {
       console.error('Error submitting test answers:', error);

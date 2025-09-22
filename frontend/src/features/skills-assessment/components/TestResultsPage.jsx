@@ -47,15 +47,15 @@ const TestResultsPage = ({
   // Extract data from either unified results or legacy results
   const extractResultData = () => {
     if (results) {
-      // From unified scoring system
+      // From unified scoring system - check for both old and new field names
       return {
         testId: testId || results.attempt?.test_id || 'unknown',
-        score: results.correct || 0,
-        totalQuestions: results.total || 0,
-        percentage: results.percentage || 0,
-        timeSpent: results.attempt?.duration_seconds || 0,
+        score: results.correctAnswers || results.correct || 0,
+        totalQuestions: results.totalQuestions || results.total || 0,
+        percentage: results.score || results.percentage || 0,
+        timeSpent: results.duration || results.attempt?.duration_seconds || 0,
         resultLabel: results.resultLabel || results.attempt?.result_label || 'Completed',
-        isPassed: results.percentage >= 70
+        isPassed: (results.score || results.percentage || 0) >= 70
       };
     } else {
       // Legacy format
@@ -72,6 +72,8 @@ const TestResultsPage = ({
   };
 
   const resultData = extractResultData();
+  console.log('🔍 TestResultsPage - Results object:', results);
+  console.log('🔍 TestResultsPage - Extracted data:', resultData);
   const performanceLevel = getPerformanceLevel(resultData.percentage);
 
   const getResultStatus = () => {

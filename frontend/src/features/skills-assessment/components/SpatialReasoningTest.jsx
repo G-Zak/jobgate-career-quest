@@ -303,7 +303,7 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
                 Spatial Reasoning Test
               </div>
               <div className="text-sm text-gray-600">
-                Question {currentQuestionIndex + 1} of {rule?.totalQuestions || 20}
+                Question {currentQuestionIndex + 1} of {questions.length}
               </div>
             </div>
 
@@ -338,19 +338,19 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
               </div>
             </div>
             <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-              {currentQuestionIndex + 1} of {rule?.totalQuestions || 20}
+              {currentQuestionIndex + 1} of {questions.length}
             </div>
           </div>
 
           {/* Question Content */}
           <div className="mb-8">
             {/* Question Image */}
-            {currentQuestion?.question_image && (
+            {currentQuestion?.main_image && (
               <div className="mb-6">
                 <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
                   <div className="flex justify-center">
                     <img
-                      src={currentQuestion.question_image}
+                      src={`/src/assets/images/spatial/questions/section_1/${currentQuestion.main_image.split('/').pop()}`}
                       alt={`Question ${currentQuestionIndex + 1}`}
                       className="max-w-xl max-h-[28rem] w-auto h-auto rounded-lg shadow-sm object-contain"
                       style={{ maxWidth: '528px', maxHeight: '422px' }}
@@ -378,12 +378,15 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
             {/* Answer Options */}
             <div className="flex justify-center gap-4 w-full">
               {currentQuestion?.options?.map((option, index) => {
-                const optionLetter = option.id || String.fromCharCode(65 + index);
+                // Handle both string and object options
+                const optionValue = typeof option === 'string' ? option : option.value || option.option_id || option.text;
+                const letters = ['A', 'B', 'C', 'D', 'E'];
+                const optionLetter = letters[index] || String.fromCharCode(65 + index);
                 const isSelected = answers[currentQuestion.id] === optionLetter;
                 const optionsCount = currentQuestion?.options?.length || 0;
                 
                 // Calculate width based on number of options
-                const buttonWidth = optionsCount <= 3 ? 'w-20' : optionsCount === 4 ? 'w-16' : 'w-12';
+                const buttonWidth = optionsCount <= 3 ? 'w-20' : optionsCount === 4 ? 'w-16' : optionsCount === 5 ? 'w-14' : 'w-12';
 
                 return (
                   <motion.button
@@ -422,7 +425,7 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
             </button>
 
             <div className="text-sm text-gray-500">
-              {getTotalAnswered()} of {rule?.totalQuestions || 20} answered
+              {getTotalAnswered()} of {questions.length} answered
             </div>
 
             <motion.button

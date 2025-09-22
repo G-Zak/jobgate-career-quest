@@ -5,6 +5,7 @@
 
 import backendApi from '../api/backendApi';
 import assessmentStore from '../store/useAssessmentStore';
+import TestDataService from '../services/testDataService';
 
 /**
  * Submit test attempt using backend-only scoring
@@ -31,12 +32,16 @@ export async function submitTestAttempt({
   try {
     console.log('Submitting test attempt to backend:', { testId, answerCount: Object.keys(answers).length });
 
+    // Convert frontend test ID to backend test ID
+    const backendTestId = TestDataService.getBackendTestId(testId);
+    console.log('Converted test ID:', { frontend: testId, backend: backendTestId });
+
     // Calculate time taken
     const timeTakenSeconds = backendApi.formatTimeTaken(startedAt, finishedAt);
 
     // Submit to backend for scoring
     const submissionResult = await backendApi.submitTestAnswers(
-      testId,
+      backendTestId,
       answers,
       timeTakenSeconds,
       metadata
@@ -117,7 +122,8 @@ export async function submitTestAttempt({
  */
 export async function fetchTestQuestions(testId) {
   try {
-    const questions = await backendApi.getTestQuestions(testId);
+    const response = await backendApi.getTestQuestions(testId);
+    const questions = response.questions || [];
     console.log(`Fetched ${questions.length} questions for test ${testId}`);
     return questions;
   } catch (error) {

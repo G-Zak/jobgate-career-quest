@@ -7,10 +7,7 @@ import {
   FaArrowLeft, 
   FaClock, 
   FaCheckCircle,
-  FaExclamationTriangle,
-  FaLightbulb,
-  FaUsers,
-  FaBalanceScale
+  FaQuestionCircle
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import TestDataService from '../services/testDataService';
@@ -136,37 +133,40 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
     }
   };
 
-  const handleSubmit = () => {
-    calculateScore();
-    setShowResults(true);
+  const handleSubmit = async () => {
+    try {
+      // Convert numeric answers to letter format for backend submission
+      const letterAnswers = {};
+      Object.keys(selectedAnswers).forEach(questionIndex => {
+        const answerIndex = selectedAnswers[questionIndex];
+        const questionId = testData[questionIndex]?.id;
+        if (questionId !== undefined && answerIndex !== undefined) {
+          // Convert 0,1,2,3 to A,B,C,D
+          const letterAnswer = String.fromCharCode(65 + answerIndex);
+          letterAnswers[questionId] = letterAnswer;
+        }
+      });
+
+      // Submit to backend using the correct method
+      const timeTaken = (25 * 60) - timeRemaining; // Calculate time taken
+      const result = await TestDataService.submitTestAnswers('SJT1', letterAnswers, timeTaken);
+      
+      console.log('Test submitted successfully:', result);
+      setScore(result.score?.percentage_score || 0);
+      setShowResults(true);
+    } catch (error) {
+      console.error('Error submitting test:', error);
+      // Fallback to local calculation
+      calculateScore();
+      setShowResults(true);
+    }
   };
 
   const startTest = () => {
     setIsTestStarted(true);
   };
 
-  const getDomainIcon = (domain) => {
-    const iconMap = {
-      teamwork: <FaUsers className="text-blue-500" />,
-      leadership: <FaLightbulb className="text-purple-500" />,
-      communication: <FaExclamationTriangle className="text-green-500" />,
-      customer_service: <FaCheckCircle className="text-orange-500" />,
-      ethics: <FaBalanceScale className="text-red-500" />,
-      inclusivity: <FaUsers className="text-pink-500" />,
-      conflict: <FaExclamationTriangle className="text-yellow-500" />,
-      safety: <FaExclamationTriangle className="text-red-600" />
-    };
-    return iconMap[domain] || <FaLightbulb className="text-gray-500" />;
-  };
 
-  const getDifficultyColor = (difficulty) => {
-    const colorMap = {
-      easy: 'text-green-600 bg-green-100',
-      medium: 'text-yellow-600 bg-yellow-100',
-      hard: 'text-red-600 bg-red-100'
-    };
-    return colorMap[difficulty] || 'text-gray-600 bg-gray-100';
-  };
 
   if (loading) {
     return (
@@ -354,22 +354,14 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
       animate={{ opacity: 1 }}
       className="max-w-4xl mx-auto p-6"
     >
-      {/* Header */}
+      {/* Header with Timer */}
       <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-3">
-            {getDomainIcon(currentQ.domain)}
-            <div>
-              <h1 className="text-xl font-bold text-gray-800">
-                Question {currentQuestion + 1} of {testData.length}
-              </h1>
-              <div className="flex items-center gap-3 text-sm">
-                <span className="capitalize text-gray-600">{currentQ.domain}</span>
-                <span className={`px-2 py-1 rounded text-xs font-medium ${getDifficultyColor(currentQ.difficulty)}`}>
-                  {currentQ.difficulty}
-                </span>
-              </div>
-            </div>
+            <FaQuestionCircle className="text-blue-500 text-xl" />
+            <h1 className="text-xl font-bold text-gray-800">
+              Question {currentQuestion + 1} of {testData.length}
+            </h1>
           </div>
           <div className="flex items-center gap-2 text-lg font-mono">
             <FaClock className="text-red-500" />
@@ -380,13 +372,11 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
         </div>
         
         {/* Progress bar */}
-        <div className="mt-4">
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${((currentQuestion + 1) / testData.length) * 100}%` }}
-            />
-          </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div
+            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${((currentQuestion + 1) / testData.length) * 100}%` }}
+          />
         </div>
       </div>
 
@@ -406,12 +396,12 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
               {currentQ.scenario}
             </p>
             <h3 className="text-lg font-semibold text-gray-800">
-              {currentQ.question || "What is the most appropriate response?"}
+              {currentQ.question_text || currentQ.question || "What is the most appropriate response?"}
           </h3>
           </div>
 
           <div className="space-y-3">
-            {currentQ.choices.map((choice, index) => (
+            {currentQ.options?.map((option, index) => (
               <motion.button
                 key={index}
                   whileHover={{ scale: 1.01 }}
@@ -433,7 +423,9 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
                       <FaCheckCircle className="text-white text-xs" />
                     )}
                   </div>
-                  <span className="text-gray-700 leading-relaxed">{choice}</span>
+                  <span className="text-gray-700 leading-relaxed">
+                    {typeof option === 'string' ? option : option.text || option.value || option.option_id}
+                  </span>
                 </div>
               </motion.button>
             ))}

@@ -1,279 +1,455 @@
 import React, { useState, useEffect, useRef } from 'react';
+import backendApi from '../api/backendApi';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaBrain, FaClock, FaStop, FaArrowRight, FaFlag, FaEye, FaQuestionCircle } from 'react-icons/fa';
-import { useScrollToTop, useTestScrollToTop, useQuestionScrollToTop, scrollToTop } from '../../../shared/utils/scrollUtils';
-import TestDataService from '../services/testDataService';
+import { FaClock, FaBrain, FaStop, FaArrowRight, FaFlag, FaSync, FaSearchPlus, FaExpand, FaEye, FaImage, FaLayerGroup, FaPlay, FaTimes, FaCheckCircle, FaArrowLeft } from 'react-icons/fa';
+// Removed frontend data imports - using backend API instead
+import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
+import TestResultsPage from './TestResultsPage';
 
-const AbstractReasoningTest = ({ onBackToDashboard, onTestComplete }) => {
-  const [testStep, setTestStep] = useState('instructions');
-  const [currentQuestion, setCurrentQuestion] = useState(null);
-  const [questionNumber, setQuestionNumber] = useState(0);
-  const [totalQuestions, setTotalQuestions] = useState(25);
-  const [timeRemaining, setTimeRemaining] = useState(15 * 60);
-  const [selectedAnswer, setSelectedAnswer] = useState(null);
+const AbstractReasoningTest = ({ onBackToDashboard, testId = 'abstract' }) => {
+  // Map frontend test ID to backend database ID
+  const getBackendTestId = (frontendId) => {
+    const testIdMapping = {
+      'abstract': '10', // Default to Abstract Reasoning
+      'abstract_pattern': '10',
+      'abstract_sequence': '11',
+      'abstract_analysis': '12',
+      'ART1': '10', // Abstract Reasoning Test 1
+      'ART2': '11', // Abstract Reasoning Test 2
+      'ART3': '12'  // Abstract Reasoning Test 3
+    };
+    return testIdMapping[frontendId] || frontendId || '10'; // Default to Abstract Reasoning
+  };
+  
+  const backendTestId = getBackendTestId(testId);
+  
+  const [testStep, setTestStep] = useState('loading');
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes default
   const [answers, setAnswers] = useState({});
-  const [testData, setTestData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [testResults, setTestResults] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [startedAt, setStartedAt] = useState(null);
+  const [results, setResults] = useState(null);
 
   const testContainerRef = useRef(null);
 
-  // Universal scroll management using scroll utilities
-  useScrollToTop([], { smooth: true });
-  useTestScrollToTop(testStep, testContainerRef);
-  useQuestionScrollToTop(questionNumber, testStep, testContainerRef);
+  // Smooth scroll-to-top function - only called on navigation
+  const scrollToTop = () => {
+    // Target the main scrollable container in MainDashboard
+    const mainScrollContainer = document.querySelector('.main-content-area .overflow-y-auto');
+    if (mainScrollContainer) {
+      // Smooth scroll to top
+      mainScrollContainer.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    } else {
+      // Fallback to window scroll
+      window.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
+  // Only scroll to top when question changes (not on every render)
+  useEffect(() => {
+    if (testStep === 'test' && currentQuestionIndex > 0) {
+      // Small delay to ensure DOM has updated after question change
+      const timer = setTimeout(() => {
+        scrollToTop();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentQuestionIndex, testStep]);
+
+  // Initialize test with backend API
+  useEffect(() => {
+    const initializeTest = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch test questions from backend (secure - no correct answers)
+        const fetchedQuestions = await fetchTestQuestions(backendTestId);
+        setQuestions(fetchedQuestions);
+        
+        setTimeRemaining(20 * 60); // 20 minutes default
+        setStartedAt(new Date());
+        setTestStep('test');
+        
+      } catch (error) {
+        console.error('Failed to initialize test:', error);
+        setError('Failed to load test questions. Please try again.');
+        setTestStep('error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeTest();
+  }, [backendTestId]);
 
   // Timer effect
   useEffect(() => {
-    let timer;
-    
     if (testStep === 'test' && timeRemaining > 0) {
-      timer = setInterval(() => {
-        setTimeRemaining(prev => {
-          if (prev <= 1) {
-            handleFinishTest();
-            return 0;
-          }
-          return prev - 1;
-        });
+      const timer = setInterval(() => {
+        setTimeRemaining(prev => prev - 1);
       }, 1000);
+      return () => clearInterval(timer);
+    } else if (timeRemaining === 0) {
+      handleFinishTest();
     }
-
-    return () => {
-      if (timer) {
-        clearInterval(timer);
-      }
-    };
   }, [testStep, timeRemaining]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const startTest = async () => {
-    try {
-      // Load test data from backend
-      const testData = await TestDataService.fetchTestQuestions('ART1');
-      setTestData(testData.questions || []);
-      setCurrentQuestion(testData.questions?.[0] || null);
-      setQuestionNumber(1);
-      setTotalQuestions(testData.questions?.length || 25);
-      setTestStep('test');
-      setTimeRemaining(15 * 60);
-      console.log('Abstract test started with', testData.questions?.length || 0, 'questions');
-    } catch (error) {
-      console.error('Error starting abstract test:', error);
-    }
-  };
-
-  const handleAnswerSelect = (answer) => {
-    setSelectedAnswer(answer);
+  const handleAnswerSelect = (questionId, selectedOption) => {
     setAnswers(prev => ({
       ...prev,
-      [questionNumber]: answer
+      [questionId]: selectedOption,
     }));
   };
 
   const handleNextQuestion = () => {
-    if (questionNumber < totalQuestions) {
-      setQuestionNumber(prev => prev + 1);
-      setCurrentQuestion(testData[questionNumber]);
-      setSelectedAnswer(answers[questionNumber + 1] || null);
-    } else {
-      handleFinishTest();
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
     }
   };
 
-  const handleFinishTest = () => {
-    // Calculate score
-    let correctAnswers = 0;
-    testData.forEach((question, index) => {
-      if (answers[index + 1] === question.answer) {
-        correctAnswers++;
-      }
-    });
-
-    const score = Math.round((correctAnswers / totalQuestions) * 100);
-    const results = {
-      score,
-      correctAnswers,
-      totalQuestions,
-      percentage: score
-    };
-
-    setTestResults(results);
-    setTestStep('results');
-  };
-
-  const handleBackToDashboard = () => {
-    if (onBackToDashboard) {
-      onBackToDashboard();
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
     }
   };
 
-  if (testStep === 'instructions') {
+  const handleFinishTest = async () => {
+    try {
+      // Submit to backend for scoring
+      const result = await submitTestAttempt({
+        testId: backendTestId,
+        answers,
+        startedAt: startedAt,
+        finishedAt: Date.now(),
+        reason: 'user',
+        metadata: {
+          testType: 'abstract_reasoning',
+          totalQuestions: questions.length,
+          currentQuestion: currentQuestionIndex + 1
+        }
+      });
+
+      console.log('Test submitted successfully:', result);
+      setResults(result);
+      setTestStep('results');
+      
+    } catch (error) {
+      console.error('Error finishing test:', error);
+      setError('Failed to submit test. Please try again.');
+    }
+  };
+
+  const handleExitTest = () => {
+    setShowExitModal(true);
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitModal(false);
+    onBackToDashboard();
+  };
+
+  const currentQuestion = questions[currentQuestionIndex];
+  const isLastQuestion = currentQuestionIndex === questions.length - 1;
+  const isAnswered = answers[currentQuestion?.id] !== undefined;
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl mx-4"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
         >
-          <div className="text-center mb-8">
-            <FaBrain className="text-6xl text-purple-600 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-gray-800 mb-4">Abstract Reasoning Test</h1>
-            <p className="text-gray-600 text-lg">
-              Test your ability to identify patterns and relationships in abstract shapes and figures.
-            </p>
-      </div>
-
-          <div className="space-y-4 mb-8">
-            <div className="flex items-center space-x-3">
-              <FaClock className="text-blue-500" />
-              <span className="text-gray-700">Duration: 15 minutes</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <FaQuestionCircle className="text-green-500" />
-              <span className="text-gray-700">Questions: {totalQuestions}</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <FaEye className="text-orange-500" />
-              <span className="text-gray-700">Pattern Recognition</span>
-            </div>
+          <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FaBrain className="w-8 h-8 text-purple-600 animate-pulse" />
           </div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading Test</h2>
+          <p className="text-gray-600">Preparing your abstract reasoning assessment...</p>
+        </motion.div>
+      </div>
+    );
+  }
 
-          <div className="text-center">
+  if (error || !questions.length) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center max-w-md"
+        >
+          <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <FaTimes className="w-12 h-12 text-red-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Test Unavailable</h2>
+          <p className="text-gray-600 mb-8">{error || 'Unable to load the test data. Please try again later.'}</p>
           <button
-              onClick={startTest}
-              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200"
+            onClick={onBackToDashboard}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium"
           >
-              Start Test
+            Back to Dashboard
           </button>
-          </div>
         </motion.div>
       </div>
     );
   }
 
-  if (testStep === 'test' && currentQuestion) {
+  if (testStep === 'results') {
     return (
-      <div className="min-h-screen bg-gray-50" ref={testContainerRef}>
-        <div className="bg-white shadow-sm border-b">
-          <div className="max-w-4xl mx-auto px-4 py-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-4">
-                <FaBrain className="text-2xl text-purple-600" />
-                <h1 className="text-xl font-semibold text-gray-800">Abstract Reasoning Test</h1>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <FaClock className="text-red-500" />
-                  <span className="text-lg font-mono text-red-600">{formatTime(timeRemaining)}</span>
-                </div>
-                <div className="text-gray-600">
-                  Question {questionNumber} of {totalQuestions}
-                </div>
-              </div>
-            </div>
-                </div>
-              </div>
-
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">
-              {currentQuestion.text}
-            </h2>
-
-            <div className="space-y-3">
-              {['A', 'B', 'C', 'D', 'E'].slice(0, currentQuestion.options).map((option) => (
-                <label
-                  key={option}
-                  className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${
-                    selectedAnswer === option
-                      ? 'border-purple-500 bg-purple-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="answer"
-                    value={option}
-                    checked={selectedAnswer === option}
-                    onChange={(e) => handleAnswerSelect(e.target.value)}
-                    className="sr-only"
-                  />
-                  <span className="flex-shrink-0 w-6 h-6 border-2 rounded-full flex items-center justify-center mr-3">
-                    {selectedAnswer === option && (
-                      <div className="w-3 h-3 bg-purple-600 rounded-full"></div>
-                    )}
-                  </span>
-                  <span className="text-gray-900">{option}</span>
-                </label>
-              ))}
-            </div>
-
-            <div className="flex justify-between mt-8">
-              <button
-                onClick={handleBackToDashboard}
-                className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                Exit Test
-              </button>
-              <button
-                onClick={handleNextQuestion}
-                disabled={!selectedAnswer}
-                className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white font-semibold py-2 px-6 rounded-lg transition-colors duration-200"
-              >
-                {questionNumber === totalQuestions ? 'Finish Test' : 'Next Question'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (testStep === 'results' && testResults) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 flex items-center justify-center">
-        <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl mx-4"
-        >
-          <div className="text-center">
-            <FaBrain className="text-6xl text-purple-600 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-gray-800 mb-4">Test Complete!</h1>
-            
-            <div className="bg-gray-50 rounded-lg p-6 mb-6">
-              <div className="text-4xl font-bold text-purple-600 mb-2">
-                {testResults.percentage}%
-              </div>
-              <div className="text-gray-600">
-                {testResults.correctAnswers} out of {testResults.totalQuestions} correct
-                    </div>
-                  </div>
-
-            <button
-              onClick={handleBackToDashboard}
-              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200"
-            >
-              Back to Dashboard
-            </button>
-          </div>
-        </motion.div>
-      </div>
+      <TestResultsPage
+        results={results}
+        testType="abstract"
+        testId={testId}
+        answers={answers}
+        testData={{ questions }}
+        onBackToDashboard={onBackToDashboard}
+      />
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading test...</p>
+    <div className="bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-100 min-h-screen">
+      {/* Modern Test Header - Matching Spatial Test Design */}
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Left: Test Info */}
+            <div className="flex items-center space-x-6">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleExitTest}
+                className="flex items-center text-gray-600 hover:text-red-600 transition-colors"
+              >
+                <FaTimes className="text-xl" />
+              </motion.button>
+              
+              <div>
+                <h1 className="text-xl font-bold text-gray-800">Abstract Reasoning Test</h1>
+                <p className="text-sm text-gray-600">
+                  Question {currentQuestionIndex + 1} of {questions.length}
+                </p>
               </div>
+            </div>
+
+            {/* Center: Progress Bar */}
+            <div className="flex-1 max-w-md mx-8">
+              <div className="bg-gray-200 rounded-full h-2">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+                  transition={{ duration: 0.5 }}
+                  className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1 text-center">
+                {Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}% Complete
+              </p>
+            </div>
+
+            {/* Right: Timer & Controls */}
+            <div className="flex items-center space-x-4">                    
+              <div className={`text-right ${timeRemaining < 300 ? 'text-red-500' : timeRemaining < 600 ? 'text-orange-500' : 'text-purple-600'}`}>
+                <div className="text-2xl font-bold font-mono">
+                  <FaClock className="inline mr-2" />
+                  {formatTime(timeRemaining)}
+                </div>
+                <p className="text-xs opacity-75">Time Remaining</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Test Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentQuestionIndex}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+            className="flex flex-col gap-6"
+          >
+            {/* Question Card - Matching Spatial Test Design */}
+            <section className="bg-white rounded-2xl shadow-lg p-8">
+              <div className="mb-8">
+                <div className="flex items-center mb-4">
+                  <FaBrain className="text-purple-600 text-xl mr-3" />
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Question {currentQuestionIndex + 1}
+                  </h3>
+                </div>
+                
+                <p className="text-gray-700 mb-6 text-lg leading-relaxed">
+                  {currentQuestion?.question_text}
+                </p>
+                
+                {/* Question Image - Similar to Spatial Test */}
+                {currentQuestion?.main_image && (
+                  <div className="mb-6">
+                    <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
+                      <div className="flex justify-center">
+                        <img
+                          src={`/src/assets/images/abstract/questions/${currentQuestion.main_image.split('/').pop()}`}
+                          alt={`Question ${currentQuestionIndex + 1}`}
+                          className="max-w-2xl max-h-[20rem] w-auto h-auto rounded-lg shadow-sm object-contain"
+                          style={{ maxWidth: '560px', maxHeight: '350px' }}
+                          onError={(e) => {
+                            console.log('Image failed to load:', e.target.src);
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Answer Options - Horizontal Layout */}
+                <div role="radiogroup" aria-labelledby={`q-${currentQuestion?.id}-label`} className="flex flex-wrap justify-center gap-4">
+                  {currentQuestion?.options?.map((option, index) => {
+                    // Handle both string and object options
+                    const optionValue = typeof option === 'string' ? option : option.value || option.option_id || option.text;
+                    const isSelected = answers[currentQuestion?.id] === optionValue;
+                    const letters = ['A', 'B', 'C', 'D', 'E'];
+                    
+                    return (
+                      <motion.label
+                        key={`option-${index}-${optionValue}`}
+                        className={`flex items-center justify-center w-16 h-16 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                          isSelected 
+                            ? "border-purple-500 bg-purple-50 text-purple-700 shadow-lg" 
+                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md"
+                        }`}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <input
+                          type="radio"
+                          name={`q-${currentQuestion?.id}`}
+                          value={optionValue}
+                          className="sr-only"
+                          checked={isSelected}
+                          onChange={() => handleAnswerSelect(currentQuestion?.id, optionValue)}
+                        />
+                        <div className="flex items-center justify-center">
+                          <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                            isSelected 
+                              ? 'bg-purple-500 text-white' 
+                              : 'bg-gray-200 text-gray-600'
+                          }`}>
+                            {letters[index]}
+                          </span>
+                        </div>
+                      </motion.label>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+
+            {/* Navigation - Matching Spatial Test Design */}
+            <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handlePreviousQuestion}
+                disabled={currentQuestionIndex === 0}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+              >
+                <FaArrowLeft />
+                Previous
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={isLastQuestion ? handleFinishTest : handleNextQuestion}
+                disabled={!isAnswered}
+                className={`flex items-center gap-2 px-8 py-3 rounded-xl transition-all duration-200 font-medium shadow-lg ${
+                  isAnswered
+                    ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {isLastQuestion ? (
+                  <>
+                    <FaFlag />
+                    Submit Test
+                  </>
+                ) : (
+                  <>
+                    Next
+                    <FaArrowRight />
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Exit Modal */}
+      <AnimatePresence>
+        {showExitModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
+            >
+              <div className="text-center">
+                <FaTimes className="w-12 h-12 text-red-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Exit Test?</h3>
+                <p className="text-gray-600 mb-6">
+                  Are you sure you want to exit? Your progress will be lost.
+                </p>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setShowExitModal(false)}
+                    className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConfirmExit}
+                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    Exit Test
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -300,164 +300,171 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
   const isAnswered = answers[currentQuestion?.id] != null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-4xl mx-auto px-6 py-4">
+    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      {/* Modern Test Header - Matching Verbal Test Design */}
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <button
-              onClick={handleExitTest}
-              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <FaTimes className="w-4 h-4" />
-              <span className="font-medium">Exit Test</span>
-            </button>
-
-            <div className="text-center">
-              <div className="text-xl font-bold text-gray-800">
-                Logical Reasoning Test
-              </div>
-              <div className="text-sm text-gray-600">
-                Question {currentQuestionIndex + 1} of {questions.length}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div className="text-sm text-gray-500">Time Remaining</div>
-                <div className={`text-lg font-bold font-mono ${timeRemaining <= 60 ? 'text-red-500' : 'text-blue-600'}`}>
-                  {formatTime(timeRemaining)}
-                </div>
-              </div>
-              <button
-                onClick={handlePauseToggle}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            {/* Left: Test Info */}
+            <div className="flex items-center space-x-6">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleExitTest}
+                className="flex items-center text-gray-600 hover:text-red-600 transition-colors"
               >
-                {isPaused ? <FaPlay className="w-4 h-4" /> : <FaPause className="w-4 h-4" />}
-                <span className="font-medium">{isPaused ? 'Resume' : 'Pause'}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          {/* Question Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl text-white">
-                <FaBrain className="w-5 h-5" />
-              </div>
+                <FaTimes className="text-xl" />
+              </motion.button>
+              
               <div>
-                <h3 className="text-xl font-bold text-gray-800">
-                  Question {currentQuestionIndex + 1}
-                </h3>
-                <p className="text-gray-600">
-                  {currentQuestion?.question_type || 'Logical Reasoning'}
+                <h1 className="text-xl font-bold text-gray-800">Logical Reasoning Test</h1>
+                <p className="text-sm text-gray-600">
+                  Question {currentQuestionIndex + 1} of {questions.length}
                 </p>
               </div>
             </div>
-            <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-              {currentQuestionIndex + 1} of {questions.length}
-            </div>
-          </div>
 
-          {/* Question Text */}
-          <div className="mb-8">
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 mb-6">
-              <h4 className="text-lg font-medium text-gray-800 leading-relaxed">
-                {currentQuestion?.question_text}
-              </h4>
-              {currentQuestion?.context && (
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
-                  <p className="text-sm text-blue-800 font-medium">
-                    <strong>Context:</strong> {currentQuestion.context}
-                  </p>
+            {/* Center: Progress Bar */}
+            <div className="flex-1 max-w-md mx-8">
+              <div className="bg-gray-200 rounded-full h-2">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+                  transition={{ duration: 0.5 }}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1 text-center">
+                {Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}% Complete
+              </p>
+            </div>
+
+            {/* Right: Timer & Controls */}
+            <div className="flex items-center space-x-4">                    
+              <div className={`text-right ${timeRemaining < 300 ? 'text-red-500' : timeRemaining < 600 ? 'text-orange-500' : 'text-blue-600'}`}>
+                <div className="text-2xl font-bold font-mono">
+                  <FaClock className="inline mr-2" />
+                  {formatTime(timeRemaining)}
                 </div>
-              )}
+                <p className="text-xs opacity-75">Time Remaining</p>
+              </div>
             </div>
-
-            {/* Answer Options */}
-            <div role="radiogroup" aria-labelledby={`q-${currentQuestion.id}-label`} className="grid gap-4">
-              {currentQuestion?.options?.map((option, index) => {
-                const optionLetter = String.fromCharCode(65 + index);
-                const isSelected = answers[currentQuestion.id] === optionLetter;
-
-                return (
-                  <motion.label
-                    key={index}
-                    className={`w-full rounded-xl border-2 px-6 py-4 cursor-pointer transition-all duration-200 ${
-                      isSelected 
-                        ? "border-blue-500 bg-blue-50 text-blue-700 shadow-lg" 
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md"
-                    }`}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                  >
-                    <input
-                      type="radio"
-                      name={`q-${currentQuestion.id}`}
-                      value={optionLetter}
-                      className="sr-only"
-                      checked={isSelected}
-                      onChange={() => handleAnswerSelect(currentQuestion.id, optionLetter)}
-                    />
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <span className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 text-sm font-bold ${
-                          isSelected 
-                            ? 'bg-blue-500 text-white' 
-                            : 'bg-gray-200 text-gray-600'
-                        }`}>
-                          {optionLetter}
-                        </span>
-                        <span className="text-lg font-medium">{option}</span>
-                      </div>
-                      {isSelected && <FaCheckCircle className="w-5 h-5 text-blue-500" />}
-                    </div>
-                  </motion.label>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-            <button
-              onClick={handlePreviousQuestion}
-              disabled={currentQuestionIndex === 0}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
-                currentQuestionIndex === 0
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              <FaArrowRight className="w-4 h-4 rotate-180" />
-              Previous
-            </button>
-
-            <div className="text-sm text-gray-500">
-              {getTotalAnswered()} of {rule?.totalQuestions || 20} answered
-            </div>
-
-            <motion.button
-              whileHover={{ scale: isAnswered ? 1.05 : 1 }}
-              whileTap={{ scale: isAnswered ? 0.95 : 1 }}
-              onClick={handleNextQuestion}
-              disabled={!isAnswered}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
-                isAnswered
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg hover:from-blue-700 hover:to-blue-800 hover:shadow-xl'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              {isLastQuestion ? 'Complete Test' : 'Next'}
-              <FaArrowRight />
-            </motion.button>
           </div>
         </div>
+      </div>
+
+      {/* Test Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentQuestionIndex}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+            className="flex flex-col gap-6"
+          >
+            {/* Question Card - Matching Verbal Test Design */}
+            <section className="bg-white rounded-2xl shadow-lg p-8">
+              <div className="mb-8">
+                <div className="flex items-center mb-4">
+                  <FaBrain className="text-blue-600 text-xl mr-3" />
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Question {currentQuestionIndex + 1}
+                  </h3>
+                </div>
+                
+                <p className="text-gray-700 mb-6 text-lg leading-relaxed">
+                  {currentQuestion?.question_text}
+                </p>
+                
+                {/* Answer Options - Matching Verbal Test Design */}
+                <div role="radiogroup" aria-labelledby={`q-${currentQuestion?.id}-label`} className="grid gap-4">
+                  {currentQuestion?.options?.map((option, index) => {
+                    // Handle both string and object options
+                    const optionText = typeof option === 'string' ? option : option.text || option.value || option.option_id;
+                    const optionValue = typeof option === 'string' ? option : option.value || option.option_id || option.text;
+                    const isSelected = answers[currentQuestion?.id] === optionValue;
+                    const letters = ['A', 'B', 'C', 'D', 'E'];
+                    
+                    return (
+                      <motion.label
+                        key={`option-${index}-${optionValue}`}
+                        className={`w-full rounded-xl border-2 px-6 py-4 cursor-pointer transition-all duration-200 ${
+                          isSelected 
+                            ? "border-blue-500 bg-blue-50 text-blue-700 shadow-lg" 
+                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md"
+                        }`}
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                      >
+                        <input
+                          type="radio"
+                          name={`q-${currentQuestion?.id}`}
+                          value={optionValue}
+                          className="sr-only"
+                          checked={isSelected}
+                          onChange={() => handleAnswerSelect(currentQuestion?.id, optionValue)}
+                        />
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 text-sm font-bold ${
+                              isSelected 
+                                ? 'bg-blue-500 text-white' 
+                                : 'bg-gray-200 text-gray-600'
+                            }`}>
+                              {letters[index]}
+                            </span>
+                            <span className="text-lg font-medium">{optionText}</span>
+                          </div>
+                          {isSelected && <FaCheckCircle className="w-5 h-5 text-blue-500" />}
+                        </div>
+                      </motion.label>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+
+            {/* Navigation - Matching Verbal Test Design */}
+            <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handlePreviousQuestion}
+                disabled={currentQuestionIndex === 0}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+              >
+                <FaArrowRight className="w-4 h-4 rotate-180" />
+                Previous
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={isLastQuestion ? handleFinishTest : handleNextQuestion}
+                disabled={!isAnswered}
+                className={`flex items-center gap-2 px-8 py-3 rounded-xl transition-all duration-200 font-medium shadow-lg ${
+                  isAnswered
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {isLastQuestion ? (
+                  <>
+                    <FaFlag />
+                    Submit Test
+                  </>
+                ) : (
+                  <>
+                    Next
+                    <FaArrowRight />
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Pause Modal */}
