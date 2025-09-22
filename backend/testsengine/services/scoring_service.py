@@ -148,7 +148,13 @@ class ScoringService:
         """Create Answer records and calculate individual scores"""
         
         answer_results = []
-        questions = submission.test.questions.all().order_by('order')
+        
+        # Only score questions that have answers provided (for random selection tests)
+        # Get question IDs from the answers_data keys
+        answered_question_ids = set(answers_data.keys())
+        
+        # Get questions that were actually answered
+        questions = submission.test.questions.filter(id__in=answered_question_ids).order_by('order')
         
         for question in questions:
             question_id_str = str(question.id)

@@ -117,17 +117,32 @@ class TestQuestionsView(APIView):
     permission_classes = [permissions.AllowAny]  # Temporarily allow anonymous access for testing
     
     def get(self, request, test_id):
-        """Return questions without correct answers"""
+        """Return random questions without correct answers"""
         test = get_object_or_404(Test, id=test_id, is_active=True)
         
-        # Get questions ordered by their sequence
-        questions = test.questions.all().order_by('order')
+        # Get all questions
+        all_questions = test.questions.all()
         
-        if not questions.exists():
+        if not all_questions.exists():
             return Response(
                 {'error': 'No questions found for this test'},
                 status=status.HTTP_404_NOT_FOUND
             )
+        
+        # For numerical test (ID 21), logical tests (30, 31, 32), diagrammatic tests (24, 25), and abstract test (10), return random questions with balanced difficulty
+        if test_id == 21:  # Numerical test
+            questions = self._get_balanced_random_questions(all_questions, 20)
+        elif test_id in [30, 31, 32]:  # Logical tests
+            questions = self._get_balanced_random_questions(all_questions, 20)
+        elif test_id in [24, 25]:  # Diagrammatic tests (DRT1, DRT2)
+            questions = self._get_balanced_random_questions(all_questions, 20)
+        elif test_id == 4:  # Situational Judgment Test
+            questions = self._get_balanced_random_questions(all_questions, 20)
+        elif test_id == 10:  # Abstract test (ART1)
+            questions = self._get_balanced_random_questions(all_questions, 20)
+        else:
+            # For other tests, return all questions in order
+            questions = all_questions.order_by('order')
         
         serializer = QuestionForTestSerializer(questions, many=True)
         
@@ -136,11 +151,50 @@ class TestQuestionsView(APIView):
             'test_title': test.title,
             'test_type': test.test_type,
             'duration_minutes': test.duration_minutes,
-            'total_questions': test.total_questions,
+            'total_questions': len(questions),
             'questions': serializer.data,
             'fetched_at': timezone.now().isoformat(),
-            'security_note': 'Correct answers are not included - submit for scoring'
+            'security_note': 'Correct answers are not included - submit for scoring',
+            'random_selection': test_id in [4, 10, 21, 24, 25, 30, 31, 32]  # Indicate if questions were randomly selected
         })
+    
+    def _get_balanced_random_questions(self, all_questions, target_count=20):
+        """Get 20 random questions with balanced difficulty distribution"""
+        import random
+        
+        # Separate questions by difficulty
+        easy_questions = list(all_questions.filter(difficulty_level='easy'))
+        medium_questions = list(all_questions.filter(difficulty_level='medium'))
+        hard_questions = list(all_questions.filter(difficulty_level='hard'))
+        
+        # Calculate how many questions to select from each difficulty
+        # Target distribution: 8 easy, 7 medium, 5 hard (total 20)
+        easy_count = min(8, len(easy_questions))
+        medium_count = min(7, len(medium_questions))
+        hard_count = min(5, len(hard_questions))
+        
+        # If we don't have enough questions in some categories, redistribute
+        remaining = target_count - (easy_count + medium_count + hard_count)
+        if remaining > 0:
+            if len(easy_questions) > easy_count:
+                easy_count += min(remaining, len(easy_questions) - easy_count)
+                remaining = target_count - (easy_count + medium_count + hard_count)
+            if remaining > 0 and len(medium_questions) > medium_count:
+                medium_count += min(remaining, len(medium_questions) - medium_count)
+                remaining = target_count - (easy_count + medium_count + hard_count)
+            if remaining > 0 and len(hard_questions) > hard_count:
+                hard_count += min(remaining, len(hard_questions) - hard_count)
+        
+        # Randomly select questions from each difficulty level
+        selected_questions = []
+        selected_questions.extend(random.sample(easy_questions, easy_count))
+        selected_questions.extend(random.sample(medium_questions, medium_count))
+        selected_questions.extend(random.sample(hard_questions, hard_count))
+        
+        # Shuffle the final selection to randomize order
+        random.shuffle(selected_questions)
+        
+        return selected_questions
 
 
 class SubmitTestView(APIView):
