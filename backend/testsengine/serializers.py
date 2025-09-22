@@ -11,7 +11,7 @@ from decimal import Decimal
 from .models import (
     Test, Question, TestSubmission, Answer, Score, 
     TestSession, TestAnswer, CodingChallenge, CodingSubmission, 
-    CodingSession, TestAttempt
+    CodingSession, TestAttempt, TestHistory
 )
 from .services.scoring_service import ScoringService
 
@@ -808,3 +808,83 @@ class UserReportSerializer(serializers.Serializer):
     achievements = serializers.ListField()
     recommendations = serializers.ListField()
     report_generated_at = serializers.DateTimeField()
+
+
+# ===============================================================================
+# TEST HISTORY SERIALIZERS
+# ===============================================================================
+
+class TestHistorySerializer(serializers.ModelSerializer):
+    """Serializer for TestHistory model"""
+    test_name = serializers.ReadOnlyField(source='test.title')
+    test_category = serializers.ReadOnlyField(source='test.test_type')
+    duration_formatted = serializers.ReadOnlyField()
+    grade_letter = serializers.ReadOnlyField()
+    passed = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = TestHistory
+        fields = [
+            'session_id', 'user', 'test', 'test_name', 'test_category',
+            'score', 'percentage_score', 'correct_answers', 'total_questions',
+            'date_taken', 'duration_minutes', 'duration_formatted',
+            'details', 'is_completed', 'grade_letter', 'passed'
+        ]
+        read_only_fields = ['session_id', 'date_taken']
+
+
+class TestHistoryCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating new test history entries"""
+    
+    class Meta:
+        model = TestHistory
+        fields = [
+            'user', 'test', 'score', 'percentage_score', 'correct_answers',
+            'total_questions', 'duration_minutes', 'details', 'is_completed'
+        ]
+    
+    def create(self, validated_data):
+        # If no user is provided, use anonymous user
+        if not validated_data.get('user'):
+            validated_data['user'] = None
+        return super().create(validated_data)
+
+
+class TestHistoryDetailSerializer(serializers.ModelSerializer):
+    """Detailed serializer for individual test history entries"""
+    test_name = serializers.ReadOnlyField(source='test.title')
+    test_category = serializers.ReadOnlyField(source='test.test_type')
+    test_description = serializers.ReadOnlyField(source='test.description')
+    duration_formatted = serializers.ReadOnlyField()
+    grade_letter = serializers.ReadOnlyField()
+    passed = serializers.ReadOnlyField()
+    
+    # Include submission details if available
+    submission_details = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = TestHistory
+        fields = [
+            'session_id', 'user', 'test', 'test_name', 'test_category', 'test_description',
+            'score', 'percentage_score', 'correct_answers', 'total_questions',
+            'date_taken', 'duration_minutes', 'duration_formatted',
+            'details', 'is_completed', 'grade_letter', 'passed', 'submission_details'
+        ]
+    
+    def get_submission_details(self, obj):
+        """Get detailed submission information if available"""
+        if obj.submission:
+            return TestSubmissionSerializer(obj.submission).data
+        return None
+
+
+class TestHistoryStatsSerializer(serializers.Serializer):
+    """Serializer for test history statistics"""
+    total_tests_taken = serializers.IntegerField()
+    average_score = serializers.DecimalField(max_digits=5, decimal_places=2)
+    best_score = serializers.DecimalField(max_digits=5, decimal_places=2)
+    tests_passed = serializers.IntegerField()
+    tests_failed = serializers.IntegerField()
+    category_breakdown = serializers.DictField()
+    recent_tests = TestHistorySerializer(many=True)
+    score_trend = serializers.ListField(child=serializers.DictField())

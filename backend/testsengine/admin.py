@@ -10,7 +10,7 @@ from datetime import timedelta
 from .models import (
     Test, Question, TestSubmission, Answer, Score,
     TestSession, TestAnswer, CodingChallenge, CodingSubmission, 
-    CodingSession, TestAttempt
+    CodingSession, TestAttempt, TestHistory
 )
 from .question_option_model import QuestionOption
 
@@ -359,6 +359,46 @@ class TestAttemptAdmin(admin.ModelAdmin):
     search_fields = ['user__username', 'test_id']
     readonly_fields = ['created_at']
     date_hierarchy = 'created_at'
+
+
+@admin.register(TestHistory)
+class TestHistoryAdmin(admin.ModelAdmin):
+    list_display = [
+        'session_id', 'user', 'test_name', 'test_category', 'percentage_score', 
+        'grade_letter', 'passed', 'duration_formatted', 'date_taken'
+    ]
+    list_filter = ['test__test_type', 'passed', 'date_taken', 'is_completed']
+    search_fields = ['user__username', 'test__title', 'test__test_type']
+    readonly_fields = ['session_id', 'date_taken', 'test_name', 'test_category', 'grade_letter', 'passed']
+    ordering = ['-date_taken']
+    date_hierarchy = 'date_taken'
+    
+    fieldsets = (
+        ('Session Information', {
+            'fields': ('session_id', 'user', 'test', 'date_taken', 'is_completed')
+        }),
+        ('Test Details', {
+            'fields': ('test_name', 'test_category', 'duration_minutes', 'duration_formatted')
+        }),
+        ('Results', {
+            'fields': ('score', 'percentage_score', 'correct_answers', 'total_questions', 'grade_letter', 'passed')
+        }),
+        ('Additional Data', {
+            'fields': ('details', 'submission'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def test_name(self, obj):
+        return obj.test.title
+    test_name.short_description = 'Test Name'
+    
+    def test_category(self, obj):
+        return obj.test.test_type
+    test_category.short_description = 'Category'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'test', 'submission')
 
 
 # Customize admin site

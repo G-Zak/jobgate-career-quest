@@ -7,6 +7,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from . import views
+from . import test_history_views
 
 app_name = 'testsengine'
 
@@ -79,6 +80,19 @@ urlpatterns = [
     
     # System Health and Monitoring (Currently Implemented)
     path('api/health/', views.health_check, name='health-check'),
+    
+    # ========================================
+    # TEST HISTORY ENDPOINTS
+    # ========================================
+    
+    # Test History Management
+    path('api/test-history/', test_history_views.save_test_history, name='save-test-history'),
+    path('api/test-history/user/<user_id>/', test_history_views.get_user_test_history, name='user-test-history'),
+    path('api/test-history/user/', test_history_views.get_user_test_history, name='anonymous-test-history'),
+    path('api/test-history/<int:session_id>/', test_history_views.get_test_history_detail, name='test-history-detail'),
+    path('api/test-history/<int:session_id>/delete/', test_history_views.delete_test_history, name='delete-test-history'),
+    path('api/test-history/user/<user_id>/stats/', test_history_views.get_test_history_stats, name='user-test-history-stats'),
+    path('api/test-history/user/stats/', test_history_views.get_test_history_stats, name='anonymous-test-history-stats'),
 ]
 
 # ===============================================================================

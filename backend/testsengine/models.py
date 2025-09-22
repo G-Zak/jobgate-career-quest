@@ -660,3 +660,84 @@ class Score(models.Model):
     def passed(self):
         """Check if the user passed based on test's passing score"""
         return self.percentage_score >= self.submission.test.passing_score
+
+
+class TestHistory(models.Model):
+    """
+    Model to store completed test session history for users.
+    This is separate from TestSession which tracks active sessions.
+    """
+    session_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='test_history',
+        null=True,
+        blank=True
+    )
+    test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='history_sessions')
+    score = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    percentage_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    correct_answers = models.IntegerField(default=0)
+    total_questions = models.IntegerField(default=0)
+    date_taken = models.DateTimeField(auto_now_add=True)
+    duration_minutes = models.IntegerField(default=0)
+    details = models.JSONField(default=dict, help_text="Store user's answers and test metadata")
+    is_completed = models.BooleanField(default=True)
+    
+    # Link to the original submission for detailed tracking
+    submission = models.ForeignKey(
+        TestSubmission,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='history_entry'
+    )
+    
+    class Meta:
+        ordering = ['-date_taken']
+        verbose_name = "Test History"
+        verbose_name_plural = "Test History"
+        indexes = [
+            models.Index(fields=['user', 'date_taken']),
+            models.Index(fields=['test', 'date_taken']),
+            models.Index(fields=['user', 'test', 'date_taken']),
+        ]
+    
+    def __str__(self):
+        return f"Session {self.session_id} - {self.test.title} - {self.percentage_score}%"
+    
+    @property
+    def test_name(self):
+        return self.test.title
+    
+    @property
+    def test_category(self):
+        return self.test.test_type
+    
+    @property
+    def duration_formatted(self):
+        hours = self.duration_minutes // 60
+        minutes = self.duration_minutes % 60
+        if hours > 0:
+            return f"{hours}h {minutes}m"
+        return f"{minutes}m"
+    
+    @property
+    def grade_letter(self):
+        """Calculate letter grade based on percentage"""
+        if self.percentage_score >= 90:
+            return 'A'
+        elif self.percentage_score >= 80:
+            return 'B'
+        elif self.percentage_score >= 70:
+            return 'C'
+        elif self.percentage_score >= 60:
+            return 'D'
+        else:
+            return 'F'
+    
+    @property
+    def passed(self):
+        """Check if the user passed based on test's passing score"""
+        return self.percentage_score >= self.test.passing_score
