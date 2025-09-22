@@ -16,7 +16,7 @@ const Dashboard = ({ onNavigateToSection }) => {
 
   const handleViewAllTests = () => {
     if (onNavigateToSection) {
-      onNavigateToSection('historique-tests');
+      onNavigateToSection('tests-history');
     }
   };
   

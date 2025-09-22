@@ -8,6 +8,7 @@ from rest_framework.routers import DefaultRouter
 
 from . import views
 from . import test_history_views
+from . import health_views
 
 app_name = 'testsengine'
 
@@ -22,6 +23,13 @@ router = DefaultRouter()
 urlpatterns = [
     # DRF Router URLs (for ViewSets)
     path('api/', include(router.urls)),
+    
+    # ========================================
+    # HEALTH CHECK ENDPOINTS
+    # ========================================
+    path('api/health/', health_views.health_check, name='health-check'),
+    path('api/health/ready/', health_views.readiness_check, name='readiness-check'),
+    path('api/health/live/', health_views.liveness_check, name='liveness-check'),
     
     # ========================================
     # CORE TEST MANAGEMENT ENDPOINTS
@@ -85,14 +93,19 @@ urlpatterns = [
     # TEST HISTORY ENDPOINTS
     # ========================================
     
-    # Test History Management
-    path('api/test-history/', test_history_views.save_test_history, name='save-test-history'),
-    path('api/test-history/user/<user_id>/', test_history_views.get_user_test_history, name='user-test-history'),
-    path('api/test-history/user/', test_history_views.get_user_test_history, name='anonymous-test-history'),
-    path('api/test-history/<int:session_id>/', test_history_views.get_test_history_detail, name='test-history-detail'),
-    path('api/test-history/<int:session_id>/delete/', test_history_views.delete_test_history, name='delete-test-history'),
-    path('api/test-history/user/<user_id>/stats/', test_history_views.get_test_history_stats, name='user-test-history-stats'),
-    path('api/test-history/user/stats/', test_history_views.get_test_history_stats, name='anonymous-test-history-stats'),
+    # Test Session Management
+    path('api/test-sessions/', test_history_views.TestSessionListCreateView.as_view(), name='test-session-list'),
+    path('api/test-sessions/<int:pk>/', test_history_views.TestSessionDetailView.as_view(), name='test-session-detail'),
+    path('api/test-sessions/<int:session_id>/detail/', test_history_views.test_session_detail, name='test-session-detail-api'),
+    path('api/test-sessions/<int:session_id>/delete/', test_history_views.delete_test_session, name='delete-test-session'),
+    
+    # Test History Analytics
+    path('api/test-history/summary/', test_history_views.test_history_summary, name='test-history-summary'),
+    path('api/test-history/category-stats/', test_history_views.test_category_stats, name='test-category-stats'),
+    path('api/test-history/charts/', test_history_views.test_history_charts, name='test-history-charts'),
+    
+    # Test Session Submission
+    path('api/test-sessions/submit/', test_history_views.submit_test_session, name='submit-test-session'),
 ]
 
 # ===============================================================================

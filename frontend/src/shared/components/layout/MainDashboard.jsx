@@ -27,20 +27,18 @@ import LogicalReasoningTest from '../../../features/skills-assessment/components
 import LRT2Test from '../../../features/skills-assessment/components/LRT2Test';
 import LRT3Test from '../../../features/skills-assessment/components/LRT3Test';
 import SituationalJudgmentTest from '../../../features/skills-assessment/components/SituationalJudgmentTest';
-import MasterSJTTest from '../../../features/skills-assessment/components/MasterSJTTest';
 import SkillsSelector from '../../../features/skills-assessment/components/SkillsSelector';
 import TechnicalTest from '../../../features/skills-assessment/components/TechnicalTest';
 // AdaptiveTest supprimé - les tests sont créés par l'admin
 import SkillBasedTests from '../../../features/skills-assessment/components/SkillBasedTests';
 import TestAdministration from '../../../features/skills-assessment/components/TestAdministration';
 import TestDebugPage from '../../../features/skills-assessment/components/TestDebugPage';
-import TestHistoryDashboard from '../../../features/candidate-dashboard/components/TestHistoryDashboard';
+import TestHistoryDashboard from '../../../features/test-history/components/TestHistoryDashboard';
 import { ChallengesList, ChallengeDetail, CodingDashboard } from '../../../features/coding-challenges/components';
 import DebugChallenges from '../../../features/coding-challenges/components/DebugChallenges';
 import SkillTestsOverview from '../../../features/skills-assessment/components/SkillTestsOverview';
 import PracticalTests from '../../../features/coding-challenges/components/PracticalTests';
 import AssessmentDashboardMetrics from '../../../features/skills-assessment/components/AssessmentDashboardMetrics';
-import AttemptsHistory from '../../../features/skills-assessment/components/AttemptsHistory';
 // Import new job recommendations and profile components
 import JobRecommendationsPage from '../../../features/job-recommendations/components/JobRecommendationsPage';
 import ProfilePage from '../../../features/profile/components/ProfilePage';
@@ -185,8 +183,7 @@ const MainDashboard = () => {
   };
 
   const handleStartTest = (testId, skillId = null) => {
-  const isMasterSJT = (typeof testId === 'string' && (testId === 'MASTER-SJT' || testId === 'MASTER-SJT1' || testId.toLowerCase().includes('master-sjt')));
-  const isSJT = (typeof testId === 'string' && (testId === 'SJT' || testId.toLowerCase().includes('situational') || testId.toLowerCase().includes('sjt')));
+  const isSJT = (typeof testId === 'string' && (testId === 'SJT' || testId.toLowerCase().includes('situational') || testId.toLowerCase().includes('sjt') || testId === 'MASTER-SJT' || testId === 'MASTER-SJT1' || testId.toLowerCase().includes('master-sjt')));
     console.log('=== HANDLE START TEST ===');
     console.log('testId:', testId, 'Type:', typeof testId);
     console.log('currentTestFilter:', currentTestFilter);
@@ -244,11 +241,8 @@ const MainDashboard = () => {
     setCurrentTestId(testId);
     setCurrentSkillId(skillId);
     
-    // Check if it's a verbal reasoning test
-    if (isMasterSJT) {
-      console.log('✅ Routing to Master SJT');
-      setActiveSection('master-sjt');
-    } else if (isSJT) {
+    // Check if it's a situational judgment test
+    if (isSJT) {
       console.log('✅ Routing to Situational Judgment Test');
       setActiveSection('situational-judgment-test');
     } else if (isVerbalComprehensive || isVerbalFilterAndNumber || isStringWithVerbal || isVRTString) {
@@ -618,14 +612,14 @@ const MainDashboard = () => {
               </button>
               
               <button 
-                onClick={() => setActiveSection('historique-tests')}
+                onClick={() => setActiveSection('tests-history')}
                 className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${
-                  activeSection === 'historique-tests'
+                  activeSection === 'tests-history'
                     ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
                     : 'text-gray-700 hover:bg-blue-50'
                 }`}
               >
-                Historique des tests
+                Test History
               </button>
             </div>
           </div>
@@ -740,10 +734,6 @@ const MainDashboard = () => {
               onBackToDashboard={() => setActiveSection('assessments')}
               testId={currentTestId}
             />
-          ) : activeSection === 'master-sjt' ? (
-            <MasterSJTTest 
-              onClose={() => setActiveSection('assessments')}
-            />
           ) : activeSection === 'test-administration' ? (
             <TestAdministration 
               onBackToDashboard={() => setActiveSection('applications')}
@@ -792,8 +782,8 @@ const MainDashboard = () => {
             <ProfilePage />
           ) : activeSection === 'offres-recommandees' ? (
             <JobRecommendationsPage />
-          ) : activeSection === 'historique-tests' ? (
-            <AttemptsHistory />
+          ) : activeSection === 'tests-history' ? (
+            <TestHistoryDashboard />
           ) : activeSection === 'coding-challenges' ? (
             <ChallengesList onSelectChallenge={handleSelectChallenge} />
           ) : activeSection === 'coding-dashboard' ? (

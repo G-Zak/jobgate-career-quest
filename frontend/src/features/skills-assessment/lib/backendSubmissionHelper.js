@@ -6,7 +6,6 @@
 import backendApi from '../api/backendApi';
 import assessmentStore from '../store/useAssessmentStore';
 import TestDataService from '../services/testDataService';
-import TestHistoryService from '../services/testHistoryService';
 
 /**
  * Submit test attempt using backend-only scoring
@@ -74,36 +73,6 @@ export async function submitTestAttempt({
     // Update local store with backend data
     assessmentStore.addAttempt(submissionData);
 
-    // Save to test history
-    try {
-      const historyData = {
-        user_id: null, // Anonymous user for now
-        test_id: backendTestId,
-        score: scoreData.raw_score,
-        percentage_score: scoreData.percentage_score,
-        correct_answers: scoreData.correct_answers,
-        total_questions: scoreData.total_questions,
-        duration_minutes: Math.round(timeTakenSeconds / 60),
-        details: {
-          answers: answers,
-          metadata: {
-            ...metadata,
-            submission_id: submissionResult.submission_id,
-            scoring_version: submissionResult.processing_info?.scoring_version || '1.0',
-            test_type: testId,
-            reason: reason
-          }
-        },
-        is_completed: true,
-        submission_id: submissionResult.submission_id
-      };
-
-      await TestHistoryService.saveTestHistory(historyData);
-      console.log('Test history saved successfully');
-    } catch (historyError) {
-      console.warn('Failed to save test history:', historyError);
-      // Don't fail the entire submission if history saving fails
-    }
 
     // Call success callback with comprehensive results
     if (onSuccess) {

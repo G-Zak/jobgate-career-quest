@@ -2,6 +2,44 @@
 
 A professional skills assessment platform that helps users evaluate their abilities through comprehensive testing and provides personalized career recommendations.
 
+## 👥 Team Setup
+
+**For team members joining the project, please see: [TEAM_SETUP_GUIDE.md](TEAM_SETUP_GUIDE.md)**
+
+### Quick Start with Docker (Recommended)
+```bash
+# Clone the repository
+git clone <repository-url>
+cd jobgate-career-quest
+
+# Run Docker setup (Windows)
+setup_docker_windows.bat
+
+# Or manually
+docker-compose up -d
+```
+
+### Quick Start for Windows (Local)
+```bash
+# Clone the repository
+git clone <repository-url>
+cd jobgate-career-quest
+
+# Run the setup script
+setup_team_windows.bat
+```
+
+### Quick Start for Linux/Mac (Local)
+```bash
+# Clone the repository
+git clone <repository-url>
+cd jobgate-career-quest
+
+# Run the setup script
+chmod +x setup_team_skills.sh
+./setup_team_skills.sh
+```
+
 ## 🚀 Features
 
 - **Professional Skills Assessment**: Comprehensive tests across multiple domains

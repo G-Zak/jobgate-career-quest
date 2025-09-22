@@ -1,305 +1,320 @@
 """
-Test History API Views
-Provides endpoints for managing and retrieving test history data
+Test History Views
+Handles API endpoints for test history functionality
 """
 
-from rest_framework import status, permissions
+from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.db.models import Avg, Max, Count, Q
 from django.utils import timezone
 from datetime import timedelta
-from decimal import Decimal
-
-from .models import TestHistory, Test, TestSubmission
-from .serializers import (
-    TestHistorySerializer, 
-    TestHistoryCreateSerializer, 
-    TestHistoryDetailSerializer,
-    TestHistoryStatsSerializer
+from .models import TestSession, TestAnswer, Test
+from .test_history_serializers import (
+    TestSessionHistorySerializer,
+    TestSessionCreateSerializer,
+    TestSessionUpdateSerializer,
+    TestHistorySummarySerializer,
+    TestCategoryStatsSerializer,
+    TestHistoryChartSerializer
 )
 
 
-@api_view(['POST'])
-@permission_classes([permissions.AllowAny])
-def save_test_history(request):
-    """
-    Save a new test session result into test_history table.
+class TestSessionListCreateView(generics.ListCreateAPIView):
+    """List and create test sessions for authenticated user"""
+    permission_classes = [AllowAny]  # Temporarily allow any for testing
     
-    Expected payload:
-    {
-        "user_id": 1,  # Optional, null for anonymous
-        "test_id": 1,
-        "score": 85.5,
-        "percentage_score": 85.5,
-        "correct_answers": 17,
-        "total_questions": 20,
-        "duration_minutes": 18,
-        "details": {
-            "answers": {"1": "A", "2": "B", ...},
-            "metadata": {...}
-        },
-        "submission_id": 123  # Optional, link to TestSubmission
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return TestSessionCreateSerializer
+        return TestSessionHistorySerializer
+    
+    def get_queryset(self):
+        """Get test sessions for current user"""
+        # For testing, return all sessions or filter by user if authenticated
+        if self.request.user.is_authenticated:
+            return TestSession.objects.filter(
+                user=self.request.user
+            ).select_related('test').prefetch_related('test_answers__question')
+        else:
+            # Return all sessions for testing
+            return TestSession.objects.all().select_related('test').prefetch_related('test_answers__question')
+    
+    def perform_create(self, serializer):
+        """Create test session for current user"""
+        serializer.save(user=self.request.user)
+
+
+class TestSessionDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve, update, or delete a specific test session"""
+    permission_classes = [AllowAny]  # Temporarily allow any for testing
+    serializer_class = TestSessionUpdateSerializer
+    
+    def get_queryset(self):
+        """Get test sessions for current user only"""
+        # For testing, return all sessions or filter by user if authenticated
+        if self.request.user.is_authenticated:
+            return TestSession.objects.filter(
+                user=self.request.user
+            ).select_related('test')
+        else:
+            return TestSession.objects.all().select_related('test').prefetch_related('test_answers__question')
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])  # Temporarily allow any for testing
+def test_history_summary(request):
+    """Get comprehensive test history summary for user"""
+    # For testing, use all sessions to show data
+    from django.contrib.auth.models import User
+    user = request.user if request.user.is_authenticated else User.objects.first()
+    
+    if not user:
+        return Response({"detail": "No user found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Get all sessions (for testing, show all data)
+    sessions = TestSession.objects.all().select_related('test')
+    
+    # Calculate statistics
+    total_sessions = sessions.count()
+    completed_sessions = sessions.filter(status='completed').count()
+    
+    # Score statistics
+    completed_sessions_with_scores = sessions.filter(
+        status='completed', 
+        score__isnull=False
+    )
+    
+    average_score = completed_sessions_with_scores.aggregate(
+        avg_score=Avg('score')
+    )['avg_score'] or 0
+    
+    best_score = completed_sessions_with_scores.aggregate(
+        max_score=Max('score')
+    )['max_score'] or 0
+    
+    # Time statistics
+    total_time_spent = sum(
+        session.time_spent for session in completed_sessions_with_scores
+    ) // 60  # Convert to minutes
+    
+    # Recent sessions (last 10)
+    recent_sessions = sessions.order_by('-start_time')[:10]
+    
+    # Tests taken (unique test types)
+    tests_taken = list(
+        sessions.values_list('test__test_type', flat=True).distinct()
+    )
+    
+    # Serialize recent sessions first
+    recent_sessions_data = TestSessionHistorySerializer(recent_sessions, many=True).data
+    
+    summary_data = {
+        'total_sessions': total_sessions,
+        'completed_sessions': completed_sessions,
+        'average_score': round(average_score, 2),
+        'best_score': best_score,
+        'total_time_spent': total_time_spent,
+        'tests_taken': tests_taken,
+        'recent_sessions': recent_sessions_data
     }
-    """
-    try:
-        # Get test object
-        test_id = request.data.get('test_id')
-        if not test_id:
-            return Response(
-                {'error': 'test_id is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        try:
-            test = Test.objects.get(id=test_id)
-        except Test.DoesNotExist:
-            return Response(
-                {'error': 'Test not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        # Prepare data for serializer
-        history_data = {
-            'user': request.data.get('user_id'),
-            'test': test_id,
-            'score': request.data.get('score', 0),
-            'percentage_score': request.data.get('percentage_score', 0),
-            'correct_answers': request.data.get('correct_answers', 0),
-            'total_questions': request.data.get('total_questions', 0),
-            'duration_minutes': request.data.get('duration_minutes', 0),
-            'details': request.data.get('details', {}),
-            'is_completed': request.data.get('is_completed', True)
-        }
-        
-        # Link to submission if provided
-        submission_id = request.data.get('submission_id')
-        if submission_id:
-            try:
-                submission = TestSubmission.objects.get(id=submission_id)
-                history_data['submission'] = submission
-            except TestSubmission.DoesNotExist:
-                pass  # Continue without linking
-        
-        serializer = TestHistoryCreateSerializer(data=history_data)
-        if serializer.is_valid():
-            history_entry = serializer.save()
-            return Response(
-                TestHistorySerializer(history_entry).data,
-                status=status.HTTP_201_CREATED
-            )
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
-    except Exception as e:
-        return Response(
-            {'error': str(e)}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-
-@api_view(['GET'])
-@permission_classes([permissions.AllowAny])
-def get_user_test_history(request, user_id=None):
-    """
-    Fetch all test sessions for a given user_id.
     
-    Query parameters:
-    - limit: Number of results to return (default: 50)
-    - offset: Number of results to skip (default: 0)
-    - test_type: Filter by test type
-    - date_from: Filter from date (YYYY-MM-DD)
-    - date_to: Filter to date (YYYY-MM-DD)
-    """
+    # Return the data directly instead of using the serializer
+    return Response(summary_data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])  # Temporarily allow any for testing
+def test_category_stats(request):
+    """Get statistics by test category"""
+    # For testing, use the first user or create a default
+    from django.contrib.auth.models import User
+    user = request.user if request.user.is_authenticated else User.objects.first()
+    
+    if not user:
+        return Response({"detail": "No user found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Get completed sessions grouped by test type (for testing, show all data)
+    category_stats = []
+    
+    for test_type, _ in Test.TEST_TYPES:
+        sessions = TestSession.objects.filter(
+            test__test_type=test_type,
+            status='completed',
+            score__isnull=False
+        )
+        
+        if sessions.exists():
+            stats = sessions.aggregate(
+                count=Count('id'),
+                avg_score=Avg('score'),
+                max_score=Max('score'),
+                last_taken=Max('start_time')
+            )
+            
+            category_stats.append({
+                'test_type': test_type,
+                'count': stats['count'],
+                'average_score': round(stats['avg_score'] or 0, 2),
+                'best_score': stats['max_score'] or 0,
+                'last_taken': stats['last_taken']
+            })
+    
+    serializer = TestCategoryStatsSerializer(category_stats, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])  # Temporarily allow any for testing
+def test_history_charts(request):
+    """Get data for test history charts"""
+    # For testing, use the first user or create a default
+    from django.contrib.auth.models import User
+    user = request.user if request.user.is_authenticated else User.objects.first()
+    
+    if not user:
+        return Response({"detail": "No user found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Get completed sessions from last 30 days
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    sessions = TestSession.objects.filter(
+        user=user,
+        status='completed',
+        score__isnull=False,
+        start_time__gte=thirty_days_ago
+    ).order_by('start_time')
+    
+    # Prepare chart data
+    labels = []
+    scores = []
+    categories = []
+    time_spent = []
+    
+    for session in sessions:
+        labels.append(session.start_time.strftime('%Y-%m-%d'))
+        scores.append(session.score)
+        categories.append(session.test.test_type)
+        time_spent.append(session.time_spent // 60)  # Convert to minutes
+    
+    chart_data = {
+        'labels': labels,
+        'scores': scores,
+        'categories': categories,
+        'time_spent': time_spent
+    }
+    
+    serializer = TestHistoryChartSerializer(chart_data)
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])  # Temporarily allow any for testing
+def submit_test_session(request):
+    """Submit a completed test session with answers"""
     try:
-        # Handle anonymous users
-        if user_id is None or user_id == 'anonymous':
-            user_id = None
+        data = request.data
         
-        # Build query
-        queryset = TestHistory.objects.all()
-        if user_id:
-            queryset = queryset.filter(user_id=user_id)
+        # For testing, use the first user or create a default
+        from django.contrib.auth.models import User
+        user = request.user if request.user.is_authenticated else User.objects.first()
+        
+        if not user:
+            return Response({"detail": "No user found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Get or create test session
+        session_id = data.get('session_id')
+        if session_id:
+            session = TestSession.objects.get(
+                id=session_id, 
+                user=user
+            )
         else:
-            queryset = queryset.filter(user__isnull=True)
+            # Create new session
+            session = TestSession.objects.create(
+                user=user,
+                test_id=data['test_id'],
+                status='completed'
+            )
         
-        # Apply filters
-        test_type = request.GET.get('test_type')
-        if test_type:
-            queryset = queryset.filter(test__test_type=test_type)
+        # Update session with results
+        session.status = 'completed'
+        session.score = data.get('score', 0)
+        session.answers = data.get('answers', {})
+        session.time_spent = data.get('time_spent', 0)
+        session.end_time = timezone.now()
+        session.save()
         
-        date_from = request.GET.get('date_from')
-        if date_from:
-            queryset = queryset.filter(date_taken__date__gte=date_from)
+        # Create TestAnswer objects for detailed tracking
+        if 'detailed_answers' in data:
+            for answer_data in data['detailed_answers']:
+                TestAnswer.objects.create(
+                    session=session,
+                    question_id=answer_data['question_id'],
+                    selected_answer=answer_data['selected_answer'],
+                    is_correct=answer_data.get('is_correct', False),
+                    time_taken=answer_data.get('time_taken', 0)
+                )
         
-        date_to = request.GET.get('date_to')
-        if date_to:
-            queryset = queryset.filter(date_taken__date__lte=date_to)
-        
-        # Pagination
-        limit = int(request.GET.get('limit', 50))
-        offset = int(request.GET.get('offset', 0))
-        
-        queryset = queryset[offset:offset + limit]
-        
-        serializer = TestHistorySerializer(queryset, many=True)
-        return Response({
-            'results': serializer.data,
-            'count': queryset.count(),
-            'limit': limit,
-            'offset': offset
-        })
+        # Return updated session data
+        serializer = TestSessionHistorySerializer(session)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
         
     except Exception as e:
         return Response(
             {'error': str(e)}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            status=status.HTTP_400_BAD_REQUEST
         )
 
 
 @api_view(['GET'])
-@permission_classes([permissions.AllowAny])
-def get_test_history_detail(request, session_id):
-    """
-    Fetch details of a specific test session.
-    """
+@permission_classes([AllowAny])  # Temporarily allow any for testing
+def test_session_detail(request, session_id):
+    """Get detailed information about a specific test session"""
     try:
-        history_entry = TestHistory.objects.get(session_id=session_id)
-        serializer = TestHistoryDetailSerializer(history_entry)
-        return Response(serializer.data)
+        # For testing, use the first user or create a default
+        from django.contrib.auth.models import User
+        user = request.user if request.user.is_authenticated else User.objects.first()
         
-    except TestHistory.DoesNotExist:
+        if not user:
+            return Response({"detail": "No user found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        session = TestSession.objects.get(
+            id=session_id,
+            user=user
+        )
+        serializer = TestSessionHistorySerializer(session)
+        return Response(serializer.data)
+    except TestSession.DoesNotExist:
         return Response(
             {'error': 'Test session not found'}, 
             status=status.HTTP_404_NOT_FOUND
-        )
-    except Exception as e:
-        return Response(
-            {'error': str(e)}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-
-@api_view(['GET'])
-@permission_classes([permissions.AllowAny])
-def get_test_history_stats(request, user_id=None):
-    """
-    Get comprehensive test history statistics for a user.
-    """
-    try:
-        # Handle anonymous users
-        if user_id is None or user_id == 'anonymous':
-            user_id = None
-        
-        # Build base query
-        queryset = TestHistory.objects.all()
-        if user_id:
-            queryset = queryset.filter(user_id=user_id)
-        else:
-            queryset = queryset.filter(user__isnull=True)
-        
-        # Calculate statistics
-        total_tests = queryset.count()
-        
-        if total_tests == 0:
-            return Response({
-                'total_tests_taken': 0,
-                'average_score': 0,
-                'best_score': 0,
-                'tests_passed': 0,
-                'tests_failed': 0,
-                'category_breakdown': {},
-                'recent_tests': [],
-                'score_trend': []
-            })
-        
-        # Basic stats
-        avg_score = queryset.aggregate(avg=Avg('percentage_score'))['avg'] or 0
-        best_score = queryset.aggregate(max=Max('percentage_score'))['max'] or 0
-        
-        # Pass/fail counts
-        tests_passed = queryset.filter(percentage_score__gte=70).count()
-        tests_failed = total_tests - tests_passed
-        
-        # Category breakdown
-        category_breakdown = {}
-        for entry in queryset.select_related('test'):
-            category = entry.test.test_type
-            if category not in category_breakdown:
-                category_breakdown[category] = {
-                    'count': 0,
-                    'average_score': 0,
-                    'total_score': 0
-                }
-            category_breakdown[category]['count'] += 1
-            category_breakdown[category]['total_score'] += float(entry.percentage_score)
-        
-        # Calculate averages for each category
-        for category in category_breakdown:
-            count = category_breakdown[category]['count']
-            total = category_breakdown[category]['total_score']
-            category_breakdown[category]['average_score'] = round(total / count, 2)
-            del category_breakdown[category]['total_score']
-        
-        # Recent tests (last 10)
-        recent_tests = queryset[:10]
-        recent_serializer = TestHistorySerializer(recent_tests, many=True)
-        
-        # Score trend (last 30 days)
-        thirty_days_ago = timezone.now() - timedelta(days=30)
-        trend_queryset = queryset.filter(date_taken__gte=thirty_days_ago).order_by('date_taken')
-        score_trend = []
-        
-        for entry in trend_queryset:
-            score_trend.append({
-                'date': entry.date_taken.strftime('%Y-%m-%d'),
-                'score': float(entry.percentage_score),
-                'test_name': entry.test.title
-            })
-        
-        # Prepare response
-        stats_data = {
-            'total_tests_taken': total_tests,
-            'average_score': round(float(avg_score), 2),
-            'best_score': round(float(best_score), 2),
-            'tests_passed': tests_passed,
-            'tests_failed': tests_failed,
-            'category_breakdown': category_breakdown,
-            'recent_tests': recent_serializer.data,
-            'score_trend': score_trend
-        }
-        
-        serializer = TestHistoryStatsSerializer(stats_data)
-        return Response(serializer.data)
-        
-    except Exception as e:
-        return Response(
-            {'error': str(e)}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
 
 @api_view(['DELETE'])
-@permission_classes([permissions.AllowAny])
-def delete_test_history(request, session_id):
-    """
-    Delete a specific test history entry.
-    """
+@permission_classes([AllowAny])  # Temporarily allow any for testing
+def delete_test_session(request, session_id):
+    """Delete a test session"""
     try:
-        history_entry = TestHistory.objects.get(session_id=session_id)
-        history_entry.delete()
+        # For testing, use the first user or create a default
+        from django.contrib.auth.models import User
+        user = request.user if request.user.is_authenticated else User.objects.first()
+        
+        if not user:
+            return Response({"detail": "No user found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        session = TestSession.objects.get(
+            id=session_id,
+            user=user
+        )
+        session.delete()
         return Response(
-            {'message': 'Test history entry deleted successfully'}, 
+            {'message': 'Test session deleted successfully'}, 
             status=status.HTTP_204_NO_CONTENT
         )
-        
-    except TestHistory.DoesNotExist:
+    except TestSession.DoesNotExist:
         return Response(
             {'error': 'Test session not found'}, 
             status=status.HTTP_404_NOT_FOUND
-        )
-    except Exception as e:
-        return Response(
-            {'error': str(e)}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

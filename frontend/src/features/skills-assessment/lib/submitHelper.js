@@ -116,7 +116,6 @@ export function normalizeTestId(testId) {
     'diagrammatic_reasoning': 'diagrammatic',
     'situational': 'situational',
     'sjt': 'situational',
-    'master-sjt': 'situational_advanced',
     'technical': 'technical'
   };
   

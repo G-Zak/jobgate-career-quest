@@ -12,7 +12,6 @@ import LogicalReasoningTest from './LogicalReasoningTest';
 import LRT2Test from './LRT2Test';
 import LRT3Test from './LRT3Test';
 import SituationalJudgmentTest from './SituationalJudgmentTest';
-import MasterSJTTest from './MasterSJTTest';
 
 const UnifiedTestRunnerShell = ({
   testId,
@@ -29,13 +28,8 @@ const UnifiedTestRunnerShell = ({
       onBackToDashboard: onAbortTest
     };
 
-    // Handle Master SJT
-    if (testId === 'MASTER-SJT' || testId === 'Master SJT') {
-      return <MasterSJTTest {...commonProps} onClose={onAbortTest} />;
-    }
-
-    // Handle Situational Judgment Tests
-    if (testId === 'SJT' || testId.toLowerCase().includes('situational') || testId.toLowerCase().includes('sjt')) {
+    // Handle Situational Judgment Tests (including Master SJT)
+    if (testId === 'SJT' || testId === 'MASTER-SJT' || testId === 'Master SJT' || testId.toLowerCase().includes('situational') || testId.toLowerCase().includes('sjt') || testId.toLowerCase().includes('master-sjt')) {
       return <SituationalJudgmentTest {...commonProps} />;
     }
 

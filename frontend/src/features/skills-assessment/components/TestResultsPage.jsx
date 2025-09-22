@@ -47,26 +47,40 @@ const TestResultsPage = ({
   // Extract data from either unified results or legacy results
   const extractResultData = () => {
     if (results) {
-      // From unified scoring system - check for both old and new field names
-      return {
-        testId: testId || results.attempt?.test_id || 'unknown',
-        score: results.correctAnswers || results.correct || 0,
-        totalQuestions: results.totalQuestions || results.total || 0,
-        percentage: results.score || results.percentage || 0,
-        timeSpent: results.duration || results.attempt?.duration_seconds || 0,
-        resultLabel: results.resultLabel || results.attempt?.result_label || 'Completed',
-        isPassed: (results.score || results.percentage || 0) >= 70
-      };
+      // From unified scoring system - handle both old and new field names
+      // Check if results has the new backend structure
+      if (results.percentage_score !== undefined) {
+        return {
+          testId: String(testId || results.test_id || 'unknown'),
+          score: parseInt(results.correct_answers) || 0,
+          totalQuestions: parseInt(results.total_questions) || 0,
+          percentage: parseFloat(results.percentage_score) || 0,
+          timeSpent: parseInt(results.time_spent) || 0,
+          resultLabel: String(results.grade_letter || 'Completed'),
+          isPassed: (parseFloat(results.percentage_score) || 0) >= 70
+        };
+      } else {
+        // Legacy unified scoring format
+        return {
+          testId: String(testId || results.attempt?.test_id || 'unknown'),
+          score: parseInt(results.correctAnswers || results.correct) || 0,
+          totalQuestions: parseInt(results.totalQuestions || results.total) || 0,
+          percentage: parseFloat(results.score || results.percentage) || 0,
+          timeSpent: parseInt(results.duration || results.attempt?.duration_seconds) || 0,
+          resultLabel: String(results.resultLabel || results.attempt?.result_label || 'Completed'),
+          isPassed: (parseFloat(results.score || results.percentage) || 0) >= 70
+        };
+      }
     } else {
       // Legacy format
       return {
-        testId: finalResults.testId || testId || 'unknown',
-        score: finalResults.score || 0,
-        totalQuestions: finalResults.totalQuestions || 0,
-        percentage: finalResults.percentage || 0,
-        timeSpent: finalResults.timeSpent || 0,
-        resultLabel: finalResults.resultLabel || 'Completed',
-        isPassed: finalResults.isPassed || finalResults.percentage >= 70
+        testId: String(finalResults.testId || testId || 'unknown'),
+        score: parseInt(finalResults.score) || 0,
+        totalQuestions: parseInt(finalResults.totalQuestions) || 0,
+        percentage: parseFloat(finalResults.percentage) || 0,
+        timeSpent: parseInt(finalResults.timeSpent) || 0,
+        resultLabel: String(finalResults.resultLabel || 'Completed'),
+        isPassed: finalResults.isPassed || (parseFloat(finalResults.percentage) || 0) >= 70
       };
     }
   };
@@ -74,7 +88,19 @@ const TestResultsPage = ({
   const resultData = extractResultData();
   console.log('🔍 TestResultsPage - Results object:', results);
   console.log('🔍 TestResultsPage - Extracted data:', resultData);
-  const performanceLevel = getPerformanceLevel(resultData.percentage);
+  
+  // Safety check: ensure all values are primitives, not objects
+  const safeResultData = {
+    testId: String(resultData.testId),
+    score: parseInt(resultData.score) || 0,
+    totalQuestions: parseInt(resultData.totalQuestions) || 0,
+    percentage: parseFloat(resultData.percentage) || 0,
+    timeSpent: parseInt(resultData.timeSpent) || 0,
+    resultLabel: String(resultData.resultLabel),
+    isPassed: Boolean(resultData.isPassed)
+  };
+  
+  const performanceLevel = getPerformanceLevel(safeResultData.percentage);
 
   const getResultStatus = () => {
     // Use performanceLevel from scoreUtils for consistent labeling
@@ -148,7 +174,7 @@ const TestResultsPage = ({
             transition={{ delay: 0.5 }}
             className="text-gray-600"
           >
-            {getTestTitle(resultData.testId)} Results
+            {getTestTitle(safeResultData.testId)} Results
           </motion.p>
         </div>
 
@@ -163,7 +189,7 @@ const TestResultsPage = ({
           >
             <h3 className="text-lg font-semibold text-gray-800 mb-1">Score</h3>
             <p className="text-3xl font-bold text-blue-600">
-              {resultData.score}/{resultData.totalQuestions}
+              {safeResultData.score}/{safeResultData.totalQuestions}
             </p>
           </motion.div>
 
@@ -176,7 +202,7 @@ const TestResultsPage = ({
           >
             <h3 className="text-lg font-semibold text-gray-800 mb-1">Percentage</h3>
             <p className="text-3xl font-bold text-green-600">
-              {resultData.percentage}%
+              {safeResultData.percentage}%
             </p>
           </motion.div>
 
@@ -195,7 +221,7 @@ const TestResultsPage = ({
         </div>
 
         {/* Time Spent (if available) */}
-        {resultData.timeSpent > 0 && (
+        {safeResultData.timeSpent > 0 && (
           <div className="px-8 pb-4">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -208,14 +234,14 @@ const TestResultsPage = ({
                 <h3 className="text-lg font-semibold text-gray-800">Time Taken</h3>
               </div>
               <p className="text-xl font-bold text-gray-700">
-                {formatDuration(resultData.timeSpent)}
+                {formatDuration(safeResultData.timeSpent)}
               </p>
             </motion.div>
           </div>
         )}
 
         {/* Performance Message */}
-        {resultData.isPassed ? (
+        {safeResultData.isPassed ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -264,7 +290,7 @@ const TestResultsPage = ({
             </button>
             {onRetakeTest && (
               <button
-                onClick={() => onRetakeTest(resultData.testId)}
+                onClick={() => onRetakeTest(safeResultData.testId)}
                 className="flex items-center px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors font-medium"
               >
                 <FaRedo className="w-4 h-4 mr-2" />

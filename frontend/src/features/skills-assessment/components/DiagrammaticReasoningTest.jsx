@@ -144,12 +144,17 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
           testType: 'diagrammatic_reasoning',
           totalQuestions: questions.length,
           currentQuestion: currentQuestionIndex + 1
+        },
+        onSuccess: (processedData) => {
+          console.log('Test submitted successfully:', processedData);
+          setResults(processedData);
+          setTestStep('results');
+        },
+        onError: (error) => {
+          console.error('Test submission failed:', error);
+          setError('Failed to submit test. Please try again.');
         }
       });
-
-      console.log('Test submitted successfully:', result);
-      setResults(result);
-      setTestStep('results');
       
     } catch (error) {
       console.error('Error finishing test:', error);

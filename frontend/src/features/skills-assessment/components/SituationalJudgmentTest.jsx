@@ -11,6 +11,8 @@ import {
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import TestDataService from '../services/testDataService';
+import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
+import TestResultsPage from './TestResultsPage';
 
 const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) => {
   const navigate = useNavigate();
@@ -23,6 +25,9 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
   const [loading, setLoading] = useState(true);
   const [score, setScore] = useState(0);
   const [loadError, setLoadError] = useState(null);
+  const [results, setResults] = useState(null);
+  const [testStep, setTestStep] = useState('test');
+  const [testStartTime, setTestStartTime] = useState(null);
 
   // Utility function to shuffle array (Fisher-Yates algorithm)
   const shuffleArray = (array) => {
@@ -137,6 +142,12 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
     try {
       // Convert numeric answers to letter format for backend submission
       const letterAnswers = {};
+      console.log('SJT Answer Debug:', {
+        selectedAnswers,
+        testDataLength: testData.length,
+        firstQuestion: testData[0] ? { id: testData[0].id, text: testData[0].question_text?.substring(0, 50) } : null
+      });
+      
       Object.keys(selectedAnswers).forEach(questionIndex => {
         const answerIndex = selectedAnswers[questionIndex];
         const questionId = testData[questionIndex]?.id;
@@ -146,14 +157,46 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
           letterAnswers[questionId] = letterAnswer;
         }
       });
-
-      // Submit to backend using the correct method
-      const timeTaken = (25 * 60) - timeRemaining; // Calculate time taken
-      const result = await TestDataService.submitTestAnswers('SJT1', letterAnswers, timeTaken);
       
-      console.log('Test submitted successfully:', result);
-      setScore(result.score?.percentage_score || 0);
-      setShowResults(true);
+      console.log('SJT Letter Answers:', letterAnswers);
+
+      // Submit to backend using backendSubmissionHelper
+      const startTime = testStartTime || (Date.now() - ((25 * 60) - timeRemaining) * 1000);
+      const endTime = Date.now();
+      const timeTaken = Math.max(1, Math.round((endTime - startTime) / 1000));
+      
+      console.log('SJT Submission Debug:', {
+        testId: '30',
+        answerCount: Object.keys(letterAnswers).length,
+        startTime: new Date(startTime).toISOString(),
+        endTime: new Date(endTime).toISOString(),
+        timeTakenSeconds: timeTaken,
+        timeRemaining
+      });
+
+      const result = await submitTestAttempt({
+        testId: '30', // Backend test ID for SJT1
+        answers: letterAnswers,
+        startedAt: startTime,
+        finishedAt: endTime,
+        reason: 'user',
+        metadata: {
+          testType: 'situational_judgment',
+          totalQuestions: testData.length,
+          currentQuestion: currentQuestion + 1
+        },
+        onSuccess: (processedData) => {
+          console.log('Test submitted successfully:', processedData);
+          setResults(processedData);
+          setTestStep('results');
+        },
+        onError: (error) => {
+          console.error('Test submission failed:', error);
+          // Fallback to local calculation
+          calculateScore();
+          setShowResults(true);
+        }
+      });
     } catch (error) {
       console.error('Error submitting test:', error);
       // Fallback to local calculation
@@ -164,6 +207,7 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
 
   const startTest = () => {
     setIsTestStarted(true);
+    setTestStartTime(Date.now());
   };
 
 
@@ -176,6 +220,22 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
     );
   }
 
+  // Show results page
+  if (testStep === 'results') {
+    return (
+      <TestResultsPage
+        results={results}
+        testType="situational"
+        testId="SJT1"
+        answers={selectedAnswers}
+        testData={{ questions: testData }}
+        onBackToDashboard={onBackToDashboard || (() => navigate('/dashboard/skills'))}
+        onRetakeTest={handleRetakeTest}
+      />
+    );
+  }
+
+  // Legacy results display (fallback)
   if (showResults) {
     return (
       <motion.div

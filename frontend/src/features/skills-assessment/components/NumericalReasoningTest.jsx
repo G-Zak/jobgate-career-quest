@@ -492,7 +492,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                 Back to Tests
               </button>
               <button
-                onClick={handleStartTest}
+                onClick={handleNextSection}
                 className="flex items-center px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
               >
                 Start Test
@@ -1024,7 +1024,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={currentQuestion === totalQuestions ? handleSubmit : handleNext}
+                onClick={currentQuestion === totalQuestions ? handleTestComplete : handleNext}
                 disabled={!currentQuestionAnswered}
                 className={`flex items-center gap-2 px-8 py-3 rounded-xl transition-all duration-200 font-medium shadow-lg ${
                   currentQuestionAnswered

@@ -345,7 +345,9 @@ class SubmitTestView(APIView):
                 submission.answers_data.update({'metadata': submission_metadata})
                 submission.save()
             
-            logger.info(f"Test submitted successfully: User {request.user.username}, Test {test.title}, Score {score.percentage_score}%")
+            user_display = request.user.username if request.user.is_authenticated else "Anonymous"
+            logger.info(f"Test submitted successfully: User {user_display}, Test {test.title}, Score {score.percentage_score}%")
+            
             
             # Return immediate score results with enhanced data
             score_serializer = ScoreDetailSerializer(score)
@@ -375,6 +377,9 @@ class SubmitTestView(APIView):
             if warnings:
                 response_data['warnings'] = warnings
             
+            # Create TestSession for test history (outside atomic transaction)
+            self._create_test_session(user, test, submission, score, answers_data, time_taken_seconds)
+            
             return Response(response_data, status=status.HTTP_201_CREATED)
             
         except Exception as e:
@@ -383,6 +388,82 @@ class SubmitTestView(APIView):
                 {'error': 'Failed to process submission', 'details': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    def _create_test_session(self, user, test, submission, score, answers_data, time_taken_seconds):
+        """Create TestSession record for test history integration (outside atomic transaction)"""
+        try:
+            from django.contrib.auth.models import User
+            from .models import TestSession, TestAnswer
+            from django.utils import timezone
+            
+            # For anonymous users, use a default user for test history
+            session_user = user if user else User.objects.first()
+            logger.info(f"TestSession creation: user={user}, session_user={session_user}")
+            
+            # For testing, if user is None, try to get a user that doesn't have this test yet
+            if not session_user:
+                # Find a user who doesn't have this test yet
+                existing_users = TestSession.objects.filter(test=test).values_list('user_id', flat=True)
+                session_user = User.objects.exclude(id__in=existing_users).first()
+                logger.info(f"Found alternative user for test: {session_user}")
+            
+            if session_user:  # Only create if we have a user (authenticated or default)
+                # Use get_or_create to handle unique constraint, then update
+                test_session, created = TestSession.objects.get_or_create(
+                    user=session_user,
+                    test=test,
+                    defaults={
+                        'status': 'completed',
+                        'start_time': submission.submitted_at,
+                        'end_time': timezone.now(),
+                        'score': float(score.percentage_score),
+                        'answers': answers_data,
+                        'time_spent': time_taken_seconds
+                    }
+                )
+                
+                # Update existing session if it wasn't created
+                if not created:
+                    test_session.status = 'completed'
+                    test_session.start_time = submission.submitted_at
+                    test_session.end_time = timezone.now()
+                    test_session.score = float(score.percentage_score)
+                    test_session.answers = answers_data
+                    test_session.time_spent = time_taken_seconds
+                    test_session.save()
+                    logger.info(f"Updated existing TestSession: {test_session.id}")
+                else:
+                    logger.info(f"Created new TestSession: {test_session.id}")
+                
+                # Create detailed TestAnswer records
+                TestAnswer.objects.filter(session=test_session).delete()  # Clear old answers
+                for question_id, selected_answer in answers_data.items():
+                    try:
+                        from .models import Question
+                        question = Question.objects.get(id=question_id)
+                        is_correct = (question.correct_answer == selected_answer)
+                        
+                        TestAnswer.objects.create(
+                            session=test_session,
+                            question=question,
+                            selected_answer=selected_answer,
+                            is_correct=is_correct,
+                            time_taken=0  # Could be calculated per question if needed
+                        )
+                    except Question.DoesNotExist:
+                        logger.warning(f"Question {question_id} not found for TestSession {test_session.id}")
+                        continue
+                
+                logger.info(f"TestSession created/updated: {test_session.id} for user {session_user.username}")
+                return test_session
+                
+        except Exception as e:
+            logger.error(f"Failed to create TestSession: {str(e)}")
+            logger.error(f"Exception type: {type(e).__name__}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            # Don't fail the main submission if test history fails
+            return None
     
     def _validate_submission_requirements(self, test, answers_data, time_taken_seconds):
         """Validate submission meets test requirements"""
