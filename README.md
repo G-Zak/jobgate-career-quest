@@ -4,41 +4,43 @@ A professional skills assessment platform that helps users evaluate their abilit
 
 ## 👥 Team Setup
 
-**For team members joining the project, please see: [TEAM_SETUP_GUIDE.md](TEAM_SETUP_GUIDE.md)**
+**🚀 NEW TEAMMATES: Start here → [TEAMMATE_QUICK_START.md](TEAMMATE_QUICK_START.md)**
 
-### Quick Start with Docker (Recommended)
+### ⚡ Super Quick Start (2 minutes)
 ```bash
-# Clone the repository
-git clone <repository-url>
+# Clone and start everything
+git clone https://github.com/G-Zak/jobgate-career-quest.git
 cd jobgate-career-quest
+docker-compose up -d
+```
+**Access**: http://localhost:3000
 
-# Run Docker setup (Windows)
+### 📋 Complete Setup Options
+
+#### Option 1: Docker (Recommended)
+```bash
+# Windows
 setup_docker_windows.bat
 
 # Or manually
 docker-compose up -d
 ```
 
-### Quick Start for Windows (Local)
+#### Option 2: Local Development
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd jobgate-career-quest
-
-# Run the setup script
+# Windows
 setup_team_windows.bat
-```
 
-### Quick Start for Linux/Mac (Local)
-```bash
-# Clone the repository
-git clone <repository-url>
-cd jobgate-career-quest
-
-# Run the setup script
+# Linux/Mac
 chmod +x setup_team_skills.sh
 ./setup_team_skills.sh
 ```
+
+### 📚 Team Documentation
+- **[TEAMMATE_QUICK_START.md](TEAMMATE_QUICK_START.md)** - 5-minute setup guide
+- **[TEAMMATE_CHECKLIST.md](TEAMMATE_CHECKLIST.md)** - Onboarding checklist
+- **[TEAM_SETUP_GUIDE.md](TEAM_SETUP_GUIDE.md)** - Comprehensive setup guide
+- **[DOCKER_SETUP_GUIDE.md](DOCKER_SETUP_GUIDE.md)** - Docker-specific guide
 
 ## 🚀 Features
 

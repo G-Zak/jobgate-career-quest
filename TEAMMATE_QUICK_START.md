@@ -1,129 +1,220 @@
-# 🚀 Quick Start Guide for Teammates
+# 👥 Teammate Quick Start Guide
 
-## The Problem You're Facing
-When you clone the repository, you get the **code** but not the **database data**. The database is empty, so you can't fetch questions, skills, or any test data.
+## 🚀 Get Started in 5 Minutes
 
-## ✅ One-Command Solution
-
-### 1. Clone and Setup
-```bash
-git clone <repository-url>
-cd jobgate-career-quest/backend
-```
-
-### 2. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Run the Database Setup (ONE COMMAND!)
-```bash
-python quick_setup.py
-```
-
-### 4. Start the Project
-```bash
-# Terminal 1 - Backend
-python manage.py runserver
-
-# Terminal 2 - Frontend  
-cd ../frontend
-npm install
-npm run dev
-```
-
-## 🎯 What the Setup Script Does
-
-The `quick_setup.py` script automatically populates your database with:
-
-- ✅ **50 Skills** - For skills management page
-- ✅ **Sample Candidate** - With 5 skills assigned
-- ✅ **875+ Questions** - For all test types:
-  - Numerical Reasoning (95 questions)
-  - Logical Reasoning (90 questions) 
-  - Diagrammatic Reasoning (50 questions)
-  - Abstract Reasoning (20 questions)
-  - Spatial Reasoning (60 questions)
-  - Situational Judgment (200 questions with scoring system)
-- ✅ **SJT Scoring System** - Multi-score system (+2, +1, 0, -1)
-- ✅ **Database Functions** - For proper scoring
-
-## 📊 Expected Results
-
-After running the setup script, you should see:
-```
-📊 Setup Summary:
-   - Commands run: 13/15
-   - Total Questions: 875
-   - Total Tests: 30
-   - Total Skills: 50
-🎉 Database setup completed successfully!
-```
-
-## 🔍 Verify Everything Works
-
-### 1. Check Django Admin
-- Go to `http://localhost:8000/admin/`
-- Login with `admin/admin123`
-- You should see:
-  - Questions (875+)
-  - Question Options (800+)
-  - Skills (50)
-  - Tests (30+)
-
-### 2. Test the Frontend
-- Go to `http://localhost:3000`
-- Try accessing different test pages
-- Questions should load from the database
-- Scoring should work properly
-
-## 🚨 Troubleshooting
-
-### If Setup Fails
-```bash
-# Run migrations manually
-python manage.py migrate
-
-# Run individual commands
-python manage.py add_sample_skills
-python manage.py create_sample_candidate
-python manage.py add_numerical_questions
-# ... etc
-```
-
-### If Database Connection Fails
-```bash
-# Check database connection
-python manage.py check_postgresql
-
-# Check if PostgreSQL is running
-# Make sure your .env file has correct database settings
-```
-
-### If Frontend Can't Connect
-- Make sure backend is running on port 8000
-- Check CORS settings in backend
-- Verify API endpoints are accessible
-
-## 🎉 Success!
-
-Once setup is complete, you should be able to:
-- ✅ Access all test pages
-- ✅ See questions loaded from database
-- ✅ Submit tests and get scores
-- ✅ Use skills management page
-- ✅ See all data in Django Admin
-
-## 📞 Need Help?
-
-If you encounter any issues:
-1. Check the terminal output for error messages
-2. Verify database connection
-3. Check if all migrations ran successfully
-4. Contact the team for support
+### Prerequisites
+- **Git** - [Download here](https://git-scm.com/downloads)
+- **Docker Desktop** - [Download here](https://www.docker.com/products/docker-desktop/) (Recommended)
+- **OR** Python 3.8+ and Node.js 18+ (Alternative)
 
 ---
 
-**Note**: This setup only needs to be run once. After that, the database will have all the necessary data and the project will work normally.
+## 🐳 Option 1: Docker Setup (Recommended)
 
-**The key insight**: Git only stores code, not database data. That's why you need to run the setup script to populate your local database with all the questions, skills, and test data.
+### Step 1: Clone the Repository
+```bash
+git clone https://github.com/G-Zak/jobgate-career-quest.git
+cd jobgate-career-quest
+```
+
+### Step 2: Start Everything
+```bash
+# Windows
+setup_docker_windows.bat
+
+# OR manually
+docker-compose up -d
+```
+
+### Step 3: Access the Application
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **Admin Panel**: http://localhost:8000/admin
+
+**That's it! 🎉**
+
+---
+
+## 💻 Option 2: Local Development Setup
+
+### Step 1: Clone the Repository
+```bash
+git clone https://github.com/G-Zak/jobgate-career-quest.git
+cd jobgate-career-quest
+```
+
+### Step 2: Backend Setup
+```bash
+cd backend
+
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# Windows:
+venv\Scripts\activate
+# Linux/Mac:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run migrations
+python manage.py migrate
+
+# Load sample data
+python manage.py loaddata database_export.json
+
+# Create admin user
+python manage.py createsuperuser
+
+# Start backend server
+python manage.py runserver
+```
+
+### Step 3: Frontend Setup (New Terminal)
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+### Step 4: Access the Application
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **Admin Panel**: http://localhost:8000/admin
+
+---
+
+## 🎯 What You'll See
+
+### Frontend Features
+- **Dashboard** - Overview of all available tests
+- **8 Test Categories** - Verbal, Numerical, Logical, Abstract, Diagrammatic, Spatial, Situational, Technical
+- **Test History** - Track your progress and scores
+- **Real-time Scoring** - Immediate feedback after tests
+- **Responsive Design** - Works on all devices
+
+### Backend Features
+- **REST API** - All endpoints documented
+- **Admin Panel** - Database management
+- **Health Checks** - Service monitoring
+- **Complete Database** - 1,200+ questions and answers
+
+---
+
+## 🛠️ Development Commands
+
+### Docker Commands
+```bash
+# View logs
+docker-compose logs -f
+
+# Stop everything
+docker-compose down
+
+# Restart a service
+docker-compose restart backend
+
+# Access backend shell
+docker-compose exec backend python manage.py shell
+
+# Access database
+docker-compose exec db psql -U jobgate -d careerquest
+```
+
+### Local Development Commands
+```bash
+# Backend
+python manage.py runserver
+python manage.py migrate
+python manage.py shell
+
+# Frontend
+npm run dev
+npm install
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+#### Port Already in Use
+```bash
+# Check what's using ports
+netstat -tulpn | grep :3000
+netstat -tulpn | grep :8000
+
+# Kill processes (Windows)
+taskkill /PID <PID> /F
+
+# Kill processes (Linux/Mac)
+sudo kill -9 <PID>
+```
+
+#### Docker Issues
+```bash
+# Check Docker is running
+docker --version
+docker-compose --version
+
+# Restart Docker Desktop if needed
+# Check container status
+docker-compose ps
+```
+
+#### Database Issues
+```bash
+# Reset database (Docker)
+docker-compose down -v
+docker-compose up -d
+
+# Reset database (Local)
+python manage.py flush
+python manage.py loaddata database_export.json
+```
+
+---
+
+## 📚 Documentation
+
+- **Full Setup Guide**: [TEAM_SETUP_GUIDE.md](TEAM_SETUP_GUIDE.md)
+- **Docker Guide**: [DOCKER_SETUP_GUIDE.md](DOCKER_SETUP_GUIDE.md)
+- **Project Status**: [PROJECT_STATUS.md](PROJECT_STATUS.md)
+- **API Documentation**: http://localhost:8000/api/docs/
+
+---
+
+## 🆘 Need Help?
+
+### Quick Checks
+1. **Docker running?** - Check Docker Desktop is started
+2. **Ports free?** - Check 3000 and 8000 are available
+3. **Dependencies installed?** - Run setup scripts
+4. **Database loaded?** - Check admin panel works
+
+### Getting Support
+1. **Check logs** - `docker-compose logs -f` or `python manage.py runserver`
+2. **Restart services** - `docker-compose restart` or restart terminals
+3. **Ask team** - Use project communication channels
+4. **Check issues** - Look at project issue tracker
+
+---
+
+## 🎉 Success!
+
+Once you see the application running at http://localhost:3000, you're all set!
+
+### Next Steps
+1. **Explore the tests** - Try different test categories
+2. **Check the admin panel** - http://localhost:8000/admin
+3. **Review the code** - Familiarize yourself with the structure
+4. **Start developing** - Make your first changes
+
+**Happy coding! 🚀**
