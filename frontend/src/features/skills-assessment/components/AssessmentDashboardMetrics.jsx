@@ -1,22 +1,50 @@
-import React, { useEffect } from 'react';
-import { useAssessmentStore } from '../store/useAssessmentStore';
-import { fetchAttempts } from '../api/attemptsApi';
+import React, { useEffect, useState } from 'react';
+import testHistoryApi from '../../test-history/services/testHistoryApi';
 
 export default function AssessmentDashboardMetrics() {
-  const { metrics, hydrateAttempts, loading, error } = useAssessmentStore();
+  const [metrics, setMetrics] = useState({
+    testsCompleted: 0,
+    avgPercentage: 0,
+    totalAttempts: 0,
+    bestByTest: {}
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const loadAttempts = async () => {
+    const loadMetrics = async () => {
       try {
-        const attempts = await fetchAttempts();
-        hydrateAttempts(attempts);
-      } catch (error) {
-        console.error('Failed to load attempts:', error);
+        setLoading(true);
+        setError(null);
+        
+        // Get test history summary
+        const summary = await testHistoryApi.getTestHistorySummary();
+        
+        // Get category stats for best scores by test type
+        const categoryStats = await testHistoryApi.getTestCategoryStats();
+        
+        // Build best scores by test type
+        const bestByTest = {};
+        categoryStats.forEach(stat => {
+          bestByTest[stat.test_type] = stat.best_score;
+        });
+        
+        setMetrics({
+          testsCompleted: summary.completed_sessions || 0,
+          avgPercentage: Math.round(summary.average_score || 0),
+          totalAttempts: summary.total_sessions || 0,
+          bestByTest
+        });
+      } catch (err) {
+        console.error('Failed to load metrics:', err);
+        setError('Failed to load assessment metrics');
+      } finally {
+        setLoading(false);
       }
     };
 
-    loadAttempts();
-  }, [hydrateAttempts]);
+    loadMetrics();
+  }, []);
 
   if (loading) {
     return (

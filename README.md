@@ -2,6 +2,46 @@
 
 A professional skills assessment platform that helps users evaluate their abilities through comprehensive testing and provides personalized career recommendations.
 
+## 👥 Team Setup
+
+**🚀 NEW TEAMMATES: Start here → [TEAMMATE_QUICK_START.md](TEAMMATE_QUICK_START.md)**
+
+### ⚡ Super Quick Start (2 minutes)
+```bash
+# Clone and start everything
+git clone https://github.com/G-Zak/jobgate-career-quest.git
+cd jobgate-career-quest
+docker-compose up -d
+```
+**Access**: http://localhost:3000
+
+### 📋 Complete Setup Options
+
+#### Option 1: Docker (Recommended)
+```bash
+# Windows
+setup_docker_windows.bat
+
+# Or manually
+docker-compose up -d
+```
+
+#### Option 2: Local Development
+```bash
+# Windows
+setup_team_windows.bat
+
+# Linux/Mac
+chmod +x setup_team_skills.sh
+./setup_team_skills.sh
+```
+
+### 📚 Team Documentation
+- **[TEAMMATE_QUICK_START.md](TEAMMATE_QUICK_START.md)** - 5-minute setup guide
+- **[TEAMMATE_CHECKLIST.md](TEAMMATE_CHECKLIST.md)** - Onboarding checklist
+- **[TEAM_SETUP_GUIDE.md](TEAM_SETUP_GUIDE.md)** - Comprehensive setup guide
+- **[DOCKER_SETUP_GUIDE.md](DOCKER_SETUP_GUIDE.md)** - Docker-specific guide
+
 ## 🚀 Features
 
 - **Professional Skills Assessment**: Comprehensive tests across multiple domains

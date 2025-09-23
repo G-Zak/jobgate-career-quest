@@ -1,39 +1,95 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaChartLine, FaClock, FaStop, FaArrowRight, FaFlag, FaCalculator, FaQuestionCircle, FaTable, FaChartBar, FaCheckCircle } from 'react-icons/fa';
+import { FaChartLine, FaClock, FaStop, FaArrowRight, FaFlag, FaCalculator, FaQuestionCircle, FaTable, FaChartBar, FaCheckCircle, FaBrain, FaTimesCircle, FaPause, FaPlay, FaTimes, FaCog, FaSearch, FaLightbulb, FaPuzzlePiece, FaCheck } from 'react-icons/fa';
 import { getNumericalTestWithAnswers } from '../data/numericalTestSections';
-import { scrollToTop } from '../../../shared/utils/scrollUtils';
+// Removed complex scroll utilities - using simple scrollToTop function instead
+import { submitTestAttempt } from '../lib/submitHelper';
+import TestResultsPage from './TestResultsPage';
+import { getRuleFor } from '../testRules';
+import { buildAttempt } from '../lib/scoreUtils';
+import { useAttempts } from '../store/useAttempts';
 
-const NumericalReasoningTest = ({ onComplete, onBack }) => {
-  const [testData, setTestData] = useState(null);
-  const [currentSection, setCurrentSection] = useState(0);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
+const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
+  const rule = getRuleFor(testId);
+  const { addAttempt } = useAttempts();
+  const [testStep, setTestStep] = useState('test'); // Skip instructions - start directly with test
+  const [currentSection, setCurrentSection] = useState(1);
+  const [currentQuestion, setCurrentQuestion] = useState(1);
+  const [timeRemaining, setTimeRemaining] = useState(rule?.timeLimitMin * 60 || 20 * 60); // Use rule time limit
   const [answers, setAnswers] = useState({});
-  const [showInstructions, setShowInstructions] = useState(false); // Disable instructions - use TestInfoPage instead
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [testStarted, setTestStarted] = useState(false);
-  const [testCompleted, setTestCompleted] = useState(false);
+  const [testData, setTestData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+  const [showPauseModal, setShowPauseModal] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [startedAt, setStartedAt] = useState(null);
+  const [results, setResults] = useState(null);
   const timerRef = useRef(null);
+  const startedAtRef = useRef(Date.now());
 
-  useEffect(() => {
-    const data = getNumericalTestWithAnswers();
-    setTestData(data);
-    setTimeLeft(data.duration_minutes * 60); // Convert to seconds
-    
-    // Reset test state in case component is remounted
-    setTestCompleted(false);
-    setShowInstructions(false); // Always start with questions - instructions shown via TestInfoPage
-    setTestStarted(true); // Start test immediately
-    setCurrentQuestion(0);
-    setAnswers({});
-  }, []);
+  // Smooth scroll-to-top function - only called on navigation
+  const scrollToTop = () => {
+    // Target the main scrollable container in MainDashboard
+    const mainScrollContainer = document.querySelector('.main-content-area .overflow-y-auto');
+    if (mainScrollContainer) {
+      // Smooth scroll to top
+      mainScrollContainer.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    } else {
+      // Fallback to window scroll
+      window.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
 
+  // Only scroll to top when question changes (not on every render)
   useEffect(() => {
-    if (testStarted && !testCompleted && timeLeft > 0) {
+    if (testStep === 'test' && currentQuestion > 0) {
+      // Small delay to ensure DOM has updated after question change
+      const timer = setTimeout(() => {
+        scrollToTop();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentQuestion, testStep]);
+
+  // Load test data
+  useEffect(() => {
+    try {
+      setLoading(true);
+      const data = getNumericalTestWithAnswers();
+      // Limit questions to rule's totalQuestions
+      const limitedData = {
+        ...data,
+        sections: data.sections.map(section => ({
+          ...section,
+          questions: section.questions.slice(0, rule?.totalQuestions || 20)
+        }))
+      };
+      setTestData(limitedData);
+      setTimeRemaining(rule?.timeLimitMin * 60 || 20 * 60);
+      setStartedAt(new Date());
+    } catch (error) {
+      console.error('Error loading test data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [rule]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (testStep === 'test' && timeRemaining > 0 && !isPaused) {
       timerRef.current = setInterval(() => {
-        setTimeLeft(prev => {
+        setTimeRemaining(prev => {
           if (prev <= 1) {
-            handleTestComplete();
+            handleTimeUp();
             return 0;
           }
           return prev - 1;
@@ -44,7 +100,7 @@ const NumericalReasoningTest = ({ onComplete, onBack }) => {
     }
 
     return () => clearInterval(timerRef.current);
-  }, [testStarted, testCompleted, timeLeft]);
+  }, [testStep, timeRemaining, isPaused]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -52,73 +108,223 @@ const NumericalReasoningTest = ({ onComplete, onBack }) => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const handleStartTest = () => {
-    setShowInstructions(false);
-    setTestStarted(true);
-    scrollToTop();
-  };
-
-  const handleAnswerSelect = (questionId, optionId) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: optionId
-    }));
-  };
-
-  const handleNext = () => {
-    const section = testData.sections[currentSection];
-    if (currentQuestion < section.questions.length - 1) {
-      setCurrentQuestion(prev => prev + 1);
+  // Handle next section
+  const handleNextSection = () => {
+    if (currentSection < testData?.sections?.length) {
+      setCurrentSection(prev => prev + 1);
+      setCurrentQuestion(1);
+      setTimeRemaining(10 * 60); // Reset timer for new section
     } else {
       handleTestComplete();
     }
-    scrollToTop();
   };
 
-  const handlePrevious = () => {
-    if (currentQuestion > 0) {
-      setCurrentQuestion(prev => prev - 1);
-      scrollToTop();
+  // Handle timer expiry
+  const handleTimeUp = async () => {
+    try {
+      const endTime = new Date();
+      const duration = Math.floor((endTime - startedAt) / 1000);
+      
+      // Calculate score using rule's totalQuestions
+      const totalQuestions = rule?.totalQuestions || 20;
+      const correctAnswers = Object.values(answers).filter(answer => answer.isCorrect).length;
+      const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+      
+      // Build attempt record using new scoring system
+      const attempt = buildAttempt(testId, totalQuestions, correctAnswers, startedAtRef.current, 'time');
+      
+      // Add attempt to store
+      addAttempt(attempt);
+      
+      const testResults = {
+        testId: testId,
+        testType: 'numerical-reasoning',
+        score: score,
+        totalQuestions: totalQuestions,
+        correctAnswers: correctAnswers,
+        duration: duration,
+        answers: answers,
+        completedAt: endTime.toISOString(),
+        startedAt: startedAt?.toISOString(),
+        attempt: attempt
+      };
+
+      // Submit to backend
+      try {
+        await submitTestAttempt(testResults);
+      } catch (error) {
+        console.error('Error submitting test attempt:', error);
+      }
+
+      setResults(testResults);
+      setTestStep('results');
+    } catch (error) {
+      console.error('Error handling time up:', error);
     }
   };
 
-  const handleTestComplete = () => {
-    // Set test completed state to true to show the completion screen
-    setTestCompleted(true);
-    clearInterval(timerRef.current);
-    scrollToTop();
-    
-    // Calculate results
-    const section = testData.sections[currentSection];
-    
-    // Calculate score (number of correct answers)
-    let correctCount = 0;
-    Object.entries(answers).forEach(([questionId, selectedAnswer]) => {
-      const question = section.questions.find(q => q.question_id === parseInt(questionId));
-      if (question && question.correct_answer === selectedAnswer) {
-        correctCount++;
+  // Handle test completion
+  const handleTestComplete = async () => {
+    try {
+      const endTime = new Date();
+      const duration = Math.floor((endTime - startedAt) / 1000);
+      
+      // Calculate score using rule's totalQuestions
+      const totalQuestions = rule?.totalQuestions || 20;
+      const correctAnswers = Object.values(answers).filter(answer => answer.isCorrect).length;
+      const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+      
+      // Build attempt record using new scoring system
+      const attempt = buildAttempt(testId, totalQuestions, correctAnswers, startedAtRef.current, 'user');
+      
+      // Add attempt to store
+      addAttempt(attempt);
+      
+      const testResults = {
+        testId: testId,
+        testType: 'numerical-reasoning',
+        score: score,
+        totalQuestions: totalQuestions,
+        correctAnswers: correctAnswers,
+        duration: duration,
+        answers: answers,
+        completedAt: endTime.toISOString(),
+        startedAt: startedAt?.toISOString(),
+        attempt: attempt
+      };
+
+      // Submit to backend
+      try {
+        await submitTestAttempt(testResults);
+      } catch (error) {
+        console.error('Error submitting test attempt:', error);
       }
-    });
-    
-    const results = {
-      testType: 'Numerical Reasoning',
-      sectionTitle: section.title,
-      totalQuestions: section.questions.length,
-      answeredQuestions: Object.keys(answers).length,
-      correctCount: correctCount,
-      score: (correctCount / section.questions.length) * 100,
-      answers: answers,
-      correctAnswers: section.questions.reduce((acc, q) => {
-        acc[q.question_id] = q.correct_answer;
-        return acc;
-      }, {}),
-      timeSpent: testData.duration_minutes * 60 - timeLeft,
-      completed: true
-    };
-    
-    // Do not call onComplete yet - we want to show our custom completion screen first
-    // We'll call onComplete when the user clicks "Return to Dashboard"
+
+      setResults(testResults);
+      setTestStep('results');
+    } catch (error) {
+      console.error('Error completing test:', error);
+    }
   };
+
+  // Handle pause/resume
+  const handlePause = () => {
+    setIsPaused(true);
+    setShowPauseModal(true);
+  };
+
+  const handleResume = () => {
+    setIsPaused(false);
+    setShowPauseModal(false);
+  };
+
+  // Handle exit
+  const handleExit = () => {
+    setShowExitModal(true);
+  };
+
+  const handleConfirmExit = () => {
+    onBackToDashboard();
+  };
+
+  // Handle answer selection
+  const handleAnswerSelect = (questionId, answer) => {
+    // Find the question to get the correct answer
+    const question = currentSectionData?.questions?.find(q => q.question_id === questionId);
+    const isCorrect = question ? question.correct_answer === answer : false;
+    
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: {
+        answer,
+        isCorrect,
+        timestamp: new Date().toISOString()
+      }
+    }));
+  };
+
+  // Handle next question
+  const handleNext = () => {
+    if (currentQuestion < totalQuestions) {
+      setCurrentQuestion(prev => prev + 1);
+    } else {
+      handleNextSection();
+    }
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => scrollToTop(), 150);
+  };
+
+  // Handle previous question
+  const handlePrevious = () => {
+    if (currentQuestion > 1) {
+      setCurrentQuestion(prev => prev - 1);
+    }
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => scrollToTop(), 150);
+  };
+
+  // Show results page
+  if (testStep === 'results') {
+    return (
+      <TestResultsPage
+        testResults={results}
+        results={results}
+        testType="numerical-reasoning"
+        testId={testId}
+        answers={answers}
+        testData={testData}
+        onBackToDashboard={onBackToDashboard}
+        onRetakeTest={() => {
+          setTestStep('test');
+          setCurrentSection(1);
+          setCurrentQuestion(1);
+          setAnswers({});
+          setTimeRemaining(10 * 60);
+          setResults(null);
+          setStartedAt(new Date());
+        }}
+      />
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading test...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!testData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Test not available</h2>
+          <button
+            onClick={onBackToDashboard}
+            className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Get current section and question data
+  const currentSectionData = testData?.sections?.[currentSection - 1];
+  const currentQuestionData = currentSectionData?.questions?.[currentQuestion - 1];
+  const totalSections = testData?.sections?.length || 0;
+  const totalQuestions = rule?.totalQuestions || 20;
+  
+  // Check if current question is answered for gated navigation
+  const currentQuestionAnswered = currentQuestionData ? 
+    answers[currentQuestionData.question_id]?.answer != null : false;
 
   if (!testData) {
     return (
@@ -132,10 +338,10 @@ const NumericalReasoningTest = ({ onComplete, onBack }) => {
   }
 
   // Only try to access section and question data if testData exists and test isn't completed
-  const section = testData?.sections?.[currentSection];
-  const question = !testCompleted && section?.questions?.[currentQuestion];
+  const section = testData?.sections?.[currentSection - 1];
+  const question = section?.questions?.[currentQuestion - 1];
 
-  if (showInstructions) {
+  if (false) { // Disabled instructions - use TestInfoPage instead
     return (
       <motion.div 
         initial={{ opacity: 0 }}
@@ -156,12 +362,14 @@ const NumericalReasoningTest = ({ onComplete, onBack }) => {
             {/* Instructions Image */}
             {section.intro_image && (
               <div className="mb-8 text-center">
-                <img 
-                  src={section.intro_image} 
-                  alt="Numerical Reasoning Instructions"
-                  className="max-w-full h-auto mx-auto rounded-lg shadow-md"
-                  style={{ maxHeight: '300px' }}
-                />
+                <div className="flex justify-center">
+                  <img 
+                    src={section.intro_image} 
+                    alt="Numerical Reasoning Instructions"
+                    className="max-w-xl max-h-96 w-auto h-auto mx-auto rounded-lg shadow-md object-contain"
+                    style={{ maxWidth: '528px', maxHeight: '352px' }}
+                  />
+                </div>
               </div>
             )}
 
@@ -487,7 +695,7 @@ const NumericalReasoningTest = ({ onComplete, onBack }) => {
     return null;
   };
 
-  if (testCompleted && section) {
+  if (false && section) { // Disabled old completion logic
     // Calculate overall score
     const correctCount = Object.entries(answers).reduce((count, [questionId, selectedAnswer]) => {
       const question = section.questions.find(q => q.question_id === parseInt(questionId));
@@ -498,7 +706,7 @@ const NumericalReasoningTest = ({ onComplete, onBack }) => {
     }, 0);
     
     const scorePercentage = Math.round((correctCount / section.questions.length) * 100);
-    const timeSpentFormatted = formatTime(testData.duration_minutes * 60 - timeLeft);
+    const timeSpentFormatted = formatTime(testData.duration_minutes * 60 - timeRemaining);
     
     return (
       <motion.div 
@@ -580,7 +788,7 @@ const NumericalReasoningTest = ({ onComplete, onBack }) => {
                     acc[q.question_id] = q.correct_answer;
                     return acc;
                   }, {}),
-                  timeSpent: testData.duration_minutes * 60 - timeLeft,
+                  timeSpent: testData.duration_minutes * 60 - timeRemaining,
                   completed: true
                 };
                 
@@ -603,44 +811,57 @@ const NumericalReasoningTest = ({ onComplete, onBack }) => {
   }
   
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="min-h-screen bg-gradient-to-br from-blue-50 to-green-100"
-    >
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+    <div id="numerical-test-scroll" className="bg-gray-50">
+      {/* Test Header */}
+      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{section.title}</h1>
-              <p className="text-gray-600">
-                Question {currentQuestion + 1} of {section.questions.length}
-              </p>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={handleExit}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <FaTimes className="w-5 h-5" />
+              </button>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">Numerical Reasoning Test</h1>
+                <p className="text-sm text-gray-600">
+                  Section {currentSection} of {totalSections} • Question {currentQuestion} of {totalQuestions}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center text-lg font-semibold">
-                <FaClock className="text-blue-600 mr-2" />
-                <span className={timeLeft < 300 ? 'text-red-600' : 'text-gray-700'}>
-                  {formatTime(timeLeft)}
+            
+            <div className="flex items-center space-x-4">
+              {/* Timer */}
+              <div className="flex items-center space-x-2 px-3 py-2 bg-gray-100 rounded-lg">
+                <FaClock className="text-blue-600" />
+                <span className={`font-mono text-lg font-semibold ${
+                  timeRemaining < 300 ? 'text-red-600' : 'text-gray-700'
+                }`}>
+                  {formatTime(timeRemaining)}
                 </span>
               </div>
+              
+              {/* Pause Button */}
               <button
-                onClick={handleTestComplete}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                onClick={handlePause}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                Finish Test
+                <FaPause className="w-5 h-5" />
               </button>
-            </div>
-          </div>
-          
-          {/* Progress Bar */}
-          <div className="mt-4">
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${((currentQuestion + 1) / section.questions.length) * 100}%` }}
-              ></div>
+              
+              {/* Progress Indicator */}
+              <div className="flex items-center space-x-2">
+                <div className="w-32 bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${(currentQuestion / totalQuestions) * 100}%` }}
+                  ></div>
+                </div>
+                <span className="text-sm text-gray-600 font-medium">
+                  {Math.round((currentQuestion / totalQuestions) * 100)}%
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -679,21 +900,26 @@ const NumericalReasoningTest = ({ onComplete, onBack }) => {
                   <button
                     key={option.option_id}
                     onClick={() => handleAnswerSelect(question.question_id, option.option_id)}
-                    className={`p-4 rounded-lg border-2 transition-all duration-200 text-left ${
-                      answers[question.question_id] === option.option_id
-                        ? 'border-blue-600 bg-blue-50 text-blue-700'
+                    className={`p-4 rounded border-2 transition-all duration-200 text-left ${
+                      answers[question.question_id]?.answer === option.option_id
+                        ? 'border-blue-500 bg-blue-100 text-blue-800'
                         : 'border-gray-200 hover:border-blue-300 bg-white'
                     }`}
                   >
-                    <div className="flex items-center">
-                      <span className={`w-8 h-8 rounded-full border-2 flex items-center justify-center mr-3 text-sm font-medium
-                        ${answers[question.question_id] === option.option_id
-                          ? 'border-blue-600 bg-blue-600 text-white'
-                          : 'border-gray-300 text-gray-700'}`}
-                      >
-                        {option.option_id}
-                      </span>
-                      <span className="text-lg">{option.text}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center mr-3 text-sm font-bold
+                          ${answers[question.question_id]?.answer === option.option_id
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-200 text-gray-600'}`}
+                        >
+                          {option.option_id}
+                        </span>
+                        <span className="text-lg font-medium">{option.text}</span>
+                      </div>
+                      {answers[question.question_id]?.answer === option.option_id && (
+                        <FaCheck className="w-5 h-5 text-blue-500" />
+                      )}
                     </div>
                   </button>
                 ))}
@@ -704,9 +930,9 @@ const NumericalReasoningTest = ({ onComplete, onBack }) => {
             <div className="flex justify-between items-center pt-6 border-t">
               <button
                 onClick={handlePrevious}
-                disabled={currentQuestion === 0}
+                disabled={currentQuestion === 1}
                 className={`flex items-center px-6 py-3 rounded-lg transition-colors ${
-                  currentQuestion === 0
+                  currentQuestion === 1
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : 'bg-gray-500 text-white hover:bg-gray-600'
                 }`}
@@ -716,21 +942,108 @@ const NumericalReasoningTest = ({ onComplete, onBack }) => {
 
               <div className="text-center">
                 <p className="text-sm text-gray-600">
-                  {answers[question.question_id] ? 'Answer selected' : 'Select an answer'}
+                  {answers[question.question_id]?.answer ? 'Answer selected' : 'Select an answer'}
                 </p>
               </div>
 
               <button
                 onClick={handleNext}
-                className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                disabled={!currentQuestionAnswered}
+                className={`flex items-center px-6 py-3 rounded-lg transition-colors ${
+                  currentQuestionAnswered
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
               >
-                {currentQuestion === section.questions.length - 1 ? 'Complete Test' : 'Next'}
+                {currentQuestion === totalQuestions ? 'Complete Test' : 'Next'}
               </button>
             </div>
           </motion.div>
         </AnimatePresence>
       </div>
-    </motion.div>
+
+      {/* Pause Modal */}
+      <AnimatePresence>
+        {showPauseModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
+            >
+              <div className="text-center">
+                <FaPause className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Test Paused</h3>
+                <p className="text-gray-600 mb-6">
+                  Your test is currently paused. Click resume to continue.
+                </p>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleResume}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Resume Test
+                  </button>
+                  <button
+                    onClick={handleConfirmExit}
+                    className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                  >
+                    Exit Test
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Exit Modal */}
+      <AnimatePresence>
+        {showExitModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
+            >
+              <div className="text-center">
+                <FaTimesCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Exit Test?</h3>
+                <p className="text-gray-600 mb-6">
+                  Are you sure you want to exit? Your progress will be lost.
+                </p>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setShowExitModal(false)}
+                    className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConfirmExit}
+                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    Exit Test
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 

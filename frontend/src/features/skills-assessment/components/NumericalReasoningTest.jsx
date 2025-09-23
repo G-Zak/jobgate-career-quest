@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaChartLine, FaClock, FaStop, FaArrowRight, FaFlag, FaCalculator, FaQuestionCircle, FaTable, FaChartBar, FaCheckCircle, FaBrain, FaTimesCircle, FaPause, FaPlay, FaTimes, FaCog, FaSearch, FaLightbulb, FaPuzzlePiece, FaCheck } from 'react-icons/fa';
-import { getNumericalTestWithAnswers } from '../data/numericalTestSections';
+import { FaChartLine, FaClock, FaStop, FaArrowRight, FaArrowLeft, FaFlag, FaCalculator, FaQuestionCircle, FaTable, FaChartBar, FaCheckCircle, FaBrain, FaTimesCircle, FaPause, FaPlay, FaTimes, FaCog, FaSearch, FaLightbulb, FaPuzzlePiece, FaCheck } from 'react-icons/fa';
+import TestDataService from '../services/testDataService';
 // Removed complex scroll utilities - using simple scrollToTop function instead
 import { submitTestAttempt } from '../lib/submitHelper';
 import TestResultsPage from './TestResultsPage';
@@ -62,52 +62,31 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
     }
   }, [currentQuestion, testStep]);
 
-  // Get current section and question data (moved up to avoid temporal dead zone)
-  const currentSectionData = testData?.sections?.[currentSection - 1];
-  const currentQuestionData = currentSectionData?.questions?.[currentQuestion - 1];
-  const totalSections = testData?.sections?.length || 0;
-  const totalQuestions = rule?.totalQuestions || 20;
-
-  // Universal scoring hook
-  const allQuestions = testData?.sections?.flatMap(section => section.questions) || [];
-  const {
-    scoringSystem,
-    isInitialized: scoringInitialized,
-    startQuestion,
-    recordAnswer,
-    getFormattedResults,
-    getScoreBreakdown,
-    getQuestionTimings,
-    completeTest,
-    getTestResultsForSubmission
-  } = useUniversalScoring('numerical', allQuestions, testData?.scoringConfig, {
-    enableConsoleLogging: true,
-    logPrefix: '🔢',
-    autoStartTest: false
-  });
-
   // Load test data
   useEffect(() => {
-    try {
-      setLoading(true);
-      const data = getNumericalTestWithAnswers();
-      // Limit questions to rule's totalQuestions
-      const limitedData = {
-        ...data,
-        sections: data.sections.map(section => ({
-          ...section,
-          questions: section.questions.slice(0, rule?.totalQuestions || 20)
-        }))
-      };
-      setTestData(limitedData);
-      setTimeRemaining(rule?.timeLimitMin * 60 || 20 * 60);
-      setStartedAt(new Date());
-      startedAtRef.current = Date.now();
-    } catch (error) {
-      console.error('Error loading test data:', error);
-    } finally {
-      setLoading(false);
-    }
+    const loadTestData = async () => {
+      try {
+        setLoading(true);
+        const data = await TestDataService.fetchTestQuestions('NRT1');
+        // Limit questions to rule's totalQuestions
+        const limitedData = {
+          ...data,
+          sections: data.sections.map(section => ({
+            ...section,
+            questions: section.questions.slice(0, rule?.totalQuestions || 20)
+          }))
+        };
+        setTestData(limitedData);
+        setTimeRemaining(rule?.timeLimitMin * 60 || 20 * 60);
+        setStartedAt(new Date());
+      } catch (error) {
+        console.error('Error loading test data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadTestData();
   }, [rule]);
 
   // Start test when scoring system is ready
@@ -166,77 +145,72 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
     try {
       const endTime = new Date();
       const duration = Math.floor((endTime - startedAt) / 1000);
-
-      // Console logging for backend scoring verification
-      console.group('⏰ Test Time Up - Backend Scoring Verification');
-      console.log('🕐 End Time:', endTime);
-      console.log('⏱️ Duration:', duration, 'seconds');
-      console.log('📊 Current Answers:', answers);
-      console.log('⚙️ Scoring System Available:', !!scoringSystem);
-
-      // Get results from universal scoring system
-      let universalResults = null;
-      if (scoringSystem) {
-        universalResults = getFormattedResults();
-        console.log('🎯 Universal Results:', universalResults);
-        console.log('📈 Score Breakdown:', getScoreBreakdown());
-        console.log('⏱️ Question Timings:', getQuestionTimings());
-      }
-
-      // Fallback to simple scoring if universal scoring not available
-      const totalQuestions = rule?.totalQuestions || 20;
-      const correctAnswers = Object.values(answers).filter(answer => answer.isCorrect).length;
-      const score = universalResults ? universalResults.percentage : (totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0);
-
-      console.log('📊 Final Score Calculation:', {
-        totalQuestions,
-        correctAnswers,
-        score,
-        universalScoring: !!universalResults
+      
+      // Prepare answers for backend submission
+      const answersForBackend = {};
+      Object.entries(answers).forEach(([questionId, answer]) => {
+        if (typeof answer === 'object' && answer.selectedAnswer !== undefined) {
+          answersForBackend[questionId] = answer.selectedAnswer;
+        } else if (typeof answer === 'string') {
+          answersForBackend[questionId] = answer;
+        }
       });
 
-      // Complete the test in universal scoring system
-      if (scoringSystem) {
-        completeTest();
-      }
-
-      // Build attempt record using new scoring system
-      const attempt = buildAttempt(testId, totalQuestions, correctAnswers, startedAtRef.current, 'time');
-
-      // Add attempt to store
-      addAttempt(attempt);
-
-      const testResults = {
-        testId: testId,
-        testType: 'numerical-reasoning',
-        score: score,
-        totalQuestions: totalQuestions,
-        correctAnswers: correctAnswers,
-        duration: duration,
-        answers: answers,
-        completedAt: endTime.toISOString(),
-        startedAt: startedAt?.toISOString(),
-        attempt: attempt,
-        // Include universal scoring results if available
-        universalResults: universalResults,
-        scoringSystem: scoringSystem
-      };
-
-      console.log('📋 Final Test Results:', testResults);
-
-      // Submit to backend
+      // Submit to backend for scoring
       try {
-        console.log('🚀 Submitting to backend...');
-        await submitTestAttempt(testResults);
-        console.log('✅ Backend submission successful');
+        const submissionResult = await submitTestAttempt({
+          testId: 21, // Backend test ID for Numerical Reasoning - Basic Arithmetic
+          answers: answersForBackend,
+          startedAt: startedAtRef.current,
+          finishedAt: endTime.getTime(),
+          reason: 'time',
+          metadata: {
+            testType: 'numerical-reasoning',
+            timeLimit: rule?.timeLimitMin * 60 || 20 * 60
+          }
+        });
+
+        // Use backend scoring results
+        const testResults = {
+          testId: testId,
+          testType: 'numerical-reasoning',
+          score: submissionResult.score?.percentage_score || 0,
+          totalQuestions: submissionResult.score?.total_questions || 0,
+          correctAnswers: submissionResult.score?.correct_answers || 0,
+          duration: duration,
+          answers: answers,
+          completedAt: endTime.toISOString(),
+          startedAt: startedAt?.toISOString(),
+          submissionId: submissionResult.submission_id,
+          grade: submissionResult.score?.grade_letter || 'F'
+        };
+
+        setResults(testResults);
+        setTestStep('results');
       } catch (error) {
-        console.error('❌ Error submitting test attempt:', error);
+        console.error('Error submitting test attempt:', error);
+        // Fallback to frontend scoring if backend fails
+        const totalQuestions = rule?.totalQuestions || 20;
+        const correctAnswers = Object.values(answers).filter(answer => 
+          typeof answer === 'object' ? answer.isCorrect : false
+        ).length;
+        const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+        
+        const testResults = {
+          testId: testId,
+          testType: 'numerical-reasoning',
+          score: score,
+          totalQuestions: totalQuestions,
+          correctAnswers: correctAnswers,
+          duration: duration,
+          answers: answers,
+          completedAt: endTime.toISOString(),
+          startedAt: startedAt?.toISOString()
+        };
+
+        setResults(testResults);
+        setTestStep('results');
       }
-
-      console.groupEnd();
-
-      setResults(testResults);
-      setTestStep('results');
     } catch (error) {
       console.error('Error handling time up:', error);
     }
@@ -247,77 +221,72 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
     try {
       const endTime = new Date();
       const duration = Math.floor((endTime - startedAt) / 1000);
-
-      // Console logging for backend scoring verification
-      console.group('✅ Test Complete - Backend Scoring Verification');
-      console.log('🕐 End Time:', endTime);
-      console.log('⏱️ Duration:', duration, 'seconds');
-      console.log('📊 Final Answers:', answers);
-      console.log('⚙️ Scoring System Available:', !!scoringSystem);
-
-      // Get results from universal scoring system
-      let universalResults = null;
-      if (scoringSystem) {
-        universalResults = getFormattedResults();
-        console.log('🎯 Universal Results:', universalResults);
-        console.log('📈 Score Breakdown:', getScoreBreakdown());
-        console.log('⏱️ Question Timings:', getQuestionTimings());
-      }
-
-      // Calculate score using rule's totalQuestions
-      const totalQuestions = rule?.totalQuestions || 20;
-      const correctAnswers = Object.values(answers).filter(answer => answer.isCorrect).length;
-      const score = universalResults ? universalResults.percentage : (totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0);
-
-      console.log('📊 Final Score Calculation:', {
-        totalQuestions,
-        correctAnswers,
-        score,
-        universalScoring: !!universalResults
+      
+      // Prepare answers for backend submission
+      const answersForBackend = {};
+      Object.entries(answers).forEach(([questionId, answer]) => {
+        if (typeof answer === 'object' && answer.selectedAnswer !== undefined) {
+          answersForBackend[questionId] = answer.selectedAnswer;
+        } else if (typeof answer === 'string') {
+          answersForBackend[questionId] = answer;
+        }
       });
 
-      // Complete the test in universal scoring system
-      if (scoringSystem) {
-        completeTest();
-      }
-
-      // Build attempt record using new scoring system
-      const attempt = buildAttempt(testId, totalQuestions, correctAnswers, startedAtRef.current, 'user');
-
-      // Add attempt to store
-      addAttempt(attempt);
-
-      const testResults = {
-        testId: testId,
-        testType: 'numerical-reasoning',
-        score: score,
-        totalQuestions: totalQuestions,
-        correctAnswers: correctAnswers,
-        duration: duration,
-        answers: answers,
-        completedAt: endTime.toISOString(),
-        startedAt: startedAt?.toISOString(),
-        attempt: attempt,
-        // Include universal scoring results if available
-        universalResults: universalResults,
-        scoringSystem: scoringSystem
-      };
-
-      console.log('📋 Final Test Results:', testResults);
-
-      // Submit to backend
+      // Submit to backend for scoring
       try {
-        console.log('🚀 Submitting to backend...');
-        await submitTestAttempt(testResults);
-        console.log('✅ Backend submission successful');
+        const submissionResult = await submitTestAttempt({
+          testId: 21, // Backend test ID for Numerical Reasoning - Basic Arithmetic
+          answers: answersForBackend,
+          startedAt: startedAtRef.current,
+          finishedAt: endTime.getTime(),
+          reason: 'user',
+          metadata: {
+            testType: 'numerical-reasoning',
+            timeLimit: rule?.timeLimitMin * 60 || 20 * 60
+          }
+        });
+
+        // Use backend scoring results
+        const testResults = {
+          testId: testId,
+          testType: 'numerical-reasoning',
+          score: submissionResult.score?.percentage_score || 0,
+          totalQuestions: submissionResult.score?.total_questions || 0,
+          correctAnswers: submissionResult.score?.correct_answers || 0,
+          duration: duration,
+          answers: answers,
+          completedAt: endTime.toISOString(),
+          startedAt: startedAt?.toISOString(),
+          submissionId: submissionResult.submission_id,
+          grade: submissionResult.score?.grade_letter || 'F'
+        };
+
+        setResults(testResults);
+        setTestStep('results');
       } catch (error) {
-        console.error('❌ Error submitting test attempt:', error);
+        console.error('Error submitting test attempt:', error);
+        // Fallback to frontend scoring if backend fails
+        const totalQuestions = rule?.totalQuestions || 20;
+        const correctAnswers = Object.values(answers).filter(answer => 
+          typeof answer === 'object' ? answer.isCorrect : false
+        ).length;
+        const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+        
+        const testResults = {
+          testId: testId,
+          testType: 'numerical-reasoning',
+          score: score,
+          totalQuestions: totalQuestions,
+          correctAnswers: correctAnswers,
+          duration: duration,
+          answers: answers,
+          completedAt: endTime.toISOString(),
+          startedAt: startedAt?.toISOString()
+        };
+
+        setResults(testResults);
+        setTestStep('results');
       }
-
-      console.groupEnd();
-
-      setResults(testResults);
-      setTestStep('results');
     } catch (error) {
       console.error('Error completing test:', error);
     }
@@ -346,7 +315,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
   // Handle answer selection
   const handleAnswerSelect = (questionId, answer) => {
     // Find the question to get the correct answer
-    const question = currentSectionData?.questions?.find(q => q.question_id === questionId);
+    const question = currentSectionData?.questions?.find(q => q.id === questionId);
     const isCorrect = question ? question.correct_answer === answer : false;
 
     // Record answer in universal scoring system
@@ -438,8 +407,8 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
   }
 
   // Check if current question is answered for gated navigation
-  const currentQuestionAnswered = currentQuestionData ?
-    answers[currentQuestionData.question_id]?.answer != null : false;
+  const currentQuestionAnswered = currentQuestionData ? 
+    answers[currentQuestionData.id]?.answer != null : false;
 
   if (!testData) {
     return (
@@ -477,7 +446,6 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
             {/* Instructions Image */}
             {section.intro_image && (
               <div className="mb-8 text-center">
-
                 <div className="flex justify-center">
                   <img 
                     src={section.intro_image} 
@@ -540,7 +508,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                 Back to Tests
               </button>
               <button
-                onClick={handleStartTest}
+                onClick={handleNextSection}
                 className="flex items-center px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
               >
                 Start Test
@@ -814,7 +782,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
   if (false && section) { // Disabled old completion logic
     // Calculate overall score
     const correctCount = Object.entries(answers).reduce((count, [questionId, selectedAnswer]) => {
-      const question = section.questions.find(q => q.question_id === parseInt(questionId));
+      const question = section.questions.find(q => q.id === parseInt(questionId));
       if (question && question.correct_answer === selectedAnswer) {
         return count + 1;
       }
@@ -885,7 +853,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
               onClick={() => {
                 // Calculate and pass the results directly
                 const correctCount = Object.entries(answers).reduce((count, [questionId, selectedAnswer]) => {
-                  const question = section.questions.find(q => q.question_id === parseInt(questionId));
+                  const question = section.questions.find(q => q.id === parseInt(questionId));
                   if (question && question.correct_answer === selectedAnswer) {
                     return count + 1;
                   }
@@ -901,7 +869,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                   score: (correctCount / section.questions.length) * 100,
                   answers: answers,
                   correctAnswers: section.questions.reduce((acc, q) => {
-                    acc[q.question_id] = q.correct_answer;
+                    acc[q.id] = q.correct_answer;
                     return acc;
                   }, {}),
                   timeSpent: testData.duration_minutes * 60 - timeRemaining,
@@ -927,63 +895,61 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
   }
 
   return (
-    <div id="numerical-test-scroll" className="bg-gray-50">
-      {/* Test Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <button
+    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      {/* Modern Test Header - Matching Verbal Test Design */}
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Left: Test Info */}
+            <div className="flex items-center space-x-6">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleExit}
-                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center text-gray-600 hover:text-red-600 transition-colors"
               >
-                <FaTimes className="w-5 h-5" />
-              </button>
+                <FaTimes className="text-xl" />
+              </motion.button>
+              
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">Numerical Reasoning Test</h1>
+                <h1 className="text-xl font-bold text-gray-800">Numerical Reasoning Test</h1>
                 <p className="text-sm text-gray-600">
-                  Section {currentSection} of {totalSections} • Question {currentQuestion} of {totalQuestions}
+                  Question {currentQuestion} of {totalQuestions}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
-              {/* Timer */}
-              <div className="flex items-center space-x-2 px-3 py-2 bg-gray-100 rounded-lg">
-                <FaClock className="text-blue-600" />
-                <span className={`font-mono text-lg font-semibold ${timeRemaining < 300 ? 'text-red-600' : 'text-gray-700'
-                  }`}>
-                  {formatTime(timeRemaining)}
-                </span>
+            {/* Center: Progress Bar */}
+            <div className="flex-1 max-w-md mx-8">
+              <div className="bg-gray-200 rounded-full h-2">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(currentQuestion / totalQuestions) * 100}%` }}
+                  transition={{ duration: 0.5 }}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full"
+                />
               </div>
+              <p className="text-xs text-gray-500 mt-1 text-center">
+                {Math.round((currentQuestion / totalQuestions) * 100)}% Complete
+              </p>
+            </div>
 
-              {/* Pause Button */}
-              <button
-                onClick={handlePause}
-                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <FaPause className="w-5 h-5" />
-              </button>
-
-              {/* Progress Indicator */}
-              <div className="flex items-center space-x-2">
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(currentQuestion / totalQuestions) * 100}%` }}
-                  ></div>
+            {/* Right: Timer & Controls */}
+            <div className="flex items-center space-x-4">                    
+              <div className={`text-right ${timeRemaining < 300 ? 'text-red-500' : timeRemaining < 600 ? 'text-orange-500' : 'text-blue-600'}`}>
+                <div className="text-2xl font-bold font-mono">
+                  <FaClock className="inline mr-2" />
+                  {formatTime(timeRemaining)}
                 </div>
-                <span className="text-sm text-gray-600 font-medium">
-                  {Math.round((currentQuestion / totalQuestions) * 100)}%
-                </span>
+                <p className="text-xs opacity-75">Time Remaining</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Question Content */}
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      {/* Test Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentQuestion}
@@ -991,84 +957,109 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
-            className="bg-white rounded-xl shadow-lg p-8"
+            className="flex flex-col gap-6"
           >
-            {/* Question */}
+            {/* Question Card - Matching Verbal Test Design */}
+            <section className="bg-white rounded-2xl shadow-lg p-8">
             <div className="mb-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Question {currentQuestion + 1} <span className="text-sm text-gray-500 ml-2">({question?.category || 'General'})</span>
-                </h2>
-                <span className="text-sm text-gray-500">
-                  Complexity: {question?.complexity_score || 3}/5
-                </span>
+              <div className="flex items-center mb-4">
+                <FaQuestionCircle className="text-blue-600 text-xl mr-3" />
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Question {currentQuestion}
+                </h3>
               </div>
-
-              <p className="text-lg text-gray-700 mb-6">{question?.question}</p>
-
+              
+              <p className="text-gray-700 mb-6 text-lg leading-relaxed">
+                {question?.question_text || question?.question}
+              </p>
+              
               {/* Display data visuals if present */}
               {question && (question.data_type === 'chart' || question.data_type === 'table') && renderDataVisual(question)}
-
-              {/* Answer Options */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                {question?.options?.map((option) => (
-                  <button
-                    key={option.option_id}
-                    onClick={() => handleAnswerSelect(question.question_id, option.option_id)}
-                    className={`p-4 rounded border-2 transition-all duration-200 text-left ${answers[question.question_id]?.answer === option.option_id
-                      ? 'border-blue-500 bg-blue-100 text-blue-800'
-                      : 'border-gray-200 hover:border-blue-300 bg-white'
+              
+              {/* Answer Options - Matching Verbal Test Design */}
+              <div role="radiogroup" aria-labelledby={`q-${question?.id}-label`} className="grid gap-4">
+                {question?.options?.map((option, index) => {
+                  // Handle both string and object options
+                  const optionText = typeof option === 'string' ? option : option.text || option.value || option.option_id;
+                  const optionValue = typeof option === 'string' ? option : option.value || option.option_id || option.text;
+                  const isSelected = answers[question?.id]?.answer === optionValue;
+                  const letters = ['A', 'B', 'C', 'D', 'E'];
+                  
+                  return (
+                    <motion.label
+                      key={`option-${index}-${optionValue}`}
+                      className={`w-full rounded-xl border-2 px-6 py-4 cursor-pointer transition-all duration-200 ${
+                        isSelected 
+                          ? "border-blue-500 bg-blue-50 text-blue-700 shadow-lg" 
+                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md"
                       }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <span className={`w-6 h-6 rounded-full flex items-center justify-center mr-3 text-sm font-bold
-                          ${answers[question.question_id]?.answer === option.option_id
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-200 text-gray-600'}`}
-                        >
-                          {option.option_id}
-                        </span>
-                        <span className="text-lg font-medium">{option.text}</span>
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                    >
+                      <input
+                        type="radio"
+                        name={`q-${question?.id}`}
+                        value={optionValue}
+                        className="sr-only"
+                        checked={isSelected}
+                        onChange={() => handleAnswerSelect(question?.id, optionValue)}
+                      />
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <span className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 text-sm font-bold ${
+                            isSelected 
+                              ? 'bg-blue-500 text-white' 
+                              : 'bg-gray-200 text-gray-600'
+                          }`}>
+                            {letters[index]}
+                          </span>
+                          <span className="text-lg font-medium">{optionText}</span>
+                        </div>
+                        {isSelected && <FaCheckCircle className="w-5 h-5 text-blue-500" />}
                       </div>
-                      {answers[question.question_id]?.answer === option.option_id && (
-                        <FaCheck className="w-5 h-5 text-blue-500" />
-                      )}
-                    </div>
-                  </button>
-                ))}
+                    </motion.label>
+                  );
+                })}
               </div>
             </div>
+          </section>
 
-            {/* Navigation */}
-            <div className="flex justify-between items-center pt-6 border-t">
-              <button
+          {/* Navigation - Matching Verbal Test Design */}
+          <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handlePrevious}
                 disabled={currentQuestion === 1}
-                className={`flex items-center px-6 py-3 rounded-lg transition-colors ${currentQuestion === 1
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-500 text-white hover:bg-gray-600'
-                  }`}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
               >
+                <FaArrowLeft />
                 Previous
-              </button>
+              </motion.button>
 
-              <div className="text-center">
-                <p className="text-sm text-gray-600">
-                  {answers[question.question_id]?.answer ? 'Answer selected' : 'Select an answer'}
-                </p>
-              </div>
-
-              <button
-                onClick={handleNext}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={currentQuestion === totalQuestions ? handleTestComplete : handleNext}
                 disabled={!currentQuestionAnswered}
-                className={`flex items-center px-6 py-3 rounded-lg transition-colors ${currentQuestionAnswered
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }`}
+                className={`flex items-center gap-2 px-8 py-3 rounded-xl transition-all duration-200 font-medium shadow-lg ${
+                  currentQuestionAnswered
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
               >
-                {currentQuestion === totalQuestions ? 'Complete Test' : 'Next'}
-              </button>
+                {currentQuestion === totalQuestions ? (
+                  <>
+                    <FaFlag />
+                    Submit Test
+                  </>
+                ) : (
+                  <>
+                    Next
+                    <FaArrowRight />
+                  </>
+                )}
+              </motion.button>
             </div>
           </motion.div>
         </AnimatePresence>

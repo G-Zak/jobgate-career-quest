@@ -1,179 +1,299 @@
-# JobGate Career Quest - Troubleshooting & Fixes
+# 🔧 Troubleshooting Guide
 
-## Project Overview
-JobGate Career Quest is a gamified skills assessment platform built with:
-- **Frontend**: React + Vite + Tailwind CSS
-- **Backend**: Django REST Framework with JWT authentication
-- **Database**: PostgreSQL 15
-- **Deployment**: Docker Compose
+This guide helps resolve common issues when setting up and running the JobGate Career Quest project.
 
-## Issues Resolved
+## 🚨 Common Issues & Solutions
 
-### Issue #1: Backend Container Failing - Missing JWT Dependencies
+### 1. Database Connection Issues
 
-**Problem:**
+#### Error: `django.db.utils.OperationalError: could not connect to server`
+
+**Causes:**
+- PostgreSQL not running
+- Wrong database credentials
+- Database doesn't exist
+- User doesn't have permissions
+
+**Solutions:**
+```bash
+# Check if PostgreSQL is running
+brew services list | grep postgresql  # macOS
+sudo systemctl status postgresql      # Linux
+
+# Start PostgreSQL
+brew services start postgresql        # macOS
+sudo systemctl start postgresql       # Linux
+
+# Check database exists
+psql -U postgres -l
+
+# Create database if missing
+psql -U postgres
+CREATE DATABASE jobgate_career_quest;
+CREATE USER jobgate_user WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE jobgate_career_quest TO jobgate_user;
+\q
 ```
-ModuleNotFoundError: No module named 'rest_framework_simplejwt'
-```
 
-**Root Cause:**
-The Django settings (`backend/careerquest/settings.py`) referenced `rest_framework_simplejwt` in `INSTALLED_APPS`, but the package wasn't included in `requirements.txt`.
+### 2. Port Already in Use
+
+#### Error: `Port 3000 is already in use` or `Port 8000 is already in use`
 
 **Solution:**
-Added the missing dependency to `backend/requirements.txt`:
-```pip
-djangorestframework-simplejwt==5.3.0
+```bash
+# Find and kill processes using ports
+lsof -ti:3000 | xargs kill -9
+lsof -ti:3001 | xargs kill -9
+lsof -ti:8000 | xargs kill -9
+
+# Or use specific port
+python manage.py runserver 8001  # Backend on 8001
+npm run dev -- --port 3001       # Frontend on 3001
 ```
 
-### Issue #2: Backend Container Failing - Missing setuptools
+### 3. Frontend Not Loading Questions
 
-**Problem:**
-```
-ModuleNotFoundError: No module named 'pkg_resources'
-```
+#### Error: "Test Unavailable" or questions not loading
 
-**Root Cause:**
-The `djangorestframework-simplejwt` package requires `pkg_resources` which is provided by `setuptools`, but it wasn't explicitly installed.
+**Causes:**
+- Backend not running
+- CORS issues
+- API endpoint errors
+- Network connectivity
 
-**Solution:**
-Added setuptools to `backend/requirements.txt`:
-```pip
-setuptools==69.0.0
-```
+**Solutions:**
+```bash
+# 1. Check backend is running
+curl http://localhost:8000/api/tests/
 
-### Issue #3: Frontend Port Configuration Mismatch
+# 2. Check specific test endpoint
+curl http://localhost:8000/api/tests/4/questions/
 
-**Problem:**
-- Docker Compose exposed port 3000
-- Vite development server was running on internal port 5173
-- Frontend was not accessible via http://localhost:3000
+# 3. Check browser console for errors
+# Open Developer Tools (F12) → Console tab
 
-**Root Cause:**
-The frontend Dockerfile didn't configure Vite to run on the correct port and host.
-
-**Solution:**
-Updated `frontend/Dockerfile` CMD instruction:
-```dockerfile
-# Before
-CMD ["npm", "run", "dev"]
-
-# After
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
+# 4. Verify CORS settings in backend/careerquest/settings.py
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
+]
 ```
 
-## Files Modified
+### 4. Images Not Loading
 
-### 1. `/backend/requirements.txt`
-```diff
-Django==4.2.16
-djangorestframework==3.14.0
-+ djangorestframework-simplejwt==5.3.0
-psycopg2-binary==2.9.9
-drf-spectacular==0.27.2
-python-decouple==3.8
-+ setuptools==69.0.0
+#### Error: Images fail to load in tests
+
+**Causes:**
+- Wrong image paths
+- Images don't exist
+- Frontend server not serving static files
+
+**Solutions:**
+```bash
+# 1. Check if images exist
+ls -la frontend/src/assets/images/
+
+# 2. Check image paths in browser
+# Open Developer Tools → Network tab → Look for 404 errors
+
+# 3. Verify image paths in components
+# Should be: /src/assets/images/[test_type]/[image_name]
 ```
 
-### 2. `/frontend/Dockerfile`
-```diff
-# frontend/Dockerfile
-FROM node:20
+### 5. Scoring Issues
 
-WORKDIR /app
+#### Error: Scores return null or 0%
 
-COPY package*.json ./
-RUN npm install
+**Causes:**
+- Missing correct answers
+- Wrong answer format
+- Scoring service errors
 
-COPY . .
-
-EXPOSE 3000
-
-- CMD ["npm", "run", "dev"]
-+ CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
+**Solutions:**
+```bash
+# 1. Check if correct answers exist
+python manage.py shell
 ```
 
-## Resolution Steps Taken
-
-1. **Diagnosed the Issue**
-   - Checked Docker container status: `docker-compose ps`
-   - Examined container logs: `docker-compose logs backend`
-   - Identified missing dependencies in error messages
-
-2. **Fixed Backend Dependencies**
-   - Added `djangorestframework-simplejwt==5.3.0` to requirements.txt
-   - Added `setuptools==69.0.0` to requirements.txt
-   - Rebuilt backend container: `docker-compose build backend`
-
-3. **Fixed Frontend Port Configuration**
-   - Updated Dockerfile to specify correct host and port
-   - Rebuilt frontend container: `docker-compose build frontend`
-
-4. **Verified Resolution**
-   - Restarted all containers: `docker-compose up -d`
-   - Tested backend accessibility: `curl http://localhost:8000/` (HTTP 200 ✓)
-   - Tested frontend accessibility: `curl http://localhost:3000/` (HTTP 200 ✓)
-
-## Final Working Configuration
-
-### Container Status
+```python
+from testsengine.models import Question
+questions = Question.objects.filter(test_id=4)
+for q in questions[:3]:
+    print(f"Q{q.id}: correct_answer = {q.correct_answer}")
 ```
-NAME                              IMAGE                           STATUS                   PORTS
-jobgate-career-quest-backend-1    jobgate-career-quest-backend    Up                       0.0.0.0:8000->8000/tcp
-jobgate-career-quest-db-1         postgres:15                     Up (healthy)             5432/tcp
-jobgate-career-quest-frontend-1   jobgate-career-quest-frontend   Up                       0.0.0.0:3000->3000/tcp
-```
-
-### Application URLs
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **Database**: PostgreSQL running on internal port 5432
-
-### Dependencies Added
-- `djangorestframework-simplejwt==5.3.0` - JWT authentication for Django REST Framework
-- `setuptools==69.0.0` - Required for pkg_resources used by JWT package
-
-## Prevention Tips
-
-1. **Dependency Management**
-   - Always update `requirements.txt` when adding new packages to Django settings
-   - Use `pip freeze > requirements.txt` to capture all dependencies
-   - Test in clean environments to catch missing dependencies
-
-2. **Docker Configuration**
-   - Ensure port mappings match between docker-compose.yml and application configuration
-   - Use `--host 0.0.0.0` for development servers in containers
-   - Test container accessibility after builds
-
-3. **Development Workflow**
-   - Check container logs immediately after startup
-   - Use health checks for databases
-   - Verify all services are accessible before proceeding with development
-
-## Quick Commands Reference
 
 ```bash
-# Check container status
-docker-compose ps
+# 2. Add correct answers if missing
+python manage.py add_sjt_correct_answers
 
-# View logs for specific service
-docker-compose logs [service-name]
-
-# Rebuild and restart specific service
-docker-compose down [service-name]
-docker-compose build [service-name]
-docker-compose up [service-name] -d
-
-# Rebuild all services
-docker-compose down
-docker-compose build
-docker-compose up -d
-
-# Test service accessibility
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/
-curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/
+# 3. Check answer format
+# Should be letters: A, B, C, D, E
+# Not numbers: 0, 1, 2, 3, 4
 ```
 
----
+### 6. Random Selection Not Working
 
-**Resolution Date**: July 29, 2025  
-**Status**: ✅ Resolved - All services running successfully
+#### Error: All questions showing instead of 20 random
+
+**Causes:**
+- Test not in random selection list
+- Backend not updated
+
+**Solutions:**
+```bash
+# 1. Check backend/testsengine/views.py
+# Ensure test ID is in random_selection list
+
+# 2. Restart backend server
+python manage.py runserver
+
+# 3. Test API endpoint
+curl -s "http://localhost:8000/api/tests/4/questions/" | jq '.random_selection'
+```
+
+### 7. Dependencies Issues
+
+#### Error: `ModuleNotFoundError` or `npm ERR`
+
+**Solutions:**
+```bash
+# Backend dependencies
+cd backend
+pip install -r requirements.txt
+
+# Frontend dependencies
+cd frontend
+npm install
+
+# If still issues, try:
+pip install --upgrade pip
+npm cache clean --force
+npm install
+```
+
+### 8. Migration Issues
+
+#### Error: `django.db.utils.ProgrammingError` or migration errors
+
+**Solutions:**
+```bash
+# 1. Reset migrations (DANGER - deletes data)
+python manage.py flush
+python manage.py migrate
+
+# 2. Or fix specific migration
+python manage.py migrate --fake-initial
+python manage.py migrate
+```
+
+## 🔍 Debugging Steps
+
+### 1. Check Backend Logs
+```bash
+cd backend
+python manage.py runserver --verbosity=2
+```
+
+### 2. Check Frontend Logs
+```bash
+cd frontend
+npm run dev
+# Check terminal output for errors
+```
+
+### 3. Check Database
+```bash
+python manage.py shell
+```
+
+```python
+from testsengine.models import *
+print(f"Tests: {Test.objects.count()}")
+print(f"Questions: {Question.objects.count()}")
+print(f"Submissions: {TestSubmission.objects.count()}")
+```
+
+### 4. Check API Endpoints
+```bash
+# Test basic connectivity
+curl http://localhost:8000/api/tests/
+
+# Test specific test
+curl http://localhost:8000/api/tests/4/questions/ | jq '.total_questions'
+
+# Test submission
+curl -X POST http://localhost:8000/api/tests/4/submit/ \
+  -H "Content-Type: application/json" \
+  -d '{"answers": {"11": "A"}, "time_taken_seconds": 300}'
+```
+
+## 🆘 Emergency Reset
+
+If nothing works, try a complete reset:
+
+```bash
+# 1. Stop all servers
+# Ctrl+C in all terminal windows
+
+# 2. Kill all processes
+lsof -ti:3000 | xargs kill -9
+lsof -ti:8000 | xargs kill -9
+
+# 3. Reset database
+psql -U postgres
+DROP DATABASE jobgate_career_quest;
+CREATE DATABASE jobgate_career_quest;
+GRANT ALL PRIVILEGES ON DATABASE jobgate_career_quest TO jobgate_user;
+\q
+
+# 4. Reset backend
+cd backend
+rm -rf venv
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py add_verbal_questions
+python manage.py add_numerical_questions
+python manage.py add_lrt1_questions
+python manage.py add_lrt2_questions
+python manage.py add_lrt3_questions
+python manage.py add_diagrammatic_image_questions
+python manage.py add_diagrammatic_20_questions
+python manage.py add_abstract_questions
+python manage.py add_sjt_correct_answers
+python manage.py update_spatial_tests_to_5_options
+python manage.py runserver
+
+# 5. Reset frontend (in new terminal)
+cd frontend
+rm -rf node_modules
+npm install
+npm run dev
+```
+
+## 📞 Getting Help
+
+If you're still stuck:
+
+1. Check the main SETUP_GUIDE.md
+2. Check MANAGEMENT_COMMANDS.md for data loading
+3. Check browser console for frontend errors
+4. Check backend terminal for Django errors
+5. Verify all prerequisites are installed
+6. Try the emergency reset procedure
+
+## ✅ Success Indicators
+
+You know everything is working when:
+
+- [ ] Backend runs without errors on port 8000
+- [ ] Frontend runs without errors on port 3000
+- [ ] API endpoints return data (not 404/500 errors)
+- [ ] Tests load questions from database
+- [ ] Images display correctly
+- [ ] Test submission works and shows scores
+- [ ] Random selection shows 20 questions (not 200)
+- [ ] All 5 options (A-E) show for spatial tests

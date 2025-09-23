@@ -143,34 +143,7 @@ const unifiedTestsData = [
   }
 ];
 
-const defaultTestsData = [
-  {
-    category: "Master Situational Judgment Test",
-    prefix: "MASTER-SJT",
-    total: 1,
-    unlocked: [1],
-    icon: <FaUsers className="text-indigo-600" />,
-    progress: 100,
-    testType: "master-sjt",
-    featured: true,
-    tests: [
-      {
-        id: 1,
-        title: "Master SJT",
-        unlocked: true,
-        level: "Comprehensive",
-        type: "master_workplace_assessment",
-        description: "Comprehensive workplace behavior and judgment assessment covering all professional domains",
-        duration: "35 min",
-        questions: "35 (randomized)",
-        badge: "🎯",
-        difficulty: "adaptive",
-        color: "indigo",
-        features: ["Anti-cheating", "Retake cooldown", "200+ question pool", "Personalized results"]
-      }
-    ]
-  }
-];
+const defaultTestsData = [];
 
 const AvailableTests = ({ onBackToDashboard, onStartTest, onViewTestInfo, testFilter }) => {
   const navigate = useNavigate();
@@ -270,17 +243,17 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, onViewTestInfo, testFi
       }
     }
     
-    // Handle Master SJT specially - check for multiple variations
+    // Handle Master SJT as regular SJT
     if (testId === 'MASTER-SJT' || testId === 'Master SJT' || testId === 1 || testId === '1') {
       testData = {
-        id: 'MASTER-SJT',
-        title: 'Master SJT',
+        id: 'SJT1',
+        title: 'Situational Judgment Test',
         difficulty: 'adaptive',
         level: 'Comprehensive',
-        duration: '35 min',
-        questions: '35 (randomized)',
+        duration: '25 min',
+        questions: '20 (randomized)',
         description: 'Comprehensive workplace behavior and judgment assessment covering all professional domains',
-        testType: 'master-sjt'
+        testType: 'situational'
       };
     }
     
@@ -503,7 +476,7 @@ const AvailableTests = ({ onBackToDashboard, onStartTest, onViewTestInfo, testFi
                     className="px-6 pb-6"
                   >
                     {/* Special layout for Master SJT, Grid layout for all other tests */}
-                    {section.testType === "master-sjt" && section.tests ? (
+                    {false && section.testType === "master-sjt" && section.tests ? (
                       <div className="grid grid-cols-1 gap-6">
                         {section.tests.map((test) => {
                           const colorSchemes = {

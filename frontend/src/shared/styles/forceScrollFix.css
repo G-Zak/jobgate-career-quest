@@ -1,0 +1,77 @@
+/* Force Scroll Fix - Clean single scroll solution */
+
+/* Ensure smooth scrolling works globally */
+html {
+  scroll-behavior: smooth !important;
+}
+
+/* Ensure body is scrollable */
+body {
+  scroll-behavior: smooth !important;
+}
+
+/* Main content area should be scrollable */
+.main-content-area {
+  scroll-behavior: smooth !important;
+}
+
+/* Test containers should be scrollable but not create extra scroll bars */
+.min-h-screen {
+  min-height: 100vh !important;
+  scroll-behavior: smooth !important;
+}
+
+/* Ensure test containers don't create additional scroll bars */
+[data-test-container],
+.test-container,
+#test-content,
+#verbal-test-scroll,
+#spatial-test-scroll,
+#numerical-test-scroll {
+  scroll-behavior: smooth !important;
+}
+
+/* Main content areas should be scrollable */
+main, .main-content, .content {
+  scroll-behavior: smooth !important;
+}
+
+/* Smooth page transitions */
+.page-transition {
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Smooth scroll container transitions */
+.main-content-area {
+  transition: scroll-behavior 0.3s ease-in-out;
+}
+
+/* Skills dropdown scrollbar styling */
+.skills-dropdown-menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.skills-dropdown-menu::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 2px;
+}
+
+.skills-dropdown-menu::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+.skills-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

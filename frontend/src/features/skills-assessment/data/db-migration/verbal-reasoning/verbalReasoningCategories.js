@@ -709,12 +709,12 @@ export const verbalReasoningCategories = {
     levels: {
       comprehensive: {
         name: 'Comprehensive Coding & Decoding Test',
-        testId: 'VRT6',
+        testId: 'VRT4',
         description: 'Letter coding, number coding, substitution patterns, and mixed encoding systems from diverse cultural backgrounds',
         questionPool: 'dynamic',
         defaultQuestionCount: 25,
         timeLimit: 30,
-        getRandomizedTest: getRandomizedVRT6
+        getRandomizedTest: getRandomizedVRT4
       }
     }
   },

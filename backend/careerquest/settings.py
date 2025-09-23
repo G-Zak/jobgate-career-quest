@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-@a+p!xz-rq!6(tur$(xp_%u0e3=8q&z12#@5bb7bi3cdbfkusp
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver']
 
 
 # Application definition
@@ -56,7 +56,11 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",  # For testing/admin
     ),
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
 }
 
 MIDDLEWARE = [
@@ -100,6 +104,31 @@ from .database_config import DATABASES
 # Use the enhanced database configuration
 # DATABASES is already defined in database_config.py
 
+# PostgreSQL-specific settings for scoring system
+DATABASE_ROUTERS = []  # Add custom routers if needed for read/write splitting
+
+# Atomic requests for data consistency in scoring operations
+DATABASE_ATOMIC_REQUESTS = True
+
+# Transaction timeout for scoring operations (in seconds)
+DATABASE_CONN_TIMEOUT = 30
+
+# Logging for database operations
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'INFO',  # Set to DEBUG for SQL query logging
+        },
+    },
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

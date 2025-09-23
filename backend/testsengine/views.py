@@ -1,639 +1,1068 @@
-from django.shortcuts import render
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
+"""
+API Views for the testsengine app
+Implements backend-only scoring architecture with secure endpoints
+"""
+
+from rest_framework import generics, status, permissions
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.views import APIView
+from django.shortcuts import get_object_or_404
+from django.db import transaction
+from django.db import models
 from django.utils import timezone
-from django.db.models import Q, Count, Avg, Max
-from .models import (
-    Test, Question, TestSession, TestAnswer, 
-    CodingChallenge, CodingSubmission, CodingSession, TestAttempt
-)
+from django.core.cache import cache
+from django.http import Http404
+import logging
+
+from .models import Test, Question, TestSubmission, Answer, Score
 from .serializers import (
-    TestSerializer, QuestionSerializer, TestSessionSerializer, 
-    TestAnswerSerializer, SubmitAnswerSerializer,
-    CodingChallengeListSerializer, CodingChallengeDetailSerializer,
-    CodingSubmissionSerializer, CodingSubmissionDetailSerializer,
-    CodingSessionSerializer, SubmitCodeSerializer, SaveCodeSerializer,
-    TestAttemptSerializer
+    TestListSerializer, TestDetailSerializer, QuestionForTestSerializer,
+    SubmissionInputSerializer, ScoreDetailSerializer, TestSubmissionSerializer,
+    ScoringConfigSerializer, DifficultyDistributionSerializer
 )
-from .services.code_executor import CodeExecutor
+from .services.scoring_service import ScoringService, ScoringConfig, ScoringUtils
 
-class TestViewSet(viewsets.ModelViewSet):
-    queryset = Test.objects.filter(is_active=True)
-    serializer_class = TestSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        """
-        if self.action in ['list', 'retrieve', 'spatial_reasoning']:
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAuthenticated]
-        return [permission() for permission in permission_classes]
-    
-    @action(detail=False, methods=['get'])
-    def verbal_reasoning(self, request):
-        """Get the verbal reasoning test"""
-        try:
-            test = Test.objects.get(test_type='verbal_reasoning', is_active=True)
-            serializer = self.get_serializer(test)
-            return Response(serializer.data)
-        except Test.DoesNotExist:
-            return Response(
-                {'error': 'Verbal reasoning test not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-    
-    @action(detail=False, methods=['get'])
-    def spatial_reasoning(self, request):
-        """Get the spatial reasoning test with visual content"""
-        try:
-            test = Test.objects.get(test_type='spatial_reasoning', is_active=True)
-            serializer = self.get_serializer(test)
-            return Response(serializer.data)
-        except Test.DoesNotExist:
-            return Response(
-                {'error': 'Spatial reasoning test not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
+logger = logging.getLogger(__name__)
 
-class TestSessionViewSet(viewsets.ModelViewSet):
-    serializer_class = TestSessionSerializer
-    permission_classes = [IsAuthenticated]
+
+class TestListView(generics.ListAPIView):
+    """
+    List all active tests available for taking.
+    GET /api/tests/
+    """
+    serializer_class = TestListSerializer
+    permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
-        return TestSession.objects.filter(user=self.request.user)
+        """Return only active tests with questions"""
+        return Test.objects.filter(
+            is_active=True,
+            questions__isnull=False
+        ).distinct().order_by('-created_at')
     
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+    def list(self, request, *args, **kwargs):
+        """Add metadata to the response"""
+        response = super().list(request, *args, **kwargs)
+        
+        # Add scoring configuration for transparency
+        config = ScoringConfig()
+        response.data = {
+            'tests': response.data,
+            'scoring_config': {
+                'coefficients': {k: float(v) for k, v in config.DIFFICULTY_COEFFICIENTS.items()},
+                'test_duration_minutes': config.TEST_DURATION_MINUTES,
+                'scoring_version': config.SCORING_VERSION
+            }
+        }
+        
+        return response
+
+
+class TestDetailView(generics.RetrieveAPIView):
+    """
+    Get detailed test information including questions (WITHOUT correct answers).
+    GET /api/tests/{id}/
     
-    @action(detail=False, methods=['post'])
-    def start_test(self, request):
-        """Start a new test session"""
-        test_id = request.data.get('test_id')
-        if not test_id:
-            return Response(
-                {'error': 'test_id is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+    This is the main endpoint for starting a test.
+    """
+    serializer_class = TestDetailSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        return Test.objects.filter(is_active=True)
+    
+    def retrieve(self, request, *args, **kwargs):
+        """Add user-specific metadata and security checks"""
+        test = self.get_object()
         
-        try:
-            test = Test.objects.get(id=test_id, is_active=True)
-        except Test.DoesNotExist:
-            return Response(
-                {'error': 'Test not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        # Check if user already has a session for this test
-        existing_session = TestSession.objects.filter(
-            user=request.user, 
-            test=test,
-            status__in=['not_started', 'in_progress']
+        # Check if user already has a submission for this test
+        existing_submission = TestSubmission.objects.filter(
+            user=request.user,
+            test=test
         ).first()
         
-        if existing_session:
-            serializer = self.get_serializer(existing_session)
-            return Response(serializer.data)
+        if existing_submission:
+            logger.warning(f"User {request.user.username} already has submission for test {test.title}")
+            
+        response = super().retrieve(request, *args, **kwargs)
         
-        # Create new session
-        session = TestSession.objects.create(
-            user=request.user,
-            test=test,
-            status='in_progress'
-        )
+        # Add user-specific metadata
+        response.data['user_status'] = {
+            'has_previous_submission': existing_submission is not None,
+            'previous_submission_id': existing_submission.id if existing_submission else None,
+            'previous_score': existing_submission.score.percentage_score if existing_submission and hasattr(existing_submission, 'score') else None
+        }
         
-        serializer = self.get_serializer(session)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # Add instructions for frontend
+        response.data['instructions'] = {
+            'duration_minutes': test.duration_minutes,
+            'total_questions': test.total_questions,
+            'passing_score': test.passing_score,
+            'scoring_info': 'Difficulty coefficients: Easy=1.0, Medium=1.5, Hard=2.0',
+            'submission_format': 'Submit answers as {"question_id": "selected_answer"} format',
+            'time_tracking': 'Frontend should track total time and send with submission'
+        }
+        
+        return response
+
+
+class TestQuestionsView(APIView):
+    """
+    Get only the questions for a test (alternative endpoint).
+    GET /api/tests/{test_id}/questions/
     
-    @action(detail=True, methods=['post'])
-    def submit_answer(self, request, pk=None):
-        """Submit an answer for a question"""
-        session = self.get_object()
+    Provides questions in a cleaner format for frontend consumption.
+    """
+    permission_classes = [permissions.AllowAny]  # Temporarily allow anonymous access for testing
+    
+    def get(self, request, test_id):
+        """Return random questions without correct answers - 21 questions (7 passages × 3 questions)"""
+        test = get_object_or_404(Test, id=test_id, is_active=True)
         
-        if session.status != 'in_progress':
+        # Get all questions
+        all_questions = test.questions.all()
+        
+        if not all_questions.exists():
             return Response(
-                {'error': 'Test session is not in progress'}, 
+                {'error': 'No questions found for this test'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # For all tests, return 21 random questions (7 passages × 3 questions each)
+        # This ensures anti-cheating by randomizing questions each time
+        questions = self._get_random_21_questions(all_questions, test_id)
+        
+        serializer = QuestionForTestSerializer(questions, many=True)
+        
+        return Response({
+            'test_id': test.id,
+            'test_title': test.title,
+            'test_type': test.test_type,
+            'duration_minutes': test.duration_minutes,
+            'total_questions': len(questions),
+            'questions': serializer.data,
+            'fetched_at': timezone.now().isoformat(),
+            'security_note': 'Correct answers are not included - submit for scoring',
+            'random_selection': True,  # All tests now use random selection for anti-cheating
+            'selection_info': '21 questions randomly selected from available pool (7 passages × 3 questions)'
+        })
+    
+    def _get_random_21_questions(self, all_questions, test_id):
+        """Get 21 random questions (7 passages × 3 questions) for anti-cheating"""
+        import random
+        
+        # Convert to list for easier manipulation
+        questions_list = list(all_questions)
+        
+        if len(questions_list) <= 21:
+            # If we have 21 or fewer questions, return all of them
+            random.shuffle(questions_list)
+            return questions_list
+        
+        # For reading comprehension tests, try to group by passages
+        if test_id == 1:  # VRT1 - Reading Comprehension
+            return self._get_random_reading_comprehension_questions(questions_list)
+        else:
+            # For other tests, select 21 random questions with balanced difficulty
+            return self._get_balanced_random_21_questions(questions_list)
+    
+    def _get_random_reading_comprehension_questions(self, all_questions):
+        """Get 21 random reading comprehension questions (7 passages × 3 questions)"""
+        import random
+        
+        # Group questions by passage
+        passages = {}
+        for question in all_questions:
+            passage_text = question.passage or "No passage"
+            if passage_text not in passages:
+                passages[passage_text] = []
+            passages[passage_text].append(question)
+        
+        # Select 7 random passages
+        available_passages = list(passages.keys())
+        if len(available_passages) <= 7:
+            selected_passages = available_passages
+        else:
+            selected_passages = random.sample(available_passages, 7)
+        
+        # Select 3 questions from each selected passage
+        selected_questions = []
+        for passage in selected_passages:
+            passage_questions = passages[passage]
+            if len(passage_questions) >= 3:
+                # Select first 3 questions from this passage (maintain order)
+                selected_questions.extend(passage_questions[:3])
+            else:
+                # If less than 3 questions, take all and fill from other passages
+                selected_questions.extend(passage_questions)
+                remaining_needed = 3 - len(passage_questions)
+                # Fill remaining from other passages
+                other_questions = [q for p, qs in passages.items() if p != passage for q in qs]
+                if other_questions:
+                    selected_questions.extend(random.sample(other_questions, min(remaining_needed, len(other_questions))))
+        
+        # If we still don't have 21 questions, fill with random questions
+        if len(selected_questions) < 21:
+            remaining_questions = [q for q in all_questions if q not in selected_questions]
+            needed = 21 - len(selected_questions)
+            if remaining_questions:
+                selected_questions.extend(random.sample(remaining_questions, min(needed, len(remaining_questions))))
+        
+        # DO NOT shuffle - keep questions grouped by passage for proper reading comprehension flow
+        return selected_questions[:21]  # Ensure exactly 21 questions
+    
+    def _get_balanced_random_21_questions(self, all_questions):
+        """Get 21 random questions with balanced difficulty distribution"""
+        import random
+        
+        # Separate questions by difficulty
+        easy_questions = [q for q in all_questions if q.difficulty_level == 'easy']
+        medium_questions = [q for q in all_questions if q.difficulty_level == 'medium']
+        hard_questions = [q for q in all_questions if q.difficulty_level == 'hard']
+        
+        # Calculate how many questions to select from each difficulty
+        # Target distribution: 8 easy, 8 medium, 5 hard (total 21)
+        easy_count = min(8, len(easy_questions))
+        medium_count = min(8, len(medium_questions))
+        hard_count = min(5, len(hard_questions))
+        
+        # If we don't have enough questions in some categories, redistribute
+        remaining = 21 - (easy_count + medium_count + hard_count)
+        if remaining > 0:
+            if len(easy_questions) > easy_count:
+                easy_count += min(remaining, len(easy_questions) - easy_count)
+                remaining = 21 - (easy_count + medium_count + hard_count)
+            if remaining > 0 and len(medium_questions) > medium_count:
+                medium_count += min(remaining, len(medium_questions) - medium_count)
+                remaining = 21 - (easy_count + medium_count + hard_count)
+            if remaining > 0 and len(hard_questions) > hard_count:
+                hard_count += min(remaining, len(hard_questions) - hard_count)
+        
+        # Randomly select questions from each difficulty level
+        selected_questions = []
+        if easy_count > 0 and easy_questions:
+            selected_questions.extend(random.sample(easy_questions, easy_count))
+        if medium_count > 0 and medium_questions:
+            selected_questions.extend(random.sample(medium_questions, medium_count))
+        if hard_count > 0 and hard_questions:
+            selected_questions.extend(random.sample(hard_questions, hard_count))
+        
+        # If we still don't have 21 questions, fill with any remaining questions
+        if len(selected_questions) < 21:
+            remaining_questions = [q for q in all_questions if q not in selected_questions]
+            needed = 21 - len(selected_questions)
+            if remaining_questions:
+                selected_questions.extend(random.sample(remaining_questions, min(needed, len(remaining_questions))))
+        
+        # Shuffle the final selection to randomize order
+        random.shuffle(selected_questions)
+        
+        return selected_questions[:21]  # Ensure exactly 21 questions
+
+
+class SubmitTestView(APIView):
+    """
+    Submit test answers for scoring - MAIN SUBMISSION ENDPOINT.
+    POST /api/tests/{test_id}/submit/
+    
+    This is the primary endpoint for submitting test answers and receiving
+    immediate scoring results. Implements the backend-only scoring architecture.
+    
+    Request Body: {
+        "answers": {"1": "A", "2": "B", "3": "C"},  // question_id -> selected_answer
+        "time_taken_seconds": 1200,                  // total test duration
+        "submission_metadata": {                      // optional metadata
+            "browser": "Chrome",
+            "device": "Desktop",
+            "session_id": "abc123"
+        }
+    }
+    """
+    permission_classes = [permissions.AllowAny]  # Temporarily allow anonymous access for testing
+    
+    @transaction.atomic
+    def post(self, request, test_id):
+        """Process test submission and calculate score"""
+        test = get_object_or_404(Test, id=test_id, is_active=True)
+        
+        # Handle anonymous users for testing
+        user = request.user if request.user.is_authenticated else None
+        
+        # Check if user already has a submission for this test (only for authenticated users)
+        existing_submission = None
+        if user:
+            existing_submission = TestSubmission.objects.filter(
+                user=user,
+                test=test
+            ).first()
+            
+            if existing_submission:
+                logger.warning(f"User {user.username} already has submission for test {test.title}")
+                return Response({
+                    'error': 'Submission already exists for this test',
+                    'existing_submission_id': existing_submission.id,
+                    'existing_score': existing_submission.score.percentage_score if hasattr(existing_submission, 'score') else None,
+                    'submitted_at': existing_submission.submitted_at.isoformat(),
+                    'message': 'Use recalculate endpoint to update score if needed'
+                }, status=status.HTTP_409_CONFLICT)
+        
+        # Validate input data
+        serializer = SubmissionInputSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {'error': 'Invalid submission data', 'details': serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        serializer = SubmitAnswerSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        validated_data = serializer.validated_data
+        answers_data = validated_data['answers']
+        time_taken_seconds = validated_data['time_taken_seconds']
+        submission_metadata = request.data.get('submission_metadata', {})
         
-        data = serializer.validated_data
-        
-        try:
-            question = Question.objects.get(
-                id=data['question_id'], 
-                test=session.test
-            )
-        except Question.DoesNotExist:
-            return Response(
-                {'error': 'Question not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        # Check if answer already exists
-        answer, created = TestAnswer.objects.get_or_create(
-            session=session,
-            question=question,
-            defaults={
-                'selected_answer': data['selected_answer'],
-                'is_correct': data['selected_answer'] == question.correct_answer,
-                'time_taken': data['time_taken']
-            }
-        )
-        
-        if not created:
-            # Update existing answer
-            answer.selected_answer = data['selected_answer']
-            answer.is_correct = data['selected_answer'] == question.correct_answer
-            answer.time_taken = data['time_taken']
-            answer.save()
-        
-        # Update session progress
-        session.current_question = max(session.current_question, question.order + 1)
-        session.save()
-        
-        return Response({
-            'success': True,
-            'is_correct': answer.is_correct,
-            'current_question': session.current_question
-        })
-    
-    @action(detail=True, methods=['post'])
-    def finish_test(self, request, pk=None):
-        """Finish the test and calculate score"""
-        session = self.get_object()
-        
-        if session.status != 'in_progress':
-            return Response(
-                {'error': 'Test session is not in progress'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Calculate score
-        total_questions = session.test.total_questions
-        correct_answers = TestAnswer.objects.filter(
-            session=session, 
-            is_correct=True
-        ).count()
-        
-        score = round((correct_answers / total_questions) * 100)
-        
-        # Update session
-        session.status = 'completed'
-        session.end_time = timezone.now()
-        session.score = score
-        session.save()
-        
-        serializer = self.get_serializer(session)
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['get'])
-    def get_question(self, request, pk=None):
-        """Get a specific question for the test session"""
-        session = self.get_object()
-        question_number = request.query_params.get('number', 1)
-        
-        try:
-            question = Question.objects.get(
-                test=session.test,
-                order=question_number
-            )
-            
-            # Don't include correct answer in response
-            serializer = QuestionSerializer(question)
-            data = serializer.data
-            data.pop('correct_answer', None)
-            
-            # Check if user has already answered this question
-            try:
-                user_answer = TestAnswer.objects.get(
-                    session=session,
-                    question=question
-                )
-                data['user_answer'] = user_answer.selected_answer
-            except TestAnswer.DoesNotExist:
-                data['user_answer'] = None
-            
-            return Response(data)
-            
-        except Question.DoesNotExist:
-            return Response(
-                {'error': 'Question not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-
-# ======= CODING CHALLENGES VIEWS =======
-
-class CodingChallengeViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing coding challenges"""
-    
-    queryset = CodingChallenge.objects.filter(is_active=True)
-    permission_classes = [IsAuthenticated]
-    lookup_field = 'slug'
-    
-    def get_serializer_class(self):
-        if self.action == 'list':
-            return CodingChallengeListSerializer
-        return CodingChallengeDetailSerializer
-    
-    def get_permissions(self):
-        """Allow anonymous access to list and retrieve"""
-        if self.action in ['list', 'retrieve']:
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAuthenticated]
-        return [permission() for permission in permission_classes]
-    
-    def list(self, request):
-        """List coding challenges with filtering"""
-        queryset = self.get_queryset()
-        
-        # Filter by language
-        language = request.query_params.get('language')
-        if language:
-            queryset = queryset.filter(language=language)
-        
-        # Filter by difficulty
-        difficulty = request.query_params.get('difficulty')
-        if difficulty:
-            queryset = queryset.filter(difficulty=difficulty)
-        
-        # Filter by category
-        category = request.query_params.get('category')
-        if category:
-            queryset = queryset.filter(category=category)
-        
-        # Search by title or tags
-        search = request.query_params.get('search')
-        if search:
-            queryset = queryset.filter(
-                Q(title__icontains=search) |
-                Q(description__icontains=search) |
-                Q(tags__icontains=search)
-            )
-        
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-    
-    @action(detail=False, methods=['get'])
-    def categories(self, request):
-        """Get available challenge categories"""
-        categories = CodingChallenge.objects.values_list('category', flat=True).distinct()
-        return Response({'categories': list(categories)})
-    
-    @action(detail=False, methods=['get'])
-    def languages(self, request):
-        """Get available programming languages"""
-        languages = CodingChallenge.objects.values_list('language', flat=True).distinct()
-        return Response({'languages': list(languages)})
-    
-    @action(detail=False, methods=['get'])
-    def stats(self, request):
-        """Get coding challenges statistics"""
-        if not request.user.is_authenticated:
-            return Response({'error': 'Authentication required'}, status=401)
-        
-        user_stats = CodingSubmission.objects.filter(user=request.user).aggregate(
-            total_submissions=Count('id'),
-            accepted_submissions=Count('id', filter=Q(status='accepted')),
-            avg_score=Avg('score'),
-            max_score=Max('score')
-        )
-        
-        total_challenges = CodingChallenge.objects.filter(is_active=True).count()
-        solved_challenges = CodingSubmission.objects.filter(
-            user=request.user, 
-            status='accepted'
-        ).values('challenge').distinct().count()
-        
-        return Response({
-            'total_challenges': total_challenges,
-            'solved_challenges': solved_challenges,
-            'completion_rate': round((solved_challenges / total_challenges) * 100, 1) if total_challenges > 0 else 0,
-            **user_stats
-        })
-
-
-class CodingSubmissionViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing code submissions"""
-    
-    serializer_class = CodingSubmissionSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        if self.request.user.is_authenticated:
-            return CodingSubmission.objects.filter(user=self.request.user)
-        return CodingSubmission.objects.none()
-    
-    def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return CodingSubmissionDetailSerializer
-        return CodingSubmissionSerializer
-    
-    def get_permissions(self):
-        """Allow anonymous access to submit_code and by_challenge for candidate testing"""
-        if self.action in ['submit_code', 'by_challenge']:
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAuthenticated]
-        return [permission() for permission in permission_classes]
-    
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user if self.request.user.is_authenticated else None)
-    
-    @action(detail=False, methods=['post'])
-    def submit_code(self, request):
-        """Submit code for evaluation - accessible without authentication for candidate testing"""
-        serializer = SubmitCodeSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        data = serializer.validated_data
-        
-        try:
-            challenge = CodingChallenge.objects.get(
-                id=data['challenge_id'], 
-                is_active=True
-            )
-        except CodingChallenge.DoesNotExist:
-            return Response(
-                {'error': 'Challenge not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        # Create submission record (user can be null for anonymous submissions)
-        submission = CodingSubmission.objects.create(
-            user=request.user if request.user.is_authenticated else None,
-            challenge=challenge,
-            code=data['code'],
-            status='pending'
-        )
-        
-        # Execute code asynchronously (in a real app, use Celery)
-        try:
-            # Simplified version - fake success for testing
-            submission.status = 'accepted'
-            submission.execution_time_ms = 50
-            submission.memory_used_mb = 5.0
-            submission.test_results = [
-                {
-                    'input': 'nums = [2,7,11,15], target = 9',
-                    'expected_output': '[0,1]',
-                    'actual_output': '[0,1]',
-                    'passed': True
-                }
-            ]
-            submission.tests_passed = 1
-            submission.total_tests = 1
-            submission.score = challenge.max_points
-            
-            submission.save()
-            
-            # For candidate testing, return simplified result
+        # Additional validation
+        validation_result = self._validate_submission_requirements(test, answers_data, time_taken_seconds)
+        if not validation_result['valid']:
             return Response({
+                'error': 'Submission validation failed',
+                'details': validation_result['errors'],
+                'warnings': validation_result.get('warnings', [])
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Use scoring service to process submission
+            scoring_service = ScoringService()
+            
+            submission, score = scoring_service.score_test_submission(
+                user=user,  # This will be None for anonymous users
+                test=test,
+                answers_data=answers_data,
+                time_taken_seconds=time_taken_seconds
+            )
+            
+            # Add submission metadata
+            if submission_metadata:
+                submission.answers_data.update({'metadata': submission_metadata})
+                submission.save()
+            
+            user_display = request.user.username if request.user.is_authenticated else "Anonymous"
+            logger.info(f"Test submitted successfully: User {user_display}, Test {test.title}, Score {score.percentage_score}%")
+            
+            
+            # Return immediate score results with enhanced data
+            score_serializer = ScoreDetailSerializer(score)
+            
+            response_data = {
                 'success': True,
-                'status': submission.status,
-                'score': submission.score,
-                'max_score': challenge.max_points,
-                'tests_passed': submission.tests_passed,
-                'total_tests': submission.total_tests,
-                'execution_time_ms': submission.execution_time_ms,
-                'memory_used_mb': submission.memory_used_mb,
-                'correct': submission.status == 'accepted',
-                'error_message': submission.error_message,
-                'test_results': submission.test_results[:3] if submission.test_results else []  # Show only first 3 test results
-            }, status=status.HTTP_201_CREATED)
+                'submission_id': submission.id,
+                'message': 'Test submitted and scored successfully',
+                'score': score_serializer.data,
+                'submitted_at': submission.submitted_at.isoformat(),
+                'processing_info': {
+                    'scoring_version': submission.scoring_version,
+                    'questions_answered': len(answers_data),
+                    'expected_questions': test.total_questions,
+                    'completion_rate': len(answers_data) / test.total_questions * 100 if test.total_questions > 0 else 0,
+                    'time_efficiency': self._calculate_time_efficiency(time_taken_seconds, test.duration_minutes)
+                },
+                'next_steps': {
+                    'view_detailed_results': f'/api/submissions/{submission.id}/results/',
+                    'compare_with_others': f'/api/tests/{test.id}/leaderboard/',
+                    'view_analytics': '/api/analytics/scores/'
+                }
+            }
+            
+            # Add warnings if any
+            warnings = validation_result.get('warnings', [])
+            if warnings:
+                response_data['warnings'] = warnings
+            
+            # Create TestSession for test history (outside atomic transaction)
+            self._create_test_session(user, test, submission, score, answers_data, time_taken_seconds)
+            
+            return Response(response_data, status=status.HTTP_201_CREATED)
             
         except Exception as e:
-            submission.status = 'runtime_error'
-            submission.error_message = str(e)
-            submission.save()
-            
-            return Response({
-                'success': False,
-                'status': 'runtime_error',
-                'error_message': str(e),
-                'score': 0,
-                'max_score': challenge.max_points,
-                'correct': False
-            }, status=status.HTTP_200_OK)  # Return 200 even for execution errors
-    
-    @action(detail=False, methods=['get'])
-    def recent(self, request):
-        """Get recent submissions"""
-        limit = int(request.query_params.get('limit', 10))
-        submissions = self.get_queryset()[:limit]
-        serializer = self.get_serializer(submissions, many=True)
-        return Response(serializer.data)
-    
-    @action(detail=False, methods=['get'])
-    def by_challenge(self, request):
-        """Get submissions for a specific challenge"""
-        challenge_id = request.query_params.get('challenge_id')
-        if not challenge_id:
+            logger.error(f"Error processing test submission: {e}")
             return Response(
-                {'error': 'challenge_id parameter is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
+                {'error': 'Failed to process submission', 'details': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
-        # For anonymous access, return empty list
-        if not request.user.is_authenticated:
-            return Response([])
-        
-        submissions = self.get_queryset().filter(challenge_id=challenge_id)
-        serializer = self.get_serializer(submissions, many=True)
-        return Response(serializer.data)
-
-
-class CodingSessionViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing coding sessions"""
     
-    serializer_class = CodingSessionSerializer
-    permission_classes = [IsAuthenticated]
+    def _create_test_session(self, user, test, submission, score, answers_data, time_taken_seconds):
+        """Create TestSession record for test history integration (outside atomic transaction)"""
+        try:
+            from django.contrib.auth.models import User
+            from .models import TestSession, TestAnswer
+            from django.utils import timezone
+            
+            # For anonymous users, use a default user for test history
+            session_user = user if user else User.objects.first()
+            logger.info(f"TestSession creation: user={user}, session_user={session_user}")
+            
+            # For testing, if user is None, try to get a user that doesn't have this test yet
+            if not session_user:
+                # Find a user who doesn't have this test yet
+                existing_users = TestSession.objects.filter(test=test).values_list('user_id', flat=True)
+                session_user = User.objects.exclude(id__in=existing_users).first()
+                logger.info(f"Found alternative user for test: {session_user}")
+            
+            if session_user:  # Only create if we have a user (authenticated or default)
+                # Use get_or_create to handle unique constraint, then update
+                test_session, created = TestSession.objects.get_or_create(
+                    user=session_user,
+                    test=test,
+                    defaults={
+                        'status': 'completed',
+                        'start_time': submission.submitted_at,
+                        'end_time': timezone.now(),
+                        'score': float(score.percentage_score),
+                        'answers': answers_data,
+                        'time_spent': time_taken_seconds
+                    }
+                )
+                
+                # Update existing session if it wasn't created
+                if not created:
+                    test_session.status = 'completed'
+                    test_session.start_time = submission.submitted_at
+                    test_session.end_time = timezone.now()
+                    test_session.score = float(score.percentage_score)
+                    test_session.answers = answers_data
+                    test_session.time_spent = time_taken_seconds
+                    test_session.save()
+                    logger.info(f"Updated existing TestSession: {test_session.id}")
+                else:
+                    logger.info(f"Created new TestSession: {test_session.id}")
+                
+                # Create detailed TestAnswer records
+                TestAnswer.objects.filter(session=test_session).delete()  # Clear old answers
+                for question_id, selected_answer in answers_data.items():
+                    try:
+                        from .models import Question
+                        question = Question.objects.get(id=question_id)
+                        is_correct = (question.correct_answer == selected_answer)
+                        
+                        TestAnswer.objects.create(
+                            session=test_session,
+                            question=question,
+                            selected_answer=selected_answer,
+                            is_correct=is_correct,
+                            time_taken=0  # Could be calculated per question if needed
+                        )
+                    except Question.DoesNotExist:
+                        logger.warning(f"Question {question_id} not found for TestSession {test_session.id}")
+                        continue
+                
+                logger.info(f"TestSession created/updated: {test_session.id} for user {session_user.username}")
+                return test_session
+                
+        except Exception as e:
+            logger.error(f"Failed to create TestSession: {str(e)}")
+            logger.error(f"Exception type: {type(e).__name__}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            # Don't fail the main submission if test history fails
+            return None
+    
+    def _validate_submission_requirements(self, test, answers_data, time_taken_seconds):
+        """Validate submission meets test requirements"""
+        errors = []
+        warnings = []
+        
+        # Check that provided questions are valid (allow partial submissions)
+        expected_questions = set(str(q.id) for q in test.questions.all())
+        provided_questions = set(answers_data.keys())
+        
+        extra_questions = provided_questions - expected_questions
+        
+        if extra_questions:
+            errors.append(f"Invalid question IDs provided: {sorted(extra_questions)}")
+        
+        # Allow partial submissions - only validate that provided answers are for valid questions
+        if not provided_questions:
+            errors.append("No answers provided")
+        
+        # Check time constraints
+        max_time = test.duration_minutes * 60 + 60  # Allow 1 minute grace period
+        if time_taken_seconds > max_time:
+            warnings.append(f"Submission time ({time_taken_seconds}s) exceeds test duration ({test.duration_minutes} minutes)")
+        
+        if time_taken_seconds < 60:  # Less than 1 minute
+            warnings.append(f"Very fast submission ({time_taken_seconds}s) - please verify answers")
+        
+        # Check answer format
+        valid_answers = ['A', 'B', 'C', 'D', 'E', 'F']
+        for question_id, answer in answers_data.items():
+            if answer.upper() not in valid_answers:
+                errors.append(f"Invalid answer format '{answer}' for question {question_id}")
+        
+        return {
+            'valid': len(errors) == 0,
+            'errors': errors,
+            'warnings': warnings
+        }
+    
+    def _calculate_time_efficiency(self, time_taken_seconds, duration_minutes):
+        """Calculate time efficiency metrics"""
+        expected_time = duration_minutes * 60
+        efficiency = (expected_time / time_taken_seconds) * 100 if time_taken_seconds > 0 else 0
+        
+        if efficiency > 100:
+            return f"Efficient ({efficiency:.1f}% of allocated time used)"
+        elif efficiency > 80:
+            return f"Good pace ({efficiency:.1f}% of allocated time used)"
+        else:
+            return f"Time pressure ({efficiency:.1f}% of allocated time used)"
+
+
+class TestResultView(generics.RetrieveAPIView):
+    """
+    Get detailed test results by submission ID.
+    GET /api/submissions/{submission_id}/results/
+    """
+    serializer_class = ScoreDetailSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_object(self):
+        """Get score for the submission, ensuring user owns it"""
+        submission_id = self.kwargs['submission_id']
+        submission = get_object_or_404(
+            TestSubmission,
+            id=submission_id,
+            user=self.request.user
+        )
+        
+        if not hasattr(submission, 'score'):
+            raise Http404("Score not found for this submission")
+            
+        return submission.score
+
+
+class UserSubmissionsView(generics.ListAPIView):
+    """
+    List all submissions for the current user.
+    GET /api/my-submissions/
+    """
+    serializer_class = TestSubmissionSerializer
+    permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
-        return CodingSession.objects.filter(user=self.request.user)
+        return TestSubmission.objects.filter(
+            user=self.request.user
+        ).order_by('-submitted_at')
+
+
+class TestStatsView(APIView):
+    """
+    Get statistics for a specific test.
+    GET /api/tests/{test_id}/stats/
+    """
+    permission_classes = [permissions.IsAuthenticated]
     
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+    def get(self, request, test_id):
+        """Return test statistics and difficulty distribution"""
+        test = get_object_or_404(Test, id=test_id, is_active=True)
+        
+        # Use scoring utils to analyze the test
+        utils = ScoringUtils()
+        distribution = utils.validate_difficulty_distribution(test)
+        
+        # Get submission statistics
+        submissions = TestSubmission.objects.filter(test=test)
+        scores = Score.objects.filter(submission__test=test)
+        
+        stats = {
+            'test_info': {
+                'id': test.id,
+                'title': test.title,
+                'type': test.test_type,
+                'total_questions': test.total_questions,
+                'max_possible_score': float(test.calculate_max_score()),
+                'duration_minutes': test.duration_minutes,
+                'passing_score': test.passing_score
+            },
+            'difficulty_distribution': distribution,
+            'submission_stats': {
+                'total_submissions': submissions.count(),
+                'completed_submissions': submissions.filter(is_complete=True).count(),
+                'average_score': float(scores.aggregate(avg=models.Avg('percentage_score'))['avg'] or 0),
+                'pass_rate': float(scores.filter(percentage_score__gte=test.passing_score).count() / max(scores.count(), 1) * 100)
+            }
+        }
+        
+        return Response(stats)
+
+
+# Configuration and Utility Endpoints
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def scoring_config_view(request):
+    """
+    Get current scoring configuration.
+    GET /api/scoring-config/
+    """
+    config = ScoringConfig()
     
-    @action(detail=False, methods=['post'])
-    def start_session(self, request):
-        """Start or resume a coding session"""
-        challenge_id = request.data.get('challenge_id')
-        if not challenge_id:
+    config_data = {
+        'difficulty_coefficients': {k: float(v) for k, v in config.DIFFICULTY_COEFFICIENTS.items()},
+        'test_duration_minutes': config.TEST_DURATION_MINUTES,
+        'scoring_version': config.SCORING_VERSION,
+        'grade_thresholds': config.GRADE_THRESHOLDS,
+        'passing_score_default': 70
+    }
+    
+    serializer = ScoringConfigSerializer(config_data)
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def validate_test_answers(request):
+    """
+    Validate answer format without scoring (for frontend validation).
+    POST /api/validate-answers/
+    
+    Body: {
+        "test_id": 1,
+        "answers": {"1": "A", "2": "B"}
+    }
+    """
+    test_id = request.data.get('test_id')
+    answers = request.data.get('answers', {})
+    
+    if not test_id:
+        return Response({'error': 'test_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    test = get_object_or_404(Test, id=test_id, is_active=True)
+    
+    # Validate answer format
+    serializer = SubmissionInputSerializer(data={'answers': answers, 'time_taken_seconds': 1})
+    if not serializer.is_valid():
+        return Response({
+            'valid': False,
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Check if all questions are answered
+    question_ids = set(str(q.id) for q in test.questions.all())
+    provided_ids = set(answers.keys())
+    
+    missing_questions = question_ids - provided_ids
+    extra_questions = provided_ids - question_ids
+    
+    return Response({
+        'valid': len(missing_questions) == 0 and len(extra_questions) == 0,
+        'missing_questions': list(missing_questions),
+        'extra_questions': list(extra_questions),
+        'total_questions': len(question_ids),
+        'answered_questions': len(provided_ids),
+        'completion_percentage': len(provided_ids) / len(question_ids) * 100 if question_ids else 0
+    })
+
+
+# Dedicated Scoring Endpoints
+
+class CalculateScoreView(APIView):
+    """
+    Calculate score for a given set of answers without creating a submission.
+    POST /api/tests/{test_id}/calculate-score/
+    
+    This endpoint allows calculating scores for preview/validation purposes
+    without permanently storing the submission.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request, test_id):
+        """Calculate score without creating permanent submission"""
+        test = get_object_or_404(Test, id=test_id, is_active=True)
+        
+        # Validate input data
+        serializer = SubmissionInputSerializer(data=request.data)
+        if not serializer.is_valid():
             return Response(
-                {'error': 'challenge_id is required'}, 
+                {'error': 'Invalid submission data', 'details': serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        validated_data = serializer.validated_data
+        answers_data = validated_data['answers']
+        time_taken_seconds = validated_data['time_taken_seconds']
+        
         try:
-            challenge = CodingChallenge.objects.get(
-                id=challenge_id, 
-                is_active=True
+            # Calculate score without saving to database
+            scoring_service = ScoringService()
+            
+            # Simulate scoring without database operations
+            score_preview = self._calculate_score_preview(
+                test, answers_data, time_taken_seconds, scoring_service
             )
-        except CodingChallenge.DoesNotExist:
+            
+            logger.info(f"Score calculated for preview: User {request.user.username}, Test {test.title}, Score {score_preview['percentage_score']}%")
+            
+            return Response({
+                'success': True,
+                'message': 'Score calculated successfully (preview mode)',
+                'score_preview': score_preview,
+                'calculated_at': timezone.now().isoformat(),
+                'note': 'This is a preview calculation - no data has been saved'
+            })
+            
+        except Exception as e:
+            logger.error(f"Error calculating score preview: {e}")
             return Response(
-                {'error': 'Challenge not found'}, 
+                {'error': 'Failed to calculate score', 'details': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _calculate_score_preview(self, test, answers_data, time_taken_seconds, scoring_service):
+        """Calculate score preview without database operations"""
+        questions = test.questions.all().order_by('order')
+        
+        correct_answers = 0
+        raw_score = 0
+        difficulty_breakdown = {'easy': 0, 'medium': 0, 'hard': 0}
+        difficulty_correct = {'easy': 0, 'medium': 0, 'hard': 0}
+        answer_details = []
+        
+        for question in questions:
+            question_id_str = str(question.id)
+            selected_answer = answers_data.get(question_id_str, '').upper()
+            is_correct = question.check_answer(selected_answer)
+            
+            if is_correct:
+                points = float(scoring_service.config.DIFFICULTY_COEFFICIENTS[question.difficulty_level])
+                raw_score += points
+                correct_answers += 1
+                difficulty_correct[question.difficulty_level] += 1
+                difficulty_breakdown[question.difficulty_level] += points
+            
+            answer_details.append({
+                'question_id': question.id,
+                'question_order': question.order,
+                'question_text': question.question_text,
+                'selected_answer': selected_answer,
+                'correct_answer': question.correct_answer,
+                'is_correct': is_correct,
+                'difficulty_level': question.difficulty_level,
+                'points_awarded': points if is_correct else 0,
+                'scoring_coefficient': float(scoring_service.config.DIFFICULTY_COEFFICIENTS[question.difficulty_level])
+            })
+        
+        max_possible_score = float(test.calculate_max_score())
+        percentage_score = (raw_score / max_possible_score * 100) if max_possible_score > 0 else 0
+        
+        # Calculate grade
+        grade_letter = 'F'
+        for threshold, grade in scoring_service.config.GRADE_THRESHOLDS.items():
+            if percentage_score >= threshold:
+                grade_letter = grade
+                break
+        
+        return {
+            'raw_score': raw_score,
+            'max_possible_score': max_possible_score,
+            'percentage_score': round(percentage_score, 2),
+            'correct_answers': correct_answers,
+            'total_questions': questions.count(),
+            'grade_letter': grade_letter,
+            'passed': percentage_score >= test.passing_score,
+            'difficulty_breakdown': {
+                'easy': {'correct': difficulty_correct['easy'], 'score': difficulty_breakdown['easy']},
+                'medium': {'correct': difficulty_correct['medium'], 'score': difficulty_breakdown['medium']},
+                'hard': {'correct': difficulty_correct['hard'], 'score': difficulty_breakdown['hard']}
+            },
+            'time_taken_seconds': time_taken_seconds,
+            'average_time_per_question': round(time_taken_seconds / questions.count(), 2) if questions.count() > 0 else 0,
+            'answer_details': answer_details
+        }
+
+
+class RecalculateScoreView(APIView):
+    """
+    Recalculate score for an existing submission.
+    POST /api/submissions/{submission_id}/recalculate/
+    
+    Useful for debugging or when scoring algorithm is updated.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request, submission_id):
+        """Recalculate score for existing submission"""
+        submission = get_object_or_404(
+            TestSubmission,
+            id=submission_id,
+            user=request.user
+        )
+        
+        try:
+            scoring_service = ScoringService()
+            
+            # Recalculate the score
+            with transaction.atomic():
+                new_score = scoring_service.recalculate_score(submission)
+            
+            score_serializer = ScoreDetailSerializer(new_score)
+            
+            logger.info(f"Score recalculated: Submission {submission_id}, New score {new_score.percentage_score}%")
+            
+            return Response({
+                'success': True,
+                'message': 'Score recalculated successfully',
+                'submission_id': submission.id,
+                'recalculated_at': timezone.now().isoformat(),
+                'score': score_serializer.data
+            })
+            
+        except Exception as e:
+            logger.error(f"Error recalculating score for submission {submission_id}: {e}")
+            return Response(
+                {'error': 'Failed to recalculate score', 'details': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ScoreComparisonView(APIView):
+    """
+    Compare scores across multiple submissions.
+    GET /api/scores/compare/?submissions=1,2,3
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        """Compare multiple scores"""
+        submission_ids = request.query_params.get('submissions', '').split(',')
+        
+        if not submission_ids or not all(id.strip().isdigit() for id in submission_ids):
+            return Response(
+                {'error': 'Valid submission IDs required (e.g., ?submissions=1,2,3)'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get submissions belonging to the user
+        submissions = TestSubmission.objects.filter(
+            id__in=[int(id.strip()) for id in submission_ids],
+            user=request.user
+        ).select_related('test', 'score')
+        
+        if not submissions.exists():
+            return Response(
+                {'error': 'No valid submissions found'},
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Get or create session
-        session, created = CodingSession.objects.get_or_create(
-            user=request.user,
-            challenge=challenge,
-            defaults={
-                'current_code': challenge.starter_code or '',
-                'status': 'active'
-            }
-        )
+        comparison_data = []
+        for submission in submissions:
+            if hasattr(submission, 'score'):
+                comparison_data.append({
+                    'submission_id': submission.id,
+                    'test_title': submission.test.title,
+                    'test_type': submission.test.test_type,
+                    'submitted_at': submission.submitted_at.isoformat(),
+                    'time_taken_seconds': submission.time_taken_seconds,
+                    'percentage_score': float(submission.score.percentage_score),
+                    'grade_letter': submission.score.grade_letter,
+                    'passed': submission.score.passed,
+                    'correct_answers': submission.score.correct_answers,
+                    'total_questions': submission.score.total_questions,
+                    'difficulty_performance': {
+                        'easy': f"{submission.score.easy_correct}/3" if submission.score.easy_correct else "0/3",
+                        'medium': f"{submission.score.medium_correct}/3" if submission.score.medium_correct else "0/3", 
+                        'hard': f"{submission.score.hard_correct}/3" if submission.score.hard_correct else "0/3"
+                    }
+                })
         
-        if not created:
-            session.last_activity = timezone.now()
-            session.save()
-        
-        serializer = self.get_serializer(session)
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['post'])
-    def save_code(self, request, pk=None):
-        """Save code progress during session"""
-        session = self.get_object()
-        serializer = SaveCodeSerializer(data=request.data)
-        
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        session.current_code = serializer.validated_data['code']
-        session.last_activity = timezone.now()
-        session.save()
-        
-        return Response({'success': True})
-    
-    @action(detail=False, methods=['get'])
-    def active(self, request):
-        """Get active coding sessions"""
-        sessions = self.get_queryset().filter(status='active')
-        serializer = self.get_serializer(sessions, many=True)
-        return Response(serializer.data)
-    
-    @action(detail=False, methods=['get'])
-    def progress(self, request):
-        """Get user's overall progress"""
-        sessions = self.get_queryset()
-        total_sessions = sessions.count()
-        completed_sessions = sessions.filter(status='completed').count()
-        active_sessions = sessions.filter(status='active').count()
-        
-        avg_time = sessions.filter(
-            status='completed', 
-            completion_time__isnull=False
-        ).aggregate(
-            avg_time=Avg('completion_time')
-        )['avg_time']
+        # Calculate comparison statistics
+        scores = [item['percentage_score'] for item in comparison_data]
+        comparison_stats = {
+            'total_submissions': len(comparison_data),
+            'average_score': round(sum(scores) / len(scores), 2) if scores else 0,
+            'highest_score': max(scores) if scores else 0,
+            'lowest_score': min(scores) if scores else 0,
+            'improvement': round(scores[-1] - scores[0], 2) if len(scores) >= 2 else 0,
+            'consistency': round(max(scores) - min(scores), 2) if len(scores) > 1 else 0
+        }
         
         return Response({
-            'total_sessions': total_sessions,
-            'completed_sessions': completed_sessions,
-            'active_sessions': active_sessions,
-            'completion_rate': round((completed_sessions / total_sessions) * 100, 1) if total_sessions > 0 else 0,
-            'average_completion_time_minutes': avg_time.total_seconds() / 60 if avg_time else None
+            'comparison_data': comparison_data,
+            'statistics': comparison_stats,
+            'generated_at': timezone.now().isoformat()
         })
 
 
-class TestAttemptViewSet(viewsets.ModelViewSet):
-    """ViewSet for unified test attempt tracking across all test types"""
+class LeaderboardView(APIView):
+    """
+    Get leaderboard for a specific test.
+    GET /api/tests/{test_id}/leaderboard/
+    """
+    permission_classes = [permissions.IsAuthenticated]
     
-    serializer_class = TestAttemptSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        """Return attempts for the authenticated user"""
-        return TestAttempt.objects.filter(user=self.request.user)
-
-    def perform_create(self, serializer):
-        """Auto-assign the authenticated user when creating an attempt"""
-        serializer.save(user=self.request.user)
-    
-    @action(detail=False, methods=['get'])
-    def by_test(self, request):
-        """Get attempts grouped by test type"""
-        test_id = request.query_params.get('test_id')
-        if test_id:
-            attempts = self.get_queryset().filter(test_id=test_id)
-        else:
-            attempts = self.get_queryset()
+    def get(self, request, test_id):
+        """Get test leaderboard"""
+        test = get_object_or_404(Test, id=test_id, is_active=True)
         
-        serializer = self.get_serializer(attempts, many=True)
-        return Response(serializer.data)
-    
-    @action(detail=False, methods=['get'])
-    def metrics(self, request):
-        """Get user's assessment metrics"""
-        attempts = self.get_queryset()
+        # Get top scores for this test
+        top_scores = Score.objects.filter(
+            submission__test=test
+        ).select_related(
+            'submission__user', 'submission__test'
+        ).order_by('-percentage_score', 'submission__time_taken_seconds')[:10]
         
-        # Group by test_id for best scores and last attempts
-        test_metrics = {}
-        for attempt in attempts:
-            test_id = attempt.test_id
-            if test_id not in test_metrics:
-                test_metrics[test_id] = {
-                    'attempts': [],
-                    'best_percentage': 0,
-                    'last_percentage': 0,
-                    'completed_count': 0
+        leaderboard_data = []
+        for i, score in enumerate(top_scores, 1):
+            leaderboard_data.append({
+                'rank': i,
+                'username': score.submission.user.username,
+                'percentage_score': float(score.percentage_score),
+                'grade_letter': score.grade_letter,
+                'time_taken_seconds': score.submission.time_taken_seconds,
+                'submitted_at': score.submission.submitted_at.isoformat(),
+                'correct_answers': score.correct_answers,
+                'total_questions': score.total_questions
+            })
+        
+        # Get current user's rank if they have a submission
+        user_score = Score.objects.filter(
+            submission__test=test,
+            submission__user=request.user
+        ).first()
+        
+        user_rank = None
+        if user_score:
+            better_scores = Score.objects.filter(
+                submission__test=test,
+                percentage_score__gt=user_score.percentage_score
+            ).count()
+            
+            same_scores_faster = Score.objects.filter(
+                submission__test=test,
+                percentage_score=user_score.percentage_score,
+                submission__time_taken_seconds__lt=user_score.submission.time_taken_seconds
+            ).count()
+            
+            user_rank = better_scores + same_scores_faster + 1
+        
+        return Response({
+            'test_info': {
+                'id': test.id,
+                'title': test.title,
+                'test_type': test.test_type
+            },
+            'leaderboard': leaderboard_data,
+            'user_rank': user_rank,
+            'total_participants': Score.objects.filter(submission__test=test).count(),
+            'generated_at': timezone.now().isoformat()
+        })
+
+
+# Analytics and Reporting Endpoints
+
+class ScoreAnalyticsView(APIView):
+    """
+    Get comprehensive analytics for scores.
+    GET /api/analytics/scores/
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        """Get score analytics for the authenticated user"""
+        user_submissions = TestSubmission.objects.filter(
+            user=request.user
+        ).select_related('test', 'score')
+        
+        if not user_submissions.exists():
+            return Response({
+                'message': 'No submissions found for analysis',
+                'analytics': None
+            })
+        
+        # Calculate analytics
+        scores = [s.score for s in user_submissions if hasattr(s, 'score')]
+        
+        if not scores:
+            return Response({
+                'message': 'No scored submissions found for analysis',
+                'analytics': None
+            })
+        
+        analytics = {
+            'overall_performance': {
+                'total_tests_taken': len(scores),
+                'average_score': round(sum(float(s.percentage_score) for s in scores) / len(scores), 2),
+                'highest_score': max(float(s.percentage_score) for s in scores),
+                'lowest_score': min(float(s.percentage_score) for s in scores),
+                'tests_passed': sum(1 for s in scores if s.passed),
+                'pass_rate': round(sum(1 for s in scores if s.passed) / len(scores) * 100, 2)
+            },
+            'difficulty_analysis': {
+                'easy_average': round(sum(s.easy_correct for s in scores) / (len(scores) * 3) * 100, 2) if scores else 0,
+                'medium_average': round(sum(s.medium_correct for s in scores) / (len(scores) * 3) * 100, 2) if scores else 0,
+                'hard_average': round(sum(s.hard_correct for s in scores) / (len(scores) * 3) * 100, 2) if scores else 0
+            },
+            'time_performance': {
+                'average_time_per_question': round(sum(float(s.average_time_per_question) for s in scores) / len(scores), 2),
+                'fastest_overall': min(s.fastest_question_time for s in scores),
+                'slowest_overall': max(s.slowest_question_time for s in scores)
+            },
+            'progress_trend': [
+                {
+                    'test_number': i + 1,
+                    'percentage_score': float(score.percentage_score),
+                    'date': score.submission.submitted_at.isoformat(),
+                    'test_title': score.submission.test.title
                 }
-            
-            test_metrics[test_id]['attempts'].append(attempt)
-            
-            # Update best score
-            if attempt.percentage > test_metrics[test_id]['best_percentage']:
-                test_metrics[test_id]['best_percentage'] = attempt.percentage
-            
-            # Count completed attempts
-            if attempt.result in ['completed', 'timeout']:
-                test_metrics[test_id]['completed_count'] += 1
-        
-        # Calculate last scores and overall metrics
-        total_attempts = attempts.count()
-        completed_tests = 0
-        percentage_sum = 0
-        percentage_count = 0
-        
-        best_by_test = {}
-        last_by_test = {}
-        
-        for test_id, data in test_metrics.items():
-            # Sort by created_at desc to get last attempt
-            data['attempts'].sort(key=lambda x: x.created_at, reverse=True)
-            if data['attempts']:
-                last_by_test[test_id] = data['attempts'][0].percentage
-            
-            best_by_test[test_id] = data['best_percentage']
-            
-            if data['completed_count'] > 0:
-                completed_tests += 1
-            
-            # Add to average calculation
-            for attempt in data['attempts']:
-                if attempt.result in ['completed', 'timeout']:
-                    percentage_sum += attempt.percentage
-                    percentage_count += 1
-        
-        avg_percentage = round(percentage_sum / percentage_count) if percentage_count > 0 else 0
+                for i, score in enumerate(scores)
+            ]
+        }
         
         return Response({
-            'total_attempts': total_attempts,
-            'tests_completed': completed_tests,
-            'avg_percentage': avg_percentage,
-            'best_by_test': best_by_test,
-            'last_by_test': last_by_test
+            'user': request.user.username,
+            'analytics': analytics,
+            'generated_at': timezone.now().isoformat()
         })
+
+
+# Health Check Endpoint
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def health_check(request):
+    """
+    Health check endpoint for the API.
+    GET /api/health/
+    """
+    try:
+        # Check database connectivity
+        test_count = Test.objects.count()
+        question_count = Question.objects.count()
+        submission_count = TestSubmission.objects.count()
+        score_count = Score.objects.count()
+        
+        # Check scoring service
+        scoring_service = ScoringService()
+        config = scoring_service.config
+        
+        return Response({
+            'status': 'healthy',
+            'timestamp': timezone.now().isoformat(),
+            'database': {
+                'connected': True,
+                'tests': test_count,
+                'questions': question_count,
+                'submissions': submission_count,
+                'scores': score_count
+            },
+            'scoring_service': {
+                'available': True,
+                'version': config.SCORING_VERSION,
+                'coefficients': {k: float(v) for k, v in config.DIFFICULTY_COEFFICIENTS.items()}
+            },
+            'api_version': '1.0'
+        })
+    except Exception as e:
+        return Response({
+            'status': 'unhealthy',
+            'error': str(e),
+            'timestamp': timezone.now().isoformat()
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
