@@ -37,10 +37,10 @@ def get_database_config():
         return {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
-                'NAME': config('DB_NAME', default='jobgate_career_quest'),
-                'USER': config('DB_USER', default='jobgate_user'),
-                'PASSWORD': config('DB_PASSWORD', default=''),
-                'HOST': config('DB_HOST', default='localhost'),
+                'NAME': config('DB_NAME', default='careerquest'),
+                'USER': config('DB_USER', default='jobgate'),
+                'PASSWORD': config('DB_PASSWORD', default='securepass'),
+                'HOST': config('DB_HOST', default='db'),
                 'PORT': config('DB_PORT', default='5432'),
                 # Django's built-in connection pooling
                 'CONN_MAX_AGE': config('DB_CONN_MAX_AGE', default=600, cast=int),

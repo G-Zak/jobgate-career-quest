@@ -29,6 +29,26 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
   const timerRef = useRef(null);
   const startedAtRef = useRef(Date.now());
 
+  // Get current section and question data
+  const currentSectionData = testData?.sections?.[currentSection - 1];
+  const currentQuestionData = currentSectionData?.questions?.[currentQuestion - 1];
+  const totalSections = testData?.sections?.length || 0;
+  const totalQuestions = rule?.totalQuestions || 20;
+
+  // Initialize universal scoring system
+  const {
+    scoringSystem,
+    isInitialized: scoringInitialized,
+    startQuestion,
+    recordAnswer,
+    completeTest,
+    getFormattedResults
+  } = useUniversalScoring('numerical-reasoning', testData?.sections?.flatMap(s => s.questions) || [], null, {
+    enableConsoleLogging: true,
+    logPrefix: '🔢',
+    autoStartTest: false
+  });
+
   // Smooth scroll-to-top function - only called on navigation
   const scrollToTop = () => {
     // Target the main scrollable container in MainDashboard
