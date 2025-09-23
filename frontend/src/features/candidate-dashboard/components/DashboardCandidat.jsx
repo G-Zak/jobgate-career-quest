@@ -35,7 +35,17 @@ const Dashboard = ({ onNavigateToSection }) => {
         setDashboardData(transformedData);
       } catch (err) {
         console.error('Error loading dashboard data:', err);
-        setError(err.message);
+        
+        // Check if it's an authentication error
+        if (err.message.includes('Session expired') || err.message.includes('log in')) {
+          setError('Your session has expired. Please log in again to view your dashboard.');
+          // Redirect to login after a short delay
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
+        } else {
+          setError(err.message);
+        }
       } finally {
         setLoading(false);
       }
@@ -62,23 +72,39 @@ const Dashboard = ({ onNavigateToSection }) => {
 
   // Error state
   if (error) {
+    const isAuthError = error.includes('session') || error.includes('expired') || error.includes('log in');
+    
     return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+      <div className={`${isAuthError ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200'} border rounded-xl p-6`}>
         <div className="flex items-center">
-          <div className="text-red-400 mr-3">
+          <div className={`${isAuthError ? 'text-yellow-400' : 'text-red-400'} mr-3`}>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <div>
-            <h3 className="text-lg font-medium text-red-800">Error Loading Dashboard</h3>
-            <p className="text-red-600 mt-1">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Try Again
-            </button>
+            <h3 className={`text-lg font-medium ${isAuthError ? 'text-yellow-800' : 'text-red-800'}`}>
+              {isAuthError ? 'Session Expired' : 'Error Loading Dashboard'}
+            </h3>
+            <p className={`${isAuthError ? 'text-yellow-600' : 'text-red-600'} mt-1`}>{error}</p>
+            <div className="mt-3 flex gap-2">
+              {!isAuthError && (
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Try Again
+                </button>
+              )}
+              {isAuthError && (
+                <button
+                  onClick={() => window.location.href = '/login'}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Go to Login
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
