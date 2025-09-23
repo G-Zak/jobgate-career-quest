@@ -2,6 +2,7 @@ from django.db.models import Avg, Count, Q, Max
 from django.utils import timezone
 from datetime import timedelta
 from testsengine.models import TestSession, Test
+from .cache_utils import cache_manager, cache_achievements
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,22 +19,30 @@ class AchievementsService:
     
     def calculate_all_achievements(self):
         """
-        Calculate all available achievements for the user
+        Calculate all available achievements for the user with caching
         """
+        # Try to get from cache first
+        cached_achievements = cache_manager.get_user_achievements(self.user.id)
+        if cached_achievements:
+            return cached_achievements
+        
         achievements = []
         
         # Get basic stats
         total_tests = self.sessions.count()
         if total_tests == 0:
-            return self._get_unearned_achievements()
+            achievements = self._get_unearned_achievements()
+        else:
+            # Calculate each achievement
+            achievements.extend(self._calculate_perfect_score_achievement())
+            achievements.extend(self._calculate_test_master_achievement(total_tests))
+            achievements.extend(self._calculate_improvement_achievement())
+            achievements.extend(self._calculate_speed_master_achievement())
+            achievements.extend(self._calculate_versatile_learner_achievement())
+            achievements.extend(self._calculate_first_step_achievement(total_tests))
         
-        # Calculate each achievement
-        achievements.extend(self._calculate_perfect_score_achievement())
-        achievements.extend(self._calculate_test_master_achievement(total_tests))
-        achievements.extend(self._calculate_improvement_achievement())
-        achievements.extend(self._calculate_speed_master_achievement())
-        achievements.extend(self._calculate_versatile_learner_achievement())
-        achievements.extend(self._calculate_first_step_achievement(total_tests))
+        # Cache the results
+        cache_manager.set_user_achievements(self.user.id, achievements)
         
         return achievements
     

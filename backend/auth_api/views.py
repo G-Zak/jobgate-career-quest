@@ -10,6 +10,7 @@ from django.db.models import Avg, Count, Q, Max
 from testsengine.models import TestSession, Test
 from recommendation.models import JobRecommendation, JobOffer
 from .services import AchievementsService
+from .cache_utils import cache_manager
 import logging
 
 logger = logging.getLogger(__name__)
@@ -240,10 +241,18 @@ def get_achievements(request):
 @permission_classes([permissions.IsAuthenticated])
 def get_dashboard_summary(request):
     """
-    Get aggregated dashboard data in a single API call
+    Get aggregated dashboard data in a single API call with caching
     """
     try:
         user = request.user
+        
+        # Try to get from cache first
+        cached_data = cache_manager.get_user_dashboard_data(user.id)
+        if cached_data:
+            logger.info(f"Returning cached dashboard data for user {user.id}")
+            return Response(cached_data)
+        
+        logger.info(f"Generating fresh dashboard data for user {user.id}")
         
         # Get test sessions for the user
         sessions = TestSession.objects.filter(user=user).select_related('test')
@@ -339,7 +348,8 @@ def get_dashboard_summary(request):
                     'count': cat['count']
                 })
         
-        return Response({
+        # Prepare response data
+        response_data = {
             'test_history': {
                 'summary': {
                     'total_tests': total_tests,
@@ -369,7 +379,13 @@ def get_dashboard_summary(request):
                 'last_name': user.last_name,
                 'date_joined': user.date_joined.isoformat()
             }
-        })
+        }
+        
+        # Cache the response data
+        cache_manager.set_user_dashboard_data(user.id, response_data)
+        logger.info(f"Cached dashboard data for user {user.id}")
+        
+        return Response(response_data)
         
     except Exception as e:
         logger.error(f"Error in get_dashboard_summary: {str(e)}")
