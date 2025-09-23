@@ -130,17 +130,22 @@ class CacheManager:
         Get cache statistics for monitoring
         """
         try:
+            # Get Redis client directly
+            dashboard_client = self.dashboard_cache._cache.get_client()
+            achievements_client = self.achievements_cache._cache.get_client()
+            default_client = self.default_cache._cache.get_client()
+            
             stats = {
                 'dashboard_cache': {
-                    'keys': len(self.dashboard_cache._cache.get_client().keys('dashboard:*')),
+                    'keys': len(dashboard_client.keys('dashboard:*')),
                     'memory_usage': self._get_memory_usage('dashboard')
                 },
                 'achievements_cache': {
-                    'keys': len(self.achievements_cache._cache.get_client().keys('achievements:*')),
+                    'keys': len(achievements_client.keys('achievements:*')),
                     'memory_usage': self._get_memory_usage('achievements')
                 },
                 'default_cache': {
-                    'keys': len(self.default_cache._cache.get_client().keys('careerquest:*')),
+                    'keys': len(default_client.keys('careerquest:*')),
                     'memory_usage': self._get_memory_usage('default')
                 }
             }
