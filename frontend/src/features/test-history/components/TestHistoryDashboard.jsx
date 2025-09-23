@@ -18,6 +18,34 @@ const TestHistoryDashboard = () => {
   const [sortBy, setSortBy] = useState('date');
 
   useEffect(() => {
+    // Check if user has a valid token in localStorage
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setError('Please log in to view your test history.');
+      setLoading(false);
+      return;
+    }
+    
+    // Check if token is expired (basic check)
+    try {
+      const tokenData = JSON.parse(atob(token.split('.')[1]));
+      const now = Date.now() / 1000;
+      if (tokenData.exp < now) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        setError('Your session has expired. Please log in again to view your test history.');
+        setLoading(false);
+        return;
+      }
+    } catch (e) {
+      // Token is malformed, remove it
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      setError('Invalid session. Please log in again to view your test history.');
+      setLoading(false);
+      return;
+    }
+    
     loadTestHistoryData();
   }, []);
 
@@ -26,7 +54,6 @@ const TestHistoryDashboard = () => {
       setLoading(true);
       setError(null);
 
-      console.log('🔄 Loading test history data...');
 
       // Load all data in parallel
       const [sessionsData, summaryData, categoryData, chartsData] = await Promise.all([
@@ -44,7 +71,13 @@ const TestHistoryDashboard = () => {
       setChartData(chartsData);
     } catch (err) {
       console.error('❌ Error loading test history data:', err);
-      setError(`Failed to load test history data: ${err.message}`);
+      
+      // Check if it's an authentication error
+      if (err.message.includes('401') || err.message.includes('Unauthorized') || err.message.includes('Session expired')) {
+        setError('Your session has expired. Please log in again to view your test history.');
+      } else {
+        setError(`Failed to load test history data: ${err.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -126,13 +159,6 @@ const TestHistoryDashboard = () => {
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
 
-  console.log('🎯 TestHistoryDashboard render state:', {
-    loading,
-    error,
-    summary,
-    testSessions: testSessions?.length,
-    activeTab
-  });
 
   if (loading) {
     return (
@@ -144,21 +170,37 @@ const TestHistoryDashboard = () => {
   }
 
   if (error) {
+    const isAuthError = error.includes('session') || error.includes('expired') || error.includes('log in');
+    
     return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+      <div className={`${isAuthError ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200'} border rounded-xl p-6`}>
         <div className="flex items-center">
-          <div className="text-red-400 mr-3">
+          <div className={`${isAuthError ? 'text-yellow-400' : 'text-red-400'} mr-3`}>
             <FaChartLine className="text-xl" />
           </div>
           <div>
-            <h3 className="text-lg font-medium text-red-800">Error Loading Test History</h3>
-            <p className="text-red-600 mt-1">{error}</p>
-            <button
-              onClick={loadTestHistoryData}
-              className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Try Again
-            </button>
+            <h3 className={`text-lg font-medium ${isAuthError ? 'text-yellow-800' : 'text-red-800'}`}>
+              {isAuthError ? 'Session Expired' : 'Error Loading Test History'}
+            </h3>
+            <p className={`${isAuthError ? 'text-yellow-600' : 'text-red-600'} mt-1`}>{error}</p>
+            <div className="mt-3 flex gap-2">
+              {!isAuthError && (
+                <button
+                  onClick={loadTestHistoryData}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Try Again
+                </button>
+              )}
+              {isAuthError && (
+                <button
+                  onClick={() => window.location.href = '/login'}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Go to Login
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

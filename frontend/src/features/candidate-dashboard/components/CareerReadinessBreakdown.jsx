@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   ChartBarIcon, 
   ArrowTrendingUpIcon, 
@@ -10,10 +10,13 @@ import {
 } from '@heroicons/react/24/outline';
 import RadarChart from './RadarChart';
 
-const CareerReadinessBreakdown = () => {
+const CareerReadinessBreakdown = ({ data }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
+  
+  // Use data from props or show error state
+  const breakdownData = data || [];
 
-  // Mock data for the 8 test categories
+  // Mock data for the 8 test categories (fallback)
   const skillCategories = [
     {
       id: 'verbal',
@@ -127,6 +130,25 @@ const CareerReadinessBreakdown = () => {
     if (score >= benchmark) return 'Above 50% of candidates';
     return 'Below 50% of candidates';
   };
+
+  // Show error state if no data is provided
+  if (!data || data.length === 0) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="text-center py-8">
+          <ExclamationTriangleIcon className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Data Available</h3>
+          <p className="text-gray-600 mb-4">Unable to load career readiness breakdown data. Please try refreshing the page.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">

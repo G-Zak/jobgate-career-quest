@@ -11,6 +11,7 @@ class TestHistoryApi {
    */
   getAuthHeaders() {
     const token = localStorage.getItem('access_token');
+    
     return {
       'Content-Type': 'application/json',
       ...(token && { 'Authorization': `Bearer ${token}` })
@@ -28,6 +29,12 @@ class TestHistoryApi {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          throw new Error('Session expired. Please log in again.');
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -117,6 +124,12 @@ class TestHistoryApi {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          throw new Error('Session expired. Please log in again.');
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -138,6 +151,12 @@ class TestHistoryApi {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          throw new Error('Session expired. Please log in again.');
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -159,6 +178,12 @@ class TestHistoryApi {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          throw new Error('Session expired. Please log in again.');
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 

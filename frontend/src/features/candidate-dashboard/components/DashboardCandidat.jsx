@@ -1,18 +1,48 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ProfileHeader from './ProfileHeader';
 // Core components for professional dashboard
 import EmployabilityScore from './EmployabilityScore';
 import CareerReadinessBreakdown from './CareerReadinessBreakdown';
-import EnhancedJobRecommendations from './EnhancedJobRecommendations';
+import JobRecommendations from './JobRecommendations';
+import RecentTests from './RecentTests';
+import AchievementsBadges from './AchievementsBadges';
+import QuickActions from './QuickActions';
 // Merged and simplified components
 import MergedStatsWidget from './MergedStatsWidget';
-import SimplifiedRecentTests from './SimplifiedRecentTests';
 import { useScrollToTop } from '../../../shared/utils/scrollUtils';
+import dashboardAggregatedApi from '../services/dashboardAggregatedApi';
 import '../../../features/candidate-dashboard/styles/dashboard-design-system.css';
 
 const Dashboard = ({ onNavigateToSection }) => {
   // Universal scroll management
   useScrollToTop([], { smooth: true }); // Scroll on component mount
+
+  // State management
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Load dashboard data
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const data = await dashboardAggregatedApi.getDashboardSummary();
+        const transformedData = dashboardAggregatedApi.transformDataForComponents(data);
+        
+        setDashboardData(transformedData);
+      } catch (err) {
+        console.error('Error loading dashboard data:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, []);
 
   const handleViewAllTests = () => {
     if (onNavigateToSection) {
@@ -20,33 +50,82 @@ const Dashboard = ({ onNavigateToSection }) => {
     }
   };
   
-  // Mock data - replace with API calls
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="ml-4 text-lg text-gray-600">Loading dashboard...</div>
+      </div>
+    );
+  }
+
+  // Error state with retry mechanism
+  if (error) {
+    const handleRetry = () => {
+      setError(null);
+      setLoading(true);
+      // Retry loading dashboard data
+      const loadDashboardData = async () => {
+        try {
+          setLoading(true);
+          setError(null);
+          
+          const data = await dashboardAggregatedApi.getDashboardSummary();
+          const transformedData = dashboardAggregatedApi.transformDataForComponents(data);
+          
+          setDashboardData(transformedData);
+        } catch (err) {
+          console.error('Error loading dashboard data:', err);
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      loadDashboardData();
+    };
+
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+        <div className="flex items-center">
+          <div className="text-red-400 mr-3">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-lg font-medium text-red-800">Error Loading Dashboard</h3>
+            <p className="text-red-600 mt-1">{error}</p>
+            <div className="mt-3 space-x-2">
+              <button
+                onClick={handleRetry}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Retry
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Refresh Page
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // User data for ProfileHeader
   const userData = {
-    name: "zakaria",
+    name: dashboardData?.userProfile?.first_name || "User",
     avatar: "avatar-3.png",
-    level: 3,
-    overallScore: 82,
+    level: dashboardData?.mergedStats?.levelProgress?.currentLevel || 1,
+    overallScore: dashboardData?.employabilityScore?.score || 0,
     xpPoints: 2480,
     nextLevelXP: 3000,
-    declaredSkills: ["Java", "Python", "Teamwork"],
-    badges: [
-      { id: 1, name: "Java Expert", image: "js-badge", earned: true, rarity: "gold" },
-      { id: 2, name: "Python Pro", image: "python-badge", earned: true, rarity: "silver" },
-      { id: 3, name: "Quick Learner", image: "learner-badge", earned: false, rarity: "bronze" }
-    ],
-    testResults: [
-      { test_type: "Java", score: 88, date: "2023-05-15" },
-      { test_type: "Python", score: 76, date: "2023-05-10" }
-    ],
-    jobRecommendations: [
-      { id: "101", title: "Frontend Developer", company: "PixelTech", match: 89, salary: "$75k-$95k", location: "Remote" },
-      { id: "205", title: "Python Developer", company: "DataCraft", match: 78, salary: "$65k-$85k", location: "San Francisco" }
-    ],
-    recentActivity: [
-      { type: "test_completed", content: "Completed Java Assessment", date: "2 hours ago", score: 88 },
-      { type: "badge_earned", content: "Earned Python Pro badge", date: "1 day ago" },
-      { type: "skill_improved", content: "Teamwork skill improved", date: "3 days ago" }
-    ]
+    declaredSkills: ["Java", "Python", "Teamwork"]
   };
 
   return (
@@ -54,7 +133,7 @@ const Dashboard = ({ onNavigateToSection }) => {
       <div className="sa-container py-6">
         {/* Hero Section - Employability Score (Full Width) */}
         <div className="mb-8">
-          <EmployabilityScore />
+          <EmployabilityScore data={dashboardData?.employabilityScore} />
         </div>
 
         {/* Professional Layout - Desktop (12 cols) */}
@@ -62,67 +141,19 @@ const Dashboard = ({ onNavigateToSection }) => {
           {/* Left Column - Profile & Stats (5 cols) */}
           <div className="lg:col-span-5 space-y-6">
             <ProfileHeader user={userData} />
-            <MergedStatsWidget />
-            <SimplifiedRecentTests onViewAll={handleViewAllTests} />
-            
-            {/* Achievements & Badges */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Achievements</h3>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">🏆</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">Perfect Score</p>
-                    <p className="text-xs text-gray-600">Verbal Reasoning - 100%</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
-                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">⚡</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">Speed Master</p>
-                    <p className="text-xs text-gray-600">Completed 5 tests this week</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">📈</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">Improvement</p>
-                    <p className="text-xs text-gray-600">+12% average score increase</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-              <div className="space-y-3">
-                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors">
-                  Take New Assessment
-                </button>
-                <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg text-sm font-medium transition-colors">
-                  View All Tests
-                </button>
-                <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg text-sm font-medium transition-colors">
-                  Update Profile
-                </button>
-              </div>
-            </div>
+            <MergedStatsWidget data={dashboardData?.mergedStats} />
+            <RecentTests data={dashboardData?.recentTests} onViewAll={handleViewAllTests} />
+            <AchievementsBadges data={dashboardData?.achievements} />
+            <QuickActions onNavigateToSection={onNavigateToSection} />
           </div>
 
           {/* Right Column - Main Content (7 cols) */}
           <div className="lg:col-span-7 space-y-6">
             {/* Career Readiness Breakdown with integrated benchmarks */}
-            <CareerReadinessBreakdown />
+            <CareerReadinessBreakdown data={dashboardData?.careerReadinessBreakdown} />
             
             {/* Job Recommendations */}
-            <EnhancedJobRecommendations onViewAll={handleViewAllTests} />
+            <JobRecommendations data={dashboardData?.jobRecommendations} onViewAll={handleViewAllTests} />
           </div>
         </div>
 
@@ -130,7 +161,9 @@ const Dashboard = ({ onNavigateToSection }) => {
         <div className="lg:hidden space-y-6 mt-6">
           <div className="space-y-6">
             <MergedStatsWidget />
-            <SimplifiedRecentTests onViewAll={handleViewAllTests} />
+            <RecentTests onViewAll={handleViewAllTests} />
+            <AchievementsBadges />
+            <QuickActions onNavigateToSection={onNavigateToSection} />
           </div>
         </div>
       </div>

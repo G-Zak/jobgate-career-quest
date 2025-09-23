@@ -130,18 +130,27 @@ class AuthService {
   // Logout user
   async logout() {
     try {
-      if (this.refreshToken) {
-        await fetch(`${API_BASE_URL}/logout/`, {
+      if (this.token) {
+        const response = await fetch(`${API_BASE_URL}/logout/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${this.token}`,
           },
-          body: JSON.stringify({ refresh_token: this.refreshToken }),
         });
+        
+        if (!response.ok) {
+          throw new Error(`Logout failed: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return { success: true, message: data.message };
       }
+      
+      return { success: true, message: 'Logout successful' };
     } catch (error) {
       console.error('Logout error:', error);
+      return { success: false, error: error.message };
     } finally {
       // Clear local storage regardless of API call success
       this.clearTokens();

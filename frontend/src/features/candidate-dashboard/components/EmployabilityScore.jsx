@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   ChartBarIcon, 
   ArrowTrendingUpIcon, 
@@ -9,11 +9,15 @@ import {
   XCircleIcon
 } from '@heroicons/react/24/outline';
 
-const EmployabilityScore = () => {
+const EmployabilityScore = ({ data }) => {
   const [selectedProfile, setSelectedProfile] = useState('Software Engineer');
-  const [employabilityScore, setEmployabilityScore] = useState(72);
-  const [previousScore, setPreviousScore] = useState(68);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  
+  // Use data from props or fallback to defaults
+  const employabilityScore = data?.score || 0;
+  const previousScore = data?.score ? Math.max(0, data.score - 5) : 0; // Mock previous score
+  const testsCompleted = data?.testsCompleted || 0;
+  const averageScore = data?.averageScore || 0;
 
   const profiles = [
     'Software Engineer',
@@ -26,6 +30,7 @@ const EmployabilityScore = () => {
     'Marketing Manager'
   ];
 
+  // Helper functions for score display
   const getScoreColor = (score) => {
     if (score >= 80) return 'text-green-600';
     if (score >= 60) return 'text-yellow-600';
@@ -54,6 +59,25 @@ const EmployabilityScore = () => {
 
   const scoreChange = employabilityScore - previousScore;
   const isImproving = scoreChange > 0;
+
+  // Show error state if no data is provided
+  if (!data) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="text-center py-8">
+          <ExclamationTriangleIcon className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Data Available</h3>
+          <p className="text-gray-600 mb-4">Unable to load employability score data. Please try refreshing the page.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
@@ -155,11 +179,15 @@ const EmployabilityScore = () => {
         {/* Quick Stats */}
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">85%</div>
+            <div className="text-2xl font-bold text-gray-900">
+              {loading ? '...' : `${Math.round((employabilityScore / 75) * 100)}%`}
+            </div>
             <div className="text-xs text-gray-500">vs. Average</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">12</div>
+            <div className="text-2xl font-bold text-gray-900">
+              {loading ? '...' : scoreData?.testsCompleted || 0}
+            </div>
             <div className="text-xs text-gray-500">Tests Taken</div>
           </div>
         </div>

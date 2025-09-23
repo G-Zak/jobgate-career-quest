@@ -86,10 +86,10 @@ export const AuthProvider = ({ children }) => {
     // Logout function
     const logout = async () => {
         try {
-            await authService.logout();
+            const result = await authService.logout();
             setUser(null);
             setIsAuthenticated(false);
-            return { success: true };
+            return result;
         } catch (error) {
             console.error('Logout error:', error);
             return { success: false, error: error.message };
