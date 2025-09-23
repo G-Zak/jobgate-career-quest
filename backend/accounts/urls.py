@@ -13,6 +13,7 @@ urlpatterns = [
     path('profile/', views.UserProfileView.as_view(), name='user-profile'),
     path('change-password/', views.PasswordChangeView.as_view(), name='change-password'),
     path('dashboard-data/', views.user_dashboard_data, name='dashboard-data'),
+    path('achievements/', views.get_achievements, name='user-achievements'),
     
     # Health check
     path('health/', views.health_check, name='auth-health'),

@@ -11,6 +11,7 @@ urlpatterns = [
     
     # User profile endpoints
     path('profile/', views.user_profile, name='user-profile'),
+    path('achievements/', views.get_achievements, name='user-achievements'),
     
     # Health check
     path('health/', views.health_check, name='auth-health'),

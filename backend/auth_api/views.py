@@ -208,3 +208,163 @@ def health_check(request):
         'status': 'healthy',
         'message': 'Authentication service is running'
     }, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_achievements(request):
+    """
+    Get user achievements and badges based on test performance
+    """
+    try:
+        from testsengine.models import TestSession
+        from testsengine.test_history_views import test_history_summary
+        from datetime import timedelta
+        
+        # Get test history summary data directly
+        sessions = TestSession.objects.filter(user=request.user)
+        
+        # Calculate summary data
+        total_tests = sessions.count()
+        if total_tests > 0:
+            average_score = sum(session.score for session in sessions) / total_tests
+            # Calculate improvement trend (simplified)
+            recent_sessions = sessions.order_by('-start_time')[:5]
+            if len(recent_sessions) >= 2:
+                recent_avg = sum(s.score for s in recent_sessions) / len(recent_sessions)
+                older_sessions = sessions.order_by('-start_time')[5:10]
+                if len(older_sessions) >= 2:
+                    older_avg = sum(s.score for s in older_sessions) / len(older_sessions)
+                    improvement_trend = recent_avg - older_avg
+                else:
+                    improvement_trend = 0
+            else:
+                improvement_trend = 0
+        else:
+            average_score = 0
+            improvement_trend = 0
+        
+        summary_data = {
+            'total_tests_completed': total_tests,
+            'average_score': average_score,
+            'improvement_trend': improvement_trend
+        }
+        
+        achievements = []
+        
+        # Perfect Score Achievement
+        if summary_data.get('average_score', 0) >= 90:
+            achievements.append({
+                'id': 1,
+                'title': "Perfect Score",
+                'description': "Achieved 90%+ average score",
+                'icon': "🏆",
+                'color': "yellow",
+                'earned': True
+            })
+        
+        # Test Master Achievement
+        if summary_data.get('total_tests_completed', 0) >= 10:
+            achievements.append({
+                'id': 2,
+                'title': "Test Master",
+                'description': "Completed 10+ tests",
+                'icon': "⚡",
+                'color': "green",
+                'earned': True
+            })
+        
+        # Improvement Achievement
+        improvement_trend = summary_data.get('improvement_trend', 0)
+        if improvement_trend > 0:
+            achievements.append({
+                'id': 3,
+                'title': "Improvement",
+                'description': f"+{improvement_trend}% score increase",
+                'icon': "📈",
+                'color': "blue",
+                'earned': True
+            })
+        
+        # Speed Master Achievement (completed 5 tests this week)
+        recent_tests = TestSession.objects.filter(
+            user=request.user,
+            start_time__gte=timezone.now() - timedelta(days=7)
+        ).count()
+        
+        if recent_tests >= 5:
+            achievements.append({
+                'id': 4,
+                'title': "Speed Master",
+                'description': "Completed 5 tests this week",
+                'icon': "⚡",
+                'color': "green",
+                'earned': True
+            })
+        
+        # Consistency Achievement (completed tests in 3+ different categories)
+        categories = TestSession.objects.filter(
+            user=request.user
+        ).values_list('test__test_type', flat=True).distinct()
+        
+        if len(categories) >= 3:
+            achievements.append({
+                'id': 5,
+                'title': "Versatile Learner",
+                'description': "Completed tests in 3+ categories",
+                'icon': "⭐",
+                'color': "purple",
+                'earned': True
+            })
+        
+        # First Test Achievement
+        if summary_data.get('total_tests_completed', 0) >= 1:
+            achievements.append({
+                'id': 6,
+                'title': "First Step",
+                'description': "Completed your first assessment",
+                'icon': "🌟",
+                'color': "purple",
+                'earned': True
+            })
+        
+        # If no achievements earned, show some unearned ones as motivation
+        if not achievements:
+            achievements = [
+                {
+                    'id': 1,
+                    'title': "Perfect Score",
+                    'description': "Achieve 90%+ average score",
+                    'icon': "🏆",
+                    'color': "yellow",
+                    'earned': False
+                },
+                {
+                    'id': 2,
+                    'title': "Test Master",
+                    'description': "Complete 10+ tests",
+                    'icon': "⚡",
+                    'color': "green",
+                    'earned': False
+                },
+                {
+                    'id': 6,
+                    'title': "First Step",
+                    'description': "Complete your first assessment",
+                    'icon': "🌟",
+                    'color': "purple",
+                    'earned': False
+                }
+            ]
+        
+        return Response({
+            'achievements': achievements,
+            'total_earned': len([a for a in achievements if a['earned']]),
+            'total_available': len(achievements)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in get_achievements: {str(e)}")
+        return Response(
+            {'error': f'Failed to get achievements: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
