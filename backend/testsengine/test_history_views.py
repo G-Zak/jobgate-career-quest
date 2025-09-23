@@ -23,7 +23,7 @@ from .test_history_serializers import (
 
 class TestSessionListCreateView(generics.ListCreateAPIView):
     """List and create test sessions for authenticated user"""
-    permission_classes = [AllowAny]  # Temporarily allow any for testing
+    permission_classes = [IsAuthenticated]
     
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -32,14 +32,9 @@ class TestSessionListCreateView(generics.ListCreateAPIView):
     
     def get_queryset(self):
         """Get test sessions for current user"""
-        # For testing, return all sessions or filter by user if authenticated
-        if self.request.user.is_authenticated:
-            return TestSession.objects.filter(
-                user=self.request.user
-            ).select_related('test').prefetch_related('test_answers__question')
-        else:
-            # Return all sessions for testing
-            return TestSession.objects.all().select_related('test').prefetch_related('test_answers__question')
+        return TestSession.objects.filter(
+            user=self.request.user
+        ).select_related('test').prefetch_related('test_answers__question')
     
     def perform_create(self, serializer):
         """Create test session for current user"""
@@ -48,27 +43,22 @@ class TestSessionListCreateView(generics.ListCreateAPIView):
 
 class TestSessionDetailView(generics.RetrieveUpdateDestroyAPIView):
     """Retrieve, update, or delete a specific test session"""
-    permission_classes = [AllowAny]  # Temporarily allow any for testing
+    permission_classes = [IsAuthenticated]
     serializer_class = TestSessionUpdateSerializer
     
     def get_queryset(self):
         """Get test sessions for current user only"""
-        # For testing, return all sessions or filter by user if authenticated
-        if self.request.user.is_authenticated:
-            return TestSession.objects.filter(
-                user=self.request.user
-            ).select_related('test')
-        else:
-            return TestSession.objects.all().select_related('test').prefetch_related('test_answers__question')
+        return TestSession.objects.filter(
+            user=self.request.user
+        ).select_related('test').prefetch_related('test_answers__question')
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])  # Temporarily allow any for testing
+@permission_classes([IsAuthenticated])
 def test_history_summary(request):
     """Get comprehensive test history summary for user"""
-    # For testing, use all sessions to show data
-    # Get all sessions (for testing, show all data)
-    sessions = TestSession.objects.all().select_related('test')
+    # Get sessions only for the authenticated user
+    sessions = TestSession.objects.filter(user=request.user).select_related('test')
     
     # Calculate statistics
     total_sessions = sessions.count()
@@ -119,15 +109,15 @@ def test_history_summary(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])  # Temporarily allow any for testing
+@permission_classes([IsAuthenticated])
 def test_category_stats(request):
     """Get statistics by test category"""
-    # For testing, show all data
-    # Get completed sessions grouped by test type (for testing, show all data)
+    # Get completed sessions grouped by test type for the authenticated user
     category_stats = []
     
     for test_type, _ in Test.TEST_TYPES:
         sessions = TestSession.objects.filter(
+            user=request.user,
             test__test_type=test_type,
             status='completed',
             score__isnull=False
@@ -154,13 +144,13 @@ def test_category_stats(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])  # Temporarily allow any for testing
+@permission_classes([IsAuthenticated])
 def test_history_charts(request):
     """Get data for test history charts"""
-    # For testing, show all data
-    # Get completed sessions from last 30 days
+    # Get completed sessions from last 30 days for the authenticated user
     thirty_days_ago = timezone.now() - timedelta(days=30)
     sessions = TestSession.objects.filter(
+        user=request.user,
         status='completed',
         score__isnull=False,
         start_time__gte=thirty_days_ago

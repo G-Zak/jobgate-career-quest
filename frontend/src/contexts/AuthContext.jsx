@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { loadUserProfile, saveUserProfile, defaultUserProfile } from '../utils/profileUtils';
+import authService from '../services/authService';
 
 const AuthContext = createContext();
 
@@ -16,13 +16,13 @@ export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    // Load user from localStorage on mount
+    // Load user from auth service on mount
     useEffect(() => {
-        const loadUser = () => {
+        const loadUser = async () => {
             try {
-                const userProfile = loadUserProfile();
-                if (userProfile && userProfile.id) {
-                    setUser(userProfile);
+                if (authService.isAuthenticated()) {
+                    const user = authService.getCurrentUser();
+                    setUser(user);
                     setIsAuthenticated(true);
                 }
             } catch (error) {
@@ -40,27 +40,18 @@ export const AuthProvider = ({ children }) => {
         try {
             setLoading(true);
 
-            // Simulate API call - in real app, this would call your backend
-            // For now, we'll create a user profile based on email
-            const userProfile = {
-                ...defaultUserProfile,
-                id: Date.now(), // Generate unique ID
-                email: email,
-                name: email.split('@')[0], // Use email prefix as name
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
-
-            // Save user profile
-            saveUserProfile(userProfile);
-
-            setUser(userProfile);
-            setIsAuthenticated(true);
-
-            return { success: true, user: userProfile };
+            const result = await authService.login(email, password);
+            
+            if (result.success) {
+                setUser(result.user);
+                setIsAuthenticated(true);
+                return { success: true, user: result.user };
+            } else {
+                return { success: false, error: result.errors?.general?.[0] || 'Login failed' };
+            }
         } catch (error) {
             console.error('Login error:', error);
-            return { success: false, error: error.message };
+            return { success: false, error: 'Login failed. Please try again.' };
         } finally {
             setLoading(false);
         }
@@ -71,55 +62,29 @@ export const AuthProvider = ({ children }) => {
         try {
             setLoading(true);
 
-            // Create new user profile with the provided data
-            const userProfile = {
-                ...defaultUserProfile,
-                id: Date.now(), // Generate unique ID
-                name: userData.name || userData.email.split('@')[0],
-                email: userData.email,
-                contact: {
-                    ...defaultUserProfile.contact,
-                    email: userData.email,
-                    location: userData.location || ''
-                },
-                // Initialize with empty arrays for professional data
-                skills: [],
-                skillsWithProficiency: [],
-                education: [],
-                experience: [],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
-
-            // Save user profile
-            saveUserProfile(userProfile);
-
-            setUser(userProfile);
-            setIsAuthenticated(true);
-
-            return { success: true, user: userProfile };
+            const result = await authService.register(userData);
+            
+            if (result.success) {
+                setUser(result.user);
+                setIsAuthenticated(true);
+                return { success: true, user: result.user };
+            } else {
+                return { success: false, error: result.errors?.general?.[0] || 'Registration failed' };
+            }
         } catch (error) {
             console.error('Registration error:', error);
-            return { success: false, error: error.message };
+            return { success: false, error: 'Registration failed. Please try again.' };
         } finally {
             setLoading(false);
         }
     };
 
     // Logout function
-    const logout = () => {
+    const logout = async () => {
         try {
-            // Clear all user data from localStorage
-            const keys = Object.keys(localStorage);
-            keys.forEach(key => {
-                if (key.startsWith('userProfile_') || key === 'savedJobs') {
-                    localStorage.removeItem(key);
-                }
-            });
-
+            await authService.logout();
             setUser(null);
             setIsAuthenticated(false);
-
             return { success: true };
         } catch (error) {
             console.error('Logout error:', error);
@@ -128,14 +93,15 @@ export const AuthProvider = ({ children }) => {
     };
 
     // Update user profile
-    const updateUser = (updatedUser) => {
+    const updateUser = async (updatedUser) => {
         try {
-            const newUser = { ...user, ...updatedUser, updatedAt: new Date().toISOString() };
-            saveUserProfile(newUser);
-            setUser(newUser);
-
-
-            return { success: true, user: newUser };
+            const result = await authService.updateProfile(updatedUser);
+            if (result) {
+                setUser(result.user);
+                return { success: true, user: result.user };
+            } else {
+                return { success: false, error: 'Profile update failed' };
+            }
         } catch (error) {
             console.error('Update user error:', error);
             return { success: false, error: error.message };

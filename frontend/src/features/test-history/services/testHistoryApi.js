@@ -7,16 +7,24 @@ const API_BASE_URL = 'http://localhost:8000/api';
 
 class TestHistoryApi {
   /**
+   * Get authentication headers
+   */
+  getAuthHeaders() {
+    const token = localStorage.getItem('access_token');
+    return {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+  }
+
+  /**
    * Get all test sessions for the current user
    */
   async getTestSessions() {
     try {
       const response = await fetch(`${API_BASE_URL}/test-sessions/`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -37,10 +45,7 @@ class TestHistoryApi {
     try {
       const response = await fetch(`${API_BASE_URL}/test-sessions/${sessionId}/detail/`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -61,10 +66,7 @@ class TestHistoryApi {
     try {
       const response = await fetch(`${API_BASE_URL}/test-sessions/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+        headers: this.getAuthHeaders(),
         body: JSON.stringify({
           test: testId,
           status: 'in_progress'
@@ -89,10 +91,7 @@ class TestHistoryApi {
     try {
       const response = await fetch(`${API_BASE_URL}/test-sessions/submit/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+        headers: this.getAuthHeaders(),
         body: JSON.stringify(sessionData),
       });
 
@@ -114,10 +113,7 @@ class TestHistoryApi {
     try {
       const response = await fetch(`${API_BASE_URL}/test-history/summary/`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -138,10 +134,7 @@ class TestHistoryApi {
     try {
       const response = await fetch(`${API_BASE_URL}/test-history/category-stats/`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -162,10 +155,7 @@ class TestHistoryApi {
     try {
       const response = await fetch(`${API_BASE_URL}/test-history/charts/`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {

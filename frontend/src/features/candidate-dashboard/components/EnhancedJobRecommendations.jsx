@@ -10,7 +10,7 @@ import {
   ChevronRightIcon
 } from '@heroicons/react/24/outline';
 
-const EnhancedJobRecommendations = () => {
+const EnhancedJobRecommendations = ({ onViewAll }) => {
   const [selectedJob, setSelectedJob] = useState(null);
 
   const jobRecommendations = [
@@ -129,9 +129,9 @@ const EnhancedJobRecommendations = () => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-green-100 rounded-lg">
             <BriefcaseIcon className="w-6 h-6 text-green-600" />
@@ -141,14 +141,17 @@ const EnhancedJobRecommendations = () => {
             <p className="text-sm text-gray-500">Based on your employability score and skills</p>
           </div>
         </div>
-        <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+        <button 
+          onClick={onViewAll}
+          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+        >
           View All Jobs
         </button>
       </div>
 
-      {/* Job Cards */}
+      {/* Job Cards - Top 3-4 Jobs Only */}
       <div className="space-y-4">
-        {jobRecommendations.map((job) => (
+        {jobRecommendations.slice(0, 3).map((job) => (
           <div
             key={job.id}
             className={`p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
@@ -158,81 +161,54 @@ const EnhancedJobRecommendations = () => {
             }`}
             onClick={() => setSelectedJob(selectedJob === job.id ? null : job.id)}
           >
-            {/* Job Header */}
-            <div className="flex items-start justify-between mb-3">
+            {/* Compact Job Header */}
+            <div className="flex items-center justify-between mb-2">
               <div className="flex-1">
-                <div className="flex items-center space-x-3 mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900">{job.title}</h3>
+                <div className="flex items-center space-x-2 mb-1">
+                  <h3 className="text-base font-semibold text-gray-900">{job.title}</h3>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getMatchColor(job.match)}`}>
-                    {getMatchLabel(job.match)}
+                    {job.match}%
                   </span>
                 </div>
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
-                  <div className="flex items-center space-x-1">
-                    <BriefcaseIcon className="w-4 h-4" />
-                    <span>{job.company}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <MapPinIcon className="w-4 h-4" />
-                    <span>{job.location}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <CurrencyDollarIcon className="w-4 h-4" />
-                    <span>{job.salary}</span>
-                  </div>
+                <div className="flex items-center space-x-3 text-sm text-gray-600">
+                  <span>{job.company}</span>
+                  <span>•</span>
+                  <span>{job.location}</span>
+                  <span>•</span>
+                  <span>{job.salary}</span>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-gray-900">{job.match}%</div>
-                <div className="text-xs text-gray-500">Match Score</div>
-              </div>
             </div>
 
-            {/* Match Details */}
+            {/* Compact Match Info */}
             <div className="mb-3">
-              <div className="flex items-center justify-between text-sm mb-1">
-                <span className="text-gray-600">Your Employability Score</span>
-                <span className="font-medium text-gray-900">72/100</span>
-              </div>
-              <div className="flex items-center justify-between text-sm mb-1">
-                <span className="text-gray-600">Required Score</span>
-                <span className="font-medium text-gray-900">{job.employabilityRequired}/100</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full"
-                  style={{ width: `${(72 / 100) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Skills Match */}
-            <div className="mb-3">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Skills Match</h4>
-              <div className="flex flex-wrap gap-2">
-                {job.skills.map((skill, index) => (
-                  <span
-                    key={index}
-                    className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs"
-                  >
-                    {skill}
-                  </span>
-                ))}
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Score: 72/{job.employabilityRequired}</span>
+                <div className="flex items-center space-x-2">
+                  {job.skills.slice(0, 2).map((skill, index) => (
+                    <span
+                      key={index}
+                      className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                  {job.skills.length > 2 && (
+                    <span className="text-xs text-gray-500">+{job.skills.length - 2} more</span>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Description */}
-            <p className="text-sm text-gray-600 mb-3">{job.description}</p>
-
-            {/* Job Details */}
+            {/* Compact Job Details */}
             <div className="flex items-center justify-between text-sm text-gray-500">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
                 <div className="flex items-center space-x-1">
                   <ClockIcon className="w-4 h-4" />
                   <span>{job.type}</span>
                 </div>
-                <span>Posted {job.posted}</span>
-                <span>{job.applicants} applicants</span>
+                <span>•</span>
+                <span>{job.posted}</span>
               </div>
               <ChevronRightIcon className="w-4 h-4" />
             </div>
@@ -286,23 +262,54 @@ const EnhancedJobRecommendations = () => {
         ))}
       </div>
 
-      {/* Summary */}
-      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Job Match Summary</h3>
-          <p className="text-sm text-gray-600 mb-3">
-            Based on your current employability score of 72, you qualify for 3 out of 4 recommended positions.
-          </p>
-          <div className="flex justify-center space-x-6 text-sm">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">3</div>
-              <div className="text-gray-500">Qualified</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-600">1</div>
-              <div className="text-gray-500">Needs Improvement</div>
-            </div>
+      {/* Job Match Insights */}
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+        <h4 className="text-sm font-medium text-blue-900 mb-3">Your Job Match Insights</h4>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-blue-700">Average Match Score</span>
+            <span className="font-semibold text-blue-900">85%</span>
           </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-blue-700">Best Match</span>
+            <span className="font-semibold text-blue-900">Junior Software Developer (92%)</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-blue-700">Salary Range</span>
+            <span className="font-semibold text-blue-900">$70k - $120k</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Tips */}
+      <div className="mt-4 p-4 bg-green-50 rounded-lg">
+        <h4 className="text-sm font-medium text-green-900 mb-3">💡 Quick Tips</h4>
+        <div className="space-y-2 text-sm text-green-800">
+          <div className="flex items-start space-x-2">
+            <span className="text-green-600">•</span>
+            <span>Improve communication skills to unlock more opportunities</span>
+          </div>
+          <div className="flex items-start space-x-2">
+            <span className="text-green-600">•</span>
+            <span>Your technical skills are highly valued by employers</span>
+          </div>
+          <div className="flex items-start space-x-2">
+            <span className="text-green-600">•</span>
+            <span>Consider remote positions for better work-life balance</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Compact Summary */}
+      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-gray-600">You qualify for 3 out of 3 recommended positions</span>
+          <button 
+            onClick={onViewAll}
+            className="text-blue-600 hover:text-blue-700 font-medium"
+          >
+            View All Jobs →
+          </button>
         </div>
       </div>
     </div>
