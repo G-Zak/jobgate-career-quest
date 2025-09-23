@@ -67,12 +67,6 @@ class TestSessionDetailView(generics.RetrieveUpdateDestroyAPIView):
 def test_history_summary(request):
     """Get comprehensive test history summary for user"""
     # For testing, use all sessions to show data
-    from django.contrib.auth.models import User
-    user = request.user if request.user.is_authenticated else User.objects.first()
-    
-    if not user:
-        return Response({"detail": "No user found"}, status=status.HTTP_404_NOT_FOUND)
-    
     # Get all sessions (for testing, show all data)
     sessions = TestSession.objects.all().select_related('test')
     
@@ -128,13 +122,7 @@ def test_history_summary(request):
 @permission_classes([AllowAny])  # Temporarily allow any for testing
 def test_category_stats(request):
     """Get statistics by test category"""
-    # For testing, use the first user or create a default
-    from django.contrib.auth.models import User
-    user = request.user if request.user.is_authenticated else User.objects.first()
-    
-    if not user:
-        return Response({"detail": "No user found"}, status=status.HTTP_404_NOT_FOUND)
-    
+    # For testing, show all data
     # Get completed sessions grouped by test type (for testing, show all data)
     category_stats = []
     
@@ -169,17 +157,10 @@ def test_category_stats(request):
 @permission_classes([AllowAny])  # Temporarily allow any for testing
 def test_history_charts(request):
     """Get data for test history charts"""
-    # For testing, use the first user or create a default
-    from django.contrib.auth.models import User
-    user = request.user if request.user.is_authenticated else User.objects.first()
-    
-    if not user:
-        return Response({"detail": "No user found"}, status=status.HTTP_404_NOT_FOUND)
-    
+    # For testing, show all data
     # Get completed sessions from last 30 days
     thirty_days_ago = timezone.now() - timedelta(days=30)
     sessions = TestSession.objects.filter(
-        user=user,
         status='completed',
         score__isnull=False,
         start_time__gte=thirty_days_ago
@@ -272,16 +253,10 @@ def submit_test_session(request):
 def test_session_detail(request, session_id):
     """Get detailed information about a specific test session"""
     try:
-        # For testing, use the first user or create a default
-        from django.contrib.auth.models import User
-        user = request.user if request.user.is_authenticated else User.objects.first()
-        
-        if not user:
-            return Response({"detail": "No user found"}, status=status.HTTP_404_NOT_FOUND)
-        
-        session = TestSession.objects.get(
-            id=session_id,
-            user=user
+        # For testing, get the session directly without user filtering
+        # This allows us to show all sessions regardless of user
+        session = TestSession.objects.select_related('test', 'user').prefetch_related('test_answers__question').get(
+            id=session_id
         )
         serializer = TestSessionHistorySerializer(session)
         return Response(serializer.data)
