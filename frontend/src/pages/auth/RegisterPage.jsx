@@ -18,12 +18,14 @@ const RegisterPage = () => {
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
-        name: '',
+        full_name: '',
         email: '',
         password: '',
-        confirmPassword: '',
+        confirm_password: '',
         location: '',
-        profession: ''
+        profession: '',
+        career_field: '',
+        level: 'Beginner'
     });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -41,12 +43,12 @@ const RegisterPage = () => {
     };
 
     const validateForm = () => {
-        if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+        if (!formData.full_name || !formData.email || !formData.password || !formData.confirm_password) {
             setError('Veuillez remplir tous les champs');
             return false;
         }
 
-        if (formData.name.length < 2) {
+        if (formData.full_name.length < 2) {
             setError('Le nom doit contenir au moins 2 caractères');
             return false;
         }
@@ -61,7 +63,7 @@ const RegisterPage = () => {
             return false;
         }
 
-        if (formData.password !== formData.confirmPassword) {
+        if (formData.password !== formData.confirm_password) {
             setError('Les mots de passe ne correspondent pas');
             return false;
         }
@@ -80,9 +82,14 @@ const RegisterPage = () => {
 
         try {
             const result = await register({
-                name: formData.name,
+                full_name: formData.full_name,
                 email: formData.email,
-                password: formData.password
+                password: formData.password,
+                confirm_password: formData.confirm_password,
+                location: formData.location,
+                profession: formData.profession,
+                career_field: formData.career_field,
+                level: formData.level
             });
 
             if (result.success) {
@@ -156,12 +163,12 @@ const RegisterPage = () => {
                                     <UserIcon className="h-5 w-5 text-gray-400" />
                                 </div>
                                 <input
-                                    id="name"
-                                    name="name"
+                                    id="full_name"
+                                    name="full_name"
                                     type="text"
                                     autoComplete="name"
                                     required
-                                    value={formData.name}
+                                    value={formData.full_name}
                                     onChange={handleChange}
                                     className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white sm:text-sm"
                                     placeholder="Votre nom complet"
@@ -238,12 +245,12 @@ const RegisterPage = () => {
                                     <LockClosedIcon className="h-5 w-5 text-gray-400" />
                                 </div>
                                 <input
-                                    id="confirmPassword"
-                                    name="confirmPassword"
+                                    id="confirm_password"
+                                    name="confirm_password"
                                     type={showConfirmPassword ? 'text' : 'password'}
                                     autoComplete="new-password"
                                     required
-                                    value={formData.confirmPassword}
+                                    value={formData.confirm_password}
                                     onChange={handleChange}
                                     className="appearance-none block w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-md placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white sm:text-sm"
                                     placeholder="Confirmez votre mot de passe"
@@ -297,6 +304,45 @@ const RegisterPage = () => {
                                     className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white sm:text-sm"
                                     placeholder="Votre profession (ex: Développeur Web)"
                                 />
+                            </div>
+                        </div>
+
+                        {/* Career Field */}
+                        <div>
+                            <label htmlFor="career_field" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Domaine de carrière
+                            </label>
+                            <div className="mt-1">
+                                <input
+                                    id="career_field"
+                                    name="career_field"
+                                    type="text"
+                                    value={formData.career_field}
+                                    onChange={handleChange}
+                                    className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white sm:text-sm"
+                                    placeholder="Ex: Technologie, Finance, Santé..."
+                                />
+                            </div>
+                        </div>
+
+                        {/* Level Field */}
+                        <div>
+                            <label htmlFor="level" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Niveau d'expérience
+                            </label>
+                            <div className="mt-1">
+                                <select
+                                    id="level"
+                                    name="level"
+                                    value={formData.level}
+                                    onChange={handleChange}
+                                    className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white sm:text-sm"
+                                >
+                                    <option value="Beginner">Débutant</option>
+                                    <option value="Intermediate">Intermédiaire</option>
+                                    <option value="Advanced">Avancé</option>
+                                    <option value="Expert">Expert</option>
+                                </select>
                             </div>
                         </div>
 

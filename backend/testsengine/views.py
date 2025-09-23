@@ -279,7 +279,7 @@ class SubmitTestView(APIView):
         }
     }
     """
-    permission_classes = [permissions.AllowAny]  # Temporarily allow anonymous access for testing
+    permission_classes = [permissions.IsAuthenticated]  # Require authentication for test submission
     
     @transaction.atomic
     def post(self, request, test_id):
@@ -396,67 +396,64 @@ class SubmitTestView(APIView):
             from .models import TestSession, TestAnswer
             from django.utils import timezone
             
-            # For anonymous users, use a default user for test history
-            session_user = user if user else User.objects.first()
+            # Only create test session for authenticated users
+            if not user or not user.is_authenticated:
+                logger.warning(f"No authenticated user for test session creation: user={user}")
+                return None
+                
+            session_user = user
             logger.info(f"TestSession creation: user={user}, session_user={session_user}")
             
-            # For testing, if user is None, try to get a user that doesn't have this test yet
-            if not session_user:
-                # Find a user who doesn't have this test yet
-                existing_users = TestSession.objects.filter(test=test).values_list('user_id', flat=True)
-                session_user = User.objects.exclude(id__in=existing_users).first()
-                logger.info(f"Found alternative user for test: {session_user}")
+            # Create test session for authenticated user
+            # Use get_or_create to handle unique constraint, then update
+            test_session, created = TestSession.objects.get_or_create(
+                user=session_user,
+                test=test,
+                defaults={
+                    'status': 'completed',
+                    'start_time': submission.submitted_at,
+                    'end_time': timezone.now(),
+                    'score': float(score.percentage_score),
+                    'answers': answers_data,
+                    'time_spent': time_taken_seconds
+                }
+            )
             
-            if session_user:  # Only create if we have a user (authenticated or default)
-                # Use get_or_create to handle unique constraint, then update
-                test_session, created = TestSession.objects.get_or_create(
-                    user=session_user,
-                    test=test,
-                    defaults={
-                        'status': 'completed',
-                        'start_time': submission.submitted_at,
-                        'end_time': timezone.now(),
-                        'score': float(score.percentage_score),
-                        'answers': answers_data,
-                        'time_spent': time_taken_seconds
-                    }
-                )
+            # Update existing session if it wasn't created
+            if not created:
+                test_session.status = 'completed'
+                test_session.start_time = submission.submitted_at
+                test_session.end_time = timezone.now()
+                test_session.score = float(score.percentage_score)
+                test_session.answers = answers_data
+                test_session.time_spent = time_taken_seconds
+                test_session.save()
+                logger.info(f"Updated existing TestSession: {test_session.id}")
+            else:
+                logger.info(f"Created new TestSession: {test_session.id}")
+            
+            # Create detailed TestAnswer records
+            TestAnswer.objects.filter(session=test_session).delete()  # Clear old answers
+            for question_id, selected_answer in answers_data.items():
+                try:
+                    from .models import Question
+                    question = Question.objects.get(id=question_id)
+                    is_correct = (question.correct_answer == selected_answer)
+                    
+                    TestAnswer.objects.create(
+                        session=test_session,
+                        question=question,
+                        selected_answer=selected_answer,
+                        is_correct=is_correct,
+                        time_taken=0  # Could be calculated per question if needed
+                    )
+                except Question.DoesNotExist:
+                    logger.warning(f"Question {question_id} not found for TestSession {test_session.id}")
+                    continue
                 
-                # Update existing session if it wasn't created
-                if not created:
-                    test_session.status = 'completed'
-                    test_session.start_time = submission.submitted_at
-                    test_session.end_time = timezone.now()
-                    test_session.score = float(score.percentage_score)
-                    test_session.answers = answers_data
-                    test_session.time_spent = time_taken_seconds
-                    test_session.save()
-                    logger.info(f"Updated existing TestSession: {test_session.id}")
-                else:
-                    logger.info(f"Created new TestSession: {test_session.id}")
-                
-                # Create detailed TestAnswer records
-                TestAnswer.objects.filter(session=test_session).delete()  # Clear old answers
-                for question_id, selected_answer in answers_data.items():
-                    try:
-                        from .models import Question
-                        question = Question.objects.get(id=question_id)
-                        is_correct = (question.correct_answer == selected_answer)
-                        
-                        TestAnswer.objects.create(
-                            session=test_session,
-                            question=question,
-                            selected_answer=selected_answer,
-                            is_correct=is_correct,
-                            time_taken=0  # Could be calculated per question if needed
-                        )
-                    except Question.DoesNotExist:
-                        logger.warning(f"Question {question_id} not found for TestSession {test_session.id}")
-                        continue
-                
-                logger.info(f"TestSession created/updated: {test_session.id} for user {session_user.username}")
-                return test_session
-                
+            logger.info(f"TestSession created/updated: {test_session.id} for user {session_user.username}")
+            return test_session
+            
         except Exception as e:
             logger.error(f"Failed to create TestSession: {str(e)}")
             logger.error(f"Exception type: {type(e).__name__}")

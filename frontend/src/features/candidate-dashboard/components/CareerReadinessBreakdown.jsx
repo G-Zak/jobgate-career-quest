@@ -130,7 +130,7 @@ const CareerReadinessBreakdown = () => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-      {/* Header */}
+      {/* Header with Integrated Benchmarks */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-purple-100 rounded-lg">
@@ -138,7 +138,23 @@ const CareerReadinessBreakdown = () => {
           </div>
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Career Readiness Breakdown</h2>
-            <p className="text-sm text-gray-500">Performance across all skill categories</p>
+            <p className="text-sm text-gray-500">Performance vs. industry benchmarks</p>
+          </div>
+        </div>
+        
+        {/* Quick Benchmark Summary */}
+        <div className="hidden md:flex items-center space-x-4 text-sm">
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+            <span className="text-gray-600">Above Benchmark</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+            <span className="text-gray-600">At Benchmark</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+            <span className="text-gray-600">Below Benchmark</span>
           </div>
         </div>
       </div>
