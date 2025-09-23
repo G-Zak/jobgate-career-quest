@@ -5,38 +5,26 @@ import {
   TrophyIcon, 
   ArrowTrendingUpIcon,
   CheckCircleIcon,
-  AcademicCapIcon,
-  ExclamationTriangleIcon
+  AcademicCapIcon
 } from '@heroicons/react/24/outline';
 
-const MergedStatsWidget = ({ data }) => {
-  // Use data from props or show error state
-  const stats = data || {
-    testsCompleted: 0,
-    averageScore: 0,
-    timeSpent: 0,
-    recentActivity: [],
-    levelProgress: { currentLevel: 1, currentLevelName: 'Novice', progress: 0 }
+const MergedStatsWidget = () => {
+  // Mock data - replace with API calls
+  const stats = {
+    testsCompleted: 21,
+    averageScore: 78.5,
+    timeSpent: 296, // minutes
+    recentActivity: [
+      { test: "Verbal Reasoning", score: 85, time: "2 hours ago" },
+      { test: "Numerical", score: 72, time: "1 day ago" },
+      { test: "Abstract", score: 91, time: "2 days ago" }
+    ],
+    trends: {
+      scoreTrend: '+5.2%',
+      completionTrend: '+12%',
+      timeTrend: '-8%'
+    }
   };
-
-  // Show error state if no data is provided
-  if (!data) {
-    return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="text-center py-8">
-          <ExclamationTriangleIcon className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Stats Available</h3>
-          <p className="text-gray-600 mb-4">Unable to load performance statistics. Please try refreshing the page.</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            Refresh Page
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

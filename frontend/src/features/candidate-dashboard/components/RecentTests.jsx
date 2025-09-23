@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ClockIcon, 
   ChartBarIcon, 
@@ -7,10 +7,32 @@ import {
   CheckCircleIcon,
   XCircleIcon
 } from '@heroicons/react/24/outline';
+import dashboardApi from '../services/dashboardApi';
 
-const RecentTests = ({ data, onViewAll, limit = 5 }) => {
-  // Use data from props or show error state
-  const tests = data || [];
+const RecentTests = ({ onViewAll, limit = 5 }) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [tests, setTests] = useState([]);
+
+  // Fetch recent tests
+  useEffect(() => {
+    const fetchRecentTests = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await dashboardApi.getRecentTests(limit);
+        setTests(data);
+      } catch (err) {
+        console.error('Error fetching recent tests:', err);
+        setError('Failed to load recent tests');
+        // Keep empty array on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecentTests();
+  }, [limit]);
 
   const getScoreColor = (score) => {
     if (score >= 80) return 'text-green-600';
@@ -50,19 +72,49 @@ const RecentTests = ({ data, onViewAll, limit = 5 }) => {
     return icons[testType?.toLowerCase()] || '📝';
   };
 
-  // Show error state if no data is provided
-  if (!data || data.length === 0) {
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="animate-pulse">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+              <div>
+                <div className="h-6 w-48 bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 w-32 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+            <div className="h-8 w-24 bg-gray-200 rounded"></div>
+          </div>
+          <div className="space-y-3">
+            {[...Array(limit)].map((_, i) => (
+              <div key={i} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
+                <div className="w-8 h-8 bg-gray-200 rounded"></div>
+                <div className="flex-1">
+                  <div className="h-4 w-32 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-3 w-24 bg-gray-200 rounded"></div>
+                </div>
+                <div className="h-6 w-12 bg-gray-200 rounded"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="text-center py-8">
-          <ExclamationTriangleIcon className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Recent Tests</h3>
-          <p className="text-gray-600 mb-4">Unable to load recent test data. Please try refreshing the page.</p>
+          <ExclamationTriangleIcon className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to Load Tests</h3>
+          <p className="text-gray-600 mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
-            Refresh Page
+            Retry
           </button>
         </div>
       </div>

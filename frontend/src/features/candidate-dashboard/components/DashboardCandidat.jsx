@@ -60,32 +60,8 @@ const Dashboard = ({ onNavigateToSection }) => {
     );
   }
 
-  // Error state with retry mechanism
+  // Error state
   if (error) {
-    const handleRetry = () => {
-      setError(null);
-      setLoading(true);
-      // Retry loading dashboard data
-      const loadDashboardData = async () => {
-        try {
-          setLoading(true);
-          setError(null);
-          
-          const data = await dashboardAggregatedApi.getDashboardSummary();
-          const transformedData = dashboardAggregatedApi.transformDataForComponents(data);
-          
-          setDashboardData(transformedData);
-        } catch (err) {
-          console.error('Error loading dashboard data:', err);
-          setError(err.message);
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-      loadDashboardData();
-    };
-
     return (
       <div className="bg-red-50 border border-red-200 rounded-xl p-6">
         <div className="flex items-center">
@@ -97,20 +73,12 @@ const Dashboard = ({ onNavigateToSection }) => {
           <div>
             <h3 className="text-lg font-medium text-red-800">Error Loading Dashboard</h3>
             <p className="text-red-600 mt-1">{error}</p>
-            <div className="mt-3 space-x-2">
-              <button
-                onClick={handleRetry}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Retry
-              </button>
-              <button
-                onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                Refresh Page
-              </button>
-            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Try Again
+            </button>
           </div>
         </div>
       </div>

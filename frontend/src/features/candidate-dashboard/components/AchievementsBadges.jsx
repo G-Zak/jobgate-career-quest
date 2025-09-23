@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   TrophyIcon, 
   StarIcon, 
@@ -6,10 +6,32 @@ import {
   ChartBarIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import dashboardApi from '../services/dashboardApi';
 
-const AchievementsBadges = ({ data }) => {
-  // Use data from props or show error state
-  const achievements = data || [];
+const AchievementsBadges = () => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [achievements, setAchievements] = useState([]);
+
+  // Fetch achievements data
+  useEffect(() => {
+    const fetchAchievements = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await dashboardApi.getAchievements();
+        setAchievements(data);
+      } catch (err) {
+        console.error('Error fetching achievements:', err);
+        setError('Failed to load achievements');
+        // Keep empty array on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAchievements();
+  }, []);
 
   const getAchievementIcon = (icon) => {
     const icons = {
@@ -32,19 +54,39 @@ const AchievementsBadges = ({ data }) => {
     return colors[color] || 'bg-gray-50 border-gray-200';
   };
 
-  // Show error state if no data is provided
-  if (!data || data.length === 0) {
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="animate-pulse">
+          <div className="h-6 w-48 bg-gray-200 rounded mb-4"></div>
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
+                <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                <div className="flex-1">
+                  <div className="h-4 w-32 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-3 w-24 bg-gray-200 rounded"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="text-center py-8">
-          <ExclamationTriangleIcon className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Achievements Available</h3>
-          <p className="text-gray-600 mb-4">Unable to load achievements data. Please try refreshing the page.</p>
+          <ExclamationTriangleIcon className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to Load Achievements</h3>
+          <p className="text-gray-600 mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
-            Refresh Page
+            Retry
           </button>
         </div>
       </div>
