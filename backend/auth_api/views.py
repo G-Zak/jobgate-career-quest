@@ -6,6 +6,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.db.models import Avg, Count, Q, Max
+from testsengine.models import TestSession, Test
+from recommendation.models import JobRecommendation, JobOffer
+from .services import AchievementsService
+from .cache_utils import cache_manager
 import logging
 
 logger = logging.getLogger(__name__)
@@ -213,158 +218,178 @@ def health_check(request):
 @permission_classes([permissions.IsAuthenticated])
 def get_achievements(request):
     """
-    Get user achievements and badges based on test performance
+    Get user achievements based on test performance using AchievementsService
     """
     try:
-        from testsengine.models import TestSession
-        from testsengine.test_history_views import test_history_summary
-        from datetime import timedelta
+        user = request.user
         
-        # Get test history summary data directly
-        sessions = TestSession.objects.filter(user=request.user)
+        # Use the achievements service
+        achievements_service = AchievementsService(user)
+        achievement_summary = achievements_service.get_achievement_summary()
         
-        # Calculate summary data
-        total_tests = sessions.count()
-        if total_tests > 0:
-            average_score = sum(session.score for session in sessions) / total_tests
-            # Calculate improvement trend (simplified)
-            recent_sessions = sessions.order_by('-start_time')[:5]
-            if len(recent_sessions) >= 2:
-                recent_avg = sum(s.score for s in recent_sessions) / len(recent_sessions)
-                older_sessions = sessions.order_by('-start_time')[5:10]
-                if len(older_sessions) >= 2:
-                    older_avg = sum(s.score for s in older_sessions) / len(older_sessions)
-                    improvement_trend = recent_avg - older_avg
-                else:
-                    improvement_trend = 0
-            else:
-                improvement_trend = 0
-        else:
-            average_score = 0
-            improvement_trend = 0
-        
-        summary_data = {
-            'total_tests_completed': total_tests,
-            'average_score': average_score,
-            'improvement_trend': improvement_trend
-        }
-        
-        achievements = []
-        
-        # Perfect Score Achievement
-        if summary_data.get('average_score', 0) >= 90:
-            achievements.append({
-                'id': 1,
-                'title': "Perfect Score",
-                'description': "Achieved 90%+ average score",
-                'icon': "🏆",
-                'color': "yellow",
-                'earned': True
-            })
-        
-        # Test Master Achievement
-        if summary_data.get('total_tests_completed', 0) >= 10:
-            achievements.append({
-                'id': 2,
-                'title': "Test Master",
-                'description': "Completed 10+ tests",
-                'icon': "⚡",
-                'color': "green",
-                'earned': True
-            })
-        
-        # Improvement Achievement
-        improvement_trend = summary_data.get('improvement_trend', 0)
-        if improvement_trend > 0:
-            achievements.append({
-                'id': 3,
-                'title': "Improvement",
-                'description': f"+{improvement_trend}% score increase",
-                'icon': "📈",
-                'color': "blue",
-                'earned': True
-            })
-        
-        # Speed Master Achievement (completed 5 tests this week)
-        recent_tests = TestSession.objects.filter(
-            user=request.user,
-            start_time__gte=timezone.now() - timedelta(days=7)
-        ).count()
-        
-        if recent_tests >= 5:
-            achievements.append({
-                'id': 4,
-                'title': "Speed Master",
-                'description': "Completed 5 tests this week",
-                'icon': "⚡",
-                'color': "green",
-                'earned': True
-            })
-        
-        # Consistency Achievement (completed tests in 3+ different categories)
-        categories = TestSession.objects.filter(
-            user=request.user
-        ).values_list('test__test_type', flat=True).distinct()
-        
-        if len(categories) >= 3:
-            achievements.append({
-                'id': 5,
-                'title': "Versatile Learner",
-                'description': "Completed tests in 3+ categories",
-                'icon': "⭐",
-                'color': "purple",
-                'earned': True
-            })
-        
-        # First Test Achievement
-        if summary_data.get('total_tests_completed', 0) >= 1:
-            achievements.append({
-                'id': 6,
-                'title': "First Step",
-                'description': "Completed your first assessment",
-                'icon': "🌟",
-                'color': "purple",
-                'earned': True
-            })
-        
-        # If no achievements earned, show some unearned ones as motivation
-        if not achievements:
-            achievements = [
-                {
-                    'id': 1,
-                    'title': "Perfect Score",
-                    'description': "Achieve 90%+ average score",
-                    'icon': "🏆",
-                    'color': "yellow",
-                    'earned': False
-                },
-                {
-                    'id': 2,
-                    'title': "Test Master",
-                    'description': "Complete 10+ tests",
-                    'icon': "⚡",
-                    'color': "green",
-                    'earned': False
-                },
-                {
-                    'id': 6,
-                    'title': "First Step",
-                    'description': "Complete your first assessment",
-                    'icon': "🌟",
-                    'color': "purple",
-                    'earned': False
-                }
-            ]
-        
-        return Response({
-            'achievements': achievements,
-            'total_earned': len([a for a in achievements if a['earned']]),
-            'total_available': len(achievements)
-        })
+        return Response(achievement_summary)
         
     except Exception as e:
         logger.error(f"Error in get_achievements: {str(e)}")
         return Response(
             {'error': f'Failed to get achievements: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_dashboard_summary(request):
+    """
+    Get aggregated dashboard data in a single API call with caching
+    """
+    try:
+        user = request.user
+        
+        # Try to get from cache first
+        cached_data = cache_manager.get_user_dashboard_data(user.id)
+        if cached_data:
+            logger.info(f"Returning cached dashboard data for user {user.id}")
+            return Response(cached_data)
+        
+        logger.info(f"Generating fresh dashboard data for user {user.id}")
+        
+        # Get test sessions for the user
+        sessions = TestSession.objects.filter(user=user).select_related('test')
+        
+        # Calculate test history summary
+        total_tests = sessions.count()
+        if total_tests > 0:
+            average_score = sessions.aggregate(avg_score=Avg('score'))['avg_score'] or 0
+            recent_sessions = sessions.order_by('-start_time')[:5]
+        else:
+            average_score = 0
+            recent_sessions = []
+        
+        # Calculate category stats
+        category_stats = []
+        if total_tests > 0:
+            category_data = sessions.values('test__test_type').annotate(
+                count=Count('id'),
+                avg_score=Avg('score')
+            ).order_by('-count')
+            
+            for cat in category_data:
+                category_stats.append({
+                    'category': cat['test__test_type'] or 'Unknown',
+                    'count': cat['count'],
+                    'average_score': round(cat['avg_score'] or 0, 1)
+                })
+        
+        # Get recent test sessions data
+        recent_sessions_data = []
+        for session in recent_sessions:
+            recent_sessions_data.append({
+                'id': session.id,
+                'test_name': session.test.title if session.test else 'Unknown Test',
+                'test_type': session.test.test_type if session.test else 'Unknown',
+                'score': session.score,
+                'date_taken': session.start_time.isoformat(),
+                'status': session.status
+            })
+        
+        # Get achievements using the service
+        achievements_service = AchievementsService(user)
+        achievement_summary = achievements_service.get_achievement_summary()
+        achievements = achievement_summary['achievements']
+        
+        # Get job recommendations (simplified)
+        try:
+            from recommendation.services import RecommendationEngine
+            from recommendation.models import CandidateProfile
+            
+            candidate = CandidateProfile.objects.get(user=user)
+            engine = RecommendationEngine()
+            recommendations = engine.generate_recommendations(candidate=candidate, limit=3)
+            
+            job_recommendations = []
+            for rec in recommendations:
+                job = rec.job
+                job_recommendations.append({
+                    'id': str(job.id),
+                    'title': job.title,
+                    'company': job.company,
+                    'match': round(rec.overall_score, 0),
+                    'salary': f"${job.salary_min:,}-${job.salary_max:,}" if job.salary_min and job.salary_max else "Salary not specified",
+                    'location': job.location,
+                    'skills': [skill.name for skill in job.required_skills.all()[:3]],
+                    'description': job.description[:100] + "..." if job.description and len(job.description) > 100 else job.description or "",
+                    'job_type': job.job_type or "Full-time",
+                    'remote': job.remote
+                })
+        except Exception as e:
+            logger.warning(f"Could not get job recommendations: {str(e)}")
+            job_recommendations = []
+        
+        # Calculate chart data
+        chart_data = {
+            'score_trend': [],
+            'category_distribution': []
+        }
+        
+        if total_tests > 0:
+            # Score trend (last 10 tests)
+            recent_tests = sessions.order_by('-start_time')[:10]
+            for session in reversed(recent_tests):
+                chart_data['score_trend'].append({
+                    'date': session.start_time.strftime('%Y-%m-%d'),
+                    'score': session.score
+                })
+            
+            # Category distribution
+            for cat in category_stats:
+                chart_data['category_distribution'].append({
+                    'category': cat['category'],
+                    'count': cat['count']
+                })
+        
+        # Prepare response data
+        response_data = {
+            'test_history': {
+                'summary': {
+                    'total_tests': total_tests,
+                    'average_score': round(average_score, 1),
+                    'total_time_spent': sum(session.time_spent or 0 for session in sessions),
+                    'best_score': sessions.aggregate(max_score=Max('score'))['max_score'] or 0
+                },
+                'recent_sessions': recent_sessions_data,
+                'category_stats': category_stats,
+                'chart_data': chart_data
+            },
+            'achievements': {
+                'list': achievements,
+                'total_earned': achievement_summary['total_earned'],
+                'total_available': achievement_summary['total_available'],
+                'completion_percentage': achievement_summary['completion_percentage'],
+                'next_achievements': achievement_summary['next_achievements']
+            },
+            'job_recommendations': {
+                'jobs': job_recommendations,
+                'total_count': len(job_recommendations)
+            },
+            'user_profile': {
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'date_joined': user.date_joined.isoformat()
+            }
+        }
+        
+        # Cache the response data
+        cache_manager.set_user_dashboard_data(user.id, response_data)
+        logger.info(f"Cached dashboard data for user {user.id}")
+        
+        return Response(response_data)
+        
+    except Exception as e:
+        logger.error(f"Error in get_dashboard_summary: {str(e)}")
+        return Response(
+            {'error': f'Failed to get dashboard summary: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

@@ -173,7 +173,7 @@ const AbstractReasoningTest = ({ onBackToDashboard, testId = 'abstract' }) => {
 
   const handleConfirmExit = () => {
     setShowExitModal(false);
-    onBackToDashboard();
+      onBackToDashboard();
   };
 
   const currentQuestion = questions[currentQuestionIndex];
@@ -258,7 +258,7 @@ const AbstractReasoningTest = ({ onBackToDashboard, testId = 'abstract' }) => {
                   Question {currentQuestionIndex + 1} of {questions.length}
                 </p>
               </div>
-            </div>
+                </div>
 
             {/* Center: Progress Bar */}
             <div className="flex-1 max-w-md mx-8">
@@ -292,7 +292,7 @@ const AbstractReasoningTest = ({ onBackToDashboard, testId = 'abstract' }) => {
       {/* Test Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         <AnimatePresence mode="wait">
-          <motion.div
+        <motion.div
             key={currentQuestionIndex}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -329,7 +329,7 @@ const AbstractReasoningTest = ({ onBackToDashboard, testId = 'abstract' }) => {
                             e.target.style.display = 'none';
                           }}
                         />
-                      </div>
+              </div>
                     </div>
                   </div>
                 )}
@@ -413,8 +413,8 @@ const AbstractReasoningTest = ({ onBackToDashboard, testId = 'abstract' }) => {
                   </>
                 )}
               </motion.button>
-            </div>
-          </motion.div>
+          </div>
+        </motion.div>
         </AnimatePresence>
       </div>
 
@@ -433,7 +433,7 @@ const AbstractReasoningTest = ({ onBackToDashboard, testId = 'abstract' }) => {
               exit={{ scale: 0.9, opacity: 0 }}
               className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
             >
-              <div className="text-center">
+      <div className="text-center">
                 <FaTimes className="w-12 h-12 text-red-600 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Exit Test?</h3>
                 <p className="text-gray-600 mb-6">

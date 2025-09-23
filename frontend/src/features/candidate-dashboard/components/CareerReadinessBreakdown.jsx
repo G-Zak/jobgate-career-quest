@@ -9,11 +9,35 @@ import {
   XCircleIcon
 } from '@heroicons/react/24/outline';
 import RadarChart from './RadarChart';
+import dashboardApi from '../services/dashboardApi';
 
 const CareerReadinessBreakdown = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [breakdownData, setBreakdownData] = useState(null);
 
-  // Mock data for the 8 test categories
+  // Fetch career readiness breakdown data
+  useEffect(() => {
+    const fetchBreakdownData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await dashboardApi.getCareerReadinessBreakdown();
+        setBreakdownData(data);
+      } catch (err) {
+        console.error('Error fetching career readiness breakdown:', err);
+        setError('Failed to load career readiness data');
+        // Keep mock data on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBreakdownData();
+  }, []);
+
+  // Mock data for the 8 test categories (fallback)
   const skillCategories = [
     {
       id: 'verbal',

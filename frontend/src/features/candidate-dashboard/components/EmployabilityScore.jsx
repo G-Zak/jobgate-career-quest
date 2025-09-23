@@ -8,12 +8,16 @@ import {
   ExclamationTriangleIcon,
   XCircleIcon
 } from '@heroicons/react/24/outline';
+import dashboardApi from '../services/dashboardApi';
 
 const EmployabilityScore = () => {
   const [selectedProfile, setSelectedProfile] = useState('Software Engineer');
   const [employabilityScore, setEmployabilityScore] = useState(72);
   const [previousScore, setPreviousScore] = useState(68);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [scoreData, setScoreData] = useState(null);
 
   const profiles = [
     'Software Engineer',
@@ -25,6 +29,28 @@ const EmployabilityScore = () => {
     'Mechanical Engineer',
     'Marketing Manager'
   ];
+
+  // Fetch employability score data
+  useEffect(() => {
+    const fetchScoreData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await dashboardApi.getEmployabilityScore();
+        setScoreData(data);
+        setEmployabilityScore(data.overallScore);
+        setPreviousScore(Math.max(0, data.overallScore - (data.improvement || 0)));
+      } catch (err) {
+        console.error('Error fetching employability score:', err);
+        setError('Failed to load employability score');
+        // Keep default values on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchScoreData();
+  }, []);
 
   const getScoreColor = (score) => {
     if (score >= 80) return 'text-green-600';
@@ -54,6 +80,57 @@ const EmployabilityScore = () => {
 
   const scoreChange = employabilityScore - previousScore;
   const isImproving = scoreChange > 0;
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="animate-pulse">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+              <div>
+                <div className="h-6 w-48 bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 w-32 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+            <div className="h-10 w-32 bg-gray-200 rounded-lg"></div>
+          </div>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-6">
+              <div className="w-24 h-24 bg-gray-200 rounded-full"></div>
+              <div className="space-y-2">
+                <div className="h-6 w-32 bg-gray-200 rounded"></div>
+                <div className="h-4 w-48 bg-gray-200 rounded"></div>
+                <div className="h-4 w-24 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="h-16 w-16 bg-gray-200 rounded"></div>
+              <div className="h-16 w-16 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="text-center py-8">
+          <ExclamationTriangleIcon className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to Load Score</h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
@@ -155,11 +232,15 @@ const EmployabilityScore = () => {
         {/* Quick Stats */}
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">85%</div>
+            <div className="text-2xl font-bold text-gray-900">
+              {loading ? '...' : `${Math.round((employabilityScore / 75) * 100)}%`}
+            </div>
             <div className="text-xs text-gray-500">vs. Average</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">12</div>
+            <div className="text-2xl font-bold text-gray-900">
+              {loading ? '...' : scoreData?.testsCompleted || 0}
+            </div>
             <div className="text-xs text-gray-500">Tests Taken</div>
           </div>
         </div>
