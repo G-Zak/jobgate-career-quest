@@ -29,8 +29,8 @@ def get_database_config():
     
     # Check if we're in production mode
     is_production = config('ENVIRONMENT', default='development') == 'production'
-    # Default to PostgreSQL for consistent scoring system behavior
-    use_postgresql = config('USE_POSTGRESQL', default=True, cast=bool)
+    # Default to SQLite for local development
+    use_postgresql = config('USE_POSTGRESQL', default=False, cast=bool)
     
     if use_postgresql:
         # PostgreSQL with Django's built-in connection pooling
@@ -40,7 +40,8 @@ def get_database_config():
                 'NAME': config('DB_NAME', default='careerquest'),
                 'USER': config('DB_USER', default='jobgate'),
                 'PASSWORD': config('DB_PASSWORD', default='securepass'),
-                'HOST': config('DB_HOST', default='db'),
+                'HOST': config('DB_HOST', default='localhost'), #for local development
+                #'HOST': config('DB_HOST', default='db'), for docker
                 'PORT': config('DB_PORT', default='5432'),
                 # Django's built-in connection pooling
                 'CONN_MAX_AGE': config('DB_CONN_MAX_AGE', default=600, cast=int),

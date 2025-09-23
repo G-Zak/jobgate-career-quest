@@ -157,13 +157,10 @@ class UserLogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
     def post(self, request):
-        """Logout user and blacklist token"""
+        """Logout user"""
         try:
-            refresh_token = request.data.get('refresh_token')
-            if refresh_token:
-                token = RefreshToken(refresh_token)
-                token.blacklist()
-            
+            # For now, we'll just log the logout without blacklisting
+            # In a production environment, you might want to implement token blacklisting
             logger.info(f"User logged out: {request.user.username}")
             
             return Response({
