@@ -4,20 +4,32 @@ class AuthService {
   constructor() {
     this.token = localStorage.getItem('access_token');
     this.refreshToken = localStorage.getItem('refresh_token');
-    this.user = JSON.parse(localStorage.getItem('user') || 'null');
+    const userData = JSON.parse(localStorage.getItem('user') || 'null');
+
+    // Ensure user has a name property
+    if (userData) {
+      this.user = {
+        ...userData,
+        name: userData.name || (userData.first_name && userData.last_name
+          ? `${userData.first_name} ${userData.last_name}`.trim()
+          : userData.first_name || userData.username || 'Utilisateur')
+      };
+    } else {
+      this.user = null;
+    }
   }
 
   // Register a new user
   async register(userData) {
     try {
       console.log('🔍 AuthService.register called with:', userData);
-      
+
       // Validate required fields
       if (!userData.email || !userData.password) {
         console.error('❌ Missing required fields:', { email: !!userData.email, password: !!userData.password });
-        return { 
-          success: false, 
-          errors: { general: ['Email and password are required'] } 
+        return {
+          success: false,
+          errors: { general: ['Email and password are required'] }
         };
       }
 
@@ -25,7 +37,7 @@ class AuthService {
       const fullName = userData.full_name || '';
       const nameParts = fullName.split(' ');
       const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
+      const lastName = nameParts.slice(1).join(' ') || 'User'; // Default to 'User' if no last name
 
       // Convert form data to API format
       const apiData = {
@@ -61,9 +73,9 @@ class AuthService {
       }
     } catch (error) {
       console.error('Registration error:', error);
-      return { 
-        success: false, 
-        errors: { general: ['Registration failed. Please try again.'] } 
+      return {
+        success: false,
+        errors: { general: ['Registration failed. Please try again.'] }
       };
     }
   }
@@ -71,6 +83,8 @@ class AuthService {
   // Login user
   async login(email, password) {
     try {
+      console.log('🔍 Attempting login for:', email);
+
       const response = await fetch(`${API_BASE_URL}/login/`, {
         method: 'POST',
         headers: {
@@ -79,21 +93,36 @@ class AuthService {
         body: JSON.stringify({ username: email, password }), // Use email as username
       });
 
+      console.log('📡 Response status:', response.status);
+
       const data = await response.json();
+      console.log('📥 Response data:', data);
+
+      if (response.status === 401) {
+        // Handle 401 Unauthorized specifically
+        console.log('❌ 401 Unauthorized - Invalid credentials');
+        return {
+          success: false,
+          errors: { general: ['No account found with these credentials. Please sign up first.'] },
+          isUnauthorized: true
+        };
+      }
 
       if (data.success) {
         // Store tokens and user data
         this.setTokens(data.tokens);
         this.setUser(data.user);
+        console.log('✅ Login successful');
         return { success: true, user: data.user };
       } else {
-        return { success: false, errors: { general: [data.message] } };
+        console.log('❌ Login failed:', data.message);
+        return { success: false, errors: { general: [data.message || 'Login failed'] } };
       }
     } catch (error) {
       console.error('Login error:', error);
-      return { 
-        success: false, 
-        errors: { general: ['Login failed. Please try again.'] } 
+      return {
+        success: false,
+        errors: { general: ['Login failed. Please try again.'] }
       };
     }
   }
@@ -273,8 +302,16 @@ class AuthService {
   }
 
   setUser(user) {
-    this.user = user;
-    localStorage.setItem('user', JSON.stringify(user));
+    // Create a name property from first_name and last_name
+    const userWithName = {
+      ...user,
+      name: user.first_name && user.last_name
+        ? `${user.first_name} ${user.last_name}`.trim()
+        : user.first_name || user.username || 'Utilisateur'
+    };
+
+    this.user = userWithName;
+    localStorage.setItem('user', JSON.stringify(userWithName));
   }
 
   clearTokens() {
@@ -289,6 +326,12 @@ class AuthService {
     localStorage.removeItem('user');
   }
 
+  // Clear all user data and tokens
+  clearAll() {
+    this.clearTokens();
+    this.clearUser();
+  }
+
   // Check if user is authenticated
   isAuthenticated() {
     return !!this.token && !!this.user;
@@ -296,6 +339,20 @@ class AuthService {
 
   // Get current user
   getCurrentUser() {
+    return this.user;
+  }
+
+  // Force refresh user data from localStorage
+  refreshUserData() {
+    const userData = JSON.parse(localStorage.getItem('user') || 'null');
+    if (userData) {
+      this.user = {
+        ...userData,
+        name: userData.name || (userData.first_name && userData.last_name
+          ? `${userData.first_name} ${userData.last_name}`.trim()
+          : userData.first_name || userData.username || 'Utilisateur')
+      };
+    }
     return this.user;
   }
 

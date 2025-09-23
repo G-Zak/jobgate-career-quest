@@ -41,11 +41,13 @@ export const AuthProvider = ({ children }) => {
             setLoading(true);
 
             const result = await authService.login(email, password);
-            
+
             if (result.success) {
-                setUser(result.user);
+                // Refresh user data to ensure it has the name property
+                const refreshedUser = authService.refreshUserData();
+                setUser(refreshedUser);
                 setIsAuthenticated(true);
-                return { success: true, user: result.user };
+                return { success: true, user: refreshedUser };
             } else {
                 return { success: false, error: result.errors?.general?.[0] || 'Login failed' };
             }
@@ -63,11 +65,13 @@ export const AuthProvider = ({ children }) => {
             setLoading(true);
 
             const result = await authService.register(userData);
-            
+
             if (result.success) {
-                setUser(result.user);
+                // Refresh user data to ensure it has the name property
+                const refreshedUser = authService.refreshUserData();
+                setUser(refreshedUser);
                 setIsAuthenticated(true);
-                return { success: true, user: result.user };
+                return { success: true, user: refreshedUser };
             } else {
                 return { success: false, error: result.errors?.general?.[0] || 'Registration failed' };
             }

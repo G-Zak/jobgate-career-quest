@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDarkMode } from '../../../contexts/DarkModeContext.jsx';
+import { useAuth } from '../../../contexts/AuthContext';
 import { saveUserProfile, loadUserProfile, defaultUserProfile, updateUserSkillsWithProficiency } from '../../../utils/profileUtils';
 import { profileApiService } from '../../../services/profileApi';
 import SkillsSelector from './SkillsSelector';
@@ -19,6 +20,7 @@ import {
 
 const ProfilePage = () => {
   const { isDarkMode } = useDarkMode();
+  const { user: authUser } = useAuth();
 
   // States for editable fields
   const [isEditingInfo, setIsEditingInfo] = useState(false);
@@ -26,9 +28,22 @@ const ProfilePage = () => {
   const [isEditingContact, setIsEditingContact] = useState(false);
   const [newSkill, setNewSkill] = useState('');
 
-  // Load user data from localStorage or use default
+  // Load user data from localStorage or use authenticated user data
   const [userData, setUserData] = useState(() => {
     try {
+      // If we have authenticated user data, use it as base
+      if (authUser) {
+        const savedData = loadUserProfile();
+        return {
+          ...defaultUserProfile,
+          ...savedData,
+          // Override with authenticated user data
+          name: authUser.name || authUser.first_name || 'Utilisateur',
+          email: authUser.email || 'user@example.com',
+          id: authUser.id
+        };
+      }
+
       const savedData = loadUserProfile();
       return savedData || defaultUserProfile;
     } catch (error) {
@@ -39,6 +54,18 @@ const ProfilePage = () => {
 
   // State for tracking if data has been modified
   const [isDataModified, setIsDataModified] = useState(false);
+
+  // Update userData when authUser changes
+  useEffect(() => {
+    if (authUser) {
+      setUserData(prevData => ({
+        ...prevData,
+        name: authUser.name || authUser.first_name || 'Utilisateur',
+        email: authUser.email || 'user@example.com',
+        id: authUser.id
+      }));
+    }
+  }, [authUser]);
 
   // Ensure userData has the required structure
   const safeUserData = {

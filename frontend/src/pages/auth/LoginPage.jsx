@@ -194,6 +194,15 @@ const LoginPage = () => {
                             </button>
                         </div>
 
+                        {/* Additional Error Message Below Form */}
+                        {error && (
+                            <div className="text-center">
+                                <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+                                    {error}
+                                </p>
+                            </div>
+                        )}
+
                         {/* Register Link */}
                         <div className="text-center">
                             <p className="text-sm text-gray-600 dark:text-gray-400">

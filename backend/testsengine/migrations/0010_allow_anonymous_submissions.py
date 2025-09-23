@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("testsengine", "0009_database_optimization"),
+        ("testsengine", "0008_update_scoring_models"),
     ]
 
     operations = [
