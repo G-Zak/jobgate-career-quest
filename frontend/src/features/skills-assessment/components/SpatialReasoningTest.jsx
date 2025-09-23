@@ -141,14 +141,14 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
   // Calculate current score
   // REMOVED: calculateCurrentScore() - use backend API instead
   const calculateCurrentScore = () => {
-    const correctAnswers = allQuestions.filter(question => 
+    const correctAnswers = questions.filter(question => 
       answers[question.id] === question.correctAnswer
     ).length;
     
     return {
       correct: correctAnswers,
-      total: allQuestions.length,
-      percentage: allQuestions.length > 0 ? Math.round((correctAnswers / allQuestions.length) * 100) : 0
+      total: questions.length,
+      percentage: questions.length > 0 ? Math.round((correctAnswers / questions.length) * 100) : 0
     };
   };
 

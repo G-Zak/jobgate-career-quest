@@ -1,4 +1,4 @@
-kayni#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Quick setup script for Skills Management System
 Run with: python manage.py shell < setup_skills_data.py
