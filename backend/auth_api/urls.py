@@ -13,6 +13,9 @@ urlpatterns = [
     path('profile/', views.user_profile, name='user-profile'),
     path('achievements/', views.get_achievements, name='user-achievements'),
     
+    # Dashboard endpoints
+    path('dashboard/summary/', views.get_dashboard_summary, name='dashboard-summary'),
+    
     # Health check
     path('health/', views.health_check, name='auth-health'),
 ]
