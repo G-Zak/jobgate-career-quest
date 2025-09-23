@@ -4,7 +4,8 @@ Handles serialization for test history and session data
 """
 
 from rest_framework import serializers
-from .models import TestSession, TestAnswer, Test, User
+from .models import TestSession, TestAnswer, Test
+from django.conf import settings
 from django.utils import timezone
 
 

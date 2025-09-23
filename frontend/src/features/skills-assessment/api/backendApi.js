@@ -14,7 +14,7 @@ class BackendApiService {
    * Get authentication headers
    */
   getAuthHeaders() {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('access_token');
     return {
       'Content-Type': 'application/json',
       ...(token && { 'Authorization': `Bearer ${token}` })

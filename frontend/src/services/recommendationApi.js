@@ -12,7 +12,7 @@ class RecommendationApiService {
    * Get authentication token from localStorage
    */
   getAuthToken() {
-    return localStorage.getItem('authToken') || localStorage.getItem('access_token');
+    return localStorage.getItem('access_token');
   }
 
   /**

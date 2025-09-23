@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 import json
 from django.utils import timezone
 
@@ -31,7 +31,7 @@ class Skill(models.Model):
 
 class CandidateProfile(models.Model):
     """Profil des candidats créé par l'admin"""
-    user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name="Utilisateur")
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Utilisateur")
     first_name = models.CharField(max_length=100, verbose_name="Prénom")
     last_name = models.CharField(max_length=100, verbose_name="Nom")
     email = models.EmailField(unique=True, verbose_name="Email")

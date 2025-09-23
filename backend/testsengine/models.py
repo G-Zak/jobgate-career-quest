@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.conf import settings
 import json
 
@@ -223,7 +223,7 @@ class TestSession(models.Model):
         ('abandoned', 'Abandoned'),
     ]
     
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     test = models.ForeignKey(Test, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_started')
     start_time = models.DateTimeField(auto_now_add=True)
@@ -329,7 +329,7 @@ class CodingSubmission(models.Model):
         ('memory_limit_exceeded', 'Memory Limit Exceeded'),
     ]
     
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     challenge = models.ForeignKey(CodingChallenge, on_delete=models.CASCADE)
     code = models.TextField()
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='pending')
@@ -357,7 +357,7 @@ class CodingSession(models.Model):
         ('abandoned', 'Abandoned'),
     ]
     
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     challenge = models.ForeignKey(CodingChallenge, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     current_code = models.TextField(blank=True, null=True)

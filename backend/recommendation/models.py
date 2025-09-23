@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.utils import timezone
 from skills.models import Skill, CandidateProfile
 import json
@@ -142,7 +142,7 @@ class JobRecommendation(models.Model):
 
 class UserJobPreference(models.Model):
     """User preferences for job recommendations"""
-    user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name="Utilisateur")
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Utilisateur")
     
     # Location preferences
     preferred_cities = models.JSONField(default=list, verbose_name="Villes préférées")

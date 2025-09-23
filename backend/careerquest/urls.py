@@ -20,6 +20,8 @@ from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # Authentication API
+    path("api/auth/", include("auth_api.urls")),
     # Expose tests engine API under /api/
     path("", include("testsengine.urls")),
     # Expose skills API (skills, candidates, technical tests, results) under /api/

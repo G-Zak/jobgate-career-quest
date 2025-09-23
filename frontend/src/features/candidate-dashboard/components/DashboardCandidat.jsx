@@ -1,18 +1,12 @@
 import React from 'react';
 import ProfileHeader from './ProfileHeader';
-import DynamicBadges from './DynamicBadges';
-import SkillsPerformance from './SkillsPerformance';
-import TestTimeline from './TestTimeline';
-import JobRecommendations from './JobRecommendations';
-import RecentTests from './RecentTests';
-import TestStatsWidget from './TestStatsWidget';
-import DynamicQuickStats from './DynamicQuickStats';
-// New components for Employability Score dashboard
+// Core components for professional dashboard
 import EmployabilityScore from './EmployabilityScore';
 import CareerReadinessBreakdown from './CareerReadinessBreakdown';
-import Benchmarks from './Benchmarks';
 import EnhancedJobRecommendations from './EnhancedJobRecommendations';
-import EnhancedTestTimeline from './EnhancedTestTimeline';
+// Merged and simplified components
+import MergedStatsWidget from './MergedStatsWidget';
+import SimplifiedRecentTests from './SimplifiedRecentTests';
 import { useScrollToTop } from '../../../shared/utils/scrollUtils';
 import '../../../features/candidate-dashboard/styles/dashboard-design-system.css';
 
@@ -58,34 +52,85 @@ const Dashboard = ({ onNavigateToSection }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="sa-container py-6">
-        {/* Top Section - Employability Score (Hero Area) */}
-        <div className="mb-6">
+        {/* Hero Section - Employability Score (Full Width) */}
+        <div className="mb-8">
           <EmployabilityScore />
         </div>
 
-        {/* Main Grid Layout */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          {/* Left Column - Profile & Stats */}
-          <div className="xl:col-span-4 sa-stack">
+        {/* Professional Layout - Desktop (12 cols) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column - Profile & Stats (5 cols) */}
+          <div className="lg:col-span-5 space-y-6">
             <ProfileHeader user={userData} />
-            <DynamicQuickStats />
-            <TestStatsWidget />
-            <RecentTests onViewAll={handleViewAllTests} />
+            <MergedStatsWidget />
+            <SimplifiedRecentTests onViewAll={handleViewAllTests} />
+            
+            {/* Achievements & Badges */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Achievements</h3>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg">
+                  <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">🏆</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">Perfect Score</p>
+                    <p className="text-xs text-gray-600">Verbal Reasoning - 100%</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">⚡</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">Speed Master</p>
+                    <p className="text-xs text-gray-600">Completed 5 tests this week</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">📈</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">Improvement</p>
+                    <p className="text-xs text-gray-600">+12% average score increase</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+              <div className="space-y-3">
+                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors">
+                  Take New Assessment
+                </button>
+                <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg text-sm font-medium transition-colors">
+                  View All Tests
+                </button>
+                <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg text-sm font-medium transition-colors">
+                  Update Profile
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Right Column - Main Content */}
-          <div className="xl:col-span-8 sa-stack">
-            {/* Career Readiness Analysis */}
+          {/* Right Column - Main Content (7 cols) */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* Career Readiness Breakdown with integrated benchmarks */}
             <CareerReadinessBreakdown />
             
-            {/* Benchmarks & Recommendations */}
-            <Benchmarks />
-            
-            {/* Enhanced Job Recommendations */}
+            {/* Job Recommendations */}
             <EnhancedJobRecommendations onViewAll={handleViewAllTests} />
-            
-            {/* Enhanced Test Timeline with Milestones */}
-            <EnhancedTestTimeline onViewAll={handleViewAllTests} />
+          </div>
+        </div>
+
+        {/* Mobile Layout - Stacked */}
+        <div className="lg:hidden space-y-6 mt-6">
+          <div className="space-y-6">
+            <MergedStatsWidget />
+            <SimplifiedRecentTests onViewAll={handleViewAllTests} />
           </div>
         </div>
       </div>
