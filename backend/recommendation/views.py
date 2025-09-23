@@ -248,6 +248,68 @@ def get_recommendations(request):
         )
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_job_recommendations(request):
+    """
+    Get job recommendations for dashboard - simplified format for frontend
+    """
+    try:
+        # Get parameters
+        limit = int(request.GET.get('limit', 3))
+        min_score = float(request.GET.get('min_score', 50.0))
+        
+        # Get user preferences
+        user_prefs, _ = UserJobPreference.objects.get_or_create(user=request.user)
+        
+        # Get candidate profile
+        try:
+            candidate = CandidateProfile.objects.get(user=request.user)
+        except CandidateProfile.DoesNotExist:
+            # Create a basic candidate profile if it doesn't exist
+            candidate = CandidateProfile.objects.create(
+                user=request.user,
+                first_name=request.user.first_name or 'User',
+                last_name=request.user.last_name or 'Name',
+                email=request.user.email or 'user@example.com'
+            )
+        
+        # Use the recommendation engine
+        engine = RecommendationEngine()
+        recommendations = engine.generate_recommendations(
+            candidate=candidate,
+            limit=limit
+        )
+        
+        # Transform recommendations to dashboard format
+        jobs_data = []
+        for rec in recommendations:
+            job = rec.job
+            jobs_data.append({
+                'id': str(job.id),
+                'title': job.title,
+                'company': job.company,
+                'match': round(rec.overall_score, 0),
+                'salary': f"${job.salary_min:,}-${job.salary_max:,}" if job.salary_min and job.salary_max else "Salary not specified",
+                'location': job.location,
+                'skills': [skill.name for skill in job.required_skills.all()[:3]],  # Top 3 skills
+                'description': job.description[:100] + "..." if job.description and len(job.description) > 100 else job.description or "",
+                'job_type': job.job_type or "Full-time",
+                'remote': job.remote
+            })
+        
+        return Response({
+            'jobs': jobs_data,
+            'total_count': len(jobs_data)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in get_job_recommendations: {str(e)}")
+        return Response(
+            {'error': f'Failed to get job recommendations: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
 def user_skills_analysis(request):
     """
     Get skills analysis for the current user

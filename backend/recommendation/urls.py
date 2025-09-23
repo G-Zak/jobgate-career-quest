@@ -9,6 +9,7 @@ app_name = 'recommendation'
 urlpatterns = [
     # Job recommendations
     path('', views.get_recommendations, name='get_recommendations'),
+    path('jobs/', views.get_job_recommendations, name='get_job_recommendations'),
     
     # Recommendation management
     path('recommendations/<int:recommendation_id>/status/', 
