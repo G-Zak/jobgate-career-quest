@@ -19,8 +19,7 @@ urlpatterns = [
     # Cache management endpoints (admin only)
     path('cache/stats/', cache_views.cache_stats, name='cache-stats'),
     path('cache/clear-user/', cache_views.clear_user_cache, name='clear-user-cache'),
-    path('cache/clear-all/', cache_views.clear_all_cache, name='clear-all-cache'),
-    
+    path('cache/clear-all/', cache_views.clear_all_cache, name='clear-all-cache'),    
     # Health check
     path('health/', views.health_check, name='auth-health'),
 ]
