@@ -237,20 +237,75 @@ class AdvancedRecommendationEngine:
                 job_vector = self.job_vectors[job_idx:job_idx+1]
                 content_score = self.calculate_cosine_similarity(user_vector, job_vector)
         
-        # 2. Skill-based similarity
-        all_job_skills = job_metadata['required_skills'] + job_metadata['preferred_skills']
-        skill_score, matched_skills, missing_skills = self.calculate_skill_similarity(user_skills, all_job_skills)
+        # 2. Skill-based similarity (separate required and preferred)
+        required_skills = job_metadata['required_skills']
+        preferred_skills = job_metadata['preferred_skills']
+        all_job_skills = required_skills + preferred_skills
         
-        # 3. Location bonus
+        # Calculate required skills match
+        required_skill_score, required_matched, required_missing = self.calculate_skill_similarity(user_skills, required_skills)
+        
+        # Calculate preferred skills match
+        preferred_skill_score, preferred_matched, preferred_missing = self.calculate_skill_similarity(user_skills, preferred_skills)
+        
+        # Overall skill score (weighted: 80% required, 20% preferred)
+        skill_score = (required_skill_score * 0.8) + (preferred_skill_score * 0.2)
+        
+        # Combine all matched skills for display
+        all_matched_skills = required_matched + preferred_matched
+        all_missing_skills = required_missing + preferred_missing
+        
+        # 3. Location bonus (enhanced)
         location_bonus = 0.0
         if user_location and job_metadata['location']:
-            if user_location.lower() in job_metadata['location'].lower():
-                location_bonus = 0.1
+            user_city = user_location.lower().strip()
+            job_location = job_metadata['location'].lower().strip()
+            
+            # Exact city match
+            if user_city in job_location:
+                location_bonus = 0.15
+            # Same country match (if location contains country info)
+            elif any(country in job_location for country in ['morocco', 'maroc', 'ma']):
+                location_bonus = 0.05
         
         # 4. Remote work bonus
         remote_bonus = 0.05 if job_metadata.get('remote', False) else 0.0
         
-        # 5. Salary fit (simplified)
+        # 5. Experience level matching
+        experience_bonus = 0.0
+        if user_profile_data and 'experienceLevel' in user_profile_data:
+            user_experience = user_profile_data['experienceLevel'].lower()
+            job_seniority = job_metadata.get('seniority', '').lower()
+            
+            # Experience level mapping
+            experience_levels = {
+                'junior': 0,
+                'entry': 0,
+                '0-1 an': 0,
+                '1-3 ans': 1,
+                'intermediate': 2,
+                '3-5 ans': 2,
+                'senior': 3,
+                '5+ ans': 3,
+                'lead': 4,
+                'principal': 4,
+                'expert': 5
+            }
+            
+            user_level = experience_levels.get(user_experience, 1)
+            job_level = experience_levels.get(job_seniority, 1)
+            
+            # Perfect match
+            if user_level == job_level:
+                experience_bonus = 0.1
+            # Close match (within 1 level)
+            elif abs(user_level - job_level) <= 1:
+                experience_bonus = 0.05
+            # User overqualified (can still apply but lower bonus)
+            elif user_level > job_level:
+                experience_bonus = 0.02
+        
+        # 6. Salary fit (simplified)
         salary_fit = 0.5  # Default salary fit
         if user_profile_data and 'preferences' in user_profile_data:
             target_salary = user_profile_data['preferences'].get('target_salary_min', 0)
@@ -260,26 +315,36 @@ class AdvancedRecommendationEngine:
                 elif job_metadata['salary_min'] >= target_salary * 0.6:  # Within 40% of target
                     salary_fit = 0.6
         
-        # Combine scores with weights
+        # Combine scores with weights - Focus on skill matching
         overall_score = (
-            content_score * 0.4 +      # 40% content similarity
-            skill_score * 0.4 +        # 40% skill match
-            location_bonus +           # 10% location bonus
-            remote_bonus +             # 5% remote bonus
-            salary_fit * 0.05          # 5% salary fit
+            skill_score * 0.8 +        # 80% skill match (primary factor)
+            content_score * 0.15 +     # 15% content similarity
+            location_bonus +           # 3% location bonus (filter)
+            experience_bonus +         # 2% experience match (filter)
+            remote_bonus +             # 0% remote bonus (removed)
+            salary_fit * 0.0           # 0% salary fit (removed)
         ) * 100  # Convert to percentage
         
         return {
             'overall_score': min(100, max(0, overall_score)),
             'content_score': content_score * 100,
             'skill_score': skill_score * 100,
+            'required_skill_score': required_skill_score * 100,
+            'preferred_skill_score': preferred_skill_score * 100,
             'location_bonus': location_bonus * 100,
+            'experience_bonus': experience_bonus * 100,
             'remote_bonus': remote_bonus * 100,
             'salary_fit': salary_fit * 100,
-            'matched_skills': matched_skills,
-            'missing_skills': missing_skills,
-            'matched_skills_count': len(matched_skills),
-            'total_skills_count': len(all_job_skills)
+            'matched_skills': all_matched_skills,  # All matched skills (required + preferred)
+            'missing_skills': all_missing_skills,  # All missing skills
+            'required_matched_skills': required_matched,
+            'preferred_matched_skills': preferred_matched,
+            'required_missing_skills': required_missing,
+            'preferred_missing_skills': preferred_missing,
+            'required_skills_count': len(required_skills),
+            'preferred_skills_count': len(preferred_skills),
+            'required_matched_count': len(required_matched),
+            'preferred_matched_count': len(preferred_matched)
         }
     
     def generate_recommendations(self, user_skills: List[str], user_location: str = "", user_profile_data: Optional[Dict] = None, limit: int = 10) -> List[Dict]:
@@ -309,6 +374,7 @@ class AdvancedRecommendationEngine:
                     'content_score': score_data['content_score'],
                     'skill_score': score_data['skill_score'],
                     'location_bonus': score_data['location_bonus'],
+                    'experience_bonus': score_data['experience_bonus'],
                     'remote_bonus': score_data['remote_bonus'],
                     'salary_fit': score_data['salary_fit'],
                     'matched_skills': score_data['matched_skills'],

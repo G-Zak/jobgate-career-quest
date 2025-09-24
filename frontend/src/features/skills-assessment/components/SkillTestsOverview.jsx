@@ -10,7 +10,7 @@ const SimpleCodeEditor = ({ value, onChange, language }) => {
       onChange={(e) => onChange(e.target.value)}
       className="w-full h-full font-mono text-sm bg-gray-900 text-green-400 p-4 resize-none focus:outline-none border-0 rounded"
       placeholder={`Votre code ${language} ici...`}
-      style={{ 
+      style={{
         fontFamily: 'Consolas, Monaco, "Courier New", monospace',
         lineHeight: '1.4',
         tabSize: 4
@@ -106,13 +106,12 @@ int main() {
                 <h1 className="text-2xl font-bold text-gray-900">{test.title}</h1>
                 <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                   <span className="capitalize bg-gray-100 px-2 py-1 rounded">{test.language}</span>
-                  <span className={`capitalize px-2 py-1 rounded ${
-                    test.difficulty === 'beginner' ? 'bg-green-100 text-green-800' :
+                  <span className={`capitalize px-2 py-1 rounded ${test.difficulty === 'beginner' ? 'bg-green-100 text-green-800' :
                     test.difficulty === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
+                      'bg-red-100 text-red-800'
+                    }`}>
                     {test.difficulty === 'beginner' ? 'Débutant' :
-                     test.difficulty === 'intermediate' ? 'Intermédiaire' : 'Avancé'}
+                      test.difficulty === 'intermediate' ? 'Intermédiaire' : 'Avancé'}
                   </span>
                   <div className="flex items-center gap-1">
                     <FaTrophy className="w-4 h-4" />
@@ -125,7 +124,7 @@ int main() {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <button
                 onClick={handleExecuteCode}
@@ -144,7 +143,7 @@ int main() {
                   </>
                 )}
               </button>
-              
+
               <button
                 onClick={handleSubmitCode}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
@@ -159,13 +158,13 @@ int main() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-200px)]">
-          
+
           {/* Left Panel - Problem Description */}
           <div className="bg-white rounded-lg shadow-sm border flex flex-col">
             <div className="border-b p-4 bg-gray-50">
               <h3 className="text-lg font-semibold text-gray-900">Énoncé du Problème</h3>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               <div>
                 <h4 className="text-lg font-semibold text-gray-900 mb-3">Description</h4>
@@ -234,7 +233,7 @@ int main() {
                 </span>
               </div>
             </div>
-            
+
             <div className="flex-1 overflow-hidden">
               <SimpleCodeEditor
                 value={code}
@@ -257,7 +256,7 @@ int main() {
               <h3 className="text-xl font-semibold text-gray-900">Exécution temporairement indisponible</h3>
             </div>
             <p className="text-gray-600 mb-6">
-              Le système d'exécution de code est actuellement en cours de développement. 
+              Le système d'exécution de code est actuellement en cours de développement.
               Cette fonctionnalité sera bientôt disponible pour tester vos solutions en temps réel.
             </p>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -291,7 +290,7 @@ int main() {
               <h3 className="text-xl font-semibold text-gray-900">Soumission en développement</h3>
             </div>
             <p className="text-gray-600 mb-6">
-              Le système de soumission et d'évaluation automatique est en cours de finalisation. 
+              Le système de soumission et d'évaluation automatique est en cours de finalisation.
               Votre code a été sauvegardé localement.
             </p>
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
@@ -407,7 +406,7 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
           {
             id: 2,
             title: 'Test Python Architecture',
-            test_type: 'technical', 
+            test_type: 'technical',
             description: 'Concepts avancés d\'architecture et de design patterns en Python',
             duration_minutes: 40,
             total_questions: 4,
@@ -449,24 +448,20 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
         ];
       }
 
-      // Charger les tests pratiques (challenges)
+      // Charger les tests pratiques (challenges) - Utilisation des données mock
       let practicalTests = [];
-      try {
-        const challengesResponse = await fetch('http://127.0.0.1:8000/api/coding-challenges/');
-        practicalTests = await challengesResponse.json();
-      } catch (error) {
-        console.log('API non disponible, utilisation des données mock');
-        // Données mock pour les tests pratiques
-        practicalTests = [
-          {
-            id: 1,
-            title: 'Vérifier un palindrome',
-            slug: 'palindrome-check',
-            description: 'Vérifiez si une chaîne est un palindrome.',
-            difficulty: 'beginner',
-            category: 'string_manipulation',
-            language: 'python',
-            problem_statement: `Écrivez une fonction qui vérifie si une chaîne de caractères est un palindrome.
+      console.log('Utilisation des données mock pour les tests pratiques');
+      // Données mock pour les tests pratiques
+      practicalTests = [
+        {
+          id: 1,
+          title: 'Vérifier un palindrome',
+          slug: 'palindrome-check',
+          description: 'Vérifiez si une chaîne est un palindrome.',
+          difficulty: 'beginner',
+          category: 'string_manipulation',
+          language: 'python',
+          problem_statement: `Écrivez une fonction qui vérifie si une chaîne de caractères est un palindrome.
 
 Un palindrome est un mot, une phrase, ou une séquence qui se lit de la même manière de gauche à droite et de droite à gauche.
 
@@ -478,10 +473,10 @@ Un palindrome est un mot, une phrase, ou une séquence qui se lit de la même ma
 **Instructions :**
 - Ignorez les espaces et la casse
 - Retournez True si c'est un palindrome, False sinon`,
-            input_format: 'Une chaîne de caractères',
-            output_format: 'True ou False',
-            constraints: 'La chaîne peut contenir des lettres, des chiffres et des espaces',
-            starter_code: `def is_palindrome(s):
+          input_format: 'Une chaîne de caractères',
+          output_format: 'True ou False',
+          constraints: 'La chaîne peut contenir des lettres, des chiffres et des espaces',
+          starter_code: `def is_palindrome(s):
     """
     Vérifie si une chaîne est un palindrome
     
@@ -498,18 +493,18 @@ Un palindrome est un mot, une phrase, ou une séquence qui se lit de la même ma
 print(is_palindrome("radar"))  # True
 print(is_palindrome("hello"))  # False
 print(is_palindrome("A man a plan a canal Panama"))  # True`,
-            estimated_time_minutes: 15,
-            skill_id: 1 // Programmation Python
-          },
-          {
-            id: 2,
-            title: 'Somme de deux nombres',
-            slug: 'two-sum',
-            description: 'Trouvez deux nombres dans un tableau qui additionnent à une cible donnée.',
-            difficulty: 'beginner',
-            category: 'algorithms',
-            language: 'python',
-            problem_statement: `Étant donné un tableau d'entiers et une valeur cible, trouvez les indices de deux nombres qui additionnent à la cible.
+          estimated_time_minutes: 15,
+          skill_id: 1 // Programmation Python
+        },
+        {
+          id: 2,
+          title: 'Somme de deux nombres',
+          slug: 'two-sum',
+          description: 'Trouvez deux nombres dans un tableau qui additionnent à une cible donnée.',
+          difficulty: 'beginner',
+          category: 'algorithms',
+          language: 'python',
+          problem_statement: `Étant donné un tableau d'entiers et une valeur cible, trouvez les indices de deux nombres qui additionnent à la cible.
 
 Vous pouvez supposer qu'il y a exactement une solution, et vous ne pouvez pas utiliser le même élément deux fois.
 
@@ -523,10 +518,10 @@ Explication : nums[0] + nums[1] = 2 + 7 = 9
 **Instructions :**
 - Retournez les indices sous forme de liste
 - L'ordre des indices n'est pas important`,
-            input_format: 'Un tableau d\'entiers et un entier cible',
-            output_format: 'Une liste de deux indices',
-            constraints: '2 ≤ nums.length ≤ 1000, -10^9 ≤ nums[i] ≤ 10^9',
-            starter_code: `def two_sum(nums, target):
+          input_format: 'Un tableau d\'entiers et un entier cible',
+          output_format: 'Une liste de deux indices',
+          constraints: '2 ≤ nums.length ≤ 1000, -10^9 ≤ nums[i] ≤ 10^9',
+          starter_code: `def two_sum(nums, target):
     """
     Trouve les indices de deux nombres qui additionnent à la cible
     
@@ -543,18 +538,18 @@ Explication : nums[0] + nums[1] = 2 + 7 = 9
 # Tests
 print(two_sum([2, 7, 11, 15], 9))  # [0, 1]
 print(two_sum([3, 2, 4], 6))       # [1, 2]`,
-            estimated_time_minutes: 20,
-            skill_id: 1 // Programmation Python
-          },
-          {
-            id: 3,
-            title: 'FizzBuzz',
-            slug: 'fizzbuzz',
-            description: 'Implémentez le classique problème FizzBuzz.',
-            difficulty: 'beginner',
-            category: 'algorithms',
-            language: 'python',
-            problem_statement: `Écrivez un programme qui affiche les nombres de 1 à n. Mais :
+          estimated_time_minutes: 20,
+          skill_id: 1 // Programmation Python
+        },
+        {
+          id: 3,
+          title: 'FizzBuzz',
+          slug: 'fizzbuzz',
+          description: 'Implémentez le classique problème FizzBuzz.',
+          difficulty: 'beginner',
+          category: 'algorithms',
+          language: 'python',
+          problem_statement: `Écrivez un programme qui affiche les nombres de 1 à n. Mais :
 - Pour les multiples de 3, affichez "Fizz" au lieu du nombre
 - Pour les multiples de 5, affichez "Buzz" au lieu du nombre  
 - Pour les multiples de 3 ET 5, affichez "FizzBuzz" au lieu du nombre
@@ -567,10 +562,10 @@ print(two_sum([3, 2, 4], 6))       # [1, 2]`,
 **Instructions :**
 - Retournez une liste de chaînes de caractères
 - Les nombres normaux doivent être convertis en chaînes`,
-            input_format: 'Un entier n',
-            output_format: 'Une liste de chaînes',
-            constraints: '1 ≤ n ≤ 1000',
-            starter_code: `def fizzbuzz(n):
+          input_format: 'Un entier n',
+          output_format: 'Une liste de chaînes',
+          constraints: '1 ≤ n ≤ 1000',
+          starter_code: `def fizzbuzz(n):
     """
     Génère la séquence FizzBuzz pour les nombres de 1 à n
     
@@ -585,16 +580,15 @@ print(two_sum([3, 2, 4], 6))       # [1, 2]`,
 
 # Tests
 print(fizzbuzz(15))`,
-            estimated_time_minutes: 10,
-            skill_id: 1 // Programmation Python
-          }
-        ];
-      }
+          estimated_time_minutes: 10,
+          skill_id: 1 // Programmation Python
+        }
+      ];
 
       // Filtrer uniquement les compétences de l'utilisateur et associer les tests
       const skillsWithTests = userSkillsData.map(skill => {
         const qcmTestsForSkill = qcmTests.filter(test => test.skill === skill.id && test.is_active);
-        const practicalTestsForSkill = practicalTests.filter(test => 
+        const practicalTestsForSkill = practicalTests.filter(test =>
           test.skill_id === skill.id ||
           test.language?.toLowerCase() === skill.name?.toLowerCase() ||
           skill.name?.toLowerCase().includes(test.language?.toLowerCase())
@@ -648,17 +642,17 @@ print(fizzbuzz(15))`,
 
   if (selectedPracticalTest) {
     return (
-      <DirectPracticalTestInterface 
-        test={selectedPracticalTest} 
-        onBack={() => setSelectedPracticalTest(null)} 
+      <DirectPracticalTestInterface
+        test={selectedPracticalTest}
+        onBack={() => setSelectedPracticalTest(null)}
       />
     );
   }
 
   if (selectedSkill) {
     return (
-      <SkillTestsDetail 
-        skill={selectedSkill} 
+      <SkillTestsDetail
+        skill={selectedSkill}
         onBack={() => setSelectedSkill(null)}
         onBackToDashboard={onBackToDashboard}
         onStartPracticalTest={startPracticalTest}
@@ -688,8 +682,8 @@ print(fizzbuzz(15))`,
       {/* Grille des compétences */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {skills.map(skill => (
-          <div 
-            key={skill.id} 
+          <div
+            key={skill.id}
             className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 cursor-pointer"
             onClick={() => setSelectedSkill(skill)}
           >
@@ -738,7 +732,7 @@ print(fizzbuzz(15))`,
             Vous devez d'abord ajouter vos compétences pour voir les tests disponibles.
           </p>
           <button
-            onClick={() => {/* Navigate to skills selector */}}
+            onClick={() => {/* Navigate to skills selector */ }}
             className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors"
           >
             Gérer mes compétences
@@ -801,11 +795,11 @@ const SkillTestsDetail = ({ skill, onBack, onBackToDashboard, onStartPracticalTe
                       Disponible
                     </span>
                   </div>
-                  
+
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                     {test.description}
                   </p>
-                  
+
                   <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                     <div className="flex items-center">
                       <FaQuestionCircle className="mr-1" />
@@ -820,7 +814,7 @@ const SkillTestsDetail = ({ skill, onBack, onBackToDashboard, onStartPracticalTe
                       <span>{test.total_score} pts</span>
                     </div>
                   </div>
-                  
+
                   <button
                     onClick={() => startQCMTest(test)}
                     className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
@@ -855,11 +849,11 @@ const SkillTestsDetail = ({ skill, onBack, onBackToDashboard, onStartPracticalTe
                       Bientôt
                     </span>
                   </div>
-                  
+
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                     {test.description}
                   </p>
-                  
+
                   <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                     <div className="flex items-center">
                       <FaCode className="mr-1" />
@@ -874,7 +868,7 @@ const SkillTestsDetail = ({ skill, onBack, onBackToDashboard, onStartPracticalTe
                       <span>{test.max_points} pts</span>
                     </div>
                   </div>
-                  
+
                   <button
                     onClick={() => onStartPracticalTest(test)}
                     className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-3 px-4 rounded-lg transition-colors flex items-center justify-center"

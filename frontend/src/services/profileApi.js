@@ -9,12 +9,13 @@ class ProfileApiService {
     try {
       const skillIds = await this.getOrCreateSkillIds(skills);
 
-      const response = await fetch(`${this.baseURL}/api/skills/candidates/${candidateId}/update_skills/`, {
+      const response = await fetch(`${this.baseURL}/api/candidates/update_skills/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          candidate_id: candidateId,
           skill_ids: skillIds,
           skills_with_proficiency: skillsWithProficiency || []
         })

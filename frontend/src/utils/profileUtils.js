@@ -104,7 +104,12 @@ export const updateUserSkills = (userId, skills, skillsWithProficiency = null) =
 // Enhanced function to update skills with proficiency
 export const updateUserSkillsWithProficiency = async (userId, skillsWithProficiency) => {
   try {
+    console.log('🔍 updateUserSkillsWithProficiency - userId:', userId);
+    console.log('🔍 updateUserSkillsWithProficiency - skillsWithProficiency:', skillsWithProficiency);
+
     const profile = loadUserProfile(userId);
+    console.log('🔍 updateUserSkillsWithProficiency - loaded profile:', profile);
+
     const skillNames = skillsWithProficiency.map(skill => skill.name);
     const updatedProfile = {
       ...profile,
@@ -113,8 +118,11 @@ export const updateUserSkillsWithProficiency = async (userId, skillsWithProficie
       updatedAt: new Date().toISOString()
     };
 
+    console.log('🔍 updateUserSkillsWithProficiency - updated profile:', updatedProfile);
+
     // Save to localStorage first (immediate)
     const localSaveSuccess = saveUserProfile(updatedProfile);
+    console.log('🔍 updateUserSkillsWithProficiency - localSaveSuccess:', localSaveSuccess);
 
     // Also save to database (async)
     try {

@@ -15,32 +15,65 @@ import {
   PhoneIcon,
   PlusCircleIcon,
   CheckIcon,
-  XMarkIcon
+  XMarkIcon,
+  MapPinIcon,
+  CalendarIcon,
+  BriefcaseIcon,
+  AcademicCapIcon,
+  UserIcon,
+  Cog6ToothIcon,
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline';
 
 const ProfilePage = () => {
   const { isDarkMode } = useDarkMode();
-  const { user: authUser } = useAuth();
+  const { user: authUser, logout } = useAuth();
 
   // States for editable fields
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [isEditingSkills, setIsEditingSkills] = useState(false);
   const [isEditingContact, setIsEditingContact] = useState(false);
+  const [isEditingEducation, setIsEditingEducation] = useState(false);
+  const [isEditingExperience, setIsEditingExperience] = useState(false);
   const [newSkill, setNewSkill] = useState('');
+
+  // Modal states
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAddEducationOpen, setIsAddEducationOpen] = useState(false);
+  const [isAddExperienceOpen, setIsAddExperienceOpen] = useState(false);
+
+  // Form states for adding new items
+  const [newEducation, setNewEducation] = useState({
+    program: '',
+    school: '',
+    dateRange: '',
+    description: ''
+  });
+  const [newExperience, setNewExperience] = useState({
+    title: '',
+    company: '',
+    dateRange: '',
+    description: ''
+  });
 
   // Load user data from localStorage or use authenticated user data
   const [userData, setUserData] = useState(() => {
     try {
       // If we have authenticated user data, use it as base
       if (authUser) {
-        const savedData = loadUserProfile();
+        const savedData = loadUserProfile(authUser.id);
         return {
           ...defaultUserProfile,
           ...savedData,
           // Override with authenticated user data
           name: authUser.name || authUser.first_name || 'Utilisateur',
           email: authUser.email || 'user@example.com',
-          id: authUser.id
+          id: authUser.id,
+          contact: {
+            ...defaultUserProfile.contact,
+            ...(savedData?.contact || {}),
+            email: authUser.email || 'user@example.com'
+          }
         };
       }
 
@@ -64,8 +97,56 @@ const ProfilePage = () => {
         email: authUser.email || 'user@example.com',
         id: authUser.id
       }));
+
+      // Load user skills from database
+      loadUserSkillsFromDatabase(authUser.id);
     }
   }, [authUser]);
+
+  // Load user skills from database
+  const loadUserSkillsFromDatabase = async (userId) => {
+    try {
+      console.log('Loading skills from database for user:', userId);
+
+      // Fetch candidate data which includes skills
+      const response = await fetch(`http://localhost:8000/api/candidates/${userId}/`);
+      if (response.ok) {
+        const candidateData = await response.json();
+        console.log('Candidate data loaded:', candidateData);
+
+        if (candidateData.skills && candidateData.skills.length > 0) {
+          // Convert database skills to the format expected by the UI
+          const skillsWithProficiency = candidateData.skills.map(skill => ({
+            id: skill.id,
+            name: skill.name,
+            proficiency: skill.proficiency || 'intermediate' // Default proficiency
+          }));
+
+          const skillNames = skillsWithProficiency.map(skill => skill.name);
+
+          setUserData(prevData => ({
+            ...prevData,
+            skills: skillNames,
+            skillsWithProficiency: skillsWithProficiency
+          }));
+
+          console.log('Skills loaded from database:', skillsWithProficiency);
+        }
+      } else {
+        console.log('No candidate data found, using localStorage skills');
+      }
+    } catch (error) {
+      console.error('Error loading skills from database:', error);
+      // Continue with localStorage data if database fails
+    }
+  };
+
+  // Load skills on component mount if user is already authenticated
+  useEffect(() => {
+    if (authUser?.id && !userData.skillsWithProficiency?.length) {
+      loadUserSkillsFromDatabase(authUser.id);
+    }
+  }, []);
 
   // Ensure userData has the required structure
   const safeUserData = {
@@ -119,7 +200,6 @@ const ProfilePage = () => {
     }
   };
 
-
   // Handle info update
   const handleInfoUpdate = (field, value) => {
     setUserData({
@@ -141,32 +221,6 @@ const ProfilePage = () => {
     setIsDataModified(true);
   };
 
-  // Add new skill
-  const handleAddSkill = () => {
-    if (newSkill.trim() && !safeUserData.skills.includes(newSkill.trim())) {
-      const updatedSkills = [...safeUserData.skills, newSkill.trim()];
-
-      // Create default skill assessment entry if it doesn't exist
-      const updatedSkillAssessments = { ...safeUserData.skillAssessments };
-      if (!updatedSkillAssessments[newSkill.trim()]) {
-        updatedSkillAssessments[newSkill.trim()] = {
-          score: 0,
-          level: "Not Assessed",
-          verified: false
-        };
-      }
-
-      setUserData({
-        ...safeUserData,
-        skills: updatedSkills,
-        skillAssessments: updatedSkillAssessments
-      });
-
-      setNewSkill('');
-      setIsDataModified(true);
-    }
-  };
-
   // Handle skills change from SkillsSelector with auto-save
   const handleSkillsChange = async (newSkills) => {
     // Convert skills with proficiency back to simple array for compatibility
@@ -181,7 +235,14 @@ const ProfilePage = () => {
 
     // Auto-save skills changes immediately to both localStorage and database
     try {
-      const success = await updateUserSkillsWithProficiency(safeUserData.id || 1, newSkills);
+      // Use the authenticated user ID or fallback to 1
+      const userId = authUser?.id || safeUserData.id || 1;
+      console.log('🔍 ProfilePage - authUser:', authUser);
+      console.log('🔍 ProfilePage - safeUserData.id:', safeUserData.id);
+      console.log('🔍 ProfilePage - Using userId:', userId);
+      console.log('🔍 ProfilePage - New skills to save:', newSkills);
+
+      const success = await updateUserSkillsWithProficiency(userId, newSkills);
       if (success) {
         console.log('Skills updated and saved successfully to both localStorage and database');
         setIsDataModified(false);
@@ -221,512 +282,693 @@ const ProfilePage = () => {
     }
   };
 
-  // Handle photo removal
-  const handlePhotoRemove = async () => {
-    try {
-      // Update UI immediately
-      setUserData({
-        ...safeUserData,
-        avatar: null
-      });
-      setIsDataModified(true);
-
-      // Remove from database
-      await profileApiService.removeProfilePhoto(safeUserData.id || 1);
-      console.log('Photo removed successfully');
-    } catch (error) {
-      console.error('Error removing photo:', error);
-      alert('Failed to remove photo. Please try again.');
-    }
+  // Handle photo remove
+  const handlePhotoRemove = () => {
+    setUserData({
+      ...safeUserData,
+      avatar: null
+    });
+    setIsDataModified(true);
   };
 
   // Handle resume upload
-  const handleResumeUpload = (e) => {
+  const handleResumeUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      setUserData({
-        ...safeUserData,
-        resume: file.name
-      });
-      setIsDataModified(true);
+      try {
+        // Create preview URL for immediate UI update
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setUserData({
+            ...safeUserData,
+            resume: file.name
+          });
+          setIsDataModified(true);
+        };
+        reader.readAsDataURL(file);
+
+        // Upload to database
+        await profileApiService.uploadResume(safeUserData.id || 1, file);
+        console.log('Resume uploaded successfully');
+      } catch (error) {
+        console.error('Error uploading resume:', error);
+        alert('Failed to upload resume. Please try again.');
+      }
     }
   };
 
-  // Handle adding education entry
+  // Handle logout
+  const handleLogout = () => {
+    logout();
+  };
+
+  // ===== MODAL HANDLERS =====
+
+  // Settings modal handlers
+  const openSettings = () => setIsSettingsOpen(true);
+  const closeSettings = () => setIsSettingsOpen(false);
+
+  // Education handlers
   const handleAddEducation = () => {
-    const newEducation = {
-      school: "",
-      program: "New Education Program",
-      dateRange: "",
-      description: ""
-    };
-
-    setUserData({
-      ...safeUserData,
-      education: [...safeUserData.education, newEducation]
-    });
-
-    setIsDataModified(true);
+    setIsAddEducationOpen(true);
+    setIsEditingEducation(false);
   };
 
-  // Handle editing education entry
-  const handleEditEducation = (index, field, value) => {
-    const updatedEducation = [...safeUserData.education];
-    updatedEducation[index][field] = value;
-
-    setUserData({
-      ...safeUserData,
-      education: updatedEducation
-    });
-
-    setIsDataModified(true);
+  const closeAddEducation = () => {
+    setIsAddEducationOpen(false);
+    setNewEducation({ program: '', school: '', dateRange: '', description: '' });
   };
 
-  // Handle removing education entry
-  const handleRemoveEducation = (index) => {
-    const updatedEducation = safeUserData.education.filter((_, i) => i !== index);
-
-    setUserData({
-      ...safeUserData,
-      education: updatedEducation
-    });
-
-    setIsDataModified(true);
+  const handleEducationSubmit = (e) => {
+    e.preventDefault();
+    if (newEducation.program && newEducation.school) {
+      const updatedEducation = [...safeUserData.education, newEducation];
+      setUserData({
+        ...safeUserData,
+        education: updatedEducation
+      });
+      setIsDataModified(true);
+      closeAddEducation();
+    }
   };
 
-  // Handle adding experience entry
+  // Experience handlers
   const handleAddExperience = () => {
-    const newExperience = {
-      title: "New Position",
-      company: "",
-      dateRange: "",
-      description: ""
-    };
-
-    setUserData({
-      ...safeUserData,
-      experience: [...safeUserData.experience, newExperience]
-    });
-
-    setIsDataModified(true);
+    setIsAddExperienceOpen(true);
+    setIsEditingExperience(false);
   };
 
-  // Handle editing experience entry
-  const handleEditExperience = (index, field, value) => {
-    const updatedExperience = [...safeUserData.experience];
-    updatedExperience[index][field] = value;
-
-    setUserData({
-      ...safeUserData,
-      experience: updatedExperience
-    });
-
-    setIsDataModified(true);
+  const closeAddExperience = () => {
+    setIsAddExperienceOpen(false);
+    setNewExperience({ title: '', company: '', dateRange: '', description: '' });
   };
 
-  // Handle removing experience entry
-  const handleRemoveExperience = (index) => {
-    const updatedExperience = safeUserData.experience.filter((_, i) => i !== index);
-
-    setUserData({
-      ...safeUserData,
-      experience: updatedExperience
-    });
-
-    setIsDataModified(true);
-  };
-
-  // Random color generator for skill badges
-  const getRandomColor = (text) => {
-    const colors = [
-      'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-      'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-      'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-      'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-      'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300',
-      'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
-    ];
-
-    // Use the string to deterministically pick a color
-    const index = text.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
-    return colors[index];
+  const handleExperienceSubmit = (e) => {
+    e.preventDefault();
+    if (newExperience.title && newExperience.company) {
+      const updatedExperience = [...safeUserData.experience, newExperience];
+      setUserData({
+        ...safeUserData,
+        experience: updatedExperience
+      });
+      setIsDataModified(true);
+      closeAddExperience();
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      {/* Modern Header */}
-      <div className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-700/60">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-lg">
-                  {safeUserData.name?.charAt(0)?.toUpperCase() || 'U'}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header / Profile Banner */}
+      <div className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800">
+        <div className="absolute inset-0 bg-black opacity-10"></div>
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row items-start md:items-end space-y-4 md:space-y-0 md:space-x-6">
+            {/* Profile Avatar */}
+            <div className="relative">
+              <div className="w-32 h-32 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center shadow-2xl border-4 border-white dark:border-gray-800">
+                <span className="text-3xl font-semibold text-gray-600 dark:text-gray-300">
+                  {safeUserData.name?.split(' ').map(n => n.charAt(0)).join('').toUpperCase() || 'U'}
                 </span>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
-                  My Profile
-                </h1>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Manage your professional information
-                </p>
+              <label className="absolute -bottom-2 -right-2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full cursor-pointer shadow-lg transition-colors">
+                <PencilIcon className="w-4 h-4" />
+                <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+              </label>
+            </div>
+
+            {/* Profile Info */}
+            <div className="flex-1 text-white">
+              <h1 className="text-3xl font-bold mb-2">{safeUserData.name || 'Your Name'}</h1>
+              <p className="text-xl text-blue-100 dark:text-gray-300 mb-2">{safeUserData.jobTitle || 'Professional Title'}</p>
+              <div className="flex items-center space-x-4 text-blue-100 dark:text-gray-300">
+                <div className="flex items-center space-x-1">
+                  <MapPinIcon className="w-4 h-4" />
+                  <span>{safeUserData.location || 'Location'}</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <EnvelopeIcon className="w-4 h-4" />
+                  <span>{safeUserData.contact?.email || 'email@example.com'}</span>
+                </div>
               </div>
             </div>
-            <button
-              onClick={saveChanges}
-              className={`group flex items-center space-x-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${isDataModified
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl'
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                }`}
-              disabled={!isDataModified}
-            >
-              <PencilIcon className="w-4 h-4" />
-              <span>{isDataModified ? 'Save Changes' : 'No Changes'}</span>
+
+            {/* Action Buttons */}
+            <div className="flex space-x-3">
+              {/* Save Changes Button - Only show when there are unsaved changes */}
               {isDataModified && (
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                <button
+                  onClick={saveChanges}
+                  className="px-6 py-2 bg-white text-blue-600 hover:bg-gray-100 rounded-lg font-medium transition-colors"
+                >
+                  Save Changes
+                </button>
               )}
-            </button>
+              <button
+                onClick={openSettings}
+                className="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
+              >
+                <Cog6ToothIcon className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <ArrowRightOnRectangleIcon className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-          {/* Left Column - Profile Info */}
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Personal Information Card */}
-            <div className="relative bg-white/80 dark:bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-slate-700/60 p-8 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden">
-              {/* Background Pattern */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-900/10 dark:to-indigo-900/10"></div>
-
-              <div className="relative z-10">
-                {/* Profile Section */}
-                <div className="text-center mb-8">
-                  <div className="relative inline-block mb-6">
-                    <div className="w-32 h-32 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-full flex items-center justify-center shadow-2xl transform hover:scale-105 transition-all duration-300">
-                      <span className="text-white font-bold text-3xl">
-                        {safeUserData.name?.split(' ').map(n => n.charAt(0)).join('').toUpperCase() || 'U'}
-                      </span>
-                    </div>
-                    {/* Status indicator */}
-                    <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-white dark:border-slate-800 flex items-center justify-center">
-                      <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                    </div>
-                  </div>
-
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                    {safeUserData.name || 'Your Name'}
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-400 mb-6">
-                    {safeUserData.jobTitle || 'Professional Title'}
-                  </p>
-
-                  {/* Profile Photo Controls */}
-                  <div className="flex justify-center space-x-3 mb-8">
-                    <label className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 text-sm font-medium cursor-pointer">
-                      <PlusCircleIcon className="w-4 h-4" />
-                      <span>Add Photo</span>
-                      <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
-                    </label>
-                    <button
-                      onClick={handlePhotoRemove}
-                      className="flex items-center space-x-2 px-4 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg transition-all duration-200 text-sm font-medium"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                      <span>Remove</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Contact Information */}
-                <div className="border-t border-slate-200/60 dark:border-slate-700/60 pt-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h4 className="text-lg font-bold text-slate-900 dark:text-white flex items-center">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                      Contact Information
-                    </h4>
-                    <button
-                      onClick={() => setIsEditingContact(!isEditingContact)}
-                      className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200"
-                    >
-                      {isEditingContact ? <CheckIcon className="w-4 h-4" /> : <PencilIcon className="w-4 h-4" />}
-                    </button>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="group p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-all duration-200">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
-                          <EnvelopeIcon className="w-5 h-5 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Email</p>
-                          {isEditingContact ? (
-                            <input
-                              type="email"
-                              value={safeUserData.contact.email}
-                              onChange={(e) => handleContactUpdate('email', e.target.value)}
-                              className="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                          ) : (
-                            <a href={`mailto:${safeUserData.contact.email}`} className="text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">
-                              {safeUserData.contact.email}
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="group p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-all duration-200">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                          <PhoneIcon className="w-5 h-5 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Phone</p>
-                          {isEditingContact ? (
-                            <input
-                              type="tel"
-                              value={safeUserData.contact.phone}
-                              onChange={(e) => handleContactUpdate('phone', e.target.value)}
-                              className="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                          ) : (
-                            <a href={`tel:${safeUserData.contact.phone}`} className="text-slate-900 dark:text-white hover:text-green-600 dark:hover:text-green-400 transition-colors font-medium">
-                              {safeUserData.contact.phone}
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="group p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-all duration-200">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                          <LinkIcon className="w-5 h-5 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">LinkedIn</p>
-                          {isEditingContact ? (
-                            <input
-                              type="text"
-                              value={safeUserData.contact.linkedin}
-                              onChange={(e) => handleContactUpdate('linkedin', e.target.value)}
-                              placeholder="linkedin.com/in/yourprofile"
-                              className="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                          ) : (
-                            <a href={`https://${safeUserData.contact.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-slate-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors font-medium">
-                              {safeUserData.contact.linkedin}
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Resume Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transition-all duration-200 hover:shadow-lg profile-card">
-              <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white section-title">Resume</h2>
-
-              {safeUserData.resume ? (
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 glass-card">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center max-w-[70%]">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-3 flex-shrink-0">
-                        <PaperClipIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div className="min-w-0 overflow-hidden">
-                        <p className="font-medium text-gray-800 dark:text-white truncate" title={safeUserData.resume}>{safeUserData.resume}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">PDF Document • Uploaded on Sep 1, 2025</p>
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0 flex space-x-2">
-                      <button className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg">
-                        <ArrowDownTrayIcon className="w-5 h-5" />
-                      </button>
-                      <button className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg">
-                        <TrashIcon className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center">
-                  <p className="text-gray-500 dark:text-gray-400 mb-4">No resume uploaded yet</p>
-                  <label className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all duration-200 inline-flex items-center cursor-pointer">
-                    <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
-                    <span>Upload Resume</span>
-                    <input type="file" className="hidden" onChange={handleResumeUpload} accept=".pdf,.doc,.docx" />
-                  </label>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right Column - Detailed Info */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Personal Info Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transition-all duration-200 hover:shadow-lg profile-card">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-white section-title">Personal Information</h2>
-                <button
-                  onClick={() => setIsEditingInfo(!isEditingInfo)}
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                >
-                  {isEditingInfo ? <CheckIcon className="w-5 h-5" /> : <PencilIcon className="w-5 h-5" />}
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {/* Name Field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
-                  {isEditingInfo ? (
-                    <input
-                      type="text"
-                      value={safeUserData.name}
-                      onChange={(e) => handleInfoUpdate('name', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200 profile-input"
-                    />
-                  ) : (
-                    <p className="bg-gray-50 dark:bg-gray-700/50 px-3 py-2 rounded-lg text-gray-800 dark:text-white">
-                      {safeUserData.name}
-                    </p>
-                  )}
-                </div>
-
-                <div className="section-divider"></div>
-                {/* Languages Field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Languages</label>
-                  <div className="flex flex-wrap gap-2">
-                    {safeUserData.languages.map((language, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-sm font-medium"
-                      >
-                        {language}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="section-divider"></div>
-                {/* About Field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">About</label>
-                  {isEditingInfo ? (
-                    <textarea
-                      value={safeUserData.about}
-                      onChange={(e) => handleInfoUpdate('about', e.target.value)}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200 profile-input"
-                    ></textarea>
-                  ) : (
-                    <p className="bg-gray-50 dark:bg-gray-700/50 px-3 py-2 rounded-lg text-gray-800 dark:text-white">
-                      {safeUserData.about}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Skills Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transition-all duration-200 hover:shadow-lg profile-card">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-white section-title">Compétences</h2>
-              </div>
-
-              {/* New Skills Selector Component */}
-              <SkillsSelector
-                skills={safeUserData.skillsWithProficiency || safeUserData.skills.map(skill => ({
-                  id: typeof skill === 'string' ? skill : skill.id || skill.name,
-                  name: typeof skill === 'string' ? skill : skill.name,
-                  proficiency: typeof skill === 'string' ? 'intermediate' : skill.proficiency || 'intermediate'
-                }))}
-                onSkillsChange={handleSkillsChange}
-                showRecommendations={true}
-              />
-            </div>
-
-            {/* Education Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transition-all duration-200 hover:shadow-lg profile-card">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-white section-title">Education</h2>
-                <button className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
-                  <PlusCircleIcon className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                {safeUserData.education.map((edu, index) => (
-                  <div
-                    key={index}
-                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-all duration-200 education-card hover-lift"
+            {/* About Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">About</h3>
+                  <button
+                    onClick={() => setIsEditingInfo(!isEditingInfo)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
-                    <div className="flex flex-col sm:flex-row sm:justify-between">
-                      <h3 className="font-medium text-gray-800 dark:text-white mb-1 sm:mb-0">{edu.program}</h3>
-                      <span className="text-sm text-gray-500 dark:text-gray-400 mb-1 sm:mb-0">{edu.dateRange}</span>
+                    {isEditingInfo ? <CheckIcon className="w-4 h-4" /> : <PencilIcon className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div className="px-6 py-4">
+                {isEditingInfo ? (
+                  <textarea
+                    value={safeUserData.about}
+                    onChange={(e) => handleInfoUpdate('about', e.target.value)}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    placeholder="Tell us about yourself..."
+                  />
+                ) : (
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                    {safeUserData.about || 'No bio available. Click edit to add information about yourself.'}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Contact Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Contact</h3>
+                  <button
+                    onClick={() => setIsEditingContact(!isEditingContact)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    {isEditingContact ? <CheckIcon className="w-4 h-4" /> : <PencilIcon className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div className="px-6 py-4 space-y-3">
+                <div className="flex items-center space-x-3">
+                  <EnvelopeIcon className="w-4 h-4 text-gray-400" />
+                  <div className="flex-1 min-w-0">
+                    {isEditingContact ? (
+                      <input
+                        type="email"
+                        value={safeUserData.contact.email}
+                        onChange={(e) => handleContactUpdate('email', e.target.value)}
+                        className="w-full text-sm bg-transparent border-none p-0 text-gray-900 dark:text-white focus:outline-none"
+                      />
+                    ) : (
+                      <a href={`mailto:${safeUserData.contact.email}`} className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 truncate block">
+                        {safeUserData.contact.email}
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <PhoneIcon className="w-4 h-4 text-gray-400" />
+                  <div className="flex-1 min-w-0">
+                    {isEditingContact ? (
+                      <input
+                        type="tel"
+                        value={safeUserData.contact.phone}
+                        onChange={(e) => handleContactUpdate('phone', e.target.value)}
+                        className="w-full text-sm bg-transparent border-none p-0 text-gray-900 dark:text-white focus:outline-none"
+                      />
+                    ) : (
+                      <a href={`tel:${safeUserData.contact.phone}`} className="text-sm text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 truncate block">
+                        {safeUserData.contact.phone}
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <LinkIcon className="w-4 h-4 text-gray-400" />
+                  <div className="flex-1 min-w-0">
+                    {isEditingContact ? (
+                      <input
+                        type="text"
+                        value={safeUserData.contact.linkedin}
+                        onChange={(e) => handleContactUpdate('linkedin', e.target.value)}
+                        placeholder="linkedin.com/in/yourprofile"
+                        className="w-full text-sm bg-transparent border-none p-0 text-gray-900 dark:text-white focus:outline-none"
+                      />
+                    ) : (
+                      <a href={`https://${safeUserData.contact.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 truncate block">
+                        {safeUserData.contact.linkedin}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Resume Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Resume</h3>
+              </div>
+              <div className="px-6 py-4">
+                {safeUserData.resume ? (
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
+                    <div className="flex items-center space-x-3">
+                      <PaperClipIcon className="w-5 h-5 text-gray-400" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{safeUserData.resume}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">PDF • Sep 1, 2025</p>
+                      </div>
                     </div>
-                    <p className="text-blue-600 dark:text-blue-400 text-sm">{edu.school}</p>
-                    <p className="mt-2 text-gray-600 dark:text-gray-300 text-sm">{edu.description}</p>
-                    <div className="flex justify-end mt-3 space-x-2">
-                      <button className="p-1 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400">
-                        <PencilIcon className="w-4 h-4" />
+                    <div className="flex space-x-2">
+                      <button className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <ArrowDownTrayIcon className="w-4 h-4" />
                       </button>
-                      <button className="p-1 text-gray-500 hover:text-red-600 dark:hover:text-red-400">
+                      <button className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400">
                         <TrashIcon className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
-                ))}
+                ) : (
+                  <div className="text-center py-6">
+                    <PaperClipIcon className="w-8 h-8 text-gray-400 mx-auto mb-3" />
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No resume uploaded</p>
+                    <label className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
+                      <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
+                      Upload Resume
+                      <input type="file" className="hidden" onChange={handleResumeUpload} accept=".pdf,.doc,.docx" />
+                    </label>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Skills Section */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Skills & Technologies</h2>
+                  <button
+                    onClick={() => setIsEditingSkills(!isEditingSkills)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    {isEditingSkills ? <CheckIcon className="w-5 h-5" /> : <PencilIcon className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+              <div className="px-6 py-4 relative">
+                <SkillsSelector
+                  skills={safeUserData.skillsWithProficiency || safeUserData.skills.map(skill => ({
+                    id: typeof skill === 'string' ? skill : skill.id || skill.name,
+                    name: typeof skill === 'string' ? skill : skill.name,
+                    proficiency: typeof skill === 'string' ? 'intermediate' : skill.proficiency || 'intermediate'
+                  }))}
+                  onSkillsChange={handleSkillsChange}
+                  showRecommendations={true}
+                />
+              </div>
+            </div>
+
+            {/* Education Section */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                    <AcademicCapIcon className="w-5 h-5 mr-2" />
+                    Education
+                  </h2>
+                  <button
+                    onClick={() => setIsEditingEducation(!isEditingEducation)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    {isEditingEducation ? <CheckIcon className="w-5 h-5" /> : <PlusCircleIcon className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+              <div className="px-6 py-4">
+                {safeUserData.education.length > 0 ? (
+                  <div className="space-y-4">
+                    {safeUserData.education.map((edu, index) => (
+                      <div key={index} className="border-l-4 border-blue-500 pl-4 py-2">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900 dark:text-white">{edu.program}</h3>
+                            <p className="text-sm text-blue-600 dark:text-blue-400">{edu.school}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{edu.description}</p>
+                          </div>
+                          <div className="flex items-center space-x-2 ml-4">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">{edu.dateRange}</span>
+                            {isEditingEducation && (
+                              <>
+                                <button className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                  <PencilIcon className="w-4 h-4" />
+                                </button>
+                                <button className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400">
+                                  <TrashIcon className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <AcademicCapIcon className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 dark:text-gray-400 mb-4">No education added yet</p>
+                    <button
+                      onClick={handleAddEducation}
+                      className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                    >
+                      <PlusCircleIcon className="w-4 h-4 mr-2" />
+                      Add Education
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Experience Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transition-all duration-200 hover:shadow-lg profile-card">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-white section-title">Work Experience</h2>
-                <button className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
-                  <PlusCircleIcon className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                {safeUserData.experience.map((exp, index) => (
-                  <div
-                    key={index}
-                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-all duration-200 experience-card hover-lift"
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                    <BriefcaseIcon className="w-5 h-5 mr-2" />
+                    Work Experience
+                  </h2>
+                  <button
+                    onClick={() => setIsEditingExperience(!isEditingExperience)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
-                    <div className="flex flex-col sm:flex-row sm:justify-between">
-                      <h3 className="font-medium text-gray-800 dark:text-white mb-1 sm:mb-0">{exp.title}</h3>
-                      <span className="text-sm text-gray-500 dark:text-gray-400 mb-1 sm:mb-0">{exp.dateRange}</span>
-                    </div>
-                    <p className="text-blue-600 dark:text-blue-400 text-sm">{exp.company}</p>
-                    <p className="mt-2 text-gray-600 dark:text-gray-300 text-sm">{exp.description}</p>
-                    <div className="flex justify-end mt-3 space-x-2">
-                      <button className="p-1 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400">
-                        <PencilIcon className="w-4 h-4" />
-                      </button>
-                      <button className="p-1 text-gray-500 hover:text-red-600 dark:hover:text-red-400">
-                        <TrashIcon className="w-4 h-4" />
-                      </button>
-                    </div>
+                    {isEditingExperience ? <CheckIcon className="w-5 h-5" /> : <PlusCircleIcon className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+              <div className="px-6 py-4">
+                {safeUserData.experience.length > 0 ? (
+                  <div className="space-y-4">
+                    {safeUserData.experience.map((exp, index) => (
+                      <div key={index} className="border-l-4 border-green-500 pl-4 py-2">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900 dark:text-white">{exp.title}</h3>
+                            <p className="text-sm text-green-600 dark:text-green-400">{exp.company}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{exp.description}</p>
+                          </div>
+                          <div className="flex items-center space-x-2 ml-4">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">{exp.dateRange}</span>
+                            {isEditingExperience && (
+                              <>
+                                <button className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                  <PencilIcon className="w-4 h-4" />
+                                </button>
+                                <button className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400">
+                                  <TrashIcon className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <BriefcaseIcon className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 dark:text-gray-400 mb-4">No work experience added yet</p>
+                    <button
+                      onClick={handleAddExperience}
+                      className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                    >
+                      <PlusCircleIcon className="w-4 h-4 mr-2" />
+                      Add Experience
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
-      </main>
+      </div>
+
+      {/* ===== MODALS ===== */}
+
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Account Settings</h3>
+                <button
+                  onClick={closeSettings}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              <div className="space-y-3">
+                <button className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                  Change Password
+                </button>
+                <button className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                  Privacy Settings
+                </button>
+                <button className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                  Notification Preferences
+                </button>
+                <button className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                  Data Export
+                </button>
+                {/* Disconnect button - calls the same logout function as the header button */}
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                >
+                  Disconnect
+                </button>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-600">
+              <button
+                onClick={closeSettings}
+                className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Education Modal */}
+      {isAddEducationOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                  <AcademicCapIcon className="w-5 h-5 mr-2" />
+                  Add Education
+                </h3>
+                <button
+                  onClick={closeAddEducation}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+            <form onSubmit={handleEducationSubmit} className="px-6 py-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Program/Degree *
+                </label>
+                <input
+                  type="text"
+                  value={newEducation.program}
+                  onChange={(e) => setNewEducation({ ...newEducation, program: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="e.g., Bachelor of Computer Science"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  School/University *
+                </label>
+                <input
+                  type="text"
+                  value={newEducation.school}
+                  onChange={(e) => setNewEducation({ ...newEducation, school: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="e.g., University of Technology"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Date Range
+                </label>
+                <input
+                  type="text"
+                  value={newEducation.dateRange}
+                  onChange={(e) => setNewEducation({ ...newEducation, dateRange: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="e.g., 2020 - 2024"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={newEducation.description}
+                  onChange={(e) => setNewEducation({ ...newEducation, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="Additional details about your education..."
+                />
+              </div>
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={closeAddEducation}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Add Education
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Experience Modal */}
+      {isAddExperienceOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                  <BriefcaseIcon className="w-5 h-5 mr-2" />
+                  Add Work Experience
+                </h3>
+                <button
+                  onClick={closeAddExperience}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+            <form onSubmit={handleExperienceSubmit} className="px-6 py-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Job Title *
+                </label>
+                <input
+                  type="text"
+                  value={newExperience.title}
+                  onChange={(e) => setNewExperience({ ...newExperience, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="e.g., Software Developer"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Company *
+                </label>
+                <input
+                  type="text"
+                  value={newExperience.company}
+                  onChange={(e) => setNewExperience({ ...newExperience, company: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="e.g., Tech Corp Inc."
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Date Range
+                </label>
+                <input
+                  type="text"
+                  value={newExperience.dateRange}
+                  onChange={(e) => setNewExperience({ ...newExperience, dateRange: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="e.g., Jan 2022 - Present"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={newExperience.description}
+                  onChange={(e) => setNewExperience({ ...newExperience, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="Describe your role and achievements..."
+                />
+              </div>
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={closeAddExperience}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Add Experience
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

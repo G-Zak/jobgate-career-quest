@@ -43,6 +43,11 @@ const JobRecommendationsPage = () => {
   });
 
   const [showFilters, setShowFilters] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    location: "",
+    experienceLevel: ""
+  });
 
   // Load user profile from database
   useEffect(() => {
@@ -235,6 +240,33 @@ const JobRecommendationsPage = () => {
     }, 1000);
   };
 
+  const handleEditProfile = () => {
+    setIsEditingProfile(true);
+    setProfileForm({
+      location: userProfile?.location || "",
+      experienceLevel: userProfile?.experienceLevel || ""
+    });
+  };
+
+  const handleSaveProfile = () => {
+    // Update the user profile with new values
+    setUserProfile(prev => ({
+      ...prev,
+      location: profileForm.location,
+      experienceLevel: profileForm.experienceLevel
+    }));
+    setIsEditingProfile(false);
+    setProfileUpdateTime(Date.now());
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingProfile(false);
+    setProfileForm({
+      location: userProfile?.location || "",
+      experienceLevel: userProfile?.experienceLevel || ""
+    });
+  };
+
   // Handle logout
   const handleLogout = () => {
     logout();
@@ -348,11 +380,11 @@ const JobRecommendationsPage = () => {
                   Your Search Profile
                 </h2>
                 <button
-                  onClick={() => navigate('/dashboard', { state: { activeSection: 'mon-espace' } })}
+                  onClick={handleEditProfile}
                   className="group flex items-center space-x-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm font-medium transition-colors"
                 >
                   <PencilIcon className="w-4 h-4" />
-                  <span>Edit</span>
+                  <span>{isEditingProfile ? 'Cancel' : 'Edit'}</span>
                 </button>
               </div>
 
@@ -387,26 +419,73 @@ const JobRecommendationsPage = () => {
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
                     Preferred Location
                   </label>
-                  <div className="flex items-center space-x-2">
-                    <MapPinIcon className="w-4 h-4 text-slate-400" />
-                    <p className="text-slate-600 dark:text-slate-400 font-medium">
-                      {userProfile.location || "Not specified"}
-                    </p>
-                  </div>
+                  {isEditingProfile ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={profileForm.location}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, location: e.target.value }))}
+                        placeholder="Enter your preferred location"
+                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <MapPinIcon className="w-4 h-4 text-slate-400" />
+                      <p className="text-slate-600 dark:text-slate-400 font-medium">
+                        {userProfile.location || "Not specified"}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
                     Experience Level
                   </label>
-                  <div className="flex items-center space-x-2">
-                    <ClockIcon className="w-4 h-4 text-slate-400" />
-                    <p className="text-slate-600 dark:text-slate-400 font-medium">
-                      {userProfile.experienceLevel || "Not specified"}
-                    </p>
-                  </div>
+                  {isEditingProfile ? (
+                    <div className="space-y-2">
+                      <select
+                        value={profileForm.experienceLevel}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, experienceLevel: e.target.value }))}
+                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="">Select experience level</option>
+                        <option value="junior">Junior (0-2 years)</option>
+                        <option value="intermediate">Intermediate (2-5 years)</option>
+                        <option value="senior">Senior (5+ years)</option>
+                        <option value="lead">Lead (7+ years)</option>
+                        <option value="principal">Principal (10+ years)</option>
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <ClockIcon className="w-4 h-4 text-slate-400" />
+                      <p className="text-slate-600 dark:text-slate-400 font-medium">
+                        {userProfile.experienceLevel || "Not specified"}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* Save/Cancel buttons when editing */}
+              {isEditingProfile && (
+                <div className="mt-6 flex justify-end space-x-3">
+                  <button
+                    onClick={handleCancelEdit}
+                    className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveProfile}
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
