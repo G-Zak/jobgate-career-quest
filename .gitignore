@@ -123,3 +123,4 @@ scripts/simple-wide-converter.sh
 scripts/universal-pandoc-converter-fixed.sh
 scripts/universal-pandoc-converter-improved.sh
 scripts/wide-format-converter.sh
+venv/
