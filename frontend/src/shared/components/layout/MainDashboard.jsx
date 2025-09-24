@@ -61,8 +61,8 @@ import betterImpressions from '../../../assets/images/ui/better_impressions.avif
 const MainDashboard = () => {
   const location = useLocation();
   const [activeSection, setActiveSection] = useState('applications');
-  const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [currentTestFilter, setCurrentTestFilter] = useState(null);
   const [currentTestId, setCurrentTestId] = useState(null);
@@ -617,6 +617,7 @@ const MainDashboard = () => {
                   >
                     Tests par compétences
                   </button>
+
                 </div>
               </div>
             </div>
@@ -725,20 +726,20 @@ const MainDashboard = () => {
               />
             ) : activeSection === 'skills-management' ? (
               <SkillsSelector
-                userId={1}
+                userId={user?.id || 1}
                 onSkillsUpdated={() => console.log('Skills updated')}
               />
             ) : activeSection === 'tests-by-competencies' ? (
               <SkillTestsOverview
                 onBackToDashboard={() => setActiveSection('applications')}
                 onStartTest={handleStartTest}
-                userId={1}
+                userId={user?.id || 1}
               />
             ) : activeSection === 'practical-tests' ? (
               <PracticalTests onBackToDashboard={() => setActiveSection('applications')} />
             ) : activeSection === 'technical-assessment' ? (
               <SkillBasedTests
-                userId={1}
+                userId={user?.id || 1}
                 testId={currentTestId}
                 skillId={currentSkillId}
                 onBackToDashboard={() => setActiveSection('applications')}
