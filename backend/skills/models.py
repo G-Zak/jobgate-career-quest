@@ -249,3 +249,5 @@ class TestResult(models.Model):
     
     def __str__(self):
         return f"{self.candidate} - {self.test} ({self.score}/{self.test.total_score})"
+
+

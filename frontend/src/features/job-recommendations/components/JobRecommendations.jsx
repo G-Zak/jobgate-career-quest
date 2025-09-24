@@ -59,6 +59,43 @@ const filterValidSkills = (skills) => {
   });
 };
 
+// Load test results for skill validation
+const loadTestResults = async (userId) => {
+  try {
+    const response = await fetch(`http://localhost:8000/api/skills/results/${userId}/`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        return data.results || [];
+      }
+    }
+  } catch (error) {
+    console.warn('⚠️ Failed to load test results:', error);
+  }
+  return [];
+};
+
+// Calculate skill proficiency based on test results
+const calculateSkillProficiency = (skillName, testResults) => {
+  if (!testResults || testResults.length === 0) return 0;
+
+  const skillTests = testResults.filter(result =>
+    result.test.skill.toLowerCase() === skillName.toLowerCase()
+  );
+
+  if (skillTests.length === 0) return 0;
+
+  // Calculate average score for this skill
+  const averageScore = skillTests.reduce((sum, test) => sum + test.percentage, 0) / skillTests.length;
+
+  // Convert percentage to proficiency level (0-1)
+  if (averageScore >= 90) return 1.0; // Expert
+  if (averageScore >= 80) return 0.8; // Advanced
+  if (averageScore >= 70) return 0.6; // Intermediate
+  if (averageScore >= 60) return 0.4; // Beginner
+  return 0.2; // Novice
+};
+
 const JobRecommendations = ({
   userId,
   userSkills = [],
@@ -77,6 +114,7 @@ const JobRecommendations = ({
   const [userProfile, setUserProfile] = useState(null);
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const [showScoreModal, setShowScoreModal] = useState(null);
+  const [testResults, setTestResults] = useState([]);
 
   // Use profile from props (passed from JobRecommendationsPage)
   useEffect(() => {
@@ -170,19 +208,42 @@ const JobRecommendations = ({
 
   const currentUserLocation = userProfile?.location || userLocation;
 
+  // Load test results for skill validation
+  const loadTestResults = async () => {
+    try {
+      const results = await loadTestResults(user?.id || userId);
+      setTestResults(results);
+      console.log('✅ Test results loaded:', results);
+    } catch (error) {
+      console.warn('⚠️ Failed to load test results:', error);
+      setTestResults([]);
+    }
+  };
+
   // Enhanced job scoring algorithm
   const calculateJobScore = useMemo(() => {
-    return (job, skills, location, userProf = null) => {
+    return (job, skills, location, userProf = null, testResults = []) => {
       let score = 0;
 
-      // Skills matching (50% weight) - Enhanced with proficiency
+      // Skills matching (50% weight) - Enhanced with proficiency and test results
       const validSkills = filterValidSkills(skills);
       const validTags = filterValidSkills(job.tags || []);
       const skillMatches = validTags.filter(tag =>
         validSkills.some(skill => compareSkills(skill, tag))
       );
 
-      const skillMatchPercentage = job.tags.length > 0 ? (skillMatches.length / job.tags.length) * 50 : 0;
+      // Base skill match percentage
+      let skillMatchPercentage = job.tags.length > 0 ? (skillMatches.length / job.tags.length) * 50 : 0;
+
+      // Enhance score with test results
+      if (testResults.length > 0) {
+        const testBonus = skillMatches.reduce((bonus, skill) => {
+          const proficiency = calculateSkillProficiency(skill, testResults);
+          return bonus + (proficiency * 10); // Up to 10 points per skill
+        }, 0);
+        skillMatchPercentage = Math.min(skillMatchPercentage + testBonus, 50);
+      }
+
       score += skillMatchPercentage;
 
       // Location matching (20% weight)
@@ -549,13 +610,13 @@ const JobRecommendations = ({
             clusterFitScore: Math.round(Math.random() * 30 + 20), // Random 20-50%
             clusterId: Math.floor(Math.random() * 3) + 1,
             clusterName: `Career Cluster ${Math.floor(Math.random() * 3) + 1}`,
-            locationMatch: currentUserLocation && job.location && 
+            locationMatch: currentUserLocation && job.location &&
               job.location.toLowerCase().includes(currentUserLocation.toLowerCase()),
             remoteAvailable: job.remote || false,
             userExperience: userProfile?.experienceLevel || 'intermediate',
             jobSeniority: job.seniority || 'mid',
             contentScore: Math.round(Math.random() * 40 + 10), // Random 10-50%
-            locationMatchScore: currentUserLocation && job.location && 
+            locationMatchScore: currentUserLocation && job.location &&
               job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0,
             experienceMatchScore: 5, // Mock experience bonus
             remoteBonus: job.remote ? 5 : 0,
@@ -591,15 +652,15 @@ const JobRecommendations = ({
                   cluster_name: `Career Cluster ${Math.floor(Math.random() * 3) + 1}`
                 },
                 location_remote_fit: {
-                  location_match: currentUserLocation && job.location && 
+                  location_match: currentUserLocation && job.location &&
                     job.location.toLowerCase().includes(currentUserLocation.toLowerCase()),
-                  location_bonus: currentUserLocation && job.location && 
+                  location_bonus: currentUserLocation && job.location &&
                     job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0,
                   remote_available: job.remote || false,
                   remote_bonus: job.remote ? 5 : 0,
-                  total_location_score: (currentUserLocation && job.location && 
+                  total_location_score: (currentUserLocation && job.location &&
                     job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0) + (job.remote ? 5 : 0),
-                  description: `Location: ${currentUserLocation && job.location && 
+                  description: `Location: ${currentUserLocation && job.location &&
                     job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 'Match' : 'No match'} | Remote: ${job.remote ? 'Available' : 'Not available'}`
                 },
                 experience_seniority: {
@@ -609,7 +670,7 @@ const JobRecommendations = ({
                   description: `Your level: ${userProfile?.experienceLevel || 'intermediate'} | Job level: ${job.seniority || 'mid'}`
                 },
                 bonuses: {
-                  location: currentUserLocation && job.location && 
+                  location: currentUserLocation && job.location &&
                     job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0,
                   experience: 5,
                   remote: job.remote ? 5 : 0,
@@ -619,7 +680,7 @@ const JobRecommendations = ({
                   skill_match_contribution: Math.round(requiredMatchPercentage * 0.7),
                   content_similarity_contribution: Math.round(Math.random() * 8 + 2),
                   cluster_fit_contribution: Math.round(Math.random() * 3 + 1),
-                  location_contribution: currentUserLocation && job.location && 
+                  location_contribution: currentUserLocation && job.location &&
                     job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0,
                   experience_contribution: 5,
                   remote_contribution: job.remote ? 5 : 0,

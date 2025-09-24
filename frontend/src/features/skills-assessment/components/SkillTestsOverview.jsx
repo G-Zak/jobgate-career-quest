@@ -1,896 +1,843 @@
 import React, { useState, useEffect } from 'react';
-import { FaArrowLeft, FaCode, FaQuestionCircle, FaClock, FaTrophy, FaPlay, FaLock, FaCheckCircle } from 'react-icons/fa';
-import PracticalTests from '../../coding-challenges/components/PracticalTests';
-
-// Composant d'éditeur de code simple
-const SimpleCodeEditor = ({ value, onChange, language }) => {
-  return (
-    <textarea
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full h-full font-mono text-sm bg-gray-900 text-green-400 p-4 resize-none focus:outline-none border-0 rounded"
-      placeholder={`Votre code ${language} ici...`}
-      style={{
-        fontFamily: 'Consolas, Monaco, "Courier New", monospace',
-        lineHeight: '1.4',
-        tabSize: 4
-      }}
-    />
-  );
-};
-
-// Interface directe pour un test pratique
-const DirectPracticalTestInterface = ({ test, onBack }) => {
-  const [code, setCode] = useState('');
-  const [showUnavailableModal, setShowUnavailableModal] = useState(false);
-  const [showSubmitModal, setShowSubmitModal] = useState(false);
-  const [isRunning, setIsRunning] = useState(false);
-
-  // Code par défaut selon le langage
-  const getDefaultCode = (language) => {
-    switch (language?.toLowerCase()) {
-      case 'python':
-        return `# Votre solution Python ici
-def solution():
-    # Implémentez votre solution
-    pass
-
-# Tests
-if __name__ == "__main__":
-    result = solution()
-    print(result)`;
-      case 'java':
-        return `public class Solution {
-    public static void main(String[] args) {
-        Solution sol = new Solution();
-        // Testez votre solution ici
-    }
-    
-    // Implémentez votre solution ici
-    public void solution() {
-        
-    }
-}`;
-      case 'javascript':
-        return `// Votre solution JavaScript ici
-function solution() {
-    // Implémentez votre solution
-}
-
-// Tests
-console.log(solution());`;
-      case 'c':
-        return `#include <stdio.h>
-
-int main() {
-    // Implémentez votre solution ici
-    
-    return 0;
-}`;
-      default:
-        return '// Votre code ici';
-    }
-  };
-
-  useEffect(() => {
-    setCode(test?.starter_code || getDefaultCode(test?.language));
-  }, [test]);
-
-  const handleExecuteCode = () => {
-    setIsRunning(true);
-    setTimeout(() => {
-      setIsRunning(false);
-      setShowUnavailableModal(true);
-    }, 1000);
-  };
-
-  const handleSubmitCode = () => {
-    setShowSubmitModal(true);
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={onBack}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <FaArrowLeft className="w-4 h-4" />
-                Retour
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{test.title}</h1>
-                <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                  <span className="capitalize bg-gray-100 px-2 py-1 rounded">{test.language}</span>
-                  <span className={`capitalize px-2 py-1 rounded ${test.difficulty === 'beginner' ? 'bg-green-100 text-green-800' :
-                    test.difficulty === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                    {test.difficulty === 'beginner' ? 'Débutant' :
-                      test.difficulty === 'intermediate' ? 'Intermédiaire' : 'Avancé'}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <FaTrophy className="w-4 h-4" />
-                    <span>{test.max_points} points</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <FaClock className="w-4 h-4" />
-                    <span>{test.estimated_time_minutes} min</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleExecuteCode}
-                disabled={isRunning}
-                className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white rounded-lg transition-colors"
-              >
-                {isRunning ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                    Exécution...
-                  </>
-                ) : (
-                  <>
-                    <FaPlay className="w-4 h-4" />
-                    Exécuter
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={handleSubmitCode}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
-              >
-                <FaCheckCircle className="w-4 h-4" />
-                Soumettre
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-200px)]">
-
-          {/* Left Panel - Problem Description */}
-          <div className="bg-white rounded-lg shadow-sm border flex flex-col">
-            <div className="border-b p-4 bg-gray-50">
-              <h3 className="text-lg font-semibold text-gray-900">Énoncé du Problème</h3>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              <div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-3">Description</h4>
-                <p className="text-gray-700 leading-relaxed">{test.description}</p>
-              </div>
-
-              <div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-3">Détails</h4>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <pre className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed">
-                    {test.problem_statement}
-                  </pre>
-                </div>
-              </div>
-
-              {test.input_format && (
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Format d'Entrée</h4>
-                  <div className="bg-blue-50 rounded-lg p-4">
-                    <p className="text-gray-700 text-sm">{test.input_format}</p>
-                  </div>
-                </div>
-              )}
-
-              {test.output_format && (
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Format de Sortie</h4>
-                  <div className="bg-green-50 rounded-lg p-4">
-                    <p className="text-gray-700 text-sm">{test.output_format}</p>
-                  </div>
-                </div>
-              )}
-
-              {test.sample_input && test.sample_output && (
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Exemple</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <h5 className="font-medium text-gray-700 mb-2">Entrée:</h5>
-                      <div className="bg-gray-100 rounded p-3">
-                        <pre className="text-sm text-gray-800">{test.sample_input}</pre>
-                      </div>
-                    </div>
-                    <div>
-                      <h5 className="font-medium text-gray-700 mb-2">Sortie:</h5>
-                      <div className="bg-gray-100 rounded p-3">
-                        <pre className="text-sm text-gray-800">{test.sample_output}</pre>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right Panel - Code Editor */}
-          <div className="bg-white rounded-lg shadow-sm border flex flex-col">
-            <div className="border-b p-4 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <FaCode className="w-5 h-5" />
-                  Éditeur de Code
-                </h3>
-                <span className="text-sm text-gray-600 capitalize bg-gray-200 px-3 py-1 rounded">
-                  {test.language}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-hidden">
-              <SimpleCodeEditor
-                value={code}
-                onChange={setCode}
-                language={test.language}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Modal d'exécution indisponible */}
-      {showUnavailableModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <div className="flex items-center mb-4">
-              <div className="bg-orange-100 p-3 rounded-full mr-4">
-                <FaLock className="text-orange-500 text-xl" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900">Exécution temporairement indisponible</h3>
-            </div>
-            <p className="text-gray-600 mb-6">
-              Le système d'exécution de code est actuellement en cours de développement.
-              Cette fonctionnalité sera bientôt disponible pour tester vos solutions en temps réel.
-            </p>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <h4 className="font-semibold text-blue-800 mb-2">En attendant, vous pouvez :</h4>
-              <ul className="text-blue-700 text-sm space-y-1">
-                <li>• Écrire et modifier votre code dans l'éditeur</li>
-                <li>• Vérifier la syntaxe et la logique</li>
-                <li>• Soumettre votre solution une fois terminée</li>
-              </ul>
-            </div>
-            <div className="text-center">
-              <button
-                onClick={() => setShowUnavailableModal(false)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
-              >
-                Compris
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de soumission indisponible */}
-      {showSubmitModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <div className="flex items-center mb-4">
-              <div className="bg-blue-100 p-3 rounded-full mr-4">
-                <FaCheckCircle className="text-blue-500 text-xl" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900">Soumission en développement</h3>
-            </div>
-            <p className="text-gray-600 mb-6">
-              Le système de soumission et d'évaluation automatique est en cours de finalisation.
-              Votre code a été sauvegardé localement.
-            </p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-              <h4 className="font-semibold text-green-800 mb-2">Code sauvegardé :</h4>
-              <p className="text-green-700 text-sm">
-                Votre solution de {code.split('\n').length} lignes en {test.language} est prête.
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowSubmitModal(false)}
-                className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Continuer à coder
-              </button>
-              <button
-                onClick={onBack}
-                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Terminer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+import {
+  BookOpenIcon,
+  ClockIcon,
+  StarIcon,
+  CheckCircleIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  TrophyIcon,
+  ChartBarIcon,
+  PlayIcon,
+  AcademicCapIcon,
+  CodeBracketIcon,
+  CpuChipIcon,
+  CircleStackIcon,
+  GlobeAltIcon,
+  CommandLineIcon,
+  SparklesIcon,
+  FireIcon
+} from '@heroicons/react/24/outline';
+import { CheckCircleIcon as CheckCircleSolidIcon, StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 
 const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
-  const [skills, setSkills] = useState([]);
   const [userSkills, setUserSkills] = useState([]);
+  const [allTests, setAllTests] = useState([]);
+  const [recommendedTests, setRecommendedTests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedSkill, setSelectedSkill] = useState(null);
-  const [showPracticalTests, setShowPracticalTests] = useState(false);
-  const [selectedPracticalTest, setSelectedPracticalTest] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDifficulty, setSelectedDifficulty] = useState('all');
+  const [selectedSkill, setSelectedSkill] = useState('all');
+  const [completedTests, setCompletedTests] = useState([]);
+  const [userProfile, setUserProfile] = useState(null);
+  const [lastUserId, setLastUserId] = useState(userId);
+  const [stats, setStats] = useState({
+    totalTests: 0,
+    recommendedCount: 0,
+    completedCount: 0,
+    averageScore: 0
+  });
+  const [testsLoaded, setTestsLoaded] = useState(false);
 
+  // Debug: Log state changes
   useEffect(() => {
-    loadUserSkillsAndTests();
+    console.log('🔍 allTests state changed:', allTests.length, allTests);
+  }, [allTests]);
+
+  // Mock data for fallback - plus complet et varié
+  const mockTests = [
+    {
+      id: 1,
+      test_name: 'Python Fundamentals Test',
+      skill: { name: 'Python', category: 'programming' },
+      description: 'Master the basics of Python programming',
+      difficulty: 'Beginner',
+      time_limit: 15,
+      question_count: 20,
+      total_score: 100,
+      is_recommended: true,
+      skill_demand: 95
+    },
+    {
+      id: 2,
+      test_name: 'JavaScript Essentials Test',
+      skill: { name: 'JavaScript', category: 'programming' },
+      description: 'Essential JavaScript concepts and syntax',
+      difficulty: 'Intermediate',
+      time_limit: 15,
+      question_count: 20,
+      total_score: 100,
+      is_recommended: true,
+      skill_demand: 88
+    },
+    {
+      id: 3,
+      test_name: 'React Components Test',
+      skill: { name: 'React', category: 'frontend' },
+      description: 'React components, hooks, and lifecycle',
+      difficulty: 'Intermediate',
+      time_limit: 15,
+      question_count: 20,
+      total_score: 100,
+      is_recommended: true,
+      skill_demand: 92
+    },
+    {
+      id: 4,
+      test_name: 'Django Framework Test',
+      skill: { name: 'Django', category: 'backend' },
+      description: 'Django web framework fundamentals',
+      difficulty: 'Advanced',
+      time_limit: 15,
+      question_count: 20,
+      total_score: 100,
+      is_recommended: false,
+      skill_demand: 75
+    },
+    {
+      id: 5,
+      test_name: 'SQL Database Test',
+      skill: { name: 'SQL', category: 'database' },
+      description: 'Database queries and management',
+      difficulty: 'Intermediate',
+      time_limit: 15,
+      question_count: 20,
+      total_score: 100,
+      is_recommended: true,
+      skill_demand: 85
+    },
+    {
+      id: 6,
+      test_name: 'SQLite Database Test',
+      skill: { name: 'SQLite', category: 'database' },
+      description: 'SQLite database management and queries',
+      difficulty: 'Beginner',
+      time_limit: 15,
+      question_count: 20,
+      total_score: 100,
+      is_recommended: true,
+      skill_demand: 80
+    },
+    {
+      id: 7,
+      test_name: 'Java Fundamentals Test',
+      skill: { name: 'Java', category: 'programming' },
+      description: 'Core Java programming concepts',
+      difficulty: 'Intermediate',
+      time_limit: 15,
+      question_count: 20,
+      total_score: 100,
+      is_recommended: true,
+      skill_demand: 85
+    },
+    {
+      id: 8,
+      test_name: 'Git Version Control Test',
+      skill: { name: 'Git', category: 'devops' },
+      description: 'Version control and collaboration',
+      difficulty: 'Beginner',
+      time_limit: 15,
+      question_count: 20,
+      total_score: 100,
+      is_recommended: false,
+      skill_demand: 70
+    }
+  ];
+
+  const skillIcons = {
+    programming: CodeBracketIcon,
+    frontend: GlobeAltIcon,
+    backend: CpuChipIcon,
+    database: CircleStackIcon,
+    devops: CommandLineIcon,
+    ai: AcademicCapIcon,
+    other: BookOpenIcon
+  };
+
+  const difficultyColors = {
+    'Beginner': 'bg-green-100 text-green-800 border-green-200',
+    'Intermediate': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    'Advanced': 'bg-red-100 text-red-800 border-red-200'
+  };
+
+  // Détecter les changements d'utilisateur
+  useEffect(() => {
+    if (userId !== lastUserId) {
+      console.log('🔄 User changed, reloading data...', { from: lastUserId, to: userId });
+      setLastUserId(userId);
+      setUserSkills([]);
+      setAllTests([]);
+      setRecommendedTests([]);
+      setUserProfile(null);
+      loadUserSkillsAndTests();
+    }
+  }, [userId, lastUserId]);
+
+  // Charger les données initiales
+  useEffect(() => {
+    console.log('🔄 Initial useEffect triggered, userId:', userId, 'allTests length:', allTests.length);
+
+    // Si on a déjà des tests, ne pas les recharger
+    if (testsLoaded && allTests.length > 0) {
+      console.log('✅ Tests already loaded, skipping reload');
+      return;
+    }
+
+    if (userId) {
+      loadUserSkillsAndTests();
+    } else {
+      // Si pas d'userId, utiliser un fallback immédiat
+      console.log('⚠️ No userId, using immediate fallback data');
+      const fallbackSkills = getFallbackSkillsForUser(1);
+      const emergencyTests = [...mockTests, ...createPersonalizedTests(fallbackSkills)];
+
+      console.log('🚨 Setting emergency tests:', emergencyTests.length);
+      setUserSkills(fallbackSkills);
+      setAllTests(emergencyTests);
+      setTestsLoaded(true);
+      setRecommendedTests(emergencyTests.filter(test => test.is_recommended));
+      setStats({
+        totalTests: emergencyTests.length,
+        recommendedCount: emergencyTests.filter(test => test.is_recommended).length,
+        completedCount: 0,
+        averageScore: 0
+      });
+      setLoading(false);
+    }
+  }, [userId]);
+
+  // Écouter les changements de compétences (si l'utilisateur les met à jour)
+  useEffect(() => {
+    const handleSkillsUpdate = () => {
+      console.log('🔄 Skills updated, reloading user data...');
+      loadUserSkillsAndTests();
+    };
+
+    // Écouter les événements personnalisés pour les mises à jour de compétences
+    window.addEventListener('skillsUpdated', handleSkillsUpdate);
+    window.addEventListener('profileUpdated', handleSkillsUpdate);
+
+    return () => {
+      window.removeEventListener('skillsUpdated', handleSkillsUpdate);
+      window.removeEventListener('profileUpdated', handleSkillsUpdate);
+    };
   }, [userId]);
 
   const loadUserSkillsAndTests = async () => {
     try {
-      // Charger les compétences de l'utilisateur
+      setLoading(true);
+      console.log('🔄 Loading data for user ID:', userId, 'current allTests:', allTests.length);
+
+      // Load user profile and skills
       let userSkillsData = [];
+      let userProfileData = null;
+
       try {
         const candidateResponse = await fetch(`http://localhost:8000/api/candidates/${userId}/`);
         if (candidateResponse.ok) {
           const candidate = await candidateResponse.json();
+          userProfileData = candidate;
           userSkillsData = candidate.skills || [];
-          console.log('Compétences utilisateur chargées:', userSkillsData);
+          console.log('✅ User profile loaded:', {
+            id: candidate.id,
+            name: candidate.name || 'Unknown',
+            skills: userSkillsData.length
+          });
         } else {
-          throw new Error('Candidat non trouvé');
+          console.log('⚠️ User profile not found, using fallback');
+          userProfileData = {
+            id: userId,
+            name: `User ${userId}`,
+            skills: []
+          };
+          userSkillsData = getFallbackSkillsForUser(userId);
         }
       } catch (error) {
-        console.log('Pas de compétences utilisateur trouvées, chargement de toutes les compétences disponibles');
-        // Fallback : charger toutes les compétences disponibles
-        try {
-          const skillsResponse = await fetch('http://localhost:8000/api/skills/');
-          if (skillsResponse.ok) {
-            const allSkills = await skillsResponse.json();
-            userSkillsData = allSkills.slice(0, 5); // Prendre les 5 premières compétences
-            console.log('Toutes les compétences chargées:', userSkillsData);
-          }
-        } catch (skillsError) {
-          console.log('Erreur chargement compétences, utilisation données mock');
-          // Données mock pour les compétences
-          userSkillsData = [
-            { id: 1, name: 'Python' },
-            { id: 2, name: 'Django' },
-            { id: 3, name: 'JavaScript' }
-          ];
-        }
+        console.log('⚠️ Error loading user profile, using fallback:', error);
+        userProfileData = {
+          id: userId,
+          name: `User ${userId}`,
+          skills: []
+        };
+        userSkillsData = getFallbackSkillsForUser(userId);
       }
+
+      setUserProfile(userProfileData);
+
+      // Load skill tests - TOUJOURS utiliser les tests mock pour garantir l'affichage
+      let testsData = [];
+
+      // Essayer l'API d'abord
+      try {
+        const testsResponse = await fetch('http://localhost:8000/api/skills/tests/');
+        if (testsResponse.ok) {
+          const response = await testsResponse.json();
+          if (response.success && response.data) {
+            console.log('✅ API tests loaded, transforming...');
+
+            testsData = Object.values(response.data).flatMap(skillData =>
+              skillData.tests.map(test => ({
+                ...test,
+                skill: skillData.skill,
+                difficulty: getDifficultyFromTime(test.time_limit),
+                is_recommended: isRecommendedSkill(skillData.skill.name, userSkillsData),
+                skill_demand: getSkillDemand(skillData.skill.name)
+              }))
+            );
+            console.log('✅ API tests transformed:', testsData.length, 'tests');
+          }
+        }
+      } catch (error) {
+        console.log('⚠️ API failed, using mock data:', error);
+      }
+
+      // Si l'API n'a pas fourni de tests, utiliser les tests mock
+      if (testsData.length === 0) {
+        console.log('🔄 No API tests, using mock data');
+        testsData = [...mockTests];
+      }
+
+      // Ajouter des tests personnalisés pour les compétences de l'utilisateur
+      const personalizedTests = createPersonalizedTests(userSkillsData);
+      testsData = [...testsData, ...personalizedTests];
+
+      console.log('✅ Final tests data:', testsData.length, 'tests');
 
       setUserSkills(userSkillsData);
 
-      // Si l'utilisateur n'a pas de compétences, ne rien afficher
-      if (userSkillsData.length === 0) {
-        setSkills([]);
-        setLoading(false);
-        return;
+      // Vérifier que les tests ne sont pas vides avant de les définir
+      if (testsData.length > 0) {
+        console.log('✅ Setting tests data:', testsData.length, 'tests');
+        setAllTests(testsData);
+        setTestsLoaded(true);
+
+        // Separate recommended tests
+        const recommended = testsData.filter(test => test.is_recommended);
+        setRecommendedTests(recommended);
+
+        // Calculate stats
+        setStats({
+          totalTests: testsData.length,
+          recommendedCount: recommended.length,
+          completedCount: 0,
+          averageScore: 0
+        });
+      } else {
+        console.log('⚠️ No tests to set, keeping existing data');
       }
 
-      // Charger les tests QCM
-      let qcmTests = [];
-      try {
-        const testsResponse = await fetch('http://localhost:8000/api/tests-alt/');
-        if (testsResponse.ok) {
-          qcmTests = await testsResponse.json();
-          console.log('Tests QCM chargés depuis API:', qcmTests);
-        } else {
-          throw new Error('API non disponible');
-        }
-      } catch (error) {
-        console.log('API non disponible, utilisation des données mock QCM');
-        // Données mock pour les tests QCM basées sur le JSON
-        qcmTests = [
-          {
-            id: 1,
-            title: 'Test JavaScript Expert',
-            test_type: 'technical',
-            description: 'Évaluation des concepts avancés de JavaScript',
-            duration_minutes: 45,
-            total_questions: 6,
-            passing_score: 70,
-            is_active: true,
-            skill: 1, // JavaScript/Python
-            test_name: 'Test JavaScript Expert',
-            total_score: 30,
-            time_limit: 45
-          },
-          {
-            id: 2,
-            title: 'Test Python Architecture',
-            test_type: 'technical',
-            description: 'Concepts avancés d\'architecture et de design patterns en Python',
-            duration_minutes: 40,
-            total_questions: 4,
-            passing_score: 70,
-            is_active: true,
-            skill: 1, // JavaScript/Python
-            test_name: 'Test Python Architecture',
-            total_score: 25,
-            time_limit: 40
-          },
-          {
-            id: 3,
-            title: 'Test Django Fondamentaux',
-            test_type: 'technical',
-            description: 'Évaluation des compétences Django : modèles, vues, templates, ORM et architecture MVT. Ce test couvre les concepts fondamentaux et avancés.',
-            duration_minutes: 25,
-            total_questions: 12,
-            passing_score: 70,
-            is_active: true,
-            skill: 2, // Django
-            test_name: 'Test Django Fondamentaux',
-            total_score: 37,
-            time_limit: 25
-          },
-          {
-            id: 4,
-            title: 'Test Java Spring Boot',
-            test_type: 'technical',
-            description: 'Framework Spring Boot et architecture microservices',
-            duration_minutes: 35,
-            total_questions: 4,
-            passing_score: 70,
-            is_active: true,
-            skill: 3, // Java (si existe)
-            test_name: 'Test Java Spring Boot',
-            total_score: 20,
-            time_limit: 35
-          }
-        ];
-      }
-
-      // Charger les tests pratiques (challenges) - Utilisation des données mock
-      let practicalTests = [];
-      console.log('Utilisation des données mock pour les tests pratiques');
-      // Données mock pour les tests pratiques
-      practicalTests = [
-        {
-          id: 1,
-          title: 'Vérifier un palindrome',
-          slug: 'palindrome-check',
-          description: 'Vérifiez si une chaîne est un palindrome.',
-          difficulty: 'beginner',
-          category: 'string_manipulation',
-          language: 'python',
-          problem_statement: `Écrivez une fonction qui vérifie si une chaîne de caractères est un palindrome.
-
-Un palindrome est un mot, une phrase, ou une séquence qui se lit de la même manière de gauche à droite et de droite à gauche.
-
-**Exemple :**
-- "radar" → True
-- "hello" → False  
-- "A man a plan a canal Panama" → True (en ignorant les espaces et la casse)
-
-**Instructions :**
-- Ignorez les espaces et la casse
-- Retournez True si c'est un palindrome, False sinon`,
-          input_format: 'Une chaîne de caractères',
-          output_format: 'True ou False',
-          constraints: 'La chaîne peut contenir des lettres, des chiffres et des espaces',
-          starter_code: `def is_palindrome(s):
-    """
-    Vérifie si une chaîne est un palindrome
-    
-    Args:
-        s (str): La chaîne à vérifier
-    
-    Returns:
-        bool: True si c'est un palindrome, False sinon
-    """
-    # Votre code ici
-    pass
-
-# Tests
-print(is_palindrome("radar"))  # True
-print(is_palindrome("hello"))  # False
-print(is_palindrome("A man a plan a canal Panama"))  # True`,
-          estimated_time_minutes: 15,
-          skill_id: 1 // Programmation Python
-        },
-        {
-          id: 2,
-          title: 'Somme de deux nombres',
-          slug: 'two-sum',
-          description: 'Trouvez deux nombres dans un tableau qui additionnent à une cible donnée.',
-          difficulty: 'beginner',
-          category: 'algorithms',
-          language: 'python',
-          problem_statement: `Étant donné un tableau d'entiers et une valeur cible, trouvez les indices de deux nombres qui additionnent à la cible.
-
-Vous pouvez supposer qu'il y a exactement une solution, et vous ne pouvez pas utiliser le même élément deux fois.
-
-**Exemple :**
-\`\`\`
-nums = [2, 7, 11, 15], target = 9
-Résultat : [0, 1]
-Explication : nums[0] + nums[1] = 2 + 7 = 9
-\`\`\`
-
-**Instructions :**
-- Retournez les indices sous forme de liste
-- L'ordre des indices n'est pas important`,
-          input_format: 'Un tableau d\'entiers et un entier cible',
-          output_format: 'Une liste de deux indices',
-          constraints: '2 ≤ nums.length ≤ 1000, -10^9 ≤ nums[i] ≤ 10^9',
-          starter_code: `def two_sum(nums, target):
-    """
-    Trouve les indices de deux nombres qui additionnent à la cible
-    
-    Args:
-        nums (List[int]): Liste d'entiers
-        target (int): Valeur cible
-    
-    Returns:
-        List[int]: Indices des deux nombres
-    """
-    # Votre code ici
-    pass
-
-# Tests
-print(two_sum([2, 7, 11, 15], 9))  # [0, 1]
-print(two_sum([3, 2, 4], 6))       # [1, 2]`,
-          estimated_time_minutes: 20,
-          skill_id: 1 // Programmation Python
-        },
-        {
-          id: 3,
-          title: 'FizzBuzz',
-          slug: 'fizzbuzz',
-          description: 'Implémentez le classique problème FizzBuzz.',
-          difficulty: 'beginner',
-          category: 'algorithms',
-          language: 'python',
-          problem_statement: `Écrivez un programme qui affiche les nombres de 1 à n. Mais :
-- Pour les multiples de 3, affichez "Fizz" au lieu du nombre
-- Pour les multiples de 5, affichez "Buzz" au lieu du nombre  
-- Pour les multiples de 3 ET 5, affichez "FizzBuzz" au lieu du nombre
-
-**Exemple pour n=15 :**
-\`\`\`
-1, 2, Fizz, 4, Buzz, Fizz, 7, 8, Fizz, Buzz, 11, Fizz, 13, 14, FizzBuzz
-\`\`\`
-
-**Instructions :**
-- Retournez une liste de chaînes de caractères
-- Les nombres normaux doivent être convertis en chaînes`,
-          input_format: 'Un entier n',
-          output_format: 'Une liste de chaînes',
-          constraints: '1 ≤ n ≤ 1000',
-          starter_code: `def fizzbuzz(n):
-    """
-    Génère la séquence FizzBuzz pour les nombres de 1 à n
-    
-    Args:
-        n (int): Nombre limite
-    
-    Returns:
-        List[str]: Séquence FizzBuzz
-    """
-    # Votre code ici
-    pass
-
-# Tests
-print(fizzbuzz(15))`,
-          estimated_time_minutes: 10,
-          skill_id: 1 // Programmation Python
-        }
-      ];
-
-      // Filtrer uniquement les compétences de l'utilisateur et associer les tests
-      const skillsWithTests = userSkillsData.map(skill => {
-        const qcmTestsForSkill = qcmTests.filter(test => test.skill === skill.id && test.is_active);
-        const practicalTestsForSkill = practicalTests.filter(test =>
-          test.skill_id === skill.id ||
-          test.language?.toLowerCase() === skill.name?.toLowerCase() ||
-          skill.name?.toLowerCase().includes(test.language?.toLowerCase())
-        );
-
-        return {
-          ...skill,
-          qcmTests: qcmTestsForSkill,
-          practicalTests: practicalTestsForSkill,
-          totalTests: qcmTestsForSkill.length + practicalTestsForSkill.length
-        };
+      console.log('✅ Data loaded successfully:', {
+        userId: userId,
+        userProfile: userProfileData?.name || 'Unknown',
+        userSkills: userSkillsData.length,
+        allTests: testsData.length,
+        recommended: recommended.length
       });
 
-      // Trier par nombre de tests disponibles (décroissant)
-      skillsWithTests.sort((a, b) => b.totalTests - a.totalTests);
-
-      setSkills(skillsWithTests);
-      setLoading(false);
     } catch (error) {
-      console.error('Erreur lors du chargement:', error);
+      console.error('❌ Critical error, using emergency fallback:', error);
+      // Emergency fallback - toujours afficher quelque chose
+      const fallbackSkills = getFallbackSkillsForUser(userId);
+      const emergencyTests = [...mockTests, ...createPersonalizedTests(fallbackSkills)];
+
+      console.log('🚨 Emergency fallback activated:', emergencyTests.length, 'tests');
+
+      setUserSkills(fallbackSkills);
+      setAllTests(emergencyTests);
+      setTestsLoaded(true);
+      setRecommendedTests(emergencyTests.filter(test => test.is_recommended));
+      setStats({
+        totalTests: emergencyTests.length,
+        recommendedCount: emergencyTests.filter(test => test.is_recommended).length,
+        completedCount: 0,
+        averageScore: 0
+      });
+
+      console.log('🚨 Emergency tests set:', emergencyTests.length, 'tests');
+    } finally {
       setLoading(false);
     }
   };
 
-  const startQCMTest = (test) => {
-    // Rediriger vers le test QCM
-    console.log('Démarrer test QCM:', test);
-    // TODO: Intégrer avec le système de test QCM existant
+  // Helper functions for better data processing
+  const createPersonalizedTests = (userSkills) => {
+    const personalizedTests = [];
+
+    // Ajouter des tests spécifiques pour les compétences de l'utilisateur
+    userSkills.forEach(skill => {
+      const skillName = skill.name.toLowerCase();
+
+      // Créer un test personnalisé pour cette compétence
+      const customTest = {
+        id: 1000 + skill.id, // ID unique pour les tests personnalisés
+        test_name: `${skill.name} Assessment Test`,
+        skill: { name: skill.name, category: skill.category },
+        description: `Test your knowledge of ${skill.name} - personalized for your profile`,
+        difficulty: 'Intermediate',
+        time_limit: 15,
+        question_count: 20,
+        total_score: 100,
+        is_recommended: true,
+        skill_demand: getSkillDemand(skill.name)
+      };
+      personalizedTests.push(customTest);
+      console.log('✅ Created personalized test for skill:', skill.name);
+    });
+
+    return personalizedTests;
   };
 
-  const startPracticalTest = (test) => {
-    // Afficher l'interface de test pratique directement
-    console.log('startPracticalTest appelé avec:', test);
-    console.log('État actuel selectedPracticalTest:', selectedPracticalTest);
-    setSelectedPracticalTest(test);
-    console.log('setSelectedPracticalTest appelé');
+  const getFallbackSkillsForUser = (userId) => {
+    // Créer des compétences de fallback différentes pour chaque utilisateur
+    const skillSets = [
+      [
+        { id: 1, name: 'Python', category: 'programming' },
+        { id: 2, name: 'Django', category: 'backend' },
+        { id: 3, name: 'SQL', category: 'database' }
+      ],
+      [
+        { id: 4, name: 'JavaScript', category: 'programming' },
+        { id: 5, name: 'React', category: 'frontend' },
+        { id: 6, name: 'Node.js', category: 'backend' }
+      ],
+      [
+        { id: 7, name: 'Java', category: 'programming' },
+        { id: 8, name: 'Spring', category: 'backend' },
+        { id: 9, name: 'MySQL', category: 'database' }
+      ],
+      [
+        { id: 10, name: 'C#', category: 'programming' },
+        { id: 11, name: '.NET', category: 'backend' },
+        { id: 12, name: 'Azure', category: 'cloud' }
+      ]
+    ];
+
+    // Utiliser l'ID utilisateur pour sélectionner un ensemble de compétences
+    const skillSetIndex = (userId - 1) % skillSets.length;
+    return skillSets[skillSetIndex];
+  };
+
+  const getDifficultyFromTime = (timeLimit) => {
+    if (timeLimit <= 15) return 'Beginner';
+    if (timeLimit <= 20) return 'Intermediate';
+    return 'Advanced';
+  };
+
+  const isRecommendedSkill = (skillName, userSkills = []) => {
+    // Vérifier si l'utilisateur a déjà cette compétence
+    const hasSkill = userSkills.some(skill =>
+      skill.name.toLowerCase() === skillName.toLowerCase()
+    );
+
+    // Compétences recommandées basées sur la demande du marché
+    const highDemandSkills = ['Python', 'JavaScript', 'React', 'SQL', 'Django', 'Node.js'];
+    const isHighDemand = highDemandSkills.includes(skillName);
+
+    // Recommander si c'est une compétence en forte demande ET que l'utilisateur ne l'a pas encore
+    return isHighDemand && !hasSkill;
+  };
+
+  const getSkillDemand = (skillName) => {
+    const demandScores = {
+      'Python': 95,
+      'JavaScript': 88,
+      'React': 92,
+      'Django': 75,
+      'SQL': 85,
+      'Git': 70,
+      'Node.js': 80,
+      'Java': 85,
+      'Spring': 75,
+      'C#': 80,
+      '.NET': 75,
+      'Azure': 90
+    };
+    return demandScores[skillName] || 70;
+  };
+
+  const filteredTests = allTests.filter(test => {
+    if (!test || !test.test_name || !test.skill) {
+      console.log('⚠️ Invalid test data:', test);
+      return false;
+    }
+
+    const matchesSearch = test.test_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      test.skill.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDifficulty = selectedDifficulty === 'all' || test.difficulty === selectedDifficulty;
+    const matchesSkill = selectedSkill === 'all' || test.skill.name === selectedSkill;
+
+    const matches = matchesSearch && matchesDifficulty && matchesSkill;
+    return matches;
+  });
+
+  console.log('🔍 Filtering results:', {
+    allTests: allTests.length,
+    filteredTests: filteredTests.length,
+    searchTerm,
+    selectedDifficulty,
+    selectedSkill
+  });
+
+  // Debug: Log filteredTests changes
+  useEffect(() => {
+    console.log('🔍 filteredTests calculated:', filteredTests.length, filteredTests);
+  }, [filteredTests]);
+
+  const getSkillIcon = (category) => {
+    const IconComponent = skillIcons[category] || BookOpenIcon;
+    return <IconComponent className="w-5 h-5" />;
+  };
+
+  const formatTime = (minutes) => {
+    if (minutes < 60) return `${minutes}min`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
+  };
+
+  const TestCard = ({ test, isRecommended = false }) => {
+    const IconComponent = skillIcons[test.skill.category] || BookOpenIcon;
+
+    return (
+      <div className={`group relative bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-300 hover:-translate-y-1`}>
+        {isRecommended && (
+          <div className="absolute -top-2 -right-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+            <FireIcon className="w-3 h-3" />
+            Recommended
+          </div>
+        )}
+
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
+              <IconComponent className="w-6 h-6 text-slate-600 dark:text-slate-300" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-900 dark:text-white text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                {test.test_name}
+              </h3>
+              <p className="text-slate-600 dark:text-slate-400 text-sm">
+                {test.skill.name} • {test.skill.category}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <p className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-2">
+          {test.description}
+        </p>
+
+        <div className="flex flex-wrap gap-2 mb-4">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${difficultyColors[test.difficulty]}`}>
+            {test.difficulty}
+          </span>
+          <span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-full text-xs font-medium">
+            {test.question_count} questions
+          </span>
+          <span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-full text-xs font-medium">
+            {formatTime(test.time_limit)}
+          </span>
+          <span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-full text-xs font-medium">
+            {test.total_score} points
+          </span>
+        </div>
+
+        {isRecommended && (
+          <div className="mb-4">
+            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+              <ChartBarIcon className="w-4 h-4" />
+              <span>High demand skill ({test.skill_demand}% job match)</span>
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={() => onStartTest && onStartTest(test.id, test.skill.id)}
+          className="w-full bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2 group/btn"
+        >
+          <PlayIcon className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
+          Commencer le test
+        </button>
+      </div>
+    );
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        <div className="ml-4 text-lg">Chargement des compétences...</div>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="animate-pulse">
+            <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
+                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-4"></div>
+                  <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mb-2"></div>
+                  <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-2/3 mb-4"></div>
+                  <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
-    );
-  }
-
-  if (showPracticalTests) {
-    return <PracticalTests onBackToDashboard={() => setShowPracticalTests(false)} />;
-  }
-
-  if (selectedPracticalTest) {
-    return (
-      <DirectPracticalTestInterface
-        test={selectedPracticalTest}
-        onBack={() => setSelectedPracticalTest(null)}
-      />
-    );
-  }
-
-  if (selectedSkill) {
-    return (
-      <SkillTestsDetail
-        skill={selectedSkill}
-        onBack={() => setSelectedSkill(null)}
-        onBackToDashboard={onBackToDashboard}
-        onStartPracticalTest={startPracticalTest}
-        onStartTest={onStartTest}
-      />
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Header */}
-      <div className="flex items-center mb-8">
-        <button
-          onClick={onBackToDashboard}
-          className="mr-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <FaArrowLeft className="w-5 h-5" />
-        </button>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Tests par Compétence</h1>
-          <p className="text-gray-600 mt-2">
-            Choisissez une compétence pour voir les tests disponibles
-          </p>
-        </div>
-      </div>
-
-      {/* Grille des compétences */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {skills.map(skill => (
-          <div
-            key={skill.id}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 cursor-pointer"
-            onClick={() => setSelectedSkill(skill)}
-          >
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-semibold text-gray-800">{skill.name}</h3>
-              {skill.totalTests > 0 && (
-                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                  {skill.totalTests} test{skill.totalTests > 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
-
-            <div className="space-y-2 mb-4">
-              {skill.qcmTests.length > 0 && (
-                <div className="flex items-center text-sm text-gray-600">
-                  <FaQuestionCircle className="mr-2 text-blue-500" />
-                  <span>{skill.qcmTests.length} test{skill.qcmTests.length > 1 ? 's' : ''} QCM</span>
+      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                Tests de Compétences
+              </h1>
+              <p className="text-slate-600 dark:text-slate-400">
+                Évaluez et développez vos compétences techniques
+              </p>
+              {userProfile && (
+                <div className="mt-3 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span>Connecté en tant que <strong>{userProfile.name}</strong></span>
+                  {userSkills.length > 0 && (
+                    <span>• {userSkills.length} compétence{userSkills.length > 1 ? 's' : ''} détectée{userSkills.length > 1 ? 's' : ''}</span>
+                  )}
                 </div>
               )}
-              {skill.practicalTests.length > 0 && (
-                <div className="flex items-center text-sm text-gray-600">
-                  <FaCode className="mr-2 text-green-500" />
-                  <span>{skill.practicalTests.length} test{skill.practicalTests.length > 1 ? 's' : ''} pratique{skill.practicalTests.length > 1 ? 's' : ''}</span>
-                </div>
-              )}
-            </div>
-
-            {skill.totalTests === 0 ? (
-              <div className="text-center py-4">
-                <p className="text-gray-500 text-sm">Aucun test disponible</p>
+              {/* Debug info */}
+              <div className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+                Debug: Tests={allTests.length} | Filtered={filteredTests.length} | UserId={userId}
               </div>
-            ) : (
-              <button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors text-sm">
-                Voir les tests
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  console.log('🔍 Debug data:', {
+                    allTests: allTests.length,
+                    filteredTests: filteredTests.length,
+                    userSkills: userSkills.length,
+                    userId: userId,
+                    searchTerm,
+                    selectedDifficulty,
+                    selectedSkill
+                  });
+                  loadUserSkillsAndTests();
+                }}
+                className="px-3 py-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 border border-blue-300 dark:border-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors text-sm"
+              >
+                Debug
               </button>
-            )}
+              <button
+                onClick={onBackToDashboard}
+                className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                Retour au tableau de bord
+              </button>
+            </div>
           </div>
-        ))}
+        </div>
       </div>
 
-      {skills.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-gray-400 text-6xl mb-4">🎯</div>
-          <h3 className="text-xl font-medium text-gray-600 mb-2">Aucune compétence sélectionnée</h3>
-          <p className="text-gray-500 mb-6">
-            Vous devez d'abord ajouter vos compétences pour voir les tests disponibles.
-          </p>
-          <button
-            onClick={() => {/* Navigate to skills selector */ }}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors"
-          >
-            Gérer mes compétences
-          </button>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <BookOpenIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalTests}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Tests disponibles</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                <SparklesIcon className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.recommendedCount}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Recommandés</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                <CheckCircleSolidIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.completedCount}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Terminés</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                <TrophyIcon className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.averageScore}%</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Score moyen</p>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
-    </div>
-  );
-};
 
-// Composant pour afficher les tests d'une compétence spécifique
-const SkillTestsDetail = ({ skill, onBack, onBackToDashboard, onStartPracticalTest, onStartTest }) => {
-  const [selectedTest, setSelectedTest] = useState(null);
+        {/* User Skills Section */}
+        {userSkills.length > 0 && (
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <AcademicCapIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+                Vos Compétences
+              </h2>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {userSkills.map(skill => (
+                <span
+                  key={skill.id}
+                  className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm font-medium"
+                >
+                  {skill.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
-  const startQCMTest = (test) => {
-    // Démarrer le test QCM en utilisant la fonction fournie par le dashboard
-    console.log(`Démarrage du test QCM : ${test.test_name}`);
-    if (onStartTest) {
-      onStartTest(test.id || test.test_id, skill.id); // Pass skillId as second parameter
-    }
-  };
+        {/* Search and Filters */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 mb-8">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1 relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Rechercher un test ou une compétence..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
 
-  return (
-    <div className="max-w-6xl mx-auto p-6">
-      {/* Header */}
-      <div className="flex items-center mb-8">
-        <button
-          onClick={onBack}
-          className="mr-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <FaArrowLeft className="w-5 h-5" />
-        </button>
+            <div className="flex gap-4">
+              <select
+                value={selectedDifficulty}
+                onChange={(e) => setSelectedDifficulty(e.target.value)}
+                className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">Toutes les difficultés</option>
+                <option value="Beginner">Débutant</option>
+                <option value="Intermediate">Intermédiaire</option>
+                <option value="Advanced">Avancé</option>
+              </select>
+
+              <select
+                value={selectedSkill}
+                onChange={(e) => setSelectedSkill(e.target.value)}
+                className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">Toutes les compétences</option>
+                {[...new Set(allTests.map(test => test.skill.name))].map(skill => (
+                  <option key={skill} value={skill}>{skill}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Recommended Tests Section */}
+        {recommendedTests.length > 0 && (
+          <div className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">
+                <SparklesIcon className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                Tests Recommandés
+              </h2>
+              <span className="px-3 py-1 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm font-medium">
+                {recommendedTests.length} tests
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {recommendedTests
+                .filter(test => {
+                  const matchesSearch = test.test_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    test.skill.name.toLowerCase().includes(searchTerm.toLowerCase());
+                  const matchesDifficulty = selectedDifficulty === 'all' || test.difficulty === selectedDifficulty;
+                  const matchesSkill = selectedSkill === 'all' || test.skill.name === selectedSkill;
+                  return matchesSearch && matchesDifficulty && matchesSkill;
+                })
+                .map(test => (
+                  <TestCard key={test.id} test={test} isRecommended={true} />
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* All Tests Section */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Tests pour {skill.name}</h1>
-          <p className="text-gray-600 mt-2">
-            {skill.totalTests} test{skill.totalTests > 1 ? 's' : ''} disponible{skill.totalTests > 1 ? 's' : ''}
-          </p>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
+              <BookOpenIcon className="w-6 h-6 text-slate-600 dark:text-slate-300" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Tous les Tests
+            </h2>
+            <span className="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-sm font-medium">
+              {filteredTests.length} tests
+            </span>
+          </div>
+
+          {filteredTests.length === 0 ? (
+            <div className="text-center py-12">
+              <BookOpenIcon className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
+                Aucun test trouvé
+              </h3>
+              <p className="text-slate-600 dark:text-slate-400 mb-4">
+                Essayez de modifier vos critères de recherche
+              </p>
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+                <p>Tests disponibles: {allTests.length}</p>
+                <p>Critères: {searchTerm ? `"${searchTerm}"` : 'Aucun'} | {selectedDifficulty} | {selectedSkill}</p>
+              </div>
+              {/* Afficher tous les tests si le filtrage échoue */}
+              {allTests.length > 0 && (
+                <div className="mt-6">
+                  <button
+                    onClick={() => {
+                      setSearchTerm('');
+                      setSelectedDifficulty('all');
+                      setSelectedSkill('all');
+                    }}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    Afficher tous les tests
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTests.map(test => (
+                <TestCard key={test.id} test={test} />
+              ))}
+            </div>
+          )}
         </div>
-      </div>
-
-      <div className="space-y-8">
-        {/* Tests QCM */}
-        {skill.qcmTests.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-              <FaQuestionCircle className="mr-3 text-blue-500" />
-              Tests QCM
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {skill.qcmTests.map(test => (
-                <div key={test.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-800 mb-2">{test.test_name}</h3>
-                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                        QCM
-                      </span>
-                    </div>
-                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                      Disponible
-                    </span>
-                  </div>
-
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                    {test.description}
-                  </p>
-
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                    <div className="flex items-center">
-                      <FaQuestionCircle className="mr-1" />
-                      <span>{test.question_count} questions</span>
-                    </div>
-                    <div className="flex items-center">
-                      <FaClock className="mr-1" />
-                      <span>{test.time_limit} min</span>
-                    </div>
-                    <div className="flex items-center">
-                      <FaTrophy className="mr-1" />
-                      <span>{test.total_score} pts</span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => startQCMTest(test)}
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
-                  >
-                    <FaPlay className="mr-2" />
-                    Commencer le test
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Tests Pratiques */}
-        {skill.practicalTests.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-              <FaCode className="mr-3 text-green-500" />
-              Tests Pratiques
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {skill.practicalTests.map(test => (
-                <div key={test.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-800 mb-2">{test.title}</h3>
-                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                        Code
-                      </span>
-                    </div>
-                    <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
-                      Bientôt
-                    </span>
-                  </div>
-
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                    {test.description}
-                  </p>
-
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                    <div className="flex items-center">
-                      <FaCode className="mr-1" />
-                      <span className="capitalize">{test.language}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <FaClock className="mr-1" />
-                      <span>{test.estimated_time_minutes} min</span>
-                    </div>
-                    <div className="flex items-center">
-                      <FaTrophy className="mr-1" />
-                      <span>{test.max_points} pts</span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => onStartPracticalTest(test)}
-                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
-                  >
-                    <FaCode className="mr-2" />
-                    Test pratique (bientôt)
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {skill.totalTests === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">📚</div>
-            <h3 className="text-xl font-medium text-gray-600 mb-2">Aucun test disponible</h3>
-            <p className="text-gray-500">
-              Aucun test n'est encore créé pour cette compétence.
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

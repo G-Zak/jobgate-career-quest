@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    FaPlus, 
-    FaTimes, 
-    FaCode, 
-    FaDatabase, 
-    FaTools, 
-    FaGlobe, 
-    FaCloud, 
+import {
+    FaPlus,
+    FaTimes,
+    FaCode,
+    FaDatabase,
+    FaTools,
+    FaGlobe,
+    FaCloud,
     FaCog,
     FaCheckCircle,
     FaStar,
@@ -48,14 +48,14 @@ const SkillsSelector = ({ userId = 1, onSkillsUpdated }) => {
         try {
             // Récupérer le candidat avec ID 1 (utilisateur de test)
             const response = await fetch(`http://localhost:8000/api/candidates/${userId}/`);
-            
+
             if (!response.ok) {
                 // Si pas de candidat, on démarre avec un profil vide
                 setUserSkills([]);
                 setLoading(false);
                 return;
             }
-            
+
             const candidate = await response.json();
             setUserSkills(candidate.skills || []);
             setLoading(false);
@@ -86,7 +86,7 @@ const SkillsSelector = ({ userId = 1, onSkillsUpdated }) => {
         try {
             const skillToAdd = availableSkills.find(skill => skill.id === skillId);
             if (skillToAdd && !userSkills.find(skill => skill.id === skillId)) {
-                
+
                 // Ajouter la compétence via l'API Django
                 const response = await fetch(`http://localhost:8000/api/candidates/${userId}/add_skill/`, {
                     method: 'POST',
@@ -95,15 +95,20 @@ const SkillsSelector = ({ userId = 1, onSkillsUpdated }) => {
                         skill_id: skillId
                     })
                 });
-                
+
                 if (response.ok) {
                     // Recharger les compétences depuis l'API pour être sûr
                     await loadUserSkills();
                     setShowAddModal(false);
-                    
+
                     if (onSkillsUpdated) {
                         onSkillsUpdated(userSkills);
                     }
+
+                    // Déclencher la mise à jour des compétences pour les autres composants
+                    window.dispatchEvent(new CustomEvent('skillsUpdated', {
+                        detail: { userId, skills: userSkills }
+                    }));
                 } else {
                     const errorText = await response.text();
                     console.error('API Error:', errorText);
@@ -126,14 +131,19 @@ const SkillsSelector = ({ userId = 1, onSkillsUpdated }) => {
                     skill_id: skillId
                 })
             });
-            
+
             if (response.ok) {
                 // Recharger les compétences depuis l'API pour être sûr
                 await loadUserSkills();
-                
+
                 if (onSkillsUpdated) {
                     onSkillsUpdated(userSkills);
                 }
+
+                // Déclencher la mise à jour des compétences pour les autres composants
+                window.dispatchEvent(new CustomEvent('skillsUpdated', {
+                    detail: { userId, skills: userSkills }
+                }));
             } else {
                 const errorText = await response.text();
                 console.error('API Error:', errorText);
@@ -210,7 +220,7 @@ const SkillsSelector = ({ userId = 1, onSkillsUpdated }) => {
             {/* Header avec statistiques */}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-800 mb-4">Gestion des compétences</h1>
-                
+
                 {skillStats && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -222,7 +232,7 @@ const SkillsSelector = ({ userId = 1, onSkillsUpdated }) => {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                             <div className="flex items-center">
                                 <FaCheckCircle className="text-2xl text-green-600 mr-3" />
@@ -232,7 +242,7 @@ const SkillsSelector = ({ userId = 1, onSkillsUpdated }) => {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                             <div className="flex items-center">
                                 <FaStar className="text-2xl text-yellow-600 mr-3" />
@@ -289,15 +299,15 @@ const SkillsSelector = ({ userId = 1, onSkillsUpdated }) => {
                                         <IconComponent className="text-xl text-gray-600 mr-2" />
                                         <h3 className="text-lg font-medium text-gray-800 capitalize">
                                             {category === 'programming' ? 'Langages de programmation' :
-                                             category === 'frontend' ? 'Technologies Frontend' :
-                                             category === 'backend' ? 'Technologies Backend' :
-                                             category === 'database' ? 'Bases de données' :
-                                             category === 'devops' ? 'DevOps & Cloud' :
-                                             category === 'mobile' ? 'Développement Mobile' :
-                                             category === 'testing' ? 'Tests & Qualité' : category}
+                                                category === 'frontend' ? 'Technologies Frontend' :
+                                                    category === 'backend' ? 'Technologies Backend' :
+                                                        category === 'database' ? 'Bases de données' :
+                                                            category === 'devops' ? 'DevOps & Cloud' :
+                                                                category === 'mobile' ? 'Développement Mobile' :
+                                                                    category === 'testing' ? 'Tests & Qualité' : category}
                                         </h3>
                                     </div>
-                                    
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ml-6">
                                         {skills.map(skill => (
                                             <div key={skill.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -310,19 +320,19 @@ const SkillsSelector = ({ userId = 1, onSkillsUpdated }) => {
                                                         <FaTimes />
                                                     </button>
                                                 </div>
-                                                
+
                                                 <p className="text-sm text-gray-600 mb-3">{skill.description}</p>
-                                                
+
                                                 <div className="flex justify-between items-center">
                                                     <span className={`text-xs px-2 py-1 rounded-full ${getCategoryColor(skill.category)}`}>
                                                         {skill.category}
                                                     </span>
-                                                    
+
                                                     {skill.proficiency_level && (
                                                         <span className="text-sm text-blue-600 font-medium">
                                                             {skill.proficiency_level === 'beginner' ? 'Débutant' :
-                                                             skill.proficiency_level === 'intermediate' ? 'Intermédiaire' :
-                                                             skill.proficiency_level === 'advanced' ? 'Avancé' : skill.proficiency_level}
+                                                                skill.proficiency_level === 'intermediate' ? 'Intermédiaire' :
+                                                                    skill.proficiency_level === 'advanced' ? 'Avancé' : skill.proficiency_level}
                                                         </span>
                                                     )}
                                                 </div>
@@ -365,15 +375,15 @@ const SkillsSelector = ({ userId = 1, onSkillsUpdated }) => {
                                                 <IconComponent className="text-lg text-gray-600 mr-2" />
                                                 <h4 className="text-lg font-medium text-gray-800 capitalize">
                                                     {category === 'programming' ? 'Langages de programmation' :
-                                                     category === 'frontend' ? 'Technologies Frontend' :
-                                                     category === 'backend' ? 'Technologies Backend' :
-                                                     category === 'database' ? 'Bases de données' :
-                                                     category === 'devops' ? 'DevOps & Cloud' :
-                                                     category === 'mobile' ? 'Développement Mobile' :
-                                                     category === 'testing' ? 'Tests & Qualité' : category}
+                                                        category === 'frontend' ? 'Technologies Frontend' :
+                                                            category === 'backend' ? 'Technologies Backend' :
+                                                                category === 'database' ? 'Bases de données' :
+                                                                    category === 'devops' ? 'DevOps & Cloud' :
+                                                                        category === 'mobile' ? 'Développement Mobile' :
+                                                                            category === 'testing' ? 'Tests & Qualité' : category}
                                                 </h4>
                                             </div>
-                                            
+
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ml-6">
                                                 {skills.map(skill => (
                                                     <div key={skill.id} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors">
@@ -383,9 +393,9 @@ const SkillsSelector = ({ userId = 1, onSkillsUpdated }) => {
                                                                 {skill.category}
                                                             </span>
                                                         </div>
-                                                        
+
                                                         <p className="text-sm text-gray-600 mb-3">{skill.description}</p>
-                                                        
+
                                                         <div className="flex space-x-2">
                                                             <button
                                                                 onClick={() => addSkill(skill.id, 'beginner')}
