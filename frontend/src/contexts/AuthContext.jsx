@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import authService from '../services/authService';
 
 const AuthContext = createContext();
@@ -15,9 +15,16 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
+    const hasInitialized = useRef(false);
 
     // Load user from auth service on mount
     useEffect(() => {
+        // Prevent double execution in Strict Mode
+        if (hasInitialized.current) {
+            return;
+        }
+        hasInitialized.current = true;
+
         const loadUser = async () => {
             try {
                 if (authService.isAuthenticated()) {

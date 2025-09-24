@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ChartBarIcon, 
-  ArrowTrendingUpIcon, 
+import {
+  ChartBarIcon,
+  ArrowTrendingUpIcon,
   UserGroupIcon,
   ChevronDownIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  XCircleIcon
+  XCircleIcon,
+  AcademicCapIcon
 } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
 import dashboardApi from '../services/dashboardApi';
+import EmployabilityScoreModal from './EmployabilityScoreModal';
 
 const EmployabilityScore = () => {
   const [selectedProfile, setSelectedProfile] = useState('Software Engineer');
@@ -18,6 +21,7 @@ const EmployabilityScore = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [scoreData, setScoreData] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const profiles = [
     'Software Engineer',
@@ -36,21 +40,60 @@ const EmployabilityScore = () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await dashboardApi.getEmployabilityScore();
+        const data = await dashboardApi.getEmployabilityScore(selectedProfile);
+
+        // Validate data structure
+        if (!data || typeof data.overallScore === 'undefined') {
+          throw new Error('Invalid data structure received from API');
+        }
+
         setScoreData(data);
-        setEmployabilityScore(data.overallScore);
-        setPreviousScore(Math.max(0, data.overallScore - (data.improvement || 0)));
+        setEmployabilityScore(data.overallScore || 0);
+
+        // Calculate previous score more accurately
+        const improvementTrend = data.improvement || 0;
+        setPreviousScore(Math.max(0, (data.overallScore || 0) - improvementTrend));
+
       } catch (err) {
         console.error('Error fetching employability score:', err);
-        setError('Failed to load employability score');
-        // Keep default values on error
+
+        // Provide more specific error messages
+        let errorMessage = 'Failed to load employability score';
+        if (err.message.includes('401') || err.message.includes('token')) {
+          errorMessage = 'Authentication required. Please log in again.';
+        } else if (err.message.includes('404')) {
+          errorMessage = 'No test data found. Take some assessments to see your score.';
+        } else if (err.message.includes('500')) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (err.message.includes('Invalid data structure')) {
+          errorMessage = 'Data format error. Please contact support.';
+        }
+
+        setError(errorMessage);
+
+        // Set fallback data for better UX
+        setScoreData({
+          overallScore: 0,
+          categories: {},
+          testsCompleted: 0,
+          improvement: 0,
+          scoreInterpretation: {
+            level: 'No Data',
+            description: 'Complete assessments to see your score',
+            market_position: null,
+            color: 'gray'
+          },
+          recommendations: []
+        });
+        setEmployabilityScore(0);
+        setPreviousScore(0);
       } finally {
         setLoading(false);
       }
     };
 
     fetchScoreData();
-  }, []);
+  }, [selectedProfile]); // Re-fetch when profile changes
 
   const getScoreColor = (score) => {
     if (score >= 80) return 'text-green-600';
@@ -83,20 +126,24 @@ const EmployabilityScore = () => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="relative bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 min-h-[280px]">
         <div className="animate-pulse">
+          {/* Header skeleton */}
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gray-200 rounded-xl"></div>
               <div>
                 <div className="h-6 w-48 bg-gray-200 rounded mb-2"></div>
                 <div className="h-4 w-32 bg-gray-200 rounded"></div>
               </div>
             </div>
-            <div className="h-10 w-32 bg-gray-200 rounded-lg"></div>
+            <div className="h-8 w-32 bg-gray-200 rounded-lg"></div>
           </div>
+
+          {/* Main content skeleton */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-6">
+              {/* Score circle skeleton */}
               <div className="w-24 h-24 bg-gray-200 rounded-full"></div>
               <div className="space-y-2">
                 <div className="h-6 w-32 bg-gray-200 rounded"></div>
@@ -104,10 +151,38 @@ const EmployabilityScore = () => {
                 <div className="h-4 w-24 bg-gray-200 rounded"></div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="h-16 w-16 bg-gray-200 rounded"></div>
-              <div className="h-16 w-16 bg-gray-200 rounded"></div>
+
+            {/* Stats skeleton */}
+            <div className="flex items-center space-x-8">
+              <div className="text-center">
+                <div className="h-8 w-12 bg-gray-200 rounded mb-2 mx-auto"></div>
+                <div className="h-4 w-16 bg-gray-200 rounded"></div>
+              </div>
+              <div className="text-center">
+                <div className="h-8 w-12 bg-gray-200 rounded mb-2 mx-auto"></div>
+                <div className="h-4 w-12 bg-gray-200 rounded"></div>
+              </div>
+              <div className="h-12 w-28 bg-gray-200 rounded-xl"></div>
             </div>
+          </div>
+
+          {/* Insight section skeleton */}
+          <div className="bg-gray-100 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <div className="w-2 h-2 bg-gray-200 rounded-full mt-2"></div>
+              <div className="flex-1">
+                <div className="h-4 w-32 bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 w-full bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Loading indicator overlay */}
+        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 rounded-xl">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-sm text-gray-600 font-medium">Loading your employability score...</p>
           </div>
         </div>
       </div>
@@ -116,197 +191,212 @@ const EmployabilityScore = () => {
 
   if (error) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="text-center py-8">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 min-h-[280px]">
+        <div className="flex flex-col items-center justify-center h-full py-8">
           <ExclamationTriangleIcon className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to Load Score</h3>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            Retry
-          </button>
+          <p className="text-gray-600 mb-6 text-center max-w-md">{error}</p>
+          <div className="flex space-x-3">
+            <button
+              onClick={() => {
+                setError(null);
+                setLoading(true);
+                // Trigger re-fetch by updating a dependency
+                setSelectedProfile(prev => prev);
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              Try Again
+            </button>
+            {error.includes('Authentication') && (
+              <button
+                onClick={() => window.location.href = '/login'}
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Login
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <ChartBarIcon className="w-6 h-6 text-blue-600" />
+    <>
+      {/* Enhanced Compact Dashboard View */}
+      <motion.div
+        className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 min-h-[280px]"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="flex items-center space-x-3 lg:space-x-4 min-w-0">
+            <div className="p-2.5 lg:p-3 bg-blue-100 rounded-xl flex-shrink-0">
+              <ChartBarIcon className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg lg:text-xl font-semibold text-gray-900 truncate">Employability Score</h2>
+              <p className="text-xs lg:text-sm text-gray-500 truncate">Your career readiness assessment</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Employability Score</h2>
-            <p className="text-sm text-gray-500">Your career readiness assessment</p>
+
+          {/* Profile Selector */}
+          <div className="relative flex-shrink-0">
+            <button
+              onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+              className="flex items-center space-x-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors text-sm w-full sm:w-auto justify-between sm:justify-start"
+            >
+              <span className="font-medium text-gray-700 truncate max-w-[180px]">{selectedProfile}</span>
+              <ChevronDownIcon className="w-3 h-3 text-gray-500 flex-shrink-0" />
+            </button>
+
+            {isProfileDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-full sm:w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10 max-h-60 overflow-y-auto">
+                {profiles.map((profile) => (
+                  <button
+                    key={profile}
+                    onClick={() => {
+                      setSelectedProfile(profile);
+                      setIsProfileDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors ${
+                      selectedProfile === profile ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                    }`}
+                  >
+                    {profile}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-        
-        {/* Profile Selector */}
-        <div className="relative">
-          <button
-            onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
-          >
-            <span className="text-sm font-medium text-gray-700">{selectedProfile}</span>
-            <ChevronDownIcon className="w-4 h-4 text-gray-500" />
-          </button>
-          
-          {isProfileDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-              {profiles.map((profile) => (
-                <button
-                  key={profile}
-                  onClick={() => {
-                    setSelectedProfile(profile);
-                    setIsProfileDropdownOpen(false);
-                  }}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${
-                    selectedProfile === profile ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-                  }`}
+
+        {/* Enhanced Main Content */}
+        <div className="space-y-6">
+          {/* Score Display Section */}
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            {/* Left Side - Enhanced Score Circle */}
+            <div className="flex items-center space-x-4 lg:space-x-6">
+              <div className="relative flex-shrink-0">
+                <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full border-4 lg:border-6 border-gray-200 flex items-center justify-center bg-gray-50">
+                  <div className="text-center">
+                    <div className={`text-xl lg:text-2xl font-bold ${getScoreColor(employabilityScore)}`}>
+                      {loading ? '...' : employabilityScore}
+                    </div>
+                    <div className="text-xs text-gray-500">/ 100</div>
+                  </div>
+                </div>
+                {/* Enhanced Animated Progress Ring */}
+                <motion.svg
+                  className="absolute inset-0 w-20 h-20 lg:w-24 lg:h-24 transform -rotate-90"
+                  viewBox="0 0 100 100"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: (employabilityScore / 100) }}
+                  transition={{ duration: 1.2, ease: "easeOut" }}
                 >
-                  {profile}
-                </button>
-              ))}
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="6"
+                    strokeDasharray="251.2"
+                    className={getScoreColor(employabilityScore).replace('text-', 'stroke-')}
+                    strokeLinecap="round"
+                    style={{ pathLength: (employabilityScore / 100) }}
+                  />
+                </motion.svg>
+              </div>
+
+              {/* Enhanced Score Details */}
+              <div className="space-y-2 min-w-0 flex-1">
+                <div className="flex items-center space-x-3">
+                  {getScoreIcon(employabilityScore)}
+                  <span className={`text-base lg:text-lg font-semibold ${getScoreColor(employabilityScore)} truncate`}>
+                    {loading ? 'Loading...' : scoreData?.scoreInterpretation?.level || getScoreLabel(employabilityScore)}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 truncate">
+                  Profile: <span className="font-medium text-gray-900">{selectedProfile}</span>
+                </p>
+                {/* Market Position Insight */}
+                {scoreData?.scoreInterpretation?.market_position && (
+                  <p className="text-sm text-blue-600 font-medium line-clamp-2">
+                    {scoreData.scoreInterpretation.market_position}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Right Side - Enhanced Quick Stats */}
+            <div className="flex items-center justify-between lg:justify-end lg:space-x-6 xl:space-x-8 gap-4">
+              {/* Tests Completed */}
+              <div className="text-center flex-shrink-0">
+                <div className="flex items-center justify-center space-x-1 lg:space-x-2 mb-1 lg:mb-2">
+                  <AcademicCapIcon className="w-4 h-4 lg:w-5 lg:h-5 text-blue-500" />
+                  <span className="text-xl lg:text-2xl font-bold text-gray-900">
+                    {loading ? '...' : scoreData?.testsCompleted || 0}
+                  </span>
+                </div>
+                <div className="text-xs lg:text-sm text-gray-500 font-medium">Tests Taken</div>
+              </div>
+
+              {/* Improvement Trend */}
+              <div className="text-center flex-shrink-0">
+                <div className="flex items-center justify-center space-x-1 lg:space-x-2 mb-1 lg:mb-2">
+                  <ArrowTrendingUpIcon className={`w-4 h-4 lg:w-5 lg:h-5 ${isImproving ? 'text-green-600' : 'text-red-600'}`} />
+                  <span className={`text-xl lg:text-2xl font-bold ${isImproving ? 'text-green-600' : 'text-red-600'}`}>
+                    {loading ? '...' : `${isImproving ? '+' : ''}${scoreChange.toFixed(1)}`}
+                  </span>
+                </div>
+                <div className="text-xs lg:text-sm text-gray-500 font-medium">Trend</div>
+              </div>
+
+              {/* View Details Button */}
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="px-4 py-2 lg:px-6 lg:py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg lg:rounded-xl transition-colors flex items-center space-x-2 shadow-sm hover:shadow-md flex-shrink-0"
+              >
+                <ChartBarIcon className="w-4 h-4 lg:w-5 lg:h-5" />
+                <span className="text-sm lg:text-base">View Details</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Key Insight Section */}
+          {(scoreData?.recommendations && scoreData.recommendations.length > 0) && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 w-2 h-2 rounded-full bg-blue-400 mt-2"></div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-gray-900 mb-1">
+                    Top Recommendation
+                  </h4>
+                  <p className="text-sm text-gray-700">
+                    {scoreData.recommendations[0]?.title || 'Continue taking assessments to improve your score'}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
 
-      {/* Main Score Display */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-6">
-          {/* Circular Score */}
-          <div className="relative">
-            <div className="w-24 h-24 rounded-full border-8 border-gray-200 flex items-center justify-center">
-              <div className="text-center">
-                <div className={`text-3xl font-bold ${getScoreColor(employabilityScore)}`}>
-                  {employabilityScore}
-                </div>
-                <div className="text-xs text-gray-500">/ 100</div>
-              </div>
-            </div>
-            {/* Progress Ring */}
-            <svg className="absolute inset-0 w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
-              <circle
-                cx="50"
-                cy="50"
-                r="40"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="8"
-                strokeDasharray={`${(employabilityScore / 100) * 251.2} 251.2`}
-                className={getScoreColor(employabilityScore).replace('text-', 'stroke-')}
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
-
-          {/* Score Details */}
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              {getScoreIcon(employabilityScore)}
-              <span className={`text-lg font-semibold ${getScoreColor(employabilityScore)}`}>
-                {getScoreLabel(employabilityScore)}
-              </span>
-            </div>
-            <p className="text-sm text-gray-600">
-              Your employability as a <span className="font-medium">{selectedProfile}</span> is {employabilityScore}/100
-            </p>
-            
-            {/* Score Change */}
-            <div className="flex items-center space-x-2">
-              <ArrowTrendingUpIcon className={`w-4 h-4 ${isImproving ? 'text-green-600' : 'text-red-600'}`} />
-              <span className={`text-sm font-medium ${isImproving ? 'text-green-600' : 'text-red-600'}`}>
-                {isImproving ? '+' : ''}{scoreChange} points
-              </span>
-              <span className="text-xs text-gray-500">from last month</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">
-              {loading ? '...' : `${Math.round((employabilityScore / 75) * 100)}%`}
-            </div>
-            <div className="text-xs text-gray-500">vs. Average</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">
-              {loading ? '...' : scoreData?.testsCompleted || 0}
-            </div>
-            <div className="text-xs text-gray-500">Tests Taken</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Score Breakdown */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">Score Breakdown</h3>
-        
-        <div className="grid grid-cols-2 gap-4">
-          {/* Strengths */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-green-700 flex items-center">
-              <CheckCircleIcon className="w-4 h-4 mr-2" />
-              Strengths
-            </h4>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Technical Skills</span>
-                <span className="text-sm font-medium text-green-600">85</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Logical Reasoning</span>
-                <span className="text-sm font-medium text-green-600">78</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Problem Solving</span>
-                <span className="text-sm font-medium text-green-600">82</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Areas for Improvement */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-red-700 flex items-center">
-              <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
-              Areas for Improvement
-            </h4>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Communication</span>
-                <span className="text-sm font-medium text-red-600">45</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Leadership</span>
-                <span className="text-sm font-medium text-red-600">52</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Teamwork</span>
-                <span className="text-sm font-medium text-yellow-600">65</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex space-x-3 mt-6 pt-4 border-t border-gray-200">
-        <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-          View Detailed Report
-        </button>
-        <button className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-          Improve Score
-        </button>
-      </div>
-    </div>
+      {/* Detailed Modal */}
+      <EmployabilityScoreModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        scoreData={scoreData}
+        selectedProfile={selectedProfile}
+        onProfileChange={setSelectedProfile}
+        profiles={profiles}
+        loading={loading}
+      />
+    </>
   );
 };
 
