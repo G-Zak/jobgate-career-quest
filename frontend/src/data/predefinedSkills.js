@@ -6,8 +6,8 @@ export const skillCategories = {
     icon: "",
     color: "#3B82F6",
     skills: [
-      "React", "Vue.js", "Angular", "JavaScript", "TypeScript", 
-      "HTML5", "CSS3", "Sass", "Less", "Tailwind CSS", 
+      "React", "Vue.js", "Angular", "JavaScript", "TypeScript",
+      "HTML5", "CSS3", "Sass", "Less", "Tailwind CSS",
       "Bootstrap", "Material-UI", "Ant Design", "Chakra UI",
       "Redux", "Vuex", "MobX", "Webpack", "Vite", "Parcel"
     ]
@@ -19,7 +19,7 @@ export const skillCategories = {
       "Node.js", "Django", "Flask", "FastAPI", "Express.js",
       "Spring Boot", "Laravel", "Ruby on Rails", "ASP.NET",
       "PHP", "Python", "Java", "C#", "Go", "Rust",
-      "Microservices", "REST API", "GraphQL", "WebSocket"
+      "Microservices", "REST API", "WebSocket"
     ]
   },
   "Mobile Development": {
@@ -116,11 +116,11 @@ export const getSkillsByCategory = (categoryName) => {
 // Search skills by query
 export const searchSkills = (query) => {
   if (!query) return [];
-  
+
   const searchTerm = query.toLowerCase();
   const allSkills = getAllSkills();
-  
-  return allSkills.filter(skill => 
+
+  return allSkills.filter(skill =>
     skill.toLowerCase().includes(searchTerm)
   );
 };
@@ -142,7 +142,7 @@ export const getSkillCategory = (skillName) => {
 // Get recommended skills based on existing skills
 export const getRecommendedSkills = (userSkills, limit = 5) => {
   if (!userSkills || userSkills.length === 0) return [];
-  
+
   // Find categories user is already working in
   const userCategories = new Set();
   userSkills.forEach(skill => {
@@ -151,7 +151,7 @@ export const getRecommendedSkills = (userSkills, limit = 5) => {
       userCategories.add(category.name);
     }
   });
-  
+
   // Get skills from those categories that user doesn't have
   const recommendations = [];
   for (const categoryName of userCategories) {
@@ -159,7 +159,7 @@ export const getRecommendedSkills = (userSkills, limit = 5) => {
     const newSkills = categorySkills.filter(skill => !userSkills.includes(skill));
     recommendations.push(...newSkills);
   }
-  
+
   // Remove duplicates and limit results
   return [...new Set(recommendations)].slice(0, limit);
 };
