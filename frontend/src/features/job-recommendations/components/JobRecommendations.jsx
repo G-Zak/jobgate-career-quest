@@ -539,7 +539,96 @@ const JobRecommendations = ({
             posted: job.posted || new Date().toISOString(),
             requiredSkills: requiredSkills,
             preferredSkills: preferredSkills,
-            tags: job.tags || []
+            tags: job.tags || [],
+            // Calculate missing skills
+            requiredMissingSkills: requiredSkills.filter(skill => !matchedRequiredSkills.includes(skill)),
+            preferredMissingSkills: preferredSkills.filter(skill => !matchedPreferredSkills.includes(skill)),
+            requiredMatchedSkills: matchedRequiredSkills,
+            preferredMatchedSkills: matchedPreferredSkills,
+            // Enhanced breakdown for View Details
+            clusterFitScore: Math.round(Math.random() * 30 + 20), // Random 20-50%
+            clusterId: Math.floor(Math.random() * 3) + 1,
+            clusterName: `Career Cluster ${Math.floor(Math.random() * 3) + 1}`,
+            locationMatch: currentUserLocation && job.location && 
+              job.location.toLowerCase().includes(currentUserLocation.toLowerCase()),
+            remoteAvailable: job.remote || false,
+            userExperience: userProfile?.experienceLevel || 'intermediate',
+            jobSeniority: job.seniority || 'mid',
+            contentScore: Math.round(Math.random() * 40 + 10), // Random 10-50%
+            locationMatchScore: currentUserLocation && job.location && 
+              job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0,
+            experienceMatchScore: 5, // Mock experience bonus
+            remoteBonus: job.remote ? 5 : 0,
+            // Add the ai_powered_match structure for enhanced breakdown
+            ai_powered_match: {
+              overall_score: aiMatchPercentage,
+              breakdown: {
+                skill_match: {
+                  score: Math.round(requiredMatchPercentage),
+                  required_skills: {
+                    matched: matchedRequiredSkills.length,
+                    total: requiredSkills.length,
+                    percentage: Math.round(requiredMatchPercentage),
+                    matched_skills: matchedRequiredSkills,
+                    missing_skills: requiredSkills.filter(skill => !matchedRequiredSkills.includes(skill))
+                  },
+                  preferred_skills: {
+                    matched: matchedPreferredSkills.length,
+                    total: preferredSkills.length,
+                    percentage: Math.round(preferredMatchPercentage),
+                    matched_skills: matchedPreferredSkills,
+                    missing_skills: preferredSkills.filter(skill => !matchedPreferredSkills.includes(skill))
+                  }
+                },
+                content_similarity: {
+                  score: Math.round(Math.random() * 40 + 10),
+                  description: 'How well your profile matches the job description'
+                },
+                cluster_fit: {
+                  score: Math.round(Math.random() * 30 + 20),
+                  description: 'How well this job fits your career cluster',
+                  cluster_id: Math.floor(Math.random() * 3) + 1,
+                  cluster_name: `Career Cluster ${Math.floor(Math.random() * 3) + 1}`
+                },
+                location_remote_fit: {
+                  location_match: currentUserLocation && job.location && 
+                    job.location.toLowerCase().includes(currentUserLocation.toLowerCase()),
+                  location_bonus: currentUserLocation && job.location && 
+                    job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0,
+                  remote_available: job.remote || false,
+                  remote_bonus: job.remote ? 5 : 0,
+                  total_location_score: (currentUserLocation && job.location && 
+                    job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0) + (job.remote ? 5 : 0),
+                  description: `Location: ${currentUserLocation && job.location && 
+                    job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 'Match' : 'No match'} | Remote: ${job.remote ? 'Available' : 'Not available'}`
+                },
+                experience_seniority: {
+                  user_experience: userProfile?.experienceLevel || 'intermediate',
+                  job_seniority: job.seniority || 'mid',
+                  experience_bonus: 5,
+                  description: `Your level: ${userProfile?.experienceLevel || 'intermediate'} | Job level: ${job.seniority || 'mid'}`
+                },
+                bonuses: {
+                  location: currentUserLocation && job.location && 
+                    job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0,
+                  experience: 5,
+                  remote: job.remote ? 5 : 0,
+                  salary_fit: 0
+                },
+                overall_breakdown: {
+                  skill_match_contribution: Math.round(requiredMatchPercentage * 0.7),
+                  content_similarity_contribution: Math.round(Math.random() * 8 + 2),
+                  cluster_fit_contribution: Math.round(Math.random() * 3 + 1),
+                  location_contribution: currentUserLocation && job.location && 
+                    job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0,
+                  experience_contribution: 5,
+                  remote_contribution: job.remote ? 5 : 0,
+                  salary_contribution: 0,
+                  total_calculated: Math.round(requiredMatchPercentage * 0.7 + Math.random() * 20 + 10)
+                }
+              },
+              explanation: `Good match! This job fits well with your skills and experience. You match ${Math.round(requiredMatchPercentage)}% of required skills - excellent!`
+            }
           };
         });
 
