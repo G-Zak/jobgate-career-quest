@@ -10,6 +10,12 @@ urlpatterns = [
     # Job recommendations
     path('', views.get_recommendations, name='get_recommendations'),
     path('jobs/', views.get_job_recommendations, name='get_job_recommendations'),
+    path('advanced/', views.get_advanced_recommendations, name='get_advanced_recommendations'),
+    path('saved/', views.get_saved_recommendations, name='get_saved_recommendations'),
+    
+    # Profile management for recommendations
+    path('profile/', views.get_user_profile_for_recommendations, name='get_user_profile'),
+    path('profile/sync/', views.sync_profile_with_recommendations, name='sync_profile'),
     
     # Recommendation management
     path('recommendations/<int:recommendation_id>/status/', 
