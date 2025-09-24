@@ -10,7 +10,7 @@ from django.db import transaction
 import json
 import logging
 
-from .models import JobRecommendation, UserJobPreference
+from .models import JobRecommendation, UserJobPreference, SavedJob
 from .services import RecommendationEngine
 from .advanced_services import AdvancedRecommendationEngine
 from skills.models import CandidateProfile
@@ -818,7 +818,7 @@ def sync_profile_with_recommendations(request):
 @permission_classes([IsAuthenticated])
 def get_advanced_recommendations(request):
     """
-    Get job recommendations using the advanced algorithm (Content-Based + K-Means)
+    Get job recommendations using the enhanced algorithm (Content-Based + K-Means)
     """
     try:
         # Get user profile data
@@ -833,57 +833,135 @@ def get_advanced_recommendations(request):
                 'message': 'No skills provided for recommendations'
             })
         
-        # Initialize advanced recommendation engine
-        engine = AdvancedRecommendationEngine()
+        # Initialize enhanced recommendation engine
+        from .enhanced_services import EnhancedRecommendationEngine
+        engine = EnhancedRecommendationEngine()
         
-        # Generate recommendations
-        recommendations = engine.generate_recommendations(
+        # Generate recommendations using enhanced algorithm
+        recommendations = engine.generate_enhanced_recommendations(
             user_skills=user_skills,
             user_location=user_location,
             user_profile_data=profile_data,
             limit=request.data.get('limit', 10)
         )
         
-        # Format response
+        # Format response to match enhanced algorithm output
         formatted_recommendations = []
         for rec in recommendations:
             job = rec['job']
             formatted_recommendations.append({
-                'job': {
                     'id': job['id'],
                     'title': job['title'],
                     'company': job['company'],
                     'location': job['location'],
+                'city': job.get('city', ''),
                     'job_type': job['job_type'],
                     'seniority': job['seniority'],
                     'salary_min': job['salary_min'],
                     'salary_max': job['salary_max'],
                     'remote': job['remote'],
+                'description': job.get('description', ''),
+                'requirements': job.get('requirements', ''),
+                'benefits': job.get('benefits', ''),
+                'industry': job.get('industry', ''),
+                'company_size': job.get('company_size', ''),
+                'tags': job['tags'],
                     'required_skills': job['required_skills'],
                     'preferred_skills': job['preferred_skills'],
-                    'tags': job['tags']
-                },
-                'overall_score': rec['score'],
-                'content_score': rec['content_score'],
-                'skill_score': rec['skill_score'],
-                'location_bonus': rec['location_bonus'],
-                'remote_bonus': rec['remote_bonus'],
-                'salary_fit': rec['salary_fit'],
-                'matched_skills': rec['matched_skills'],
-                'missing_skills': rec['missing_skills'],
-                'matched_skills_count': rec['matched_skills_count'],
-                'total_skills_count': rec['total_skills_count'],
-                'recommendation_reason': f"Matches {rec['matched_skills_count']} out of {rec['total_skills_count']} required skills"
+                'skill_categories': job.get('skill_categories', []),
+                
+                # AI-Powered Match Details
+                'ai_powered_match': {
+                    'overall_score': round(rec['score'], 1),
+                    'breakdown': {
+                        'skill_match': {
+                            'score': round(rec['skill_score'], 1),
+                            'required_skills': {
+                                'matched': rec['required_matched_count'],
+                                'total': rec['required_skills_count'],
+                                'percentage': round(rec['required_skill_match_percentage'], 1),
+                                'matched_skills': rec['required_matched_skills'],
+                                'missing_skills': rec['required_missing_skills']
+                            },
+                            'preferred_skills': {
+                                'matched': rec['preferred_matched_count'],
+                                'total': rec['preferred_skills_count'],
+                                'percentage': round(rec['preferred_skill_match_percentage'], 1),
+                                'matched_skills': rec['preferred_matched_skills'],
+                                'missing_skills': rec['preferred_missing_skills']
+                            }
+                        },
+                        'content_similarity': {
+                            'score': round(rec['content_score'], 1),
+                            'description': 'How well your profile matches the job description'
+                        },
+                        'cluster_fit': {
+                            'score': round(rec['cluster_fit_score'], 1),
+                            'description': 'How well this job fits your career cluster',
+                            'cluster_id': rec.get('cluster_id', 'Unknown'),
+                            'cluster_name': rec.get('cluster_name', 'Career Cluster'),
+                            'user_fit_percentage': round(rec.get('cluster_fit_score', 0), 1)
+                        },
+                        'location_remote_fit': {
+                            'location_match': rec.get('location_match', False),
+                            'location_bonus': round(rec['location_bonus'], 1),
+                            'remote_available': rec.get('remote', False),
+                            'remote_bonus': round(rec['remote_bonus'], 1),
+                            'total_location_score': round(rec['location_bonus'] + rec['remote_bonus'], 1),
+                            'description': f"Location: {'Match' if rec.get('location_match', False) else 'No match'} | Remote: {'Available' if rec.get('remote', False) else 'Not available'}"
+                        },
+                        'experience_seniority': {
+                            'user_experience': profile_data.get('experienceLevel', 'intermediate'),
+                            'job_seniority': job.get('seniority', 'mid'),
+                            'experience_bonus': round(rec['experience_bonus'], 1),
+                            'description': f"Your level: {profile_data.get('experienceLevel', 'intermediate')} | Job level: {job.get('seniority', 'mid')}"
+                        },
+                        'bonuses': {
+                            'location': round(rec['location_bonus'], 1),
+                            'experience': round(rec['experience_bonus'], 1),
+                            'remote': round(rec['remote_bonus'], 1),
+                            'salary_fit': round(rec['salary_fit'], 1)
+                        },
+                        'overall_breakdown': {
+                            'skill_match_contribution': round(rec['skill_score'] * 0.7, 1),
+                            'content_similarity_contribution': round(rec['content_score'] * 0.2, 1),
+                            'cluster_fit_contribution': round(rec['cluster_fit_score'] * 0.1, 1),
+                            'location_contribution': round(rec['location_bonus'], 1),
+                            'experience_contribution': round(rec['experience_bonus'], 1),
+                            'remote_contribution': round(rec['remote_bonus'], 1),
+                            'salary_contribution': round(rec['salary_fit'] * 0.05, 1),
+                            'total_calculated': round(
+                                (rec['skill_score'] * 0.7) +
+                                (rec['content_score'] * 0.2) +
+                                (rec['cluster_fit_score'] * 0.1) +
+                                rec['location_bonus'] +
+                                rec['experience_bonus'] +
+                                rec['remote_bonus'] +
+                                (rec['salary_fit'] * 0.05), 1
+                            ),
+                            'weighting_explanation': {
+                                'skill_match': '70% - Most important factor',
+                                'content_similarity': '20% - Job description match',
+                                'cluster_fit': '10% - Career cluster alignment',
+                                'location_bonus': 'Fixed bonus for location match',
+                                'experience_bonus': 'Fixed bonus for experience match',
+                                'remote_bonus': 'Fixed bonus for remote work',
+                                'salary_fit': '5% - Salary expectations'
+                            }
+                        }
+                    },
+                    'explanation': f"Good match! This job fits well with your skills and experience. You match {rec['required_skill_match_percentage']:.0f}% of required skills - excellent!"
+                }
             })
         
         # Get cluster information for debugging
-        cluster_info = engine.get_cluster_info()
+        cluster_info = engine.get_cluster_info_enhanced()
         
         return Response({
             'recommendations': formatted_recommendations,
             'total_count': len(formatted_recommendations),
             'algorithm_info': {
-                'method': 'Content-Based Filtering + K-Means Clustering',
+                'method': 'Enhanced Content-Based Filtering + K-Means Clustering',
                 'clusters': cluster_info,
                 'is_trained': engine.is_trained
             },
@@ -1068,5 +1146,123 @@ def user_preferences(request):
         logger.error(f"Error with user preferences: {str(e)}")
         return Response(
             {'error': f'Failed to handle preferences: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def saved_jobs_api(request):
+    """
+    API endpoint for managing saved jobs
+    GET: Retrieve user's saved jobs
+    POST: Save a job for the user
+    """
+    try:
+        user = request.user
+        
+        if request.method == 'GET':
+            # Get user_id from query params
+            user_id = request.GET.get('user_id')
+            if user_id and str(user.id) != str(user_id):
+                return Response(
+                    {'error': 'Cannot access other user\'s saved jobs'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Get saved jobs for the user
+            saved_jobs = SavedJob.objects.filter(user=user).order_by('-saved_at')
+            
+            # Format response
+            jobs_data = []
+            for saved_job in saved_jobs:
+                jobs_data.append({
+                    'id': saved_job.id,
+                    'job_id': saved_job.job_id,
+                    'job_title': saved_job.job_title,
+                    'job_company': saved_job.job_company,
+                    'saved_at': saved_job.saved_at.isoformat()
+                })
+            
+            return Response({
+                'results': jobs_data,
+                'count': len(jobs_data)
+            })
+        
+        elif request.method == 'POST':
+            # Save a job
+            data = request.data
+            job_id = data.get('job_id')
+            job_title = data.get('job_title', '')
+            job_company = data.get('job_company', '')
+            
+            if not job_id:
+                return Response(
+                    {'error': 'job_id is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create or update saved job
+            saved_job, created = SavedJob.objects.get_or_create(
+                user=user,
+                job_id=job_id,
+                defaults={
+                    'job_title': job_title,
+                    'job_company': job_company
+                }
+            )
+            
+            if not created:
+                # Update existing saved job
+                saved_job.job_title = job_title
+                saved_job.job_company = job_company
+                saved_job.save()
+            
+            return Response({
+                'message': 'Job saved successfully',
+                'saved_job': {
+                    'id': saved_job.id,
+                    'job_id': saved_job.job_id,
+                    'job_title': saved_job.job_title,
+                    'job_company': saved_job.job_company,
+                    'saved_at': saved_job.saved_at.isoformat()
+                }
+            }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+    
+    except Exception as e:
+        logger.error(f"Error with saved jobs API: {str(e)}")
+        return Response(
+            {'error': f'Failed to handle saved jobs: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_saved_job(request, job_id):
+    """
+    API endpoint to delete a saved job
+    """
+    try:
+        user = request.user
+        
+        try:
+            saved_job = SavedJob.objects.get(user=user, job_id=job_id)
+            saved_job.delete()
+            
+            return Response({
+                'message': 'Job removed from saved jobs successfully'
+            })
+        
+        except SavedJob.DoesNotExist:
+            return Response(
+                {'error': 'Saved job not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    except Exception as e:
+        logger.error(f"Error deleting saved job: {str(e)}")
+        return Response(
+            {'error': f'Failed to delete saved job: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

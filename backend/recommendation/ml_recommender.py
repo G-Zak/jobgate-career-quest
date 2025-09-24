@@ -23,7 +23,8 @@ from django.conf import settings
 from django.db.models import Q
 from django.utils import timezone
 
-from .models import JobOffer, JobRecommendation, CandidateProfile
+from .models import JobOffer, JobRecommendation
+from skills.models import CandidateProfile
 from skills.models import Skill
 
 logger = logging.getLogger(__name__)

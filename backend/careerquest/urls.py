@@ -28,4 +28,6 @@ urlpatterns = [
     path("", include("skills.urls")),
     # Expose recommendation API under /api/
     path("api/recommendations/", include("recommendation.urls")),
+    # Expose enhanced recommendation API under /api/
+    path("api/recommendations/enhanced/", include("recommendation.enhanced_urls")),
 ]

@@ -20,7 +20,8 @@ from django.db.models import Q, Avg
 from django.utils import timezone
 from datetime import timedelta
 
-from .models import JobOffer, JobRecommendation, CandidateProfile
+from .models import JobOffer, JobRecommendation
+from skills.models import CandidateProfile
 from .ml_recommender import (
     ContentBasedRecommender,
     JobClusterRecommender, 
