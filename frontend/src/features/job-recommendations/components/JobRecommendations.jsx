@@ -26,6 +26,7 @@ import {
   MinusIcon
 } from '@heroicons/react/24/outline';
 import { BookmarkIcon as BookmarkSolidIcon, HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
+import { useAuth } from '../../../contexts/AuthContext';
 import { jobOffers } from '../../../data/jobOffers';
 import { loadUserProfile } from '../../../utils/profileUtils';
 import jobRecommendationsApi from '../../../services/jobRecommendationsApi';
@@ -66,6 +67,7 @@ const JobRecommendations = ({
   onProfileChange,
   realTimeUpdate = true
 }) => {
+  const { user } = useAuth();
   const [recommendedJobs, setRecommendedJobs] = useState([]);
   const [savedJobs, setSavedJobs] = useState(new Set());
   const [applyingJobs, setApplyingJobs] = useState(new Set());
@@ -229,17 +231,40 @@ const JobRecommendations = ({
     };
   }, []);
 
-  // Load saved jobs from localStorage
+  // Load and merge saved jobs from API and localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('savedJobs');
-    if (saved) {
-      try {
-        setSavedJobs(new Set(JSON.parse(saved)));
-      } catch (error) {
-        console.error('Error loading saved jobs:', error);
+    const loadAndMergeSavedJobs = async () => {
+      const currentUserId = user?.id || userProfile?.id || userId;
+      if (!currentUserId) {
+        // Fallback to old localStorage method if no user ID
+        const saved = localStorage.getItem('savedJobs');
+        if (saved) {
+          try {
+            setSavedJobs(new Set(JSON.parse(saved)));
+          } catch (error) {
+            console.error('Error loading saved jobs:', error);
+          }
+        }
+        return;
       }
-    }
-  }, []);
+
+      const userSavedJobsKey = `savedJobs_${currentUserId}`;
+      const userSavedJobsFallbackKey = `savedJobsFallback_${currentUserId}`;
+
+      // Load from localStorage first (immediate UI update)
+      const localSavedJobs = JSON.parse(localStorage.getItem(userSavedJobsKey) || '[]');
+      const fallbackJobs = JSON.parse(localStorage.getItem(userSavedJobsFallbackKey) || '[]');
+
+      // Merge local and fallback jobs
+      const mergedJobs = [...new Set([...localSavedJobs, ...fallbackJobs])];
+      setSavedJobs(new Set(mergedJobs));
+
+      // Using localStorage only - no API sync needed
+      console.log('✅ Loaded saved jobs from localStorage only');
+    };
+
+    loadAndMergeSavedJobs();
+  }, [user?.id, userProfile?.id, userId]);
 
   // Save jobs to localStorage
   const saveJobsToStorage = (jobs) => {
@@ -265,6 +290,9 @@ const JobRecommendations = ({
         const userProfileData = {
           name: userProfile?.name || 'User',
           email: userProfile?.email || 'user@example.com',
+          skills: userProfile?.skills || currentUserSkills.map(skill =>
+            typeof skill === 'string' ? skill : skill.name || skill
+          ),
           skillsWithProficiency: userProfile?.skillsWithProficiency || currentUserSkills.map(skill => ({
             name: typeof skill === 'string' ? skill : skill.name || skill,
             proficiency: 'intermediate'
@@ -291,60 +319,136 @@ const JobRecommendations = ({
 
           console.log('📡 Backend API response:', response);
           if (response.success && response.recommendations && response.recommendations.length > 0) {
-            // Transform advanced algorithm response to frontend format
-            const transformedJobs = response.recommendations.map(rec => ({
-              id: rec.job.id,
-              title: rec.job.title,
-              company: rec.job.company,
-              location: rec.job.location,
-              city: rec.job.location?.split(',')[0] || rec.job.location,
-              type: rec.job.job_type,
-              experience: rec.job.seniority,
-              description: `Advanced algorithm recommendation: ${rec.job.title} at ${rec.job.company}`,
-              requirements: `Required skills: ${rec.job.required_skills?.join(', ') || 'Not specified'}`,
-              salary: rec.job.salary_min && rec.job.salary_max
-                ? `${rec.job.salary_min.toLocaleString()} - ${rec.job.salary_max.toLocaleString()} MAD`
-                : 'Salary not specified',
-              remote: rec.job.remote,
-              posted: new Date().toISOString(),
-              requiredSkills: rec.job.required_skills || [],
-              preferredSkills: rec.job.preferred_skills || [],
-              tags: rec.job.tags || [],
-              recommendationScore: rec.score,
-              skillMatchScore: rec.skill_score,
-              requiredSkillScore: rec.required_skill_score,
-              preferredSkillScore: rec.preferred_skill_score,
-              contentScore: rec.content_score,
-              salaryFitScore: rec.salary_fit,
-              locationMatchScore: rec.location_bonus,
-              experienceMatchScore: rec.experience_bonus,
-              remoteBonus: rec.remote_bonus,
-              matchedSkills: rec.matched_skills || [],
-              missingSkills: rec.missing_skills || [],
-              requiredMatchedSkills: rec.required_matched_skills || [],
-              preferredMatchedSkills: rec.preferred_matched_skills || [],
-              requiredMissingSkills: rec.required_missing_skills || [],
-              preferredMissingSkills: rec.preferred_missing_skills || [],
-              requiredSkillsCount: rec.required_skills_count || 0,
-              preferredSkillsCount: rec.preferred_skills_count || 0,
-              requiredMatchedCount: rec.required_matched_count || 0,
-              preferredMatchedCount: rec.preferred_matched_count || 0,
-              // Calculate percentages for consistency
-              requiredMatchPercentage: rec.required_skills_count > 0 ? Math.round((rec.required_matched_count || 0) / rec.required_skills_count * 100) : 0,
-              preferredMatchPercentage: rec.preferred_skills_count > 0 ? Math.round((rec.preferred_matched_count || 0) / rec.preferred_skills_count * 100) : 0,
-              aiMatchPercentage: rec.required_skills_count > 0 || rec.preferred_skills_count > 0
-                ? Math.round(((rec.required_skills_count > 0 ? (rec.required_matched_count || 0) / rec.required_skills_count * 100 : 0) * 0.7) +
-                  (rec.preferred_skills_count > 0 ? (rec.preferred_matched_count || 0) / rec.preferred_skills_count * 100 : 0) * 0.3)
-                : 0,
-              recommendationReason: rec.recommendation_reason || `Based on ${rec.required_matched_count || 0} out of ${rec.required_skills_count || 0} required skills`,
-              status: 'new',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              isHighMatch: rec.score >= 70,
-              isGoodMatch: rec.score >= 50,
-              // Advanced algorithm specific fields
-              algorithmMethod: response.algorithm_info?.method || 'Advanced Algorithm'
-            }));
+            // Transform enhanced algorithm response to frontend format
+            const transformedJobs = response.recommendations.map(rec => {
+              // Handle both old and new response formats
+              const isNewFormat = rec.ai_powered_match && rec.ai_powered_match.overall_score !== undefined;
+              console.log('🔍 Processing recommendation:', rec.title);
+              console.log('🔍 Is new format:', isNewFormat);
+              console.log('🔍 AI match data:', rec.ai_powered_match);
+
+              if (isNewFormat) {
+                // New enhanced format
+                const aiMatch = rec.ai_powered_match;
+                const skillMatch = aiMatch.breakdown.skill_match;
+                const requiredSkills = skillMatch.required_skills;
+                const preferredSkills = skillMatch.preferred_skills;
+
+                return {
+                  id: rec.id,
+                  title: rec.title,
+                  company: rec.company,
+                  location: rec.location,
+                  city: rec.city || rec.location?.split(',')[0] || rec.location,
+                  type: rec.job_type,
+                  experience: rec.seniority,
+                  description: rec.description || `Enhanced algorithm recommendation: ${rec.title} at ${rec.company}`,
+                  requirements: rec.requirements || `Required skills: ${rec.required_skills?.join(', ') || 'Not specified'}`,
+                  salary: rec.salary_min && rec.salary_max
+                    ? `${rec.salary_min.toLocaleString()} - ${rec.salary_max.toLocaleString()} MAD`
+                    : 'Salary not specified',
+                  remote: rec.remote,
+                  posted: new Date().toISOString(),
+                  requiredSkills: rec.required_skills || [],
+                  preferredSkills: rec.preferred_skills || [],
+                  tags: rec.tags || [],
+                  recommendationScore: aiMatch.overall_score,
+                  skillMatchScore: skillMatch.score,
+                  requiredSkillScore: requiredSkills.percentage,
+                  preferredSkillScore: preferredSkills.percentage,
+                  contentScore: aiMatch.breakdown.content_similarity.score,
+                  salaryFitScore: aiMatch.breakdown.bonuses.salary_fit,
+                  locationMatchScore: aiMatch.breakdown.bonuses.location,
+                  experienceMatchScore: aiMatch.breakdown.bonuses.experience,
+                  remoteBonus: aiMatch.breakdown.bonuses.remote,
+                  matchedSkills: requiredSkills.matched_skills.concat(preferredSkills.matched_skills),
+                  missingSkills: requiredSkills.missing_skills.concat(preferredSkills.missing_skills),
+                  requiredMatchedSkills: requiredSkills.matched_skills,
+                  preferredMatchedSkills: preferredSkills.matched_skills,
+                  requiredMissingSkills: requiredSkills.missing_skills,
+                  preferredMissingSkills: preferredSkills.missing_skills,
+                  requiredSkillsCount: requiredSkills.total,
+                  preferredSkillsCount: preferredSkills.total,
+                  requiredMatchedCount: requiredSkills.matched,
+                  preferredMatchedCount: preferredSkills.matched,
+                  // Calculate percentages for consistency
+                  requiredMatchPercentage: requiredSkills.percentage,
+                  preferredMatchPercentage: preferredSkills.percentage,
+                  aiMatchPercentage: aiMatch.overall_score,
+                  recommendationReason: aiMatch.explanation || `Based on ${requiredSkills.matched} out of ${requiredSkills.total} required skills`,
+                  status: 'new',
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  isHighMatch: aiMatch.overall_score >= 70,
+                  // Enhanced View Details fields
+                  clusterFitScore: aiMatch.breakdown.cluster_fit.score,
+                  clusterId: aiMatch.breakdown.cluster_fit.cluster_id,
+                  clusterName: aiMatch.breakdown.cluster_fit.cluster_name,
+                  locationMatch: aiMatch.breakdown.location_remote_fit.location_match,
+                  remoteAvailable: aiMatch.breakdown.location_remote_fit.remote_available,
+                  userExperience: aiMatch.breakdown.experience_seniority.user_experience,
+                  jobSeniority: aiMatch.breakdown.experience_seniority.job_seniority,
+                  overallBreakdown: aiMatch.breakdown.overall_breakdown,
+                };
+              } else {
+                // Old format (fallback)
+                return {
+                  id: rec.job.id,
+                  title: rec.job.title,
+                  company: rec.job.company,
+                  location: rec.job.location,
+                  city: rec.job.location?.split(',')[0] || rec.job.location,
+                  type: rec.job.job_type,
+                  experience: rec.job.seniority,
+                  description: `Advanced algorithm recommendation: ${rec.job.title} at ${rec.job.company}`,
+                  requirements: `Required skills: ${rec.job.required_skills?.join(', ') || 'Not specified'}`,
+                  salary: rec.job.salary_min && rec.job.salary_max
+                    ? `${rec.job.salary_min.toLocaleString()} - ${rec.job.salary_max.toLocaleString()} MAD`
+                    : 'Salary not specified',
+                  remote: rec.job.remote,
+                  posted: new Date().toISOString(),
+                  requiredSkills: rec.job.required_skills || [],
+                  preferredSkills: rec.job.preferred_skills || [],
+                  tags: rec.job.tags || [],
+                  recommendationScore: rec.score,
+                  skillMatchScore: rec.skill_score,
+                  requiredSkillScore: rec.required_skill_score,
+                  preferredSkillScore: rec.preferred_skill_score,
+                  contentScore: rec.content_score,
+                  salaryFitScore: rec.salary_fit,
+                  locationMatchScore: rec.location_bonus,
+                  experienceMatchScore: rec.experience_bonus,
+                  remoteBonus: rec.remote_bonus,
+                  matchedSkills: rec.matched_skills || [],
+                  missingSkills: rec.missing_skills || [],
+                  requiredMatchedSkills: rec.required_matched_skills || [],
+                  preferredMatchedSkills: rec.preferred_matched_skills || [],
+                  requiredMissingSkills: rec.required_missing_skills || [],
+                  preferredMissingSkills: rec.preferred_missing_skills || [],
+                  requiredSkillsCount: rec.required_skills_count || 0,
+                  preferredSkillsCount: rec.preferred_skills_count || 0,
+                  requiredMatchedCount: rec.required_matched_count || 0,
+                  preferredMatchedCount: rec.preferred_matched_count || 0,
+                  // Calculate percentages for consistency
+                  requiredMatchPercentage: rec.required_skills_count > 0 ? Math.round((rec.required_matched_count || 0) / rec.required_skills_count * 100) : 0,
+                  preferredMatchPercentage: rec.preferred_skills_count > 0 ? Math.round((rec.preferred_matched_count || 0) / rec.preferred_skills_count * 100) : 0,
+                  aiMatchPercentage: rec.required_skills_count > 0
+                    ? Math.round((rec.required_matched_count || 0) / rec.required_skills_count * 100)
+                    : 0,
+                  recommendationReason: rec.recommendation_reason || `Based on ${rec.required_matched_count || 0} out of ${rec.required_skills_count || 0} required skills`,
+                  status: 'new',
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  isHighMatch: rec.score >= 70,
+                };
+              }
+            });
+
+            console.log('🔍 Transformed jobs:', transformedJobs);
+            console.log('🔍 First job data:', transformedJobs[0]);
+            console.log('🔍 First job requiredMatchPercentage:', transformedJobs[0]?.requiredMatchPercentage);
+            console.log('🔍 First job requiredMatchedCount:', transformedJobs[0]?.requiredMatchedCount);
+            console.log('🔍 First job requiredSkillsCount:', transformedJobs[0]?.requiredSkillsCount);
 
             setRecommendedJobs(transformedJobs);
             console.log('✅ Loaded job recommendations from backend API');
@@ -353,11 +457,30 @@ const JobRecommendations = ({
             console.log('⚠️ Backend API returned empty recommendations, using mock data fallback');
           }
         } catch (apiError) {
-          console.warn('Backend API not available, using mock data:', apiError);
+          console.error('❌ Backend API call failed:', apiError);
+          console.error('❌ Error details:', {
+            message: apiError.message,
+            status: apiError.status,
+            response: apiError.response
+          });
+
+          // Check if it's an authentication error
+          if (apiError.message && apiError.message.includes('401')) {
+            console.error('🔐 Authentication failed - user may not be logged in or token expired');
+          } else if (apiError.message && apiError.message.includes('fetch')) {
+            console.error('🌐 Network error - backend server may not be running');
+          }
+
+          console.warn('⚠️ Falling back to mock data due to API error');
         }
 
         // Fallback to mock data with enhanced scoring
         console.log('🔄 Using mock data fallback for job recommendations');
+
+        // Show a notification to the user that we're using mock data
+        if (typeof window !== 'undefined' && window.showNotification) {
+          window.showNotification('Using sample data - please check your connection', 'warning');
+        }
         const activeJobs = mockJobOffers.filter(job => job.status === 'active');
         const jobsWithScores = activeJobs.map(job => {
           const score = calculateJobScore(job, currentUserSkills, currentUserLocation, userProfile);
@@ -386,8 +509,8 @@ const JobRecommendations = ({
           const requiredMatchPercentage = requiredSkills.length > 0 ? (matchedRequiredSkills.length / requiredSkills.length) * 100 : 0;
           const preferredMatchPercentage = preferredSkills.length > 0 ? (matchedPreferredSkills.length / preferredSkills.length) * 100 : 0;
 
-          // Calculate AI-powered match percentage using the specified formula
-          const aiMatchPercentage = Math.round((requiredMatchPercentage * 0.7) + (preferredMatchPercentage * 0.3));
+          // Calculate AI-powered match percentage using only required skills
+          const aiMatchPercentage = Math.round(requiredMatchPercentage);
 
           return {
             ...job,
@@ -452,29 +575,75 @@ const JobRecommendations = ({
 
   const handleSaveJob = async (jobId) => {
     try {
+      // Get user ID from auth context or fallback to userProfile
+      const currentUserId = user?.id || userProfile?.id || userId;
+
+      if (!currentUserId) {
+        console.warn('No user ID available, cannot save job');
+        return;
+      }
+
       // Update local state immediately for better UX
       const newSavedJobs = new Set(savedJobs);
-      if (newSavedJobs.has(jobId)) {
+      const isCurrentlySaved = newSavedJobs.has(jobId);
+
+      // Use user-specific keys
+      const userSavedJobsKey = `savedJobs_${currentUserId}`;
+      const userSavedJobDataKey = `savedJobData_${currentUserId}`;
+      const userSavedJobsFallbackKey = `savedJobsFallback_${currentUserId}`;
+
+      if (isCurrentlySaved) {
         newSavedJobs.delete(jobId);
+        // Remove from savedJobData when unsaving
+        const savedJobData = JSON.parse(localStorage.getItem(userSavedJobDataKey) || '[]');
+        const updatedSavedJobData = savedJobData.filter(data => data.jobId !== jobId);
+        localStorage.setItem(userSavedJobDataKey, JSON.stringify(updatedSavedJobData));
+
+        // Also remove from fallback
+        const fallbackJobs = JSON.parse(localStorage.getItem(userSavedJobsFallbackKey) || '[]');
+        const updatedFallbackJobs = fallbackJobs.filter(id => id !== jobId);
+        localStorage.setItem(userSavedJobsFallbackKey, JSON.stringify(updatedFallbackJobs));
       } else {
         newSavedJobs.add(jobId);
-      }
-      setSavedJobs(newSavedJobs);
-      saveJobsToStorage(newSavedJobs);
+        // Add to savedJobData when saving
+        const savedJobData = JSON.parse(localStorage.getItem(userSavedJobDataKey) || '[]');
+        const existingIndex = savedJobData.findIndex(data => data.jobId === jobId);
+        const newSavedJobData = {
+          jobId,
+          savedDate: new Date().toISOString()
+        };
 
-      // Try to update recommendation status in backend
-      try {
-        const job = recommendedJobs.find(j => j.id === jobId);
-        if (job && job.status) {
-          await jobRecommendationsApi.updateRecommendationStatus(
-            job.status === 'saved' ? 'new' : 'saved'
-          );
+        if (existingIndex >= 0) {
+          savedJobData[existingIndex] = newSavedJobData;
+        } else {
+          savedJobData.push(newSavedJobData);
         }
-      } catch (apiError) {
-        console.warn('Could not update recommendation status in backend:', apiError);
+        localStorage.setItem(userSavedJobDataKey, JSON.stringify(savedJobData));
+
+        // Add to fallback
+        const fallbackJobs = JSON.parse(localStorage.getItem(userSavedJobsFallbackKey) || '[]');
+        if (!fallbackJobs.includes(jobId)) {
+          fallbackJobs.push(jobId);
+          localStorage.setItem(userSavedJobsFallbackKey, JSON.stringify(fallbackJobs));
+        }
       }
+
+      setSavedJobs(newSavedJobs);
+
+      // Update user-specific localStorage
+      localStorage.setItem(userSavedJobsKey, JSON.stringify([...newSavedJobs]));
+
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new CustomEvent('savedJobsUpdated'));
+
+      // Using localStorage only - no API calls needed
+      console.log(`✅ Job ${jobId} ${isCurrentlySaved ? 'removed from' : 'saved to'} saved jobs (localStorage only)`);
     } catch (error) {
       console.error('Error saving job:', error);
+      // Show user-friendly error message
+      if (typeof window !== 'undefined' && window.showNotification) {
+        window.showNotification('Failed to save job changes', 'error');
+      }
     }
   };
 
@@ -529,6 +698,22 @@ const JobRecommendations = ({
       newAppliedJobs.add(jobId);
       setAppliedJobs(newAppliedJobs);
       localStorage.setItem('appliedJobs', JSON.stringify([...newAppliedJobs]));
+
+      // Save application data with timestamp
+      const applicationData = JSON.parse(localStorage.getItem('appliedJobData') || '[]');
+      const existingIndex = applicationData.findIndex(data => data.jobId === jobId);
+      const newApplicationData = {
+        jobId,
+        applicationDate: new Date().toISOString(),
+        status: 'applied'
+      };
+
+      if (existingIndex >= 0) {
+        applicationData[existingIndex] = newApplicationData;
+      } else {
+        applicationData.push(newApplicationData);
+      }
+      localStorage.setItem('appliedJobData', JSON.stringify(applicationData));
 
       // Update recommendation status to applied
       setRecommendedJobs(prev => prev.map(job =>
@@ -702,7 +887,7 @@ const JobRecommendations = ({
 
                 return (
                   <div
-                    key={job.id}
+                    key={`${job.id}_${index}_${job.company || 'unknown'}`}
                     className="group relative bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 p-6 transition-all duration-200 hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-700"
                   >
                     {/* Header with Company Avatar and Actions */}
@@ -755,19 +940,6 @@ const JobRecommendations = ({
                         )}
                         <div className="flex items-center space-x-2">
                           <button
-                            onClick={() => handleLikeJob(job.id)}
-                            className={`p-2 rounded-lg transition-all duration-200 ${isLiked
-                              ? 'text-red-500 bg-red-50 dark:bg-red-900/20 shadow-sm'
-                              : 'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                              }`}
-                          >
-                            {isLiked ? (
-                              <HeartSolidIcon className="w-5 h-5" />
-                            ) : (
-                              <HeartIcon className="w-5 h-5" />
-                            )}
-                          </button>
-                          <button
                             onClick={() => handleSaveJob(job.id)}
                             className={`p-2 rounded-lg transition-all duration-200 ${isSaved
                               ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20 shadow-sm'
@@ -780,147 +952,6 @@ const JobRecommendations = ({
                               <BookmarkIcon className="w-5 h-5" />
                             )}
                           </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Advanced Algorithm Matching Score Section */}
-                    <div className="mb-6 p-4 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800/50 dark:to-blue-900/20 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-2">
-                          <StarIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                            AI-Powered Match
-                          </span>
-                          {job.algorithmMethod && (
-                            <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">
-                              {job.algorithmMethod}
-                            </span>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => setShowScoreModal(job.id)}
-                          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
-                        >
-                          View Details
-                        </button>
-                      </div>
-
-                      <div className="flex items-center space-x-4">
-                        {/* Circular Progress */}
-                        <div className="relative w-16 h-16">
-                          <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
-                            <path
-                              className="text-slate-200 dark:text-slate-700"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                              fill="none"
-                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                            />
-                            <path
-                              className={getScoreProgressColor(job.aiMatchPercentage || 0)}
-                              stroke="currentColor"
-                              strokeWidth="3"
-                              fill="none"
-                              strokeLinecap="round"
-                              strokeDasharray={`${job.aiMatchPercentage || 0}, 100`}
-                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                            />
-                          </svg>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className={`text-lg font-bold ${getScoreColor(job.aiMatchPercentage || 0).split(' ')[0]}`}>
-                              {job.aiMatchPercentage || 0}%
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Advanced Score Breakdown */}
-                        <div className="flex-1">
-                          <div className="space-y-3">
-                            {/* Required Skills Match */}
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                  Required Skills
-                                </span>
-                                <span className={`text-sm font-semibold ${getScoreColor(job.requiredMatchPercentage || 0).split(' ')[0]}`}>
-                                  {job.requiredMatchPercentage || 0}%
-                                </span>
-                              </div>
-                              <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2">
-                                <div
-                                  className={`h-2 rounded-full transition-all duration-500 ease-out ${getScoreProgressColor(job.requiredMatchPercentage || 0)}`}
-                                  style={{ width: `${job.requiredMatchPercentage || 0}%` }}
-                                ></div>
-                              </div>
-                              <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {job.requiredMatchedCount || 0} of {job.requiredSkillsCount || 0} required skills matched
-                              </p>
-                            </div>
-
-                            {/* Preferred Skills Match */}
-                            {job.preferredSkillsCount > 0 && (
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Preferred Skills
-                                  </span>
-                                  <span className={`text-sm font-semibold ${getScoreColor(job.preferredMatchPercentage || 0).split(' ')[0]}`}>
-                                    {job.preferredMatchPercentage || 0}%
-                                  </span>
-                                </div>
-                                <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5">
-                                  <div
-                                    className={`h-1.5 rounded-full transition-all duration-500 ease-out ${getScoreProgressColor(job.preferredMatchPercentage || 0)}`}
-                                    style={{ width: `${job.preferredMatchPercentage || 0}%` }}
-                                  ></div>
-                                </div>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
-                                  {job.preferredMatchedCount || 0} of {job.preferredSkillsCount || 0} preferred skills matched
-                                </p>
-                              </div>
-                            )}
-
-                            {/* Location Match */}
-                            {(job.locationMatchScore || 0) > 0 && (
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Location Bonus
-                                  </span>
-                                  <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
-                                    +{Math.round(job.locationMatchScore || 0)}%
-                                  </span>
-                                </div>
-                                <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5">
-                                  <div
-                                    className="bg-orange-500 h-1.5 rounded-full transition-all duration-500 ease-out"
-                                    style={{ width: `${Math.min((job.locationMatchScore || 0) * 10, 100)}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Experience Match */}
-                            {(job.experienceMatchScore || 0) > 0 && (
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Experience Match
-                                  </span>
-                                  <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">
-                                    +{Math.round(job.experienceMatchScore || 0)}%
-                                  </span>
-                                </div>
-                                <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5">
-                                  <div
-                                    className="bg-purple-500 h-1.5 rounded-full transition-all duration-500 ease-out"
-                                    style={{ width: `${Math.min((job.experienceMatchScore || 0) * 10, 100)}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -942,7 +973,7 @@ const JobRecommendations = ({
                     </div>
 
                     {/* Advanced Skills Analysis Section */}
-                    {(job.requiredSkills?.length > 0 || job.preferredSkills?.length > 0) && (
+                    {job.requiredSkills?.length > 0 && (
                       <div className="mb-6 p-4 bg-slate-50/80 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center space-x-2">
@@ -999,46 +1030,121 @@ const JobRecommendations = ({
                           </div>
                         )}
 
-                        {/* Preferred Skills */}
-                        {job.preferredSkills?.length > 0 && (
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
-                                Preferred Skills ({job.preferredSkills.length})
-                              </span>
-                              <span className="text-xs text-slate-500 dark:text-slate-400">
-                                {job.matchedSkills?.filter(skill => {
-                                  const validPreferredSkills = filterValidSkills(job.preferredSkills || []);
-                                  return validPreferredSkills.some(pref => compareSkills(skill, pref));
-                                }).length || 0} matched
-                              </span>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {filterValidSkills(job.preferredSkills || []).map((skill, skillIndex) => {
-                                const skillName = normalizeSkill(skill);
-                                const isMatched = isSkillMatched(skill, job.matchedSkills);
-                                return (
-                                  <span
-                                    key={skillIndex}
-                                    className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${isMatched
-                                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700'
-                                      : 'bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-600'
-                                      }`}
-                                  >
-                                    {isMatched ? (
-                                      <CheckCircleIcon className="w-3 h-3 mr-1.5" />
-                                    ) : (
-                                      <MinusIcon className="w-3 h-3 mr-1.5" />
-                                    )}
-                                    {skillName}
-                                  </span>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     )}
+
+                    {/* Advanced Algorithm Matching Score Section */}
+                    <div className="mb-6 p-4 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800/50 dark:to-blue-900/20 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          <StarIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                            Job Match
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => setShowScoreModal(job.id)}
+                          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+                        >
+                          View Details
+                        </button>
+                      </div>
+
+                      <div className="flex items-center space-x-4">
+                        {/* Circular Progress */}
+                        <div className="relative w-16 h-16">
+                          <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+                            <path
+                              className="text-slate-200 dark:text-slate-700"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              fill="none"
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                            <path
+                              className={getScoreProgressColor(job.aiMatchPercentage || 0)}
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              fill="none"
+                              strokeLinecap="round"
+                              strokeDasharray={`${job.aiMatchPercentage || 0}, 100`}
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className={`text-sm font-bold leading-none ${getScoreColor(job.aiMatchPercentage || 0).split(' ')[0]}`}>
+                              {Math.round(job.aiMatchPercentage || 0)}%
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Advanced Score Breakdown */}
+                        <div className="flex-1">
+                          <div className="space-y-3">
+                            {/* Required Skills Match */}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                  Required Skills
+                                </span>
+                                <span className={`text-sm font-semibold ${getScoreColor(job.requiredMatchPercentage || 0).split(' ')[0]}`}>
+                                  {job.requiredMatchPercentage || 0}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2">
+                                <div
+                                  className={`h-2 rounded-full transition-all duration-500 ease-out ${getScoreProgressColor(job.requiredMatchPercentage || 0)}`}
+                                  style={{ width: `${job.requiredMatchPercentage || 0}%` }}
+                                ></div>
+                              </div>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {job.requiredMatchedCount || 0} of {job.requiredSkillsCount || 0} required skills matched
+                              </p>
+                            </div>
+
+                            {/* Location Match */}
+                            {(job.locationMatchScore || 0) > 0 && (
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    Location Bonus
+                                  </span>
+                                  <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
+                                    +{Math.round(job.locationMatchScore || 0)}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5">
+                                  <div
+                                    className="bg-orange-500 h-1.5 rounded-full transition-all duration-500 ease-out"
+                                    style={{ width: `${Math.min((job.locationMatchScore || 0) * 10, 100)}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Experience Match */}
+                            {(job.experienceMatchScore || 0) > 0 && (
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    Experience Match
+                                  </span>
+                                  <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">
+                                    +{Math.round(job.experienceMatchScore || 0)}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5">
+                                  <div
+                                    className="bg-purple-500 h-1.5 rounded-full transition-all duration-500 ease-out"
+                                    style={{ width: `${Math.min((job.experienceMatchScore || 0) * 10, 100)}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Footer Actions */}
                     <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
@@ -1131,32 +1237,27 @@ const JobRecommendations = ({
                             />
                           </svg>
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <span className={`text-2xl font-bold ${getScoreColor(job.recommendationScore).split(' ')[0]}`}>
+                            <span className={`text-lg font-bold leading-none ${getScoreColor(job.recommendationScore).split(' ')[0]}`}>
                               {Math.round(job.recommendationScore)}%
                             </span>
                           </div>
                         </div>
                         <p className="text-slate-600 dark:text-slate-400 mb-2">
-                          AI-Powered Match for {job.title} at {job.company}
+                          Match Score for {job.title} at {job.company}
                         </p>
-                        {job.algorithmMethod && (
-                          <span className="inline-block bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm font-medium">
-                            {job.algorithmMethod}
-                          </span>
-                        )}
                       </div>
 
-                      {/* Advanced Algorithm Breakdown */}
+                      {/* Enhanced Match Score Breakdown */}
                       <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4">
                         <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                          Algorithm Breakdown
+                          Match Score Breakdown
                         </h4>
                         <div className="space-y-4">
                           {/* Required Skills Match */}
                           <div className="space-y-3">
                             <div className="flex items-center justify-between">
                               <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
-                                Required Skills
+                                Required Skills Match
                               </span>
                               <span className={`text-lg font-bold ${getScoreColor(job.requiredMatchPercentage || 0).split(' ')[0]}`}>
                                 {job.requiredMatchPercentage || 0}%
@@ -1173,17 +1274,17 @@ const JobRecommendations = ({
                                 {job.requiredMatchedCount || 0} out of {job.requiredSkillsCount || 0} required skills matched
                               </p>
                               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                Essential skills needed for this position
+                                Essential skills needed for this position (70% weight)
                               </p>
                             </div>
                           </div>
 
                           {/* Preferred Skills Match */}
-                          {job.preferredSkillsCount > 0 && (
+                          {(job.preferredMatchPercentage || 0) > 0 && (
                             <div className="space-y-3">
                               <div className="flex items-center justify-between">
                                 <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
-                                  Preferred Skills
+                                  Preferred Skills Match
                                 </span>
                                 <span className={`text-lg font-bold ${getScoreColor(job.preferredMatchPercentage || 0).split(' ')[0]}`}>
                                   {job.preferredMatchPercentage || 0}%
@@ -1200,69 +1301,129 @@ const JobRecommendations = ({
                                   {job.preferredMatchedCount || 0} out of {job.preferredSkillsCount || 0} preferred skills matched
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                  Nice-to-have skills that give you an advantage
+                                  Bonus qualifications that can boost your profile
                                 </p>
                               </div>
                             </div>
                           )}
 
-                          {/* Location Match */}
-                          {(job.locationMatchScore || 0) > 0 && (
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
-                                  Location Bonus
-                                </span>
-                                <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
-                                  +{Math.round(job.locationMatchScore || 0)}%
-                                </span>
-                              </div>
-                              <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-3">
-                                <div
-                                  className="bg-orange-500 h-3 rounded-full transition-all duration-500 ease-out"
-                                  style={{ width: `${Math.min((job.locationMatchScore || 0) * 10, 100)}%` }}
-                                ></div>
-                              </div>
-                              <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
-                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                  Location preference match
-                                </p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                  Job location matches your preferred location
-                                </p>
-                              </div>
+                          {/* Content Similarity */}
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
+                                Content Similarity
+                              </span>
+                              <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                                {Math.round(job.contentScore || 0)}%
+                              </span>
                             </div>
-                          )}
+                            <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-3">
+                              <div
+                                className="bg-blue-500 h-3 rounded-full transition-all duration-500 ease-out"
+                                style={{ width: `${Math.min(job.contentScore || 0, 100)}%` }}
+                              ></div>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
+                              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                Profile matches job description
+                              </p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                How well your profile matches the job description (20% weight)
+                              </p>
+                            </div>
+                          </div>
 
-                          {/* Experience Match */}
-                          {(job.experienceMatchScore || 0) > 0 && (
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
-                                  Experience Match
-                                </span>
-                                <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                                  +{Math.round(job.experienceMatchScore || 0)}%
-                                </span>
-                              </div>
-                              <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-3">
-                                <div
-                                  className="bg-purple-500 h-3 rounded-full transition-all duration-500 ease-out"
-                                  style={{ width: `${Math.min((job.experienceMatchScore || 0) * 10, 100)}%` }}
-                                ></div>
-                              </div>
-                              <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
-                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                  Experience level alignment
-                                </p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                  Job seniority matches your experience level
-                                </p>
-                              </div>
+                          {/* Cluster Fit Score */}
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
+                                Career Cluster Fit
+                              </span>
+                              <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                                {Math.round(job.clusterFitScore || 0)}%
+                              </span>
                             </div>
-                          )}
+                            <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-3">
+                              <div
+                                className="bg-purple-500 h-3 rounded-full transition-all duration-500 ease-out"
+                                style={{ width: `${Math.min(job.clusterFitScore || 0, 100)}%` }}
+                              ></div>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
+                              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                Cluster: {job.clusterName || 'Career Cluster'} (ID: {job.clusterId || 'Unknown'})
+                              </p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                How well this job fits your career cluster (10% weight)
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Location & Remote Fit */}
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
+                                Location & Remote Fit
+                              </span>
+                              <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                +{Math.round((job.locationMatchScore || 0) + (job.remoteBonus || 0))}%
+                              </span>
+                            </div>
+                            <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-3">
+                              <div
+                                className="bg-orange-500 h-3 rounded-full transition-all duration-500 ease-out"
+                                style={{ width: `${Math.min(((job.locationMatchScore || 0) + (job.remoteBonus || 0)) * 5, 100)}%` }}
+                              ></div>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
+                              <div className="flex items-center space-x-4 text-sm">
+                                <div className="flex items-center">
+                                  <span className={`w-2 h-2 rounded-full mr-2 ${job.locationMatch ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                  <span className="text-slate-700 dark:text-slate-300">
+                                    Location: {job.locationMatch ? 'Match' : 'No match'}
+                                  </span>
+                                </div>
+                                <div className="flex items-center">
+                                  <span className={`w-2 h-2 rounded-full mr-2 ${job.remoteAvailable ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                                  <span className="text-slate-700 dark:text-slate-300">
+                                    Remote: {job.remoteAvailable ? 'Available' : 'Not available'}
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                                Location bonus: +{Math.round(job.locationMatchScore || 0)}% | Remote bonus: +{Math.round(job.remoteBonus || 0)}%
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Experience & Seniority */}
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
+                                Experience & Seniority
+                              </span>
+                              <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                                +{Math.round(job.experienceMatchScore || 0)}%
+                              </span>
+                            </div>
+                            <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-3">
+                              <div
+                                className="bg-indigo-500 h-3 rounded-full transition-all duration-500 ease-out"
+                                style={{ width: `${Math.min((job.experienceMatchScore || 0) * 10, 100)}%` }}
+                              ></div>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
+                              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                Your level: {job.userExperience || 'intermediate'} | Job level: {job.jobSeniority || 'mid'}
+                              </p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                Experience level alignment bonus
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
+
 
                       {/* Advanced Skills Analysis */}
                       <div>
@@ -1309,44 +1470,6 @@ const JobRecommendations = ({
                           </div>
                         )}
 
-                        {/* Preferred Skills */}
-                        {job.preferredSkills?.length > 0 && (
-                          <div className="mb-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                Preferred Skills ({job.preferredSkills.length})
-                              </span>
-                              <span className="text-xs text-slate-500 dark:text-slate-400">
-                                {job.matchedSkills?.filter(skill => {
-                                  const validPreferredSkills = filterValidSkills(job.preferredSkills || []);
-                                  return validPreferredSkills.some(pref => compareSkills(skill, pref));
-                                }).length || 0} matched
-                              </span>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {filterValidSkills(job.preferredSkills || []).map((skill, index) => {
-                                const skillName = normalizeSkill(skill);
-                                const isMatched = isSkillMatched(skill, job.matchedSkills);
-                                return (
-                                  <span
-                                    key={index}
-                                    className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${isMatched
-                                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700'
-                                      : 'bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-600'
-                                      }`}
-                                  >
-                                    {isMatched ? (
-                                      <CheckCircleIcon className="w-3 h-3 mr-1.5" />
-                                    ) : (
-                                      <MinusIcon className="w-3 h-3 mr-1.5" />
-                                    )}
-                                    {skillName}
-                                  </span>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
 
                         {/* Missing Skills Summary */}
                         {job.missingSkills?.length > 0 && (
@@ -1379,37 +1502,6 @@ const JobRecommendations = ({
                         )}
                       </div>
 
-                      {/* AI-Powered Recommendations */}
-                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4">
-                        <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">
-                          🤖 AI-Powered Recommendations
-                        </h4>
-                        <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
-                          <li className="flex items-start">
-                            <span className="text-blue-500 mr-2">•</span>
-                            <span>This recommendation is powered by Content-Based Filtering + K-Means Clustering</span>
-                          </li>
-                          <li className="flex items-start">
-                            <span className="text-blue-500 mr-2">•</span>
-                            <span>Focus on learning the missing required skills to increase your match score</span>
-                          </li>
-                          <li className="flex items-start">
-                            <span className="text-blue-500 mr-2">•</span>
-                            <span>Consider preferred skills as bonus qualifications that can boost your profile</span>
-                          </li>
-                          <li className="flex items-start">
-                            <span className="text-blue-500 mr-2">•</span>
-                            <span>Location and remote preferences are factored into the algorithm</span>
-                          </li>
-                        </ul>
-                        {job.recommendationReason && (
-                          <div className="mt-3 p-2 bg-white/60 dark:bg-slate-800/60 rounded border border-blue-200 dark:border-blue-700">
-                            <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">
-                              💡 {job.recommendationReason}
-                            </p>
-                          </div>
-                        )}
-                      </div>
                     </div>
                   );
                 })()}
