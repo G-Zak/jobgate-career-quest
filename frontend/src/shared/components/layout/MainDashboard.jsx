@@ -681,13 +681,15 @@ const MainDashboard = () => {
               testId={currentTestId}
             />
           ) : activeSection === 'diagrammatic-reasoning-test' ? (
-            <DiagrammaticReasoningTest 
-              onBackToDashboard={() => setActiveSection('assessments')} 
+            <DiagrammaticReasoningTest
+              onBackToDashboard={() => setActiveSection('assessments')}
+              onNavigateToTestHistory={() => setActiveSection('tests-history')}
               testId={currentTestId}
             />
           ) : activeSection === 'abstract-reasoning-test' ? (
-            <AbstractReasoningTest 
-              onBackToDashboard={() => setActiveSection('assessments')} 
+            <AbstractReasoningTest
+              onBackToDashboard={() => setActiveSection('assessments')}
+              onNavigateToTestHistory={() => setActiveSection('tests-history')}
               testId={currentTestId}
             />
           ) : activeSection === 'logical-reasoning-test' ? (
