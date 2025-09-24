@@ -13,7 +13,7 @@ import { useScrollToTop } from '../../../shared/utils/scrollUtils';
 import dashboardAggregatedApi from '../services/dashboardAggregatedApi';
 import '../../../features/candidate-dashboard/styles/dashboard-design-system.css';
 
-const Dashboard = ({ onNavigateToSection }) => {
+const Dashboard = ({ onNavigateToSection, onStartTest }) => {
   // Universal scroll management
   useScrollToTop([], { smooth: true }); // Scroll on component mount
 
@@ -57,6 +57,12 @@ const Dashboard = ({ onNavigateToSection }) => {
   const handleViewAllTests = () => {
     if (onNavigateToSection) {
       onNavigateToSection('tests-history');
+    }
+  };
+
+  const handleViewAllJobs = () => {
+    if (onNavigateToSection) {
+      onNavigateToSection('offres-recommandees');
     }
   };
   
@@ -144,10 +150,17 @@ const Dashboard = ({ onNavigateToSection }) => {
           {/* Right Column - Main Content (7 cols) */}
           <div className="lg:col-span-7 space-y-6">
             {/* Career Readiness Breakdown with integrated benchmarks */}
-            <CareerReadinessBreakdown data={dashboardData?.careerReadinessBreakdown} />
+            <CareerReadinessBreakdown
+              data={dashboardData?.careerReadinessBreakdown}
+              onNavigateToTest={onStartTest}
+            />
             
             {/* Job Recommendations */}
-            <JobRecommendations data={dashboardData?.jobRecommendations} onViewAll={handleViewAllTests} />
+            <JobRecommendations
+              data={dashboardData?.jobRecommendations}
+              onViewAll={handleViewAllJobs}
+              onNavigateToTest={onStartTest}
+            />
           </div>
         </div>
 

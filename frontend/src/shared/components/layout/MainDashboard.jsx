@@ -628,7 +628,7 @@ const MainDashboard = () => {
           
           {activeSection === 'dashboard' ? (
             <div className="space-y-6">
-              <Dashboard onNavigateToSection={setActiveSection} />
+              <Dashboard onNavigateToSection={setActiveSection} onStartTest={handleStartTest} />
               <AssessmentDashboardMetrics />
             </div>
           ) : activeSection === 'assessments' ? (

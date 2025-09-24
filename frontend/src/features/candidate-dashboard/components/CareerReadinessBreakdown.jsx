@@ -14,7 +14,7 @@ import WeakAreasModal from './WeakAreasModal';
 
 import dashboardApi from '../services/dashboardApi';
 
-const CareerReadinessBreakdown = () => {
+const CareerReadinessBreakdown = ({ onNavigateToTest }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -48,11 +48,30 @@ const CareerReadinessBreakdown = () => {
         setBreakdownData(categoryData);
         setEmployabilityData(employabilityScore);
 
-        // Transform category data for display - Enhanced for comprehensive cognitive skills
+        // Transform category data for display - Use individual test scores for spider chart
         let transformedCategories = [];
 
-        if (employabilityScore?.categories && Object.keys(employabilityScore.categories).length > 0) {
-          console.log('✅ Using employability score categories (user-specific data)');
+        if (employabilityScore?.individual_test_scores && Object.keys(employabilityScore.individual_test_scores).length > 0) {
+          console.log('✅ Using individual test scores (user-specific data)');
+
+          // Use individual test scores directly for spider chart
+          transformedCategories = Object.entries(employabilityScore.individual_test_scores).map(([testType, data]) => ({
+            id: testType,
+            name: getCategoryDisplayName(testType),
+            icon: getCategoryIcon(testType),
+            score: Math.round(data.score || 0),
+            previousScore: Math.round((data.score || 0) - (data.recent_trend || 0)),
+            benchmark: getBenchmarkForCategory(testType),
+            description: getCategoryDescription(testType),
+            color: getCategoryColor(testType),
+            count: data.count || 0,
+            bestScore: Math.round(data.best_score || 0),
+            consistency: Math.round(data.consistency || 0),
+            lastTaken: data.last_updated,
+            hasData: data.count > 0
+          }));
+        } else if (employabilityScore?.categories && Object.keys(employabilityScore.categories).length > 0) {
+          console.log('✅ Using employability score categories (fallback)');
 
           // Create comprehensive category mapping including all cognitive dimensions
           const allCognitiveCategories = createComprehensiveCategoryMapping(employabilityScore.categories);
@@ -218,7 +237,7 @@ const CareerReadinessBreakdown = () => {
     setIsWeakAreasModalOpen(true);
   };
 
-  // Helper function to create grouped categories for cards display
+  // Helper function to create grouped categories for cards display (3 cards: Situational, Cognitive, Technical)
   const createGroupedCategoriesForCards = (individualCategories) => {
     const cognitiveTestTypes = [
       'numerical_reasoning', 'spatial_reasoning', 'verbal_reasoning',
@@ -226,13 +245,72 @@ const CareerReadinessBreakdown = () => {
       'analytical_reasoning'
     ];
 
-    // Group cognitive tests together
+    const situationalTestTypes = ['situational_judgment'];
+    const technicalTestTypes = ['technical'];
+
+    // Group cognitive tests together (for the single cognitive card)
     const cognitiveTests = individualCategories.filter(cat =>
       cognitiveTestTypes.includes(cat.id) && cat.hasData
     );
 
-    // Calculate grouped cognitive stats
-    let groupedCognitive = null;
+    // Group situational tests
+    const situationalTests = individualCategories.filter(cat =>
+      situationalTestTypes.includes(cat.id) && cat.hasData
+    );
+
+    // Group technical tests
+    const technicalTests = individualCategories.filter(cat =>
+      technicalTestTypes.includes(cat.id) && cat.hasData
+    );
+
+    const result = [];
+
+    // Create Situational card
+    if (situationalTests.length > 0) {
+      const totalScore = situationalTests.reduce((sum, cat) => sum + cat.score, 0);
+      const totalPreviousScore = situationalTests.reduce((sum, cat) => sum + cat.previousScore, 0);
+      const totalCount = situationalTests.reduce((sum, cat) => sum + cat.count, 0);
+      const avgConsistency = situationalTests.reduce((sum, cat) => sum + cat.consistency, 0) / situationalTests.length;
+      const bestScore = Math.max(...situationalTests.map(cat => cat.bestScore));
+
+      result.push({
+        id: 'situational',
+        name: 'Situational\nTests',
+        icon: getCategoryIcon('situational'),
+        score: Math.round(totalScore / situationalTests.length),
+        previousScore: Math.round(totalPreviousScore / situationalTests.length),
+        benchmark: getBenchmarkForCategory('situational'),
+        description: getCategoryDescription('situational'),
+        color: getCategoryColor('situational'),
+        count: totalCount,
+        bestScore: bestScore,
+        consistency: Math.round(avgConsistency),
+        lastTaken: situationalTests.reduce((latest, cat) => {
+          if (!latest || !cat.lastTaken) return latest || cat.lastTaken;
+          return new Date(cat.lastTaken) > new Date(latest) ? cat.lastTaken : latest;
+        }, null),
+        hasData: true
+      });
+    } else {
+      // Add placeholder for situational
+      result.push({
+        id: 'situational',
+        name: 'Situational\nTests',
+        icon: getCategoryIcon('situational'),
+        score: 0,
+        previousScore: 0,
+        benchmark: getBenchmarkForCategory('situational'),
+        description: getCategoryDescription('situational'),
+        color: getCategoryColor('situational'),
+        count: 0,
+        bestScore: 0,
+        consistency: 0,
+        lastTaken: null,
+        hasData: false
+      });
+    }
+
+    // Create Cognitive card
     if (cognitiveTests.length > 0) {
       const totalScore = cognitiveTests.reduce((sum, cat) => sum + cat.score, 0);
       const totalPreviousScore = cognitiveTests.reduce((sum, cat) => sum + cat.previousScore, 0);
@@ -240,9 +318,9 @@ const CareerReadinessBreakdown = () => {
       const avgConsistency = cognitiveTests.reduce((sum, cat) => sum + cat.consistency, 0) / cognitiveTests.length;
       const bestScore = Math.max(...cognitiveTests.map(cat => cat.bestScore));
 
-      groupedCognitive = {
+      result.push({
         id: 'cognitive',
-        name: 'Cognitive Skills',
+        name: 'Cognitive\nTests',
         icon: getCategoryIcon('cognitive'),
         score: Math.round(totalScore / cognitiveTests.length),
         previousScore: Math.round(totalPreviousScore / cognitiveTests.length),
@@ -257,18 +335,70 @@ const CareerReadinessBreakdown = () => {
           return new Date(cat.lastTaken) > new Date(latest) ? cat.lastTaken : latest;
         }, null),
         hasData: true
-      };
+      });
+    } else {
+      // Add placeholder for cognitive
+      result.push({
+        id: 'cognitive',
+        name: 'Cognitive\nTests',
+        icon: getCategoryIcon('cognitive'),
+        score: 0,
+        previousScore: 0,
+        benchmark: getBenchmarkForCategory('cognitive'),
+        description: getCategoryDescription('cognitive'),
+        color: getCategoryColor('cognitive'),
+        count: 0,
+        bestScore: 0,
+        consistency: 0,
+        lastTaken: null,
+        hasData: false
+      });
     }
 
-    // Get non-cognitive categories
-    const nonCognitiveCategories = individualCategories.filter(cat =>
-      !cognitiveTestTypes.includes(cat.id) && cat.hasData
-    );
+    // Create Technical card
+    if (technicalTests.length > 0) {
+      const totalScore = technicalTests.reduce((sum, cat) => sum + cat.score, 0);
+      const totalPreviousScore = technicalTests.reduce((sum, cat) => sum + cat.previousScore, 0);
+      const totalCount = technicalTests.reduce((sum, cat) => sum + cat.count, 0);
+      const avgConsistency = technicalTests.reduce((sum, cat) => sum + cat.consistency, 0) / technicalTests.length;
+      const bestScore = Math.max(...technicalTests.map(cat => cat.bestScore));
 
-    // Combine grouped cognitive with other categories
-    const result = [];
-    if (groupedCognitive) result.push(groupedCognitive);
-    result.push(...nonCognitiveCategories);
+      result.push({
+        id: 'technical',
+        name: 'Technical\nTests',
+        icon: getCategoryIcon('technical'),
+        score: Math.round(totalScore / technicalTests.length),
+        previousScore: Math.round(totalPreviousScore / technicalTests.length),
+        benchmark: getBenchmarkForCategory('technical'),
+        description: getCategoryDescription('technical'),
+        color: getCategoryColor('technical'),
+        count: totalCount,
+        bestScore: bestScore,
+        consistency: Math.round(avgConsistency),
+        lastTaken: technicalTests.reduce((latest, cat) => {
+          if (!latest || !cat.lastTaken) return latest || cat.lastTaken;
+          return new Date(cat.lastTaken) > new Date(latest) ? cat.lastTaken : latest;
+        }, null),
+        hasData: true
+      });
+    } else {
+      // Add placeholder for technical
+      result.push({
+        id: 'technical',
+        name: 'Technical\nTests',
+        icon: getCategoryIcon('technical'),
+        score: 0,
+        previousScore: 0,
+        benchmark: getBenchmarkForCategory('technical'),
+        description: getCategoryDescription('technical'),
+        color: getCategoryColor('technical'),
+        count: 0,
+        bestScore: 0,
+        consistency: 0,
+        lastTaken: null,
+        hasData: false
+      });
+    }
 
     return result;
   };
@@ -389,6 +519,7 @@ const CareerReadinessBreakdown = () => {
       // Other test categories
       'technical': 'Technical Tests',
       'situational': 'Situational Judgment',
+      'situational_judgment': 'Situational Judgment',
       // Fallback for grouped cognitive (for cards display)
       'cognitive': 'Cognitive Skills'
     };
@@ -400,6 +531,7 @@ const CareerReadinessBreakdown = () => {
       'cognitive': '🧠',
       'technical': '💻',
       'situational': '⚖️',
+      'situational_judgment': '⚖️',
       'communication': '💬',
       'analytical': '📊',
       'verbal_reasoning': '📖',
@@ -407,6 +539,7 @@ const CareerReadinessBreakdown = () => {
       'logical_reasoning': '🧩',
       'abstract_reasoning': '🔮',
       'diagrammatic_reasoning': '📊',
+      'analytical_reasoning': '📈',
       'spatial_reasoning': '🌐'
     };
     return iconMap[key] || '📋';
@@ -417,6 +550,7 @@ const CareerReadinessBreakdown = () => {
       'cognitive': 'blue',
       'technical': 'red',
       'situational': 'emerald',
+      'situational_judgment': 'emerald',
       'communication': 'purple',
       'analytical': 'teal',
       'verbal_reasoning': 'blue',
@@ -424,6 +558,7 @@ const CareerReadinessBreakdown = () => {
       'logical_reasoning': 'purple',
       'abstract_reasoning': 'indigo',
       'diagrammatic_reasoning': 'teal',
+      'analytical_reasoning': 'teal',
       'spatial_reasoning': 'orange'
     };
     return colorMap[key] || 'gray';
@@ -434,6 +569,7 @@ const CareerReadinessBreakdown = () => {
       'cognitive': 'General cognitive abilities and problem-solving skills',
       'technical': 'Programming concepts and system design',
       'situational': 'Workplace scenarios and decision making',
+      'situational_judgment': 'Workplace scenarios and decision making',
       'communication': 'Written and verbal communication skills',
       'analytical': 'Data analysis and logical reasoning',
       'verbal_reasoning': 'Reading comprehension, analogies, and language skills',
@@ -441,6 +577,7 @@ const CareerReadinessBreakdown = () => {
       'logical_reasoning': 'Pattern recognition and logical sequences',
       'abstract_reasoning': 'Non-verbal reasoning and abstract thinking',
       'diagrammatic_reasoning': 'Flowchart analysis and process understanding',
+      'analytical_reasoning': 'Data analysis and quantitative reasoning',
       'spatial_reasoning': '3D visualization and mental rotation'
     };
     return descriptionMap[key] || 'Assessment of specific skills and abilities';
@@ -642,18 +779,13 @@ const CareerReadinessBreakdown = () => {
                 {/* Test Category Name - Multi-line Format */}
                 <div className="mb-2">
                   <span className="text-xs font-medium text-gray-600 leading-tight">
-                    {category.id === 'cognitive' ? (
-                      <>
-                        Cognitive<br />Skills
-                      </>
-                    ) : category.id === 'technical' ? (
-                      <>
-                        Technical<br />Skills
-                      </>
-                    ) : category.id === 'situational' ? (
-                      <>
-                        Situational<br />Judgment
-                      </>
+                    {category.name.includes('\n') ? (
+                      category.name.split('\n').map((line, index) => (
+                        <span key={index}>
+                          {line}
+                          {index < category.name.split('\n').length - 1 && <br />}
+                        </span>
+                      ))
                     ) : (
                       category.name
                     )}
@@ -774,6 +906,7 @@ const CareerReadinessBreakdown = () => {
         isOpen={isWeakAreasModalOpen}
         onClose={() => setIsWeakAreasModalOpen(false)}
         recommendations={weakAreasRecommendations}
+        onNavigateToTest={onNavigateToTest}
       />
     </div>
   );
