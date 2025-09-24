@@ -13,6 +13,7 @@ import { motion } from 'framer-motion';
 import dashboardApi from '../services/dashboardApi';
 import EmployabilityScoreModal from './EmployabilityScoreModal';
 
+
 const EmployabilityScore = () => {
   const [selectedProfile, setSelectedProfile] = useState('Software Engineer');
   const [employabilityScore, setEmployabilityScore] = useState(72);
@@ -22,6 +23,7 @@ const EmployabilityScore = () => {
   const [error, setError] = useState(null);
   const [scoreData, setScoreData] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
 
   const profiles = [
     'Software Engineer',
@@ -87,6 +89,7 @@ const EmployabilityScore = () => {
         });
         setEmployabilityScore(0);
         setPreviousScore(0);
+
       } finally {
         setLoading(false);
       }
@@ -94,6 +97,7 @@ const EmployabilityScore = () => {
 
     fetchScoreData();
   }, [selectedProfile]); // Re-fetch when profile changes
+
 
   const getScoreColor = (score) => {
     if (score >= 80) return 'text-green-600';
@@ -132,12 +136,14 @@ const EmployabilityScore = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-gray-200 rounded-xl"></div>
+
               <div>
                 <div className="h-6 w-48 bg-gray-200 rounded mb-2"></div>
                 <div className="h-4 w-32 bg-gray-200 rounded"></div>
               </div>
             </div>
             <div className="h-8 w-32 bg-gray-200 rounded-lg"></div>
+
           </div>
 
           {/* Main content skeleton */}
@@ -216,6 +222,7 @@ const EmployabilityScore = () => {
                 Login
               </button>
             )}
+
           </div>
         </div>
       </div>

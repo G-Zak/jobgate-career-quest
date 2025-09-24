@@ -57,6 +57,7 @@ const QuickActions = ({ onNavigateToSection }) => {
     }, 150);
   };
 
+
   const actions = [
     {
       id: 'take-test',
@@ -87,6 +88,7 @@ const QuickActions = ({ onNavigateToSection }) => {
       activeColor: 'bg-green-300',
       route: '/jobs',
       primary: false
+
     },
     {
       id: 'update-profile',
@@ -107,6 +109,7 @@ const QuickActions = ({ onNavigateToSection }) => {
       activeColor: 'bg-orange-300',
       route: '/job-recommendations',
       primary: false
+
     }
   ];
 
@@ -149,6 +152,7 @@ const QuickActions = ({ onNavigateToSection }) => {
                 </div>
               </div>
               <ArrowRightIcon className={`w-4 h-4 transition-transform duration-200 ${isSelected ? 'rotate-90' : 'group-hover:translate-x-1'} ${action.primary ? 'text-white/60' : 'opacity-50'}`} />
+
             </button>
           );
         })}
@@ -168,6 +172,7 @@ const QuickActions = ({ onNavigateToSection }) => {
               {loading ? '...' : quickStats.categoriesCount}
             </div>
             <div className="text-xs text-green-700 font-medium">Categories</div>
+
           </div>
         </div>
       </div>

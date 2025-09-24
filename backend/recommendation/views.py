@@ -12,6 +12,7 @@ import logging
 
 from .models import JobRecommendation, UserJobPreference
 from .services import RecommendationEngine
+from .advanced_services import AdvancedRecommendationEngine
 from skills.models import CandidateProfile
 from skills.models import Skill
 
@@ -567,6 +568,431 @@ def get_my_applications(request):
         logger.error(f"Error getting applications: {str(e)}")
         return Response(
             {'error': f'Failed to get applications: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_profile_for_recommendations(request):
+    """
+    Get complete user profile data for job recommendations
+    """
+    try:
+        # Get or create candidate profile
+        try:
+            candidate = CandidateProfile.objects.get(user=request.user)
+        except CandidateProfile.DoesNotExist:
+            candidate = CandidateProfile.objects.create(
+                user=request.user,
+                first_name=request.user.first_name or 'User',
+                last_name=request.user.last_name or 'Name',
+                email=request.user.email or 'user@example.com'
+            )
+        
+        # Get user skills
+        skills_data = []
+        for skill in candidate.skills.all():
+            skills_data.append({
+                'id': skill.id,
+                'name': skill.name,
+                'category': skill.category,
+                'description': skill.description
+            })
+        
+        # Get user preferences
+        user_prefs, _ = UserJobPreference.objects.get_or_create(user=request.user)
+        
+        # Build complete profile data
+        profile_data = {
+            'id': candidate.id,
+            'user_id': request.user.id,
+            'name': f"{candidate.first_name} {candidate.last_name}",
+            'first_name': candidate.first_name,
+            'last_name': candidate.last_name,
+            'email': candidate.email,
+            'location': getattr(candidate, 'location', ''),
+            'about': getattr(candidate, 'about', ''),
+            'skills': skills_data,
+            'skills_count': len(skills_data),
+            'preferences': {
+                'min_score_threshold': user_prefs.min_score_threshold,
+                'preferred_job_types': user_prefs.preferred_job_types,
+                'preferred_seniority': user_prefs.preferred_seniority,
+                'preferred_cities': user_prefs.preferred_cities,
+                'preferred_countries': user_prefs.preferred_countries,
+                'target_salary_min': user_prefs.target_salary_min,
+                'target_salary_max': user_prefs.target_salary_max,
+                'accepts_remote': user_prefs.accepts_remote
+            },
+            'created_at': candidate.created_at.isoformat() if hasattr(candidate, 'created_at') and candidate.created_at else None,
+            'updated_at': candidate.updated_at.isoformat() if hasattr(candidate, 'updated_at') and candidate.updated_at else None
+        }
+        
+        return Response({
+            'profile': profile_data,
+            'success': True
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting user profile: {str(e)}")
+        return Response(
+            {'error': f'Failed to get user profile: {str(e)}', 'success': False},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def sync_profile_with_recommendations(request):
+    """
+    Sync user profile data with recommendation system and regenerate recommendations
+    """
+    try:
+        # Get or create candidate profile
+        try:
+            candidate = CandidateProfile.objects.get(user=request.user)
+        except CandidateProfile.DoesNotExist:
+            candidate = CandidateProfile.objects.create(
+                user=request.user,
+                first_name=request.user.first_name or 'User',
+                last_name=request.user.last_name or 'Name',
+                email=request.user.email or 'user@example.com'
+            )
+        
+        # Update candidate profile with provided data
+        profile_data = request.data.get('profile', {})
+        
+        if 'first_name' in profile_data:
+            candidate.first_name = profile_data['first_name']
+        if 'last_name' in profile_data:
+            candidate.last_name = profile_data['last_name']
+        if 'email' in profile_data:
+            candidate.email = profile_data['email']
+        if 'location' in profile_data:
+            candidate.location = profile_data['location']
+        if 'about' in profile_data:
+            candidate.about = profile_data['about']
+        
+        candidate.save()
+        
+        # Update skills if provided
+        if 'skills' in profile_data:
+            skills_to_add = []
+            for skill_data in profile_data['skills']:
+                if isinstance(skill_data, dict):
+                    skill_name = skill_data.get('name', skill_data.get('skill'))
+                else:
+                    skill_name = skill_data
+                
+                if skill_name:
+                    skill, created = Skill.objects.get_or_create(
+                        name=skill_name,
+                        defaults={'category': 'programming', 'description': f'{skill_name} skill'}
+                    )
+                    skills_to_add.append(skill)
+            
+            # Clear existing skills and add new ones
+            candidate.skills.clear()
+            candidate.skills.set(skills_to_add)
+        
+        # Update user preferences if provided
+        preferences = request.data.get('preferences', {})
+        if preferences:
+            user_prefs, _ = UserJobPreference.objects.get_or_create(user=request.user)
+            
+            if 'min_score_threshold' in preferences:
+                user_prefs.min_score_threshold = preferences['min_score_threshold']
+            if 'preferred_job_types' in preferences:
+                user_prefs.preferred_job_types = preferences['preferred_job_types']
+            if 'preferred_seniority' in preferences:
+                user_prefs.preferred_seniority = preferences['preferred_seniority']
+            if 'preferred_cities' in preferences:
+                user_prefs.preferred_cities = preferences['preferred_cities']
+            if 'preferred_countries' in preferences:
+                user_prefs.preferred_countries = preferences['preferred_countries']
+            if 'target_salary_min' in preferences:
+                user_prefs.target_salary_min = preferences['target_salary_min']
+            if 'target_salary_max' in preferences:
+                user_prefs.target_salary_max = preferences['target_salary_max']
+            if 'accepts_remote' in preferences:
+                user_prefs.accepts_remote = preferences['accepts_remote']
+            
+            user_prefs.save()
+        
+        # Clear existing recommendations to force regeneration
+        JobRecommendation.objects.filter(candidate=candidate).delete()
+        
+        # Generate new recommendations
+        engine = RecommendationEngine()
+        limit = request.data.get('limit', 10)
+        min_score = request.data.get('min_score', 50.0)
+        
+        # Create user profile data for recommendations
+        user_profile_data = {
+            'name': f"{candidate.first_name} {candidate.last_name}",
+            'email': candidate.email,
+            'skillsWithProficiency': [
+                {'name': skill.name, 'proficiency': 'intermediate'}
+                for skill in candidate.skills.all()
+            ],
+            'contact': {
+                'location': candidate.location or ''
+            },
+            'education': profile_data.get('education', []),
+            'experience': profile_data.get('experience', [])
+        }
+        
+        recommendations = engine.generate_recommendations(
+            candidate=candidate,
+            limit=limit,
+            user_profile_data=user_profile_data
+        )
+        
+        # Filter by minimum score
+        recommendations = [r for r in recommendations if r.overall_score >= min_score]
+        
+        # Serialize recommendations
+        recommendations_data = []
+        for rec in recommendations:
+            job = rec.job
+            recommendations_data.append({
+                'id': rec.id,
+                'job': {
+                    'id': job.id,
+                    'title': job.title,
+                    'company': job.company,
+                    'location': job.location,
+                    'city': job.city,
+                    'job_type': job.job_type,
+                    'seniority': job.seniority,
+                    'description': job.description,
+                    'requirements': job.requirements,
+                    'salary_min': job.salary_min,
+                    'salary_max': job.salary_max,
+                    'salary_currency': job.salary_currency,
+                    'remote': job.remote,
+                    'posted_at': job.posted_at.isoformat() if job.posted_at else None,
+                    'required_skills': [
+                        {'name': skill.name, 'category': skill.category}
+                        for skill in job.required_skills.all()
+                    ],
+                    'preferred_skills': [
+                        {'name': skill.name, 'category': skill.category}
+                        for skill in job.preferred_skills.all()
+                    ],
+                    'tags': job.tags
+                },
+                'overall_score': rec.overall_score,
+                'skill_match_score': rec.skill_match_score,
+                'salary_fit_score': rec.salary_fit_score,
+                'location_match_score': rec.location_match_score,
+                'seniority_match_score': rec.seniority_match_score,
+                'remote_bonus': rec.remote_bonus,
+                'matched_skills': rec.matched_skills,
+                'missing_skills': rec.missing_skills,
+                'recommendation_reason': rec.recommendation_reason,
+                'status': rec.status,
+                'created_at': rec.created_at.isoformat() if rec.created_at else None,
+                'updated_at': rec.updated_at.isoformat() if rec.updated_at else None
+            })
+        
+        return Response({
+            'message': 'Profile synced and recommendations generated successfully',
+            'recommendations': recommendations_data,
+            'total_count': len(recommendations_data),
+            'candidate_info': {
+                'name': f"{candidate.first_name} {candidate.last_name}",
+                'email': candidate.email,
+                'skills_count': candidate.skills.count()
+            },
+            'success': True
+        })
+        
+    except Exception as e:
+        logger.error(f"Error syncing profile with recommendations: {str(e)}")
+        return Response(
+            {'error': f'Failed to sync profile: {str(e)}', 'success': False},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_advanced_recommendations(request):
+    """
+    Get job recommendations using the advanced algorithm (Content-Based + K-Means)
+    """
+    try:
+        # Get user profile data
+        profile_data = request.data.get('profile', {})
+        user_skills = profile_data.get('skills', [])
+        user_location = profile_data.get('location', '')
+        
+        if not user_skills:
+            return Response({
+                'recommendations': [],
+                'total_count': 0,
+                'message': 'No skills provided for recommendations'
+            })
+        
+        # Initialize advanced recommendation engine
+        engine = AdvancedRecommendationEngine()
+        
+        # Generate recommendations
+        recommendations = engine.generate_recommendations(
+            user_skills=user_skills,
+            user_location=user_location,
+            user_profile_data=profile_data,
+            limit=request.data.get('limit', 10)
+        )
+        
+        # Format response
+        formatted_recommendations = []
+        for rec in recommendations:
+            job = rec['job']
+            formatted_recommendations.append({
+                'job': {
+                    'id': job['id'],
+                    'title': job['title'],
+                    'company': job['company'],
+                    'location': job['location'],
+                    'job_type': job['job_type'],
+                    'seniority': job['seniority'],
+                    'salary_min': job['salary_min'],
+                    'salary_max': job['salary_max'],
+                    'remote': job['remote'],
+                    'required_skills': job['required_skills'],
+                    'preferred_skills': job['preferred_skills'],
+                    'tags': job['tags']
+                },
+                'overall_score': rec['score'],
+                'content_score': rec['content_score'],
+                'skill_score': rec['skill_score'],
+                'location_bonus': rec['location_bonus'],
+                'remote_bonus': rec['remote_bonus'],
+                'salary_fit': rec['salary_fit'],
+                'matched_skills': rec['matched_skills'],
+                'missing_skills': rec['missing_skills'],
+                'matched_skills_count': rec['matched_skills_count'],
+                'total_skills_count': rec['total_skills_count'],
+                'recommendation_reason': f"Matches {rec['matched_skills_count']} out of {rec['total_skills_count']} required skills"
+            })
+        
+        # Get cluster information for debugging
+        cluster_info = engine.get_cluster_info()
+        
+        return Response({
+            'recommendations': formatted_recommendations,
+            'total_count': len(formatted_recommendations),
+            'algorithm_info': {
+                'method': 'Content-Based Filtering + K-Means Clustering',
+                'clusters': cluster_info,
+                'is_trained': engine.is_trained
+            },
+            'success': True
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting advanced recommendations: {str(e)}")
+        return Response(
+            {'error': f'Failed to get recommendations: {str(e)}', 'success': False},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_saved_recommendations(request):
+    """
+    Get saved job recommendations for the current user
+    """
+    try:
+        # Get candidate profile
+        try:
+            candidate = CandidateProfile.objects.get(user=request.user)
+        except CandidateProfile.DoesNotExist:
+            return Response({
+                'recommendations': [],
+                'total_count': 0,
+                'message': 'No candidate profile found'
+            })
+        
+        # Get parameters
+        limit = int(request.GET.get('limit', 10))
+        min_score = float(request.GET.get('min_score', 0.0))
+        status_filter = request.GET.get('status', None)
+        
+        # Get saved recommendations
+        recommendations_query = JobRecommendation.objects.filter(candidate=candidate)
+        
+        # Filter by minimum score
+        if min_score > 0:
+            recommendations_query = recommendations_query.filter(overall_score__gte=min_score)
+        
+        # Filter by status
+        if status_filter:
+            recommendations_query = recommendations_query.filter(status=status_filter)
+        
+        # Order by score and creation date
+        recommendations = recommendations_query.order_by('-overall_score', '-created_at')[:limit]
+        
+        # Serialize recommendations
+        recommendations_data = []
+        for rec in recommendations:
+            job = rec.job
+            recommendations_data.append({
+                'id': rec.id,
+                'job': {
+                    'id': job.id,
+                    'title': job.title,
+                    'company': job.company,
+                    'location': job.location,
+                    'city': job.city,
+                    'job_type': job.job_type,
+                    'seniority': job.seniority,
+                    'description': job.description,
+                    'requirements': job.requirements,
+                    'salary_min': job.salary_min,
+                    'salary_max': job.salary_max,
+                    'salary_currency': job.salary_currency,
+                    'remote': job.remote,
+                    'posted_at': job.posted_at.isoformat() if job.posted_at else None,
+                    'required_skills': [
+                        {'name': skill.name, 'category': skill.category}
+                        for skill in job.required_skills.all()
+                    ],
+                    'preferred_skills': [
+                        {'name': skill.name, 'category': skill.category}
+                        for skill in job.preferred_skills.all()
+                    ],
+                    'tags': job.tags
+                },
+                'overall_score': rec.overall_score,
+                'skill_match_score': rec.skill_match_score,
+                'salary_fit_score': rec.salary_fit_score,
+                'location_match_score': rec.location_match_score,
+                'seniority_match_score': rec.seniority_match_score,
+                'remote_bonus': rec.remote_bonus,
+                'matched_skills': rec.matched_skills,
+                'missing_skills': rec.missing_skills,
+                'recommendation_reason': rec.recommendation_reason,
+                'status': rec.status,
+                'created_at': rec.created_at.isoformat() if rec.created_at else None,
+                'updated_at': rec.updated_at.isoformat() if rec.updated_at else None
+            })
+        
+        return Response({
+            'recommendations': recommendations_data,
+            'total_count': len(recommendations_data),
+            'candidate_info': {
+                'name': f"{candidate.first_name} {candidate.last_name}",
+                'email': candidate.email,
+                'skills_count': candidate.skills.count()
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting saved recommendations: {str(e)}")
+        return Response(
+            {'error': f'Failed to get saved recommendations: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 

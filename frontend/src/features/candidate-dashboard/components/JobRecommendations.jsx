@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  BriefcaseIcon,
-  MapPinIcon,
+import { 
+  BriefcaseIcon, 
+  MapPinIcon, 
+>>>>>>> main
   CurrencyDollarIcon,
   StarIcon,
   ArrowTopRightOnSquareIcon,
@@ -11,7 +11,6 @@ import {
 import dashboardApi from '../services/dashboardApi';
 
 const JobRecommendations = ({ onViewAll, limit = 3 }) => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [jobs, setJobs] = useState([]);
@@ -118,13 +117,16 @@ const JobRecommendations = ({ onViewAll, limit = 3 }) => {
           </div>
         </div>
         
-        <button
-          onClick={() => navigate('/jobs')}
-          className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors hover:underline"
-        >
-          <span>View All Jobs</span>
-          <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-        </button>
+
+        {onViewAll && (
+          <button
+            onClick={onViewAll}
+            className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
+          >
+            <span>View All</span>
+            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Job Cards */}

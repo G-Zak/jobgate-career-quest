@@ -11,6 +11,7 @@ import {
 import RadarChart from './RadarChart';
 import CareerReadinessModal from './CareerReadinessModal';
 import WeakAreasModal from './WeakAreasModal';
+
 import dashboardApi from '../services/dashboardApi';
 
 const CareerReadinessBreakdown = () => {
@@ -26,6 +27,7 @@ const CareerReadinessBreakdown = () => {
   const [weakAreasRecommendations, setWeakAreasRecommendations] = useState([]);
 
   // Fetch comprehensive career readiness data
+
   useEffect(() => {
     const fetchBreakdownData = async () => {
       try {
@@ -112,6 +114,7 @@ const CareerReadinessBreakdown = () => {
         // Don't fall back to mock data - show error state instead
         setCategoryStats([]);
         setGroupedCategoryStats([]);
+
       } finally {
         setLoading(false);
       }
@@ -315,6 +318,7 @@ const CareerReadinessBreakdown = () => {
           });
         }
       });
+
     }
 
     // Ensure all core categories are represented

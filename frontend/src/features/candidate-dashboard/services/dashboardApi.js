@@ -39,6 +39,7 @@ class DashboardApi {
       }
 
       const response = await fetch(url, {
+
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -85,6 +86,7 @@ class DashboardApi {
         best_score: data.best_score || 0,
         total_time_spent: data.total_time_spent || 0,
         recent_sessions: data.recent_sessions || []
+
       };
     } catch (error) {
       console.error('Error fetching employability score:', error);
