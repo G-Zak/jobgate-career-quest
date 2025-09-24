@@ -17,8 +17,8 @@ import json
 
 logger = logging.getLogger(__name__)
 
-from .models import JobOffer, JobRecommendation, UserJobPreference, CandidateProfile
-from skills.models import Skill, TestResult
+from .models import JobOffer, JobRecommendation, UserJobPreference
+from skills.models import Skill, TestResult, CandidateProfile
 
 
 class AdvancedRecommendationEngine:
@@ -344,7 +344,9 @@ class AdvancedRecommendationEngine:
             'required_skills_count': len(required_skills),
             'preferred_skills_count': len(preferred_skills),
             'required_matched_count': len(required_matched),
-            'preferred_matched_count': len(preferred_matched)
+            'preferred_matched_count': len(preferred_matched),
+            'matched_skills_count': len(all_matched_skills),
+            'total_skills_count': len(all_job_skills)
         }
     
     def generate_recommendations(self, user_skills: List[str], user_location: str = "", user_profile_data: Optional[Dict] = None, limit: int = 10) -> List[Dict]:
