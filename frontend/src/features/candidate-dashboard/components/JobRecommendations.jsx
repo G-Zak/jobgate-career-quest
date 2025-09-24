@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { 
   BriefcaseIcon, 
   MapPinIcon, 
->>>>>>> main
   CurrencyDollarIcon,
   StarIcon,
   ArrowTopRightOnSquareIcon,
