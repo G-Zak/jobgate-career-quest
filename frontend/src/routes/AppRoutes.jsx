@@ -63,12 +63,8 @@ const AppRoutes = () => {
                 </PublicRoute>
             } />
 
-            {/* Protected routes */}
-            <Route path="/" element={
-                <ProtectedRoute>
-                    <HomePage />
-                </ProtectedRoute>
-            } />
+            {/* Home route - handles its own redirects */}
+            <Route path="/" element={<HomePage />} />
             <Route path="/dashboard" element={
                 <ProtectedRoute>
                     <MainDashboard />

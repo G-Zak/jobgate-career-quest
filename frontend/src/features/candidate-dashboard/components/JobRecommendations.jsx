@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   BriefcaseIcon, 
   MapPinIcon, 
+>>>>>>> main
   CurrencyDollarIcon,
   StarIcon,
   ArrowTopRightOnSquareIcon,
@@ -116,6 +117,7 @@ const JobRecommendations = ({ onViewAll, limit = 3 }) => {
           </div>
         </div>
         
+
         {onViewAll && (
           <button
             onClick={onViewAll}

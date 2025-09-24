@@ -3,7 +3,12 @@ import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react({
+    // Enable fast refresh but with more conservative settings
+    fastRefresh: true,
+    // Exclude problematic files from fast refresh
+    exclude: [/node_modules/, /\.stories\.(t|j)sx?$/, /\.test\.(t|j)sx?$/]
+  })],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
@@ -19,11 +24,17 @@ export default defineConfig({
     port: 3000,
     strictPort: true,
     watch: {
-      usePolling: true, // 👈 required in Docker
+      usePolling: false, // disabled to prevent excessive polling and auto-refresh
+      interval: 2000, // check for changes every 2 seconds - balanced approach
+      ignored: ['**/node_modules/**', '**/dist/**', '**/.git/**'], // ignore common directories
     },
-    hmr: {
-      clientPort: 3000, // 👈 this allows hot reload to work correctly from outside the container
-    }
+    // HMR can cause development auto-refresh issues in some environments.
+    // Respect VITE_ENABLE_HMR env var (set to 'true' to re-enable) otherwise disable HMR.
+    hmr: process.env.VITE_ENABLE_HMR === 'true' ? {
+      clientPort: 3000,
+      overlay: false,
+      timeout: 60000,
+    } : false
   },
   build: {
     rollupOptions: {

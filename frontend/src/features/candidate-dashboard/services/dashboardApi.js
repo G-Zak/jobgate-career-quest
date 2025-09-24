@@ -30,9 +30,16 @@ class DashboardApi {
   }
 
   // Get employability score data
-  async getEmployabilityScore() {
+  async getEmployabilityScore(profile = null) {
     try {
-      const response = await fetch(`${API_BASE_URL}/test-history/summary/`, {
+      // Build URL with profile parameter if provided
+      let url = `${API_BASE_URL}/test-history/summary/`;
+      if (profile) {
+        url += `?profile=${encodeURIComponent(profile)}`;
+      }
+
+      const response = await fetch(url, {
+
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -45,16 +52,41 @@ class DashboardApi {
       }
 
       const data = await response.json();
-      
-      // Transform the data to match component expectations
+
+      // Transform the new structured data to match component expectations
       return {
-        overallScore: data.average_score || 0,
-        level: this.calculateLevel(data.average_score || 0),
-        xpPoints: data.total_tests_completed * 100 || 0,
-        nextLevelXP: this.getNextLevelXP(data.total_tests_completed * 100 || 0),
+        // Core score data
+        overallScore: data.overall_score || 0,
+        categories: data.categories || {},
         testsCompleted: data.total_tests_completed || 0,
         improvement: data.improvement_trend || 0,
-        lastUpdated: data.last_test_date || new Date().toISOString()
+        lastUpdated: data.last_updated || new Date().toISOString(),
+
+        // Score interpretation
+        scoreInterpretation: data.score_interpretation || {
+          level: 'Unknown',
+          description: 'No data available',
+          market_position: 'Unknown',
+          color: 'gray'
+        },
+
+        // Recommendations
+        recommendations: data.recommendations || [],
+
+        // Profile information
+        profile: data.profile || null,
+
+        // Legacy compatibility
+        level: this.calculateLevel(data.overall_score || 0),
+        xpPoints: (data.total_tests_completed || 0) * 100,
+        nextLevelXP: this.getNextLevelXP((data.total_tests_completed || 0) * 100),
+
+        // Backward compatibility fields
+        average_score: data.overall_score || 0,
+        best_score: data.best_score || 0,
+        total_time_spent: data.total_time_spent || 0,
+        recent_sessions: data.recent_sessions || []
+
       };
     } catch (error) {
       console.error('Error fetching employability score:', error);

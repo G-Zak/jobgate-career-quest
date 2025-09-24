@@ -19,6 +19,7 @@ from .test_history_serializers import (
     TestCategoryStatsSerializer,
     TestHistoryChartSerializer
 )
+from .employability_scoring import EmployabilityScorer
 
 
 class TestSessionListCreateView(generics.ListCreateAPIView):
@@ -56,55 +57,61 @@ class TestSessionDetailView(generics.RetrieveUpdateDestroyAPIView):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def test_history_summary(request):
-    """Get comprehensive test history summary for user"""
-    # Get sessions only for the authenticated user
+    """Get comprehensive test history summary for user with employability scoring"""
+    # Get profile from query parameters (optional)
+    profile = request.GET.get('profile', None)
+
+    # Initialize employability scorer
+    scorer = EmployabilityScorer(request.user)
+
+    # Calculate comprehensive employability score
+    employability_data = scorer.calculate_overall_score(profile)
+
+    # Get basic session statistics for backward compatibility
     sessions = TestSession.objects.filter(user=request.user).select_related('test')
-    
-    # Calculate statistics
     total_sessions = sessions.count()
     completed_sessions = sessions.filter(status='completed').count()
-    
-    # Score statistics
+
+    # Time statistics
     completed_sessions_with_scores = sessions.filter(
-        status='completed', 
+        status='completed',
         score__isnull=False
     )
-    
-    average_score = completed_sessions_with_scores.aggregate(
-        avg_score=Avg('score')
-    )['avg_score'] or 0
-    
-    best_score = completed_sessions_with_scores.aggregate(
-        max_score=Max('score')
-    )['max_score'] or 0
-    
-    # Time statistics
     total_time_spent = sum(
         session.time_spent for session in completed_sessions_with_scores
     ) // 60  # Convert to minutes
-    
+
     # Recent sessions (last 10)
     recent_sessions = sessions.order_by('-start_time')[:10]
-    
+    recent_sessions_data = TestSessionHistorySerializer(recent_sessions, many=True).data
+
     # Tests taken (unique test types)
     tests_taken = list(
         sessions.values_list('test__test_type', flat=True).distinct()
     )
-    
-    # Serialize recent sessions first
-    recent_sessions_data = TestSessionHistorySerializer(recent_sessions, many=True).data
-    
+
+    # Prepare structured response for employability score
     summary_data = {
+        # New employability scoring data
+        'overall_score': employability_data['overall_score'],
+        'categories': employability_data['categories'],
+        'total_tests_completed': employability_data['total_tests_completed'],
+        'improvement_trend': employability_data['improvement_trend'],
+        'score_interpretation': employability_data['score_interpretation'],
+        'recommendations': employability_data['recommendations'],
+        'profile': employability_data['profile'],
+        'last_updated': employability_data['last_updated'].isoformat(),
+
+        # Legacy data for backward compatibility
         'total_sessions': total_sessions,
         'completed_sessions': completed_sessions,
-        'average_score': round(average_score, 2),
-        'best_score': best_score,
+        'average_score': employability_data['overall_score'],  # Use new calculated score
+        'best_score': max([cat['best_score'] for cat in employability_data['categories'].values()] + [0]),
         'total_time_spent': total_time_spent,
         'tests_taken': tests_taken,
         'recent_sessions': recent_sessions_data
     }
-    
-    # Return the data directly instead of using the serializer
+
     return Response(summary_data)
 
 
