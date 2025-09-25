@@ -202,7 +202,7 @@ class JobRecommendation(models.Model):
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='job_recommendations')
     job_offer = models.ForeignKey(JobOffer, on_delete=models.CASCADE, related_name='recommendations')
-    score = models.FloatField(help_text="Overall recommendation score")
+    score = models.FloatField(default=0.0, help_text="Overall recommendation score")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -322,3 +322,38 @@ class SavedJob(models.Model):
     
     def __str__(self):
         return f"{self.user.username} saved job {self.job_id}"
+
+
+class JobApplication(models.Model):
+    """
+    Model to track job applications by users
+    """
+    STATUS_CHOICES = [
+        ('applied', 'Applied'),
+        ('under_review', 'Under Review'),
+        ('shortlisted', 'Shortlisted'),
+        ('interview_scheduled', 'Interview Scheduled'),
+        ('interviewed', 'Interviewed'),
+        ('rejected', 'Rejected'),
+        ('accepted', 'Accepted'),
+        ('withdrawn', 'Withdrawn'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='job_applications')
+    job_id = models.IntegerField(help_text="ID of the job being applied to")
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='applied')
+    cover_letter = models.TextField(blank=True, help_text="Cover letter for the application")
+    resume_url = models.URLField(blank=True, help_text="URL to the resume file")
+    applied_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    notes = models.TextField(blank=True, help_text="Additional notes about the application")
+    
+    class Meta:
+        verbose_name = "Job Application"
+        verbose_name_plural = "Job Applications"
+        ordering = ['-applied_at']
+        unique_together = ('user', 'job_id')
+    
+    def __str__(self):
+        return f"{self.user.username} applied to job {self.job_id}"
+

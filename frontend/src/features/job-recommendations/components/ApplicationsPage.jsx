@@ -9,7 +9,11 @@ import {
   TagIcon,
   CalendarIcon,
   ArrowUpIcon,
-  ArrowDownIcon
+  ArrowDownIcon,
+  TrashIcon,
+  XMarkIcon,
+  ChevronDownIcon,
+  PencilIcon
 } from '@heroicons/react/24/outline';
 import { jobOffers } from '../../../data/jobOffers';
 import { mockJobOffers } from '../../../data/mockJobOffers';
@@ -18,6 +22,9 @@ const ApplicationsPage = () => {
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState('newest'); // 'newest' or 'oldest'
+  const [deletingJobId, setDeletingJobId] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [showStatusModal, setShowStatusModal] = useState(null);
 
   // Load applied jobs from localStorage
   useEffect(() => {
@@ -26,18 +33,29 @@ const ApplicationsPage = () => {
       try {
         const appliedJobIds = JSON.parse(localStorage.getItem('appliedJobs') || '[]');
         const appliedJobData = JSON.parse(localStorage.getItem('appliedJobData') || '[]');
-        
-        // Get job details for applied jobs
+
+        // Get job details for applied jobs - use stored job data first, fallback to static data
         const allJobs = [...jobOffers, ...mockJobOffers];
-        const jobsWithApplicationData = appliedJobIds.map(jobId => {
-          const job = allJobs.find(j => j.id === jobId);
-          const applicationData = appliedJobData.find(data => data.jobId === jobId);
-          return {
-            ...job,
-            applicationDate: applicationData?.applicationDate || new Date().toISOString(),
-            applicationStatus: applicationData?.status || 'applied'
-          };
-        });
+        const jobsWithApplicationData = appliedJobIds
+          .map(jobId => {
+            const applicationData = appliedJobData.find(data => data.jobId === jobId);
+            let job;
+
+            // Use stored job data if available, otherwise fallback to static data
+            if (applicationData?.jobData) {
+              job = applicationData.jobData;
+            } else {
+              job = allJobs.find(j => j.id === jobId);
+            }
+
+            if (!job) return null; // Filter out jobs that don't exist
+            return {
+              ...job,
+              applicationDate: applicationData?.applicationDate || new Date().toISOString(),
+              applicationStatus: applicationData?.status || 'applied'
+            };
+          })
+          .filter(Boolean); // Remove null values
 
         // Sort by application date
         const sortedJobs = jobsWithApplicationData.sort((a, b) => {
@@ -105,6 +123,55 @@ const ApplicationsPage = () => {
     setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest');
   };
 
+  // Delete application function
+  const handleDeleteApplication = async (jobId) => {
+    setDeletingJobId(jobId);
+    try {
+      // Remove from appliedJobs Set
+      const appliedJobIds = JSON.parse(localStorage.getItem('appliedJobs') || '[]');
+      const updatedAppliedJobIds = appliedJobIds.filter(id => id !== jobId);
+      localStorage.setItem('appliedJobs', JSON.stringify(updatedAppliedJobIds));
+
+      // Remove from appliedJobData
+      const appliedJobData = JSON.parse(localStorage.getItem('appliedJobData') || '[]');
+      const updatedAppliedJobData = appliedJobData.filter(data => data.jobId !== jobId);
+      localStorage.setItem('appliedJobData', JSON.stringify(updatedAppliedJobData));
+
+      // Update local state
+      setAppliedJobs(prev => prev.filter(job => job.id !== jobId));
+
+      // Hide delete confirmation
+      setShowDeleteConfirm(null);
+
+      console.log('Application deleted successfully');
+    } catch (error) {
+      console.error('Error deleting application:', error);
+    } finally {
+      setDeletingJobId(null);
+    }
+  };
+
+  // Show delete confirmation
+  const handleShowDeleteConfirm = (jobId) => {
+    setShowDeleteConfirm(jobId);
+  };
+
+  // Cancel delete
+  const handleCancelDelete = () => {
+    setShowDeleteConfirm(null);
+  };
+
+  // Handle status tracking button click
+  const handleTrackStatus = (jobId) => {
+    setShowStatusModal(jobId);
+  };
+
+  // Close status modal
+  const handleCloseStatusModal = () => {
+    setShowStatusModal(null);
+  };
+
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -134,7 +201,7 @@ const ApplicationsPage = () => {
                 {appliedJobs.length} candidature{appliedJobs.length !== 1 ? 's' : ''} envoyée{appliedJobs.length !== 1 ? 's' : ''}
               </p>
             </div>
-            
+
             {/* Sort Button */}
             {appliedJobs.length > 1 && (
               <button
@@ -155,12 +222,13 @@ const ApplicationsPage = () => {
           </div>
         </div>
 
+
         {/* Applications List */}
         {appliedJobs.length > 0 ? (
           <div className="space-y-6">
-            {appliedJobs.map((job) => (
+            {appliedJobs.map((job, index) => (
               <div
-                key={job.id}
+                key={job.id || `job-${index}`}
                 className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow"
               >
                 {/* Header */}
@@ -180,7 +248,7 @@ const ApplicationsPage = () => {
                       <p className="text-gray-600 dark:text-gray-400 font-medium text-sm mb-2">
                         {job.company}
                       </p>
-                      
+
                       {/* Application Date */}
                       <div className="flex items-center space-x-2 mb-3">
                         <CalendarIcon className="w-4 h-4 text-gray-400" />
@@ -224,6 +292,42 @@ const ApplicationsPage = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Delete Button */}
+                  <div className="flex-shrink-0">
+                    {showDeleteConfirm === job.id ? (
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleDeleteApplication(job.id)}
+                          disabled={deletingJobId === job.id}
+                          className="flex items-center space-x-1 px-3 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                        >
+                          {deletingJobId === job.id ? (
+                            <div className="w-4 h-4 border-2 border-red-300 border-t-red-600 rounded-full animate-spin"></div>
+                          ) : (
+                            <TrashIcon className="w-4 h-4" />
+                          )}
+                          <span>{deletingJobId === job.id ? 'Suppression...' : 'Confirmer'}</span>
+                        </button>
+                        <button
+                          onClick={handleCancelDelete}
+                          className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          <XMarkIcon className="w-4 h-4" />
+                          <span>Annuler</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleShowDeleteConfirm(job.id)}
+                        className="flex items-center space-x-1 px-3 py-1.5 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors"
+                        title="Supprimer cette candidature"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                        <span className="text-sm">Supprimer</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Description */}
@@ -264,8 +368,12 @@ const ApplicationsPage = () => {
                     <button className="text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
                       Voir détails
                     </button>
-                    <button className="text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
-                      Suivre le statut
+                    <button
+                      onClick={() => handleTrackStatus(job.id)}
+                      className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105"
+                    >
+                      <CheckCircleIcon className="w-4 h-4" />
+                      <span>Suivre le statut</span>
                     </button>
                   </div>
                 </div>
@@ -283,6 +391,121 @@ const ApplicationsPage = () => {
           </div>
         )}
       </div>
+
+      {/* Status Tracking Modal */}
+      {showStatusModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 scale-100">
+            {(() => {
+              const job = appliedJobs.find(j => j.id === showStatusModal);
+              if (!job) return null;
+
+              return (
+                <div className="p-6">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
+                        <CheckCircleIcon className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                          Statut de candidature
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {job.title} - {job.company}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleCloseStatusModal}
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    >
+                      <XMarkIcon className="w-6 h-6" />
+                    </button>
+                  </div>
+
+                  {/* Current Status */}
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Statut actuel
+                      </span>
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getApplicationStatusColor(job.applicationStatus)}`}>
+                        <CheckCircleIcon className="w-4 h-4 mr-2" />
+                        {getApplicationStatusText(job.applicationStatus)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Application Details */}
+                  <div className="space-y-4 mb-6">
+                    <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Date de candidature</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {formatApplicationDate(job.applicationDate)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Localisation</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {job.location}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Salaire</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {job.salary}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Status Timeline */}
+                  <div className="mb-6">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                      Prochaines étapes possibles
+                    </h4>
+                    <div className="space-y-2">
+                      {[
+                        { status: 'reviewed', label: 'Examen de votre candidature' },
+                        { status: 'interview', label: 'Entretien programmé' },
+                        { status: 'interviewed', label: 'Entretien terminé' },
+                        { status: 'accepted', label: 'Candidature acceptée' }
+                      ].map((step, index) => (
+                        <div key={step.status} className="flex items-center space-x-3">
+                          <div className={`w-2 h-2 rounded-full ${job.applicationStatus === step.status
+                              ? 'bg-blue-500'
+                              : 'bg-gray-300 dark:bg-gray-600'
+                            }`} />
+                          <span className={`text-sm ${job.applicationStatus === step.status
+                              ? 'text-blue-600 dark:text-blue-400 font-medium'
+                              : 'text-gray-500 dark:text-gray-400'
+                            }`}>
+                            {step.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={handleCloseStatusModal}
+                      className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
+                    >
+                      Fermer
+                    </button>
+                    <button className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium">
+                      Voir détails
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

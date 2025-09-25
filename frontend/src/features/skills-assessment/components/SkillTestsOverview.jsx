@@ -24,6 +24,7 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
   const [userSkills, setUserSkills] = useState([]);
   const [allTests, setAllTests] = useState([]);
   const [recommendedTests, setRecommendedTests] = useState([]);
+  const [mySkillsTests, setMySkillsTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
@@ -175,7 +176,7 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
 
   // Charger les données initiales
   useEffect(() => {
-    console.log('🔄 Initial useEffect triggered, userId:', userId, 'allTests length:', allTests.length);
+    console.log('🔄 Initial useEffect triggered, userId:', userId, 'allTests length:', allTests.length, 'testsLoaded:', testsLoaded);
 
     // Si on a déjà des tests, ne pas les recharger
     if (testsLoaded && allTests.length > 0) {
@@ -189,13 +190,14 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
       // Si pas d'userId, utiliser un fallback immédiat
       console.log('⚠️ No userId, using immediate fallback data');
       const fallbackSkills = getFallbackSkillsForUser(1);
-      const emergencyTests = [...mockTests, ...createPersonalizedTests(fallbackSkills)];
+      const emergencyTests = [...mockTests, ...createPersonalizedTests(fallbackSkills, mockTests)];
 
       console.log('🚨 Setting emergency tests:', emergencyTests.length);
       setUserSkills(fallbackSkills);
       setAllTests(emergencyTests);
       setTestsLoaded(true);
       setRecommendedTests(emergencyTests.filter(test => test.is_recommended));
+      setMySkillsTests(getUniqueMySkillsTests(emergencyTests, fallbackSkills));
       setStats({
         totalTests: emergencyTests.length,
         recommendedCount: emergencyTests.filter(test => test.is_recommended).length,
@@ -204,13 +206,23 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
       });
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, testsLoaded]);
 
   // Écouter les changements de compétences (si l'utilisateur les met à jour)
   useEffect(() => {
-    const handleSkillsUpdate = () => {
-      console.log('🔄 Skills updated, reloading user data...');
-      loadUserSkillsAndTests();
+    const handleSkillsUpdate = (event) => {
+      console.log('🔄 Skills updated, reloading user data...', event.detail);
+      // Reset all states to force complete reload
+      setTestsLoaded(false);
+      setAllTests([]);
+      setRecommendedTests([]);
+      setMySkillsTests([]);
+      setUserSkills([]);
+      setUserProfile(null);
+      // Force reload after a short delay to ensure state is reset
+      setTimeout(() => {
+        loadUserSkillsAndTests();
+      }, 100);
     };
 
     // Écouter les événements personnalisés pour les mises à jour de compétences
@@ -238,10 +250,12 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
           const candidate = await candidateResponse.json();
           userProfileData = candidate;
           userSkillsData = candidate.skills || [];
-          console.log('✅ User profile loaded:', {
+          console.log('✅ User profile loaded from API:', {
             id: candidate.id,
             name: candidate.name || 'Unknown',
-            skills: userSkillsData.length
+            skills: userSkillsData.length,
+            skillNames: userSkillsData.map(s => s.name),
+            fullSkillsData: userSkillsData
           });
         } else {
           console.log('⚠️ User profile not found, using fallback');
@@ -298,22 +312,32 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
       }
 
       // Ajouter des tests personnalisés pour les compétences de l'utilisateur
-      const personalizedTests = createPersonalizedTests(userSkillsData);
+      // seulement si aucun test n'existe déjà pour cette compétence
+      const personalizedTests = createPersonalizedTests(userSkillsData, testsData);
       testsData = [...testsData, ...personalizedTests];
 
       console.log('✅ Final tests data:', testsData.length, 'tests');
 
       setUserSkills(userSkillsData);
 
+      // Initialize variables for logging
+      let recommended = [];
+      let mySkills = [];
+
       // Vérifier que les tests ne sont pas vides avant de les définir
       if (testsData.length > 0) {
         console.log('✅ Setting tests data:', testsData.length, 'tests');
+        console.log('✅ Tests data sample:', testsData[0]);
         setAllTests(testsData);
         setTestsLoaded(true);
 
         // Separate recommended tests
-        const recommended = testsData.filter(test => test.is_recommended);
+        recommended = testsData.filter(test => test.is_recommended);
         setRecommendedTests(recommended);
+
+        // Filter tests for user's existing skills (unique, one per skill)
+        mySkills = getUniqueMySkillsTests(testsData, userSkillsData);
+        setMySkillsTests(mySkills);
 
         // Calculate stats
         setStats({
@@ -331,14 +355,15 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
         userProfile: userProfileData?.name || 'Unknown',
         userSkills: userSkillsData.length,
         allTests: testsData.length,
-        recommended: recommended.length
+        recommended: recommended.length,
+        mySkills: mySkills.length
       });
 
     } catch (error) {
       console.error('❌ Critical error, using emergency fallback:', error);
       // Emergency fallback - toujours afficher quelque chose
       const fallbackSkills = getFallbackSkillsForUser(userId);
-      const emergencyTests = [...mockTests, ...createPersonalizedTests(fallbackSkills)];
+      const emergencyTests = [...mockTests, ...createPersonalizedTests(fallbackSkills, mockTests)];
 
       console.log('🚨 Emergency fallback activated:', emergencyTests.length, 'tests');
 
@@ -346,6 +371,7 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
       setAllTests(emergencyTests);
       setTestsLoaded(true);
       setRecommendedTests(emergencyTests.filter(test => test.is_recommended));
+      setMySkillsTests(getUniqueMySkillsTests(emergencyTests, fallbackSkills));
       setStats({
         totalTests: emergencyTests.length,
         recommendedCount: emergencyTests.filter(test => test.is_recommended).length,
@@ -360,28 +386,39 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
   };
 
   // Helper functions for better data processing
-  const createPersonalizedTests = (userSkills) => {
+  const createPersonalizedTests = (userSkills, existingTests = []) => {
     const personalizedTests = [];
 
     // Ajouter des tests spécifiques pour les compétences de l'utilisateur
+    // seulement si aucun test n'existe déjà pour cette compétence
     userSkills.forEach(skill => {
       const skillName = skill.name.toLowerCase();
 
-      // Créer un test personnalisé pour cette compétence
-      const customTest = {
-        id: 1000 + skill.id, // ID unique pour les tests personnalisés
-        test_name: `${skill.name} Assessment Test`,
-        skill: { name: skill.name, category: skill.category },
-        description: `Test your knowledge of ${skill.name} - personalized for your profile`,
-        difficulty: 'Intermediate',
-        time_limit: 15,
-        question_count: 20,
-        total_score: 100,
-        is_recommended: true,
-        skill_demand: getSkillDemand(skill.name)
-      };
-      personalizedTests.push(customTest);
-      console.log('✅ Created personalized test for skill:', skill.name);
+      // Vérifier si un test existe déjà pour cette compétence
+      const existingTest = existingTests.find(test =>
+        test.skill && test.skill.name &&
+        test.skill.name.toLowerCase() === skillName
+      );
+
+      // Créer un test personnalisé seulement si aucun test n'existe
+      if (!existingTest) {
+        const customTest = {
+          id: 1000 + skill.id, // ID unique pour les tests personnalisés
+          test_name: `${skill.name} Assessment Test`,
+          skill: { name: skill.name, category: skill.category },
+          description: `Test your knowledge of ${skill.name} - personalized for your profile`,
+          difficulty: 'Intermediate',
+          time_limit: 15,
+          question_count: 20,
+          total_score: 100,
+          is_recommended: true,
+          skill_demand: getSkillDemand(skill.name)
+        };
+        personalizedTests.push(customTest);
+        console.log('✅ Created personalized test for skill:', skill.name);
+      } else {
+        console.log('⏭️ Skipped creating test for skill (already exists):', skill.name);
+      }
     });
 
     return personalizedTests;
@@ -455,6 +492,76 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
     return demandScores[skillName] || 70;
   };
 
+  // Filter tests based on user's existing skills
+  const getMySkillsTests = (tests, userSkills) => {
+    if (!userSkills || userSkills.length === 0) return [];
+
+    const userSkillNames = userSkills.map(skill => skill.name.toLowerCase());
+
+    return tests.filter(test => {
+      if (!test || !test.skill || !test.skill.name) return false;
+
+      const testSkillName = test.skill.name.toLowerCase();
+
+      // Check if the test skill matches any of the user's skills
+      return userSkillNames.some(userSkill =>
+        userSkill === testSkillName ||
+        testSkillName.includes(userSkill) ||
+        userSkill.includes(testSkillName)
+      );
+    });
+  };
+
+  // Filter tests to show only one test per user skill (avoid duplicates)
+  const getUniqueMySkillsTests = (tests, userSkills) => {
+    if (!userSkills || userSkills.length === 0) {
+      console.log('⚠️ No user skills provided to getUniqueMySkillsTests');
+      return [];
+    }
+
+    const userSkillNames = userSkills.map(skill => skill.name.toLowerCase());
+    const uniqueTests = [];
+    const usedSkills = new Set();
+
+    console.log('🔍 getUniqueMySkillsTests - User skills:', userSkillNames);
+    console.log('🔍 getUniqueMySkillsTests - Available tests:', tests.map(t => t.skill?.name));
+
+    // First, try to find exact matches for each user skill
+    userSkillNames.forEach(userSkill => {
+      const exactMatch = tests.find(test => {
+        if (!test || !test.skill || !test.skill.name) return false;
+        const testSkillName = test.skill.name.toLowerCase();
+        return testSkillName === userSkill && !usedSkills.has(userSkill);
+      });
+
+      if (exactMatch) {
+        console.log('✅ Found exact match for skill:', userSkill, '->', exactMatch.skill.name);
+        uniqueTests.push(exactMatch);
+        usedSkills.add(userSkill);
+      }
+    });
+
+    // If no exact matches found, try partial matches
+    if (uniqueTests.length === 0) {
+      userSkillNames.forEach(userSkill => {
+        const partialMatch = tests.find(test => {
+          if (!test || !test.skill || !test.skill.name) return false;
+          const testSkillName = test.skill.name.toLowerCase();
+          return (testSkillName.includes(userSkill) || userSkill.includes(testSkillName)) && !usedSkills.has(userSkill);
+        });
+
+        if (partialMatch) {
+          console.log('✅ Found partial match for skill:', userSkill, '->', partialMatch.skill.name);
+          uniqueTests.push(partialMatch);
+          usedSkills.add(userSkill);
+        }
+      });
+    }
+
+    console.log('✅ getUniqueMySkillsTests result:', uniqueTests.length, 'tests for', userSkillNames.length, 'skills');
+    return uniqueTests;
+  };
+
   const filteredTests = allTests.filter(test => {
     if (!test || !test.test_name || !test.skill) {
       console.log('⚠️ Invalid test data:', test);
@@ -481,7 +588,8 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
   // Debug: Log filteredTests changes
   useEffect(() => {
     console.log('🔍 filteredTests calculated:', filteredTests.length, filteredTests);
-  }, [filteredTests]);
+    console.log('🔍 allTests in filteredTests useEffect:', allTests.length, allTests);
+  }, [filteredTests, allTests]);
 
   const getSkillIcon = (category) => {
     const IconComponent = skillIcons[category] || BookOpenIcon;
@@ -495,12 +603,18 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
     return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
   };
 
-  const TestCard = ({ test, isRecommended = false }) => {
+  const TestCard = ({ test, isRecommended = false, isMySkill = false }) => {
     const IconComponent = skillIcons[test.skill.category] || BookOpenIcon;
 
     return (
       <div className={`group relative bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-300 hover:-translate-y-1`}>
-        {isRecommended && (
+        {isMySkill && (
+          <div className="absolute -top-2 -right-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+            <CheckCircleSolidIcon className="w-3 h-3" />
+            Ma Compétence
+          </div>
+        )}
+        {isRecommended && !isMySkill && (
           <div className="absolute -top-2 -right-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
             <FireIcon className="w-3 h-3" />
             Recommended
@@ -542,7 +656,15 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
           </span>
         </div>
 
-        {isRecommended && (
+        {isMySkill && (
+          <div className="mb-4">
+            <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+              <CheckCircleSolidIcon className="w-4 h-4" />
+              <span>Compétence détectée dans votre profil</span>
+            </div>
+          </div>
+        )}
+        {isRecommended && !isMySkill && (
           <div className="mb-4">
             <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
               <ChartBarIcon className="w-4 h-4" />
@@ -608,7 +730,7 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
               )}
               {/* Debug info */}
               <div className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-                Debug: Tests={allTests.length} | Filtered={filteredTests.length} | UserId={userId}
+                Debug: Tests={allTests.length} | MySkills={mySkillsTests.length} | Recommended={recommendedTests.length} | Filtered={filteredTests.length} | UserId={userId}
               </div>
             </div>
             <div className="flex gap-2">
@@ -616,6 +738,8 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
                 onClick={() => {
                   console.log('🔍 Debug data:', {
                     allTests: allTests.length,
+                    mySkillsTests: mySkillsTests.length,
+                    recommendedTests: recommendedTests.length,
                     filteredTests: filteredTests.length,
                     userSkills: userSkills.length,
                     userId: userId,
@@ -623,11 +747,25 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
                     selectedDifficulty,
                     selectedSkill
                   });
+                  // Force reload by resetting testsLoaded flag
+                  setTestsLoaded(false);
                   loadUserSkillsAndTests();
                 }}
                 className="px-3 py-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 border border-blue-300 dark:border-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors text-sm"
               >
-                Debug
+                Debug & Reload
+              </button>
+              <button
+                onClick={() => {
+                  console.log('🔄 Force sync with profile...');
+                  // Simulate skills update event
+                  window.dispatchEvent(new CustomEvent('skillsUpdated', {
+                    detail: { userId, skills: userSkills }
+                  }));
+                }}
+                className="px-3 py-2 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 border border-green-300 dark:border-green-600 rounded-lg hover:bg-green-50 dark:hover:bg-green-900 transition-colors text-sm"
+              >
+                Force Sync
               </button>
               <button
                 onClick={onBackToDashboard}
@@ -642,7 +780,7 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
@@ -651,6 +789,18 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
               <div>
                 <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalTests}</p>
                 <p className="text-sm text-slate-600 dark:text-slate-400">Tests disponibles</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                <AcademicCapIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{mySkillsTests.length}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Mes Compétences</p>
               </div>
             </div>
           </div>
@@ -669,8 +819,8 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
 
           <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                <CheckCircleSolidIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
+              <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                <CheckCircleSolidIcon className="w-6 h-6 text-orange-600 dark:text-orange-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.completedCount}</p>
@@ -756,6 +906,37 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
           </div>
         </div>
 
+        {/* My Skills Tests Section */}
+        {mySkillsTests.length > 0 && (
+          <div className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg">
+                <AcademicCapIcon className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                Mes Tests de Compétences
+              </h2>
+              <span className="px-3 py-1 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-800 dark:text-green-300 rounded-full text-sm font-medium">
+                {mySkillsTests.length} test{mySkillsTests.length > 1 ? 's' : ''}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {mySkillsTests
+                .filter(test => {
+                  const matchesSearch = test.test_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    test.skill.name.toLowerCase().includes(searchTerm.toLowerCase());
+                  const matchesDifficulty = selectedDifficulty === 'all' || test.difficulty === selectedDifficulty;
+                  const matchesSkill = selectedSkill === 'all' || test.skill.name === selectedSkill;
+                  return matchesSearch && matchesDifficulty && matchesSkill;
+                })
+                .map(test => (
+                  <TestCard key={test.id} test={test} isMySkill={true} />
+                ))}
+            </div>
+          </div>
+        )}
+
         {/* Recommended Tests Section */}
         {recommendedTests.length > 0 && (
           <div className="mb-12">
@@ -832,9 +1013,20 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTests.map(test => (
-                <TestCard key={test.id} test={test} />
-              ))}
+              {console.log('🔍 Rendering filteredTests:', filteredTests.length, filteredTests)}
+              {filteredTests.length > 0 ? (
+                filteredTests.map(test => (
+                  <TestCard key={test.id} test={test} />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <div className="text-slate-500 dark:text-slate-400">
+                    <BookOpenIcon className="w-12 h-12 mx-auto mb-4" />
+                    <p className="text-lg font-medium">Aucun test trouvé</p>
+                    <p className="text-sm">Essayez de modifier vos filtres de recherche</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

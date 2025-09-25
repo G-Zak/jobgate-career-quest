@@ -501,7 +501,7 @@ def apply_to_job(request, job_id):
     Apply to a job
     """
     try:
-        from job_offers.models import JobApplication
+        from .models import JobApplication
         
         # Check if already applied
         existing_application = JobApplication.objects.filter(
@@ -543,9 +543,9 @@ def get_my_applications(request):
     Get user's job applications
     """
     try:
-        from job_offers.models import JobApplication
+        from .models import JobApplication
         
-        applications = JobApplication.objects.filter(user=request.user).order_by('-created_at')
+        applications = JobApplication.objects.filter(user=request.user).order_by('-applied_at')
         
         applications_data = []
         for app in applications:
@@ -555,7 +555,7 @@ def get_my_applications(request):
                 'status': app.status,
                 'cover_letter': app.cover_letter,
                 'resume_url': app.resume_url,
-                'created_at': app.created_at.isoformat() if app.created_at else None,
+                'applied_at': app.applied_at.isoformat() if app.applied_at else None,
                 'updated_at': app.updated_at.isoformat() if app.updated_at else None
             })
         
