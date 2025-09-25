@@ -474,12 +474,12 @@ const ApplicationsPage = () => {
                       ].map((step, index) => (
                         <div key={step.status} className="flex items-center space-x-3">
                           <div className={`w-2 h-2 rounded-full ${job.applicationStatus === step.status
-                              ? 'bg-blue-500'
-                              : 'bg-gray-300 dark:bg-gray-600'
+                            ? 'bg-blue-500'
+                            : 'bg-gray-300 dark:bg-gray-600'
                             }`} />
                           <span className={`text-sm ${job.applicationStatus === step.status
-                              ? 'text-blue-600 dark:text-blue-400 font-medium'
-                              : 'text-gray-500 dark:text-gray-400'
+                            ? 'text-blue-600 dark:text-blue-400 font-medium'
+                            : 'text-gray-500 dark:text-gray-400'
                             }`}>
                             {step.label}
                           </span>

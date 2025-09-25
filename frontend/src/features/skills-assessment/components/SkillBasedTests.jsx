@@ -196,7 +196,7 @@ const SkillBasedTests = ({ userId, testId, skillId, onBackToDashboard }) => {
 
     // Utiliser la compétence explicite si fournie, sinon essayer de l'identifier
     let skillName = 'general';
-    
+
     if (explicitSkill) {
       skillName = explicitSkill.toLowerCase();
       console.log('🎯 Using explicit skill:', skillName);
@@ -759,7 +759,7 @@ const SkillBasedTests = ({ userId, testId, skillId, onBackToDashboard }) => {
     console.log('🚀 test.skill?.name:', test.skill?.name);
     console.log('🚀 test.title:', test.title);
     console.log('🚀 test.test_name:', test.test_name);
-    
+
     try {
       // Charger les questions du test depuis notre API des compétences
       const response = await fetch(`http://localhost:8000/api/skills/tests/${test.id}/questions/`);

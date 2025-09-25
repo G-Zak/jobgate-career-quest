@@ -300,15 +300,17 @@ const MainDashboard = () => {
       setActiveSection('lrt3-test');
     } else {
       // Check if it's a custom QCM test from our skill-based system
-      const isCustomQCMTest = (typeof testId === 'number' && testId >= 1 && testId <= 100) ||
+      const isCustomQCMTest = (typeof testId === 'number' && testId >= 1 && testId <= 2000) || // Extended range to include skill tests (1000+)
         (typeof testId === 'string' && testId.includes('test'));
 
       if (isCustomQCMTest) {
         console.log('✅ Routing to technical-assessment for custom QCM test:', testId);
+        console.log('✅ Test ID type:', typeof testId, 'Value:', testId);
         setActiveSection('technical-assessment');
       } else {
         // Handle other test types (numerical, etc.)
         console.log('❌ Routing to test-session for testId:', testId);
+        console.log('❌ Test ID type:', typeof testId, 'Value:', testId);
         setActiveSection('test-session');
       }
     }
@@ -591,7 +593,7 @@ const MainDashboard = () => {
                               : 'text-gray-700 hover:bg-blue-50 hover:text-blue-500'
                               }`}
                           >
-                               {skill}
+                            {skill}
                           </button>
                         ))}
                       </div>
