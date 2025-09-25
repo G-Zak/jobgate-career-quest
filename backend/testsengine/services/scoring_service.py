@@ -17,6 +17,7 @@ from django.core.exceptions import ValidationError
 import logging
 
 from ..models import Test, Question, TestSubmission, Answer, Score
+from ..question_option_model import QuestionOption
 
 logger = logging.getLogger(__name__)
 
@@ -159,16 +160,28 @@ class ScoringService:
         for question in questions:
             question_id_str = str(question.id)
             selected_answer = answers_data.get(question_id_str, '').upper()
-            
-            # Determine if answer is correct
-            is_correct = question.check_answer(selected_answer)
-            
-            # Calculate points based on difficulty coefficient
-            if is_correct:
-                points_awarded = self.config.DIFFICULTY_COEFFICIENTS[question.difficulty_level]
+
+            # Special scoring for Situational Judgment (per-option +2/+1/0/-1)
+            if submission.test.test_type == 'situational_judgment':
+                # Default to 0 if no mapping found
+                score_value = 0
+                try:
+                    opt = QuestionOption.objects.filter(
+                        question=question,
+                        option_letter=selected_answer
+                    ).first()
+                    if opt:
+                        score_value = int(opt.score_value)
+                except Exception:
+                    score_value = 0
+                # Best choice counts as correct for reporting
+                is_correct = (score_value == 2)
+                points_awarded = Decimal(str(score_value))
             else:
-                points_awarded = Decimal('0.0')
-            
+                # Standard MCQ scoring
+                is_correct = question.check_answer(selected_answer)
+                points_awarded = self.config.DIFFICULTY_COEFFICIENTS[question.difficulty_level] if is_correct else Decimal('0.0')
+
             # Create Answer record
             answer = Answer.objects.create(
                 submission=submission,
@@ -179,7 +192,7 @@ class ScoringService:
                 time_taken_seconds=0,  # Individual question timing not implemented yet
                 answered_at=timezone.now()
             )
-            
+
             answer_results.append({
                 'answer': answer,
                 'question': question,
@@ -201,8 +214,12 @@ class ScoringService:
         raw_score = sum(result['points_awarded'] for result in answer_results)
         
         # Calculate maximum possible score for this test
-        max_possible_score = submission.test.calculate_max_score()
-        
+        if submission.test.test_type == 'situational_judgment':
+            # Max per question is +2 in SJT
+            max_possible_score = Decimal('2.0') * Decimal(str(total_questions))
+        else:
+            max_possible_score = submission.test.calculate_max_score()
+
         # Calculate percentage
         if max_possible_score > 0:
             percentage_score = (raw_score / max_possible_score * 100).quantize(

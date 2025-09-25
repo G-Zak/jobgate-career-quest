@@ -51,8 +51,8 @@ class QuestionForTestSerializer(serializers.ModelSerializer):
         # Add coefficient for transparency (frontend can show difficulty weighting)
         data['scoring_coefficient'] = instance.scoring_coefficient
         
-        # For SJT tests (test_id = 4), include QuestionOption data instead of JSON options
-        if instance.test_id == 4:
+        # For SJT tests, include QuestionOption data instead of JSON options
+        if (getattr(instance, 'question_type', '') == 'situational_judgment') or (instance.test_id in (4, 30)):
             try:
                 from .question_option_model import QuestionOption
                 question_options = QuestionOption.objects.filter(question=instance).order_by('option_letter')
