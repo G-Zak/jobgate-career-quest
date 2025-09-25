@@ -816,6 +816,7 @@ const JobRecommendations = ({
             experience: job.seniority || 'mid',
             remote: job.remote || false,
             posted: job.posted || new Date().toISOString(),
+
             requiredSkills: requiredSkills,
             preferredSkills: preferredSkills,
             tags: job.tags || [],

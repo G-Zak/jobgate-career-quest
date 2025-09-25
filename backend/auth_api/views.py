@@ -300,28 +300,52 @@ def get_dashboard_summary(request):
         
         # Get job recommendations (simplified)
         try:
-            from recommendation.services import RecommendationEngine
-            from recommendation.models import CandidateProfile
-            
+            from recommendation.models import CandidateProfile, JobRecommendation
+
             candidate = CandidateProfile.objects.get(user=user)
-            engine = RecommendationEngine()
-            recommendations = engine.generate_recommendations(candidate=candidate, limit=3)
-            
+
+            # Get existing recommendations first
+            existing_recommendations = JobRecommendation.objects.filter(
+                candidate=candidate
+            ).select_related('job').prefetch_related('job__required_skills').order_by('-overall_score')[:3]
+
             job_recommendations = []
-            for rec in recommendations:
+            for rec in existing_recommendations:
                 job = rec.job
                 job_recommendations.append({
                     'id': str(job.id),
                     'title': job.title,
                     'company': job.company,
                     'match': round(rec.overall_score, 0),
-                    'salary': f"${job.salary_min:,}-${job.salary_max:,}" if job.salary_min and job.salary_max else "Salary not specified",
+                    'salary': f"{job.salary_min:,}-{job.salary_max:,} {job.salary_currency}" if job.salary_min and job.salary_max else "Salary not specified",
                     'location': job.location,
                     'skills': [skill.name for skill in job.required_skills.all()[:3]],
                     'description': job.description[:100] + "..." if job.description and len(job.description) > 100 else job.description or "",
                     'job_type': job.job_type or "Full-time",
                     'remote': job.remote
                 })
+
+            # If no existing recommendations, try to generate new ones
+            if not job_recommendations:
+                from recommendation.services import RecommendationEngine
+                engine = RecommendationEngine()
+                recommendations = engine.generate_recommendations(candidate=candidate, limit=3)
+
+                for rec in recommendations:
+                    job = rec.job
+                    job_recommendations.append({
+                        'id': str(job.id),
+                        'title': job.title,
+                        'company': job.company,
+                        'match': round(rec.overall_score, 0),
+                        'salary': f"{job.salary_min:,}-{job.salary_max:,} {job.salary_currency}" if job.salary_min and job.salary_max else "Salary not specified",
+                        'location': job.location,
+                        'skills': [skill.name for skill in job.required_skills.all()[:3]],
+                        'description': job.description[:100] + "..." if job.description and len(job.description) > 100 else job.description or "",
+                        'job_type': job.job_type or "Full-time",
+                        'remote': job.remote
+                    })
+
         except Exception as e:
             logger.warning(f"Could not get job recommendations: {str(e)}")
             job_recommendations = []

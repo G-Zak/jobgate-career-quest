@@ -93,9 +93,25 @@ export async function submitTestAttempt({
 
   } catch (error) {
     console.error('Error submitting test attempt:', error);
-    
+
+    // Handle 409 Conflict (duplicate submission) specially
+    if (error.status === 409 && error.existingSubmission) {
+      console.log('Duplicate submission detected:', error.existingSubmission);
+
+      // Create a special error object with existing submission data
+      const duplicateError = new Error('DUPLICATE_SUBMISSION');
+      duplicateError.isDuplicateSubmission = true;
+      duplicateError.existingSubmission = error.existingSubmission;
+
+      if (onError) {
+        onError(duplicateError);
+      }
+
+      throw duplicateError;
+    }
+
     const errorMessage = backendApi.handleApiError(error, 'Test submission');
-    
+
     if (onError) {
       onError(new Error(errorMessage));
     } else {
@@ -110,10 +126,10 @@ export async function submitTestAttempt({
         id: `error_${Date.now()}`,
         error_message: errorMessage
       };
-      
+
       assessmentStore.addAttempt(fallbackPayload);
     }
-    
+
     throw new Error(errorMessage);
   }
 }

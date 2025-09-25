@@ -9,30 +9,38 @@ import {
 } from '@heroicons/react/24/outline';
 import dashboardApi from '../services/dashboardApi';
 
-const RecentTests = ({ onViewAll, limit = 5 }) => {
-  const [loading, setLoading] = useState(true);
+const RecentTests = ({ data, onViewAll, limit = 5 }) => {
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [tests, setTests] = useState([]);
 
-  // Fetch recent tests
+  // Use data from props or fetch if not provided
   useEffect(() => {
-    const fetchRecentTests = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await dashboardApi.getRecentTests(limit);
-        setTests(data);
-      } catch (err) {
-        console.error('Error fetching recent tests:', err);
-        setError('Failed to load recent tests');
-        // Keep empty array on error
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (data) {
+      // Use data passed from parent (dashboard aggregated API)
+      const limitedTests = Array.isArray(data) ? data.slice(0, limit) : [];
+      setTests(limitedTests);
+      setLoading(false);
+    } else {
+      // Fallback: fetch data directly
+      const fetchRecentTests = async () => {
+        try {
+          setLoading(true);
+          setError(null);
+          const apiData = await dashboardApi.getRecentTests(limit);
+          setTests(apiData);
+        } catch (err) {
+          console.error('Error fetching recent tests:', err);
+          setError('Failed to load recent tests');
+          setTests([]);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    fetchRecentTests();
-  }, [limit]);
+      fetchRecentTests();
+    }
+  }, [data, limit]);
 
   const getScoreColor = (score) => {
     if (score >= 80) return 'text-green-600';
@@ -168,11 +176,11 @@ const RecentTests = ({ onViewAll, limit = 5 }) => {
               {/* Test Info */}
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-gray-900 truncate">
-                  {test.test_title || test.test_type || 'Unknown Test'}
+                  {test.test_name || test.test_type || 'Unknown Test'}
                 </h3>
                 <div className="flex items-center space-x-2 text-xs text-gray-500">
                   <ClockIcon className="w-3 h-3" />
-                  <span>{formatDate(test.date_taken)}</span>
+                  <span>{formatDate(test.date)}</span>
                 </div>
               </div>
               

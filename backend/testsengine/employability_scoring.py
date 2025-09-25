@@ -18,23 +18,45 @@ from .models import TestSession, Test
 
 class EmployabilityCategories:
     """Define employability categories and their mappings"""
-    
+
     # Core employability categories
     COGNITIVE = 'cognitive'
     TECHNICAL = 'technical'
     SITUATIONAL = 'situational'
     COMMUNICATION = 'communication'
     ANALYTICAL = 'analytical'
-    
-    # Test type to category mapping
+
+    # Individual test types (for spider charts)
+    INDIVIDUAL_TEST_TYPES = [
+        'verbal_reasoning',
+        'numerical_reasoning',
+        'logical_reasoning',
+        'abstract_reasoning',
+        'spatial_reasoning',
+        'diagrammatic_reasoning',
+        'analytical_reasoning',
+        'situational_judgment',
+        'technical'
+    ]
+
+    # Test type to category mapping (for grouped cards) - REMOVED COGNITIVE GROUPING
     TEST_CATEGORY_MAPPING = {
-        'verbal_reasoning': COGNITIVE,
-        'numerical_reasoning': ANALYTICAL,
-        'logical_reasoning': COGNITIVE,
-        'abstract_reasoning': COGNITIVE,
-        'spatial_reasoning': ANALYTICAL,
+        'verbal_reasoning': 'verbal_reasoning',
+        'numerical_reasoning': 'numerical_reasoning',
+        'logical_reasoning': 'logical_reasoning',
+        'abstract_reasoning': 'abstract_reasoning',
+        'spatial_reasoning': 'spatial_reasoning',
+        'diagrammatic_reasoning': 'diagrammatic_reasoning',
+        'analytical_reasoning': 'analytical_reasoning',
         'situational_judgment': SITUATIONAL,
         'technical': TECHNICAL,
+    }
+
+    # Grouping for cards display - REMOVED COGNITIVE GROUPING
+    CARD_GROUPINGS = {
+        'situational': ['situational_judgment'],
+        'cognitive': ['verbal_reasoning', 'numerical_reasoning', 'logical_reasoning', 'abstract_reasoning', 'spatial_reasoning', 'diagrammatic_reasoning', 'analytical_reasoning'],
+        'technical': ['technical']
     }
     
     # Category display names and descriptions
@@ -70,11 +92,21 @@ class EmployabilityCategories:
     def get_category_for_test_type(cls, test_type: str) -> str:
         """Get the employability category for a given test type"""
         return cls.TEST_CATEGORY_MAPPING.get(test_type, cls.COGNITIVE)
-    
+
     @classmethod
     def get_all_categories(cls) -> List[str]:
         """Get all available categories"""
         return list(cls.CATEGORY_INFO.keys())
+
+    @classmethod
+    def get_individual_test_types(cls) -> List[str]:
+        """Get all individual test types for spider chart display"""
+        return cls.INDIVIDUAL_TEST_TYPES
+
+    @classmethod
+    def get_card_groupings(cls) -> Dict[str, List[str]]:
+        """Get test type groupings for card display"""
+        return cls.CARD_GROUPINGS
 
 
 class ProfileWeights:
@@ -168,26 +200,86 @@ class EmployabilityScorer:
         self.categories = EmployabilityCategories()
         self.profile_weights = ProfileWeights()
     
-    def calculate_category_scores(self) -> Dict[str, Dict]:
-        """Calculate scores for each employability category"""
-        category_scores = {}
-        
+    def calculate_individual_test_scores(self) -> Dict[str, Dict]:
+        """Calculate scores for individual test types (for spider charts)"""
+        test_scores = {}
+
         # Get all completed test sessions for the user
         completed_sessions = TestSession.objects.filter(
             user=self.user,
             status='completed',
             score__isnull=False
         ).select_related('test')
-        
-        # Group sessions by category
-        for category in self.categories.get_all_categories():
+
+        # Group sessions by individual test type
+        for test_type in self.categories.get_individual_test_types():
+            test_sessions = completed_sessions.filter(test__test_type=test_type)
+
+            if test_sessions.exists():
+                scores = [session.score for session in test_sessions]
+                test_scores[test_type] = {
+                    'score': round(statistics.mean(scores), 2),
+                    'count': len(scores),
+                    'best_score': max(scores),
+                    'consistency': self._calculate_consistency(scores),
+                    'recent_trend': self._calculate_recent_trend(test_sessions),
+                    'last_updated': max(session.start_time for session in test_sessions)
+                }
+            else:
+                test_scores[test_type] = {
+                    'score': 0,
+                    'count': 0,
+                    'best_score': 0,
+                    'consistency': 0,
+                    'recent_trend': 0,
+                    'last_updated': None
+                }
+
+        return test_scores
+
+    def calculate_category_scores(self) -> Dict[str, Dict]:
+        """Calculate scores for each individual test type (no more grouping)"""
+        category_scores = {}
+
+        # Get all completed test sessions for the user
+        completed_sessions = TestSession.objects.filter(
+            user=self.user,
+            status='completed',
+            score__isnull=False
+        ).select_related('test')
+
+        # Calculate scores for each individual test type
+        for test_type in self.categories.get_individual_test_types():
+            test_sessions = completed_sessions.filter(test__test_type=test_type)
+
+            if test_sessions.exists():
+                scores = [session.score for session in test_sessions]
+                category_scores[test_type] = {
+                    'score': round(statistics.mean(scores), 2),
+                    'count': len(scores),
+                    'best_score': max(scores),
+                    'consistency': self._calculate_consistency(scores),
+                    'recent_trend': self._calculate_recent_trend(test_sessions),
+                    'last_updated': max(session.start_time for session in test_sessions)
+                }
+            else:
+                category_scores[test_type] = {
+                    'score': 0,
+                    'count': 0,
+                    'best_score': 0,
+                    'consistency': 0,
+                    'recent_trend': 0,
+                    'last_updated': None
+                }
+
+        # Also include situational and technical as separate categories
+        for category in [self.categories.SITUATIONAL, self.categories.TECHNICAL]:
             category_sessions = []
-            
             for session in completed_sessions:
                 test_category = self.categories.get_category_for_test_type(session.test.test_type)
                 if test_category == category:
                     category_sessions.append(session)
-            
+
             if category_sessions:
                 scores = [session.score for session in category_sessions]
                 category_scores[category] = {
@@ -207,7 +299,7 @@ class EmployabilityScorer:
                     'recent_trend': 0,
                     'last_updated': None
                 }
-        
+
         return category_scores
     
     def _calculate_consistency(self, scores: List[float]) -> float:
@@ -243,24 +335,20 @@ class EmployabilityScorer:
     def calculate_overall_score(self, profile: str = None) -> Dict:
         """Calculate overall employability score with profile weighting"""
         category_scores = self.calculate_category_scores()
+        individual_test_scores = self.calculate_individual_test_scores()
 
-        # Get profile weights
-        weights = self.profile_weights.get_weights_for_profile(profile) if profile else self.profile_weights.DEFAULT_WEIGHTS
+        # Calculate simple average of all completed individual test scores
+        # This is more straightforward and reflects actual test performance
+        completed_scores = []
+        for test_type, data in individual_test_scores.items():
+            if data['count'] > 0:
+                completed_scores.append(data['score'])
 
-        # Calculate weighted overall score
-        weighted_sum = 0
-        total_weight = 0
-
-        for category, weight in weights.items():
-            if category in category_scores and category_scores[category]['count'] > 0:
-                weighted_sum += category_scores[category]['score'] * weight
-                total_weight += weight
-
-        # Calculate overall score (0-100)
-        overall_score = (weighted_sum / total_weight) if total_weight > 0 else 0
+        # Calculate overall score as simple average of all test scores
+        overall_score = statistics.mean(completed_scores) if completed_scores else 0
 
         # Calculate additional metrics
-        total_tests = sum(cat['count'] for cat in category_scores.values())
+        total_tests = sum(data['count'] for data in individual_test_scores.values())
 
         # Calculate overall improvement trend
         all_sessions = TestSession.objects.filter(
@@ -275,6 +363,7 @@ class EmployabilityScorer:
             'overall_score': round(overall_score, 2),
             'profile': profile,
             'categories': category_scores,
+            'individual_test_scores': individual_test_scores,  # Add individual test scores
             'total_tests_completed': total_tests,
             'improvement_trend': improvement_trend,
             'last_updated': timezone.now(),
@@ -349,12 +438,26 @@ class EmployabilityScorer:
             # Recommend improvement for lowest scoring categories
             for category, data in sorted_categories[:2]:  # Top 2 improvement areas
                 if data['score'] < 75:  # Only recommend if below good threshold
-                    category_info = self.categories.CATEGORY_INFO[category]
+                    # Handle individual test types vs traditional categories
+                    if category in self.categories.CATEGORY_INFO:
+                        category_info = self.categories.CATEGORY_INFO[category]
+                        category_name = category_info['name']
+                    else:
+                        # For individual test types, create readable names
+                        category_name = category.replace('_', ' ').title()
+
+                    # Create description based on category type
+                    if category in self.categories.CATEGORY_INFO:
+                        category_info = self.categories.CATEGORY_INFO[category]
+                        description = f"Your {category_info['name'].lower()} score is {data['score']}/100. Focus on {category_info['description'].lower()}."
+                    else:
+                        description = f"Your {category_name.lower()} score is {data['score']}/100. Practice more {category_name.lower()} tests to improve."
+
                     recommendations.append({
                         'type': 'improvement',
                         'category': category,
-                        'title': f"Improve {category_info['name']}",
-                        'description': f"Your {category_info['name'].lower()} score is {data['score']}/100. Focus on {category_info['description'].lower()}.",
+                        'title': f"Improve {category_name}",
+                        'description': description,
                         'priority': 'high' if data['score'] < 60 else 'medium'
                     })
 

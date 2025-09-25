@@ -95,6 +95,7 @@ def test_history_summary(request):
         # New employability scoring data
         'overall_score': employability_data['overall_score'],
         'categories': employability_data['categories'],
+        'individual_test_scores': employability_data['individual_test_scores'],  # Add individual test scores
         'total_tests_completed': employability_data['total_tests_completed'],
         'improvement_trend': employability_data['improvement_trend'],
         'score_interpretation': employability_data['score_interpretation'],
