@@ -3,40 +3,40 @@ Admin configuration for recommendation models
 """
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import JobOffer, JobRecommendation, UserJobPreference, JobApplication
+from .models import (
+    JobOffer, JobRecommendation, UserJobPreference, 
+    ScoringWeights, JobRecommendationDetail, RecommendationAnalytics
+)
 
 
 @admin.register(JobOffer)
 class JobOfferAdmin(admin.ModelAdmin):
     list_display = [
         'title', 'company', 'job_type', 'seniority', 'location', 
-        'salary_range', 'status', 'posted_at', 'is_active'
+        'salary_range', 'status', 'posted_at'
     ]
     list_filter = [
         'job_type', 'seniority', 'status', 'remote', 'city', 
-        'posted_at', 'expires_at'
+        'posted_at', 'updated_at'
     ]
     search_fields = ['title', 'company', 'description', 'location']
-    readonly_fields = ['posted_at', 'updated_at', 'is_active']
+    readonly_fields = ['posted_at', 'updated_at']
     
     fieldsets = (
         ('Informations de base', {
-            'fields': ('title', 'company', 'description', 'requirements', 'responsibilities')
+            'fields': ('title', 'company', 'description', 'requirements')
         }),
         ('Détails du poste', {
             'fields': ('job_type', 'seniority', 'location', 'city', 'remote')
         }),
         ('Salaire', {
-            'fields': ('salary_min', 'salary_max', 'salary_currency')
+            'fields': ('salary_min', 'salary_max')
         }),
         ('Compétences', {
             'fields': ('required_skills', 'preferred_skills', 'tags')
         }),
         ('Statut et dates', {
-            'fields': ('status', 'posted_at', 'updated_at', 'expires_at', 'is_active')
-        }),
-        ('Contact', {
-            'fields': ('contact_email', 'contact_phone')
+            'fields': ('status', 'posted_at', 'updated_at')
         }),
         ('Informations supplémentaires', {
             'fields': ('benefits', 'company_size', 'industry'),
@@ -47,64 +47,57 @@ class JobOfferAdmin(admin.ModelAdmin):
     filter_horizontal = ['required_skills', 'preferred_skills']
     
     def salary_range(self, obj):
-        return obj.salary_range
+        if obj.salary_min and obj.salary_max:
+            return f"{obj.salary_min:,} - {obj.salary_max:,}"
+        elif obj.salary_min:
+            return f"À partir de {obj.salary_min:,}"
+        elif obj.salary_max:
+            return f"Jusqu'à {obj.salary_max:,}"
+        return 'Non spécifié'
     salary_range.short_description = 'Fourchette de salaire'
-    
-    def is_active(self, obj):
-        if obj.is_active:
-            return format_html('<span style="color: green;">✓ Actif</span>')
-        else:
-            return format_html('<span style="color: red;">✗ Inactif</span>')
-    is_active.short_description = 'Statut'
 
 
 @admin.register(JobRecommendation)
 class JobRecommendationAdmin(admin.ModelAdmin):
     list_display = [
-        'candidate', 'job_title', 'company', 'overall_score', 
-        'skill_match_score', 'status', 'created_at'
+        'user', 'job_title', 'company', 'score', 
+        'algorithm_version', 'created_at'
     ]
-    list_filter = ['status', 'created_at', 'job__job_type', 'job__seniority']
+    list_filter = ['algorithm_version', 'created_at', 'job_offer__job_type', 'job_offer__seniority']
     search_fields = [
-        'candidate__first_name', 'candidate__last_name', 
-        'job__title', 'job__company'
+        'user__username', 'user__email', 
+        'job_offer__title', 'job_offer__company'
     ]
     readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
-        ('Candidat et emploi', {
-            'fields': ('candidate', 'job')
+        ('Utilisateur et emploi', {
+            'fields': ('user', 'job_offer')
         }),
         ('Scores', {
-            'fields': (
-                'overall_score', 'skill_match_score', 'salary_fit_score',
-                'location_match_score', 'seniority_match_score', 'remote_bonus'
-            )
+            'fields': ('score', 'algorithm_version', 'cluster_id')
         }),
-        ('Analyse des compétences', {
-            'fields': ('matched_skills', 'missing_skills', 'recommendation_reason')
-        }),
-        ('Statut', {
-            'fields': ('status', 'created_at', 'updated_at')
+        ('Dates', {
+            'fields': ('created_at', 'updated_at')
         }),
     )
     
     def job_title(self, obj):
-        return obj.job.title
+        return obj.job_offer.title
     job_title.short_description = 'Titre du poste'
     
     def company(self, obj):
-        return obj.job.company
+        return obj.job_offer.company
     company.short_description = 'Entreprise'
 
 
 @admin.register(UserJobPreference)
 class UserJobPreferenceAdmin(admin.ModelAdmin):
     list_display = [
-        'user', 'preferred_cities_display', 'accepts_remote', 
-        'preferred_seniority', 'target_salary_range', 'max_recommendations'
+        'user', 'preferred_locations_display', 'remote_preference', 
+        'preferred_seniority', 'target_salary_range'
     ]
-    list_filter = ['accepts_remote', 'preferred_seniority', 'salary_currency']
+    list_filter = ['remote_preference', 'preferred_seniority', 'willing_to_relocate']
     search_fields = ['user__username', 'user__email']
     readonly_fields = ['created_at', 'updated_at']
     
@@ -113,83 +106,148 @@ class UserJobPreferenceAdmin(admin.ModelAdmin):
             'fields': ('user',)
         }),
         ('Préférences de localisation', {
-            'fields': ('preferred_cities', 'preferred_countries', 'accepts_remote')
+            'fields': ('preferred_locations', 'willing_to_relocate', 'remote_preference')
         }),
         ('Préférences d\'emploi', {
             'fields': ('preferred_job_types', 'preferred_seniority')
         }),
         ('Préférences salariales', {
-            'fields': ('target_salary_min', 'target_salary_max', 'salary_currency')
-        }),
-        ('Compétences préférées', {
-            'fields': ('preferred_skills', 'skill_weights')
+            'fields': ('target_salary_min', 'target_salary_max')
         }),
         ('Préférences d\'entreprise', {
             'fields': ('preferred_industries', 'preferred_company_sizes')
         }),
-        ('Paramètres de recommandation', {
-            'fields': ('max_recommendations', 'min_score_threshold')
+        ('Compétences préférées', {
+            'fields': ('skill_priorities',)
         }),
         ('Dates', {
             'fields': ('created_at', 'updated_at')
         }),
     )
     
-    filter_horizontal = ['preferred_skills']
-    
-    def preferred_cities_display(self, obj):
-        cities = obj.preferred_cities[:3]  # Show first 3 cities
-        if len(obj.preferred_cities) > 3:
-            cities.append('...')
-        return ', '.join(cities) if cities else 'Aucune'
-    preferred_cities_display.short_description = 'Villes préférées'
+    def preferred_locations_display(self, obj):
+        locations = obj.preferred_locations[:3]  # Show first 3 locations
+        if len(obj.preferred_locations) > 3:
+            locations.append('...')
+        return ', '.join(locations) if locations else 'Aucune'
+    preferred_locations_display.short_description = 'Lieux préférés'
     
     def target_salary_range(self, obj):
         if obj.target_salary_min and obj.target_salary_max:
-            return f"{obj.target_salary_min:,} - {obj.target_salary_max:,} {obj.salary_currency}"
+            return f"{obj.target_salary_min:,} - {obj.target_salary_max:,}"
         elif obj.target_salary_min:
-            return f"À partir de {obj.target_salary_min:,} {obj.salary_currency}"
+            return f"À partir de {obj.target_salary_min:,}"
         elif obj.target_salary_max:
-            return f"Jusqu'à {obj.target_salary_max:,} {obj.salary_currency}"
+            return f"Jusqu'à {obj.target_salary_max:,}"
         return 'Non spécifié'
     target_salary_range.short_description = 'Fourchette de salaire cible'
 
 
-@admin.register(JobApplication)
-class JobApplicationAdmin(admin.ModelAdmin):
+@admin.register(ScoringWeights)
+class ScoringWeightsAdmin(admin.ModelAdmin):
     list_display = [
-        'candidate', 'job_title', 'company', 'status', 
-        'applied_at', 'recommendation_score'
+        'name', 'is_active', 'skill_match_weight', 'content_similarity_weight',
+        'cluster_fit_weight', 'created_at'
     ]
-    list_filter = ['status', 'applied_at', 'job__job_type']
-    search_fields = [
-        'candidate__first_name', 'candidate__last_name',
-        'job__title', 'job__company'
-    ]
-    readonly_fields = ['applied_at', 'updated_at']
+    list_filter = ['is_active', 'created_at']
+    search_fields = ['name', 'created_by__username']
+    readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
-        ('Candidat et emploi', {
-            'fields': ('candidate', 'job', 'recommendation')
+        ('Configuration', {
+            'fields': ('name', 'is_active', 'created_by')
         }),
-        ('Candidature', {
-            'fields': ('cover_letter', 'status', 'notes')
+        ('Poids principaux', {
+            'fields': ('skill_match_weight', 'content_similarity_weight', 'cluster_fit_weight')
+        }),
+        ('Poids des compétences', {
+            'fields': ('required_skill_weight', 'preferred_skill_weight')
+        }),
+        ('Bonus', {
+            'fields': ('location_bonus_weight', 'experience_bonus_weight', 'remote_bonus_weight', 'salary_fit_weight')
+        }),
+        ('Seuils', {
+            'fields': ('min_score_threshold', 'max_recommendations')
         }),
         ('Dates', {
-            'fields': ('applied_at', 'updated_at')
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+
+@admin.register(JobRecommendationDetail)
+class JobRecommendationDetailAdmin(admin.ModelAdmin):
+    list_display = [
+        'user', 'job_title', 'company', 'overall_score', 
+        'skill_score', 'content_score', 'created_at'
+    ]
+    list_filter = ['created_at', 'job_offer__job_type', 'job_offer__seniority']
+    search_fields = [
+        'user__username', 'user__email',
+        'job_offer__title', 'job_offer__company'
+    ]
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Utilisateur et emploi', {
+            'fields': ('user', 'job_offer')
+        }),
+        ('Scores principaux', {
+            'fields': ('overall_score', 'content_score', 'skill_score', 'cluster_fit_score')
+        }),
+        ('Scores des compétences', {
+            'fields': ('required_skill_score', 'preferred_skill_score')
+        }),
+        ('Compteurs de compétences', {
+            'fields': ('required_skills_count', 'preferred_skills_count', 'required_matched_count', 'preferred_matched_count')
+        }),
+        ('Bonus', {
+            'fields': ('location_bonus', 'experience_bonus', 'remote_bonus', 'salary_fit')
+        }),
+        ('Compétences correspondantes', {
+            'fields': ('matched_skills', 'missing_skills', 'required_matched_skills', 'preferred_matched_skills')
+        }),
+        ('Compétences manquantes', {
+            'fields': ('required_missing_skills', 'preferred_missing_skills')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at')
         }),
     )
     
     def job_title(self, obj):
-        return obj.job.title
+        return obj.job_offer.title
     job_title.short_description = 'Titre du poste'
     
     def company(self, obj):
-        return obj.job.company
+        return obj.job_offer.company
     company.short_description = 'Entreprise'
+
+
+@admin.register(RecommendationAnalytics)
+class RecommendationAnalyticsAdmin(admin.ModelAdmin):
+    list_display = [
+        'date', 'total_recommendations', 'avg_score', 
+        'avg_skill_match', 'recommendations_viewed'
+    ]
+    list_filter = ['date']
+    search_fields = ['date']
+    readonly_fields = ['created_at']
     
-    def recommendation_score(self, obj):
-        if obj.recommendation:
-            return f"{obj.recommendation.overall_score:.1f}%"
-        return 'N/A'
-    recommendation_score.short_description = 'Score de recommandation'
+    fieldsets = (
+        ('Métriques de recommandation', {
+            'fields': ('date', 'total_recommendations', 'avg_score', 'min_score', 'max_score')
+        }),
+        ('Métriques de compétences', {
+            'fields': ('avg_skill_match', 'avg_required_skill_match', 'avg_preferred_skill_match')
+        }),
+        ('Métriques de cluster', {
+            'fields': ('avg_cluster_fit', 'cluster_distribution')
+        }),
+        ('Engagement utilisateur', {
+            'fields': ('recommendations_viewed', 'applications_from_recommendations', 'jobs_saved_from_recommendations')
+        }),
+        ('Dates', {
+            'fields': ('created_at',)
+        }),
+    )

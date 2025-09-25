@@ -97,8 +97,8 @@ const JobRecommendationsPage = () => {
               email: candidateData.email,
               location: candidateData.location || '',
               about: candidateData.bio || '',
-              skills: candidateData.skills?.map(skill => skill.name) || [],
-              skillsWithProficiency: candidateData.skills?.map(skill => ({
+              skills: candidateData.skills_with_proficiency?.map(skill => skill.name) || candidateData.skills?.map(skill => skill.name) || [],
+              skillsWithProficiency: candidateData.skills_with_proficiency || candidateData.skills?.map(skill => ({
                 id: skill.id,
                 name: skill.name,
                 proficiency: 'intermediate'
@@ -108,7 +108,10 @@ const JobRecommendationsPage = () => {
             };
 
             console.log('🔍 JobRecommendationsPage - Transformed profile from candidate API:', transformedProfile);
-            console.log('🔍 JobRecommendationsPage - Setting userProfile with skills:', transformedProfile.skills);
+            console.log('🔍 JobRecommendationsPage - Skills from skills_with_proficiency:', candidateData.skills_with_proficiency);
+            console.log('🔍 JobRecommendationsPage - Skills from skills (ManyToMany):', candidateData.skills);
+            console.log('🔍 JobRecommendationsPage - Final skills array:', transformedProfile.skills);
+            console.log('🔍 JobRecommendationsPage - Final skillsWithProficiency array:', transformedProfile.skillsWithProficiency);
             setUserProfile(transformedProfile);
             console.log('🔍 JobRecommendationsPage - userProfile state set, skills should be visible now');
             return; // Success, exit early
@@ -133,8 +136,8 @@ const JobRecommendationsPage = () => {
             email: profileData.email,
             location: profileData.location,
             about: profileData.about,
-            skills: profileData.skills?.map(skill => skill.name) || [],
-            skillsWithProficiency: profileData.skills?.map(skill => ({
+            skills: profileData.skills_with_proficiency?.map(skill => skill.name) || profileData.skills?.map(skill => skill.name) || [],
+            skillsWithProficiency: profileData.skills_with_proficiency || profileData.skills?.map(skill => ({
               id: skill.id,
               name: skill.name,
               proficiency: 'intermediate'
@@ -225,9 +228,25 @@ const JobRecommendationsPage = () => {
   //   };
   // }, [userProfile]);
 
-  const userSkills = userProfile?.skillsWithProficiency?.map(skill => skill.name) || userProfile?.skills || [];
-  const hasSkills = userSkills.length > 0;
+  const [userSkills, setUserSkills] = useState([]);
 
+  // Recalculate userSkills when userProfile changes
+  useEffect(() => {
+    if (userProfile) {
+      console.log('🔍 JobRecommendationsPage - userProfile changed, recalculating userSkills');
+      console.log('  - userProfile.skills:', userProfile.skills);
+      console.log('  - userProfile.skillsWithProficiency:', userProfile.skillsWithProficiency);
+
+      const skills = userProfile?.skillsWithProficiency?.map(skill => skill.name) || userProfile?.skills || [];
+      console.log('🔍 JobRecommendationsPage - Calculated userSkills:', skills);
+      setUserSkills(skills);
+    } else {
+      console.log('🔍 JobRecommendationsPage - userProfile is null, setting userSkills to empty array');
+      setUserSkills([]);
+    }
+  }, [userProfile]);
+
+  const hasSkills = userSkills.length > 0;
   console.log('🔍 JobRecommendationsPage - userSkills:', userSkills);
   console.log('🔍 JobRecommendationsPage - hasSkills:', hasSkills);
 
@@ -318,24 +337,7 @@ const JobRecommendationsPage = () => {
                   </p>
                 </div>
               </div>
-              {hasSkills && (
-                <div className="hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-lg border border-emerald-200/50 dark:border-emerald-700/50">
-                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                  <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
-                    AI Enabled
-                  </span>
-                </div>
-              )}
             </div>
-
-            {/* Disconnect Button - Consistent with Profile Page */}
-            <button
-              onClick={handleLogout}
-              className="group flex items-center space-x-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 text-sm font-medium transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
-            >
-              <ArrowRightOnRectangleIcon className="w-4 h-4" />
-              <span>Disconnect</span>
-            </button>
           </div>
         </div>
       </div>
@@ -421,13 +423,26 @@ const JobRecommendationsPage = () => {
                   </label>
                   {isEditingProfile ? (
                     <div className="space-y-2">
-                      <input
-                        type="text"
+                      <select
                         value={profileForm.location}
                         onChange={(e) => setProfileForm(prev => ({ ...prev, location: e.target.value }))}
-                        placeholder="Enter your preferred location"
                         className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
+                      >
+                        <option value="">Select a city</option>
+                        <option value="Casablanca">Casablanca</option>
+                        <option value="Rabat">Rabat</option>
+                        <option value="Marrakech">Marrakech</option>
+                        <option value="Fes">Fes</option>
+                        <option value="Tangier">Tangier</option>
+                        <option value="Agadir">Agadir</option>
+                        <option value="Meknes">Meknes</option>
+                        <option value="Oujda">Oujda</option>
+                        <option value="Kenitra">Kenitra</option>
+                        <option value="Tetouan">Tetouan</option>
+                        <option value="Safi">Safi</option>
+                        <option value="Essaouira">Essaouira</option>
+                        <option value="Nador">Nador</option>
+                      </select>
                     </div>
                   ) : (
                     <div className="flex items-center space-x-2">

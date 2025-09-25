@@ -38,5 +38,9 @@ urlpatterns = [
     path('ml/save/', ml_views.save_ml_recommendations, name='ml_save'),
     path('ml/analytics/', ml_views.get_recommendation_analytics, name='ml_analytics'),
     path('ml/train/', ml_views.train_recommendation_models, name='ml_train'),
+    
+    # Saved Jobs API
+    path('saved-jobs/', views.saved_jobs_api, name='saved_jobs'),
+    path('saved-jobs/<int:job_id>/', views.delete_saved_job, name='delete_saved_job'),
 ]
 

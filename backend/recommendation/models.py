@@ -1,227 +1,359 @@
+"""
+Enhanced models for job recommendations with scoring weights and detailed tracking
+"""
 from django.db import models
-from django.conf import settings
+from django.contrib.auth.models import User
 from django.utils import timezone
-from skills.models import Skill, CandidateProfile
-import json
+from skills.models import Skill
+
+
+class ScoringWeights(models.Model):
+    """
+    Configurable scoring weights for recommendation algorithm
+    """
+    name = models.CharField(max_length=100, default="Default Weights")
+    is_active = models.BooleanField(default=True)
+    
+    # Core scoring weights
+    skill_match_weight = models.FloatField(default=0.70, help_text="Weight for skill matching score")
+    content_similarity_weight = models.FloatField(default=0.20, help_text="Weight for content similarity score")
+    cluster_fit_weight = models.FloatField(default=0.10, help_text="Weight for cluster fit score")
+    
+    # Skill type weights
+    required_skill_weight = models.FloatField(default=0.80, help_text="Weight for required skills within skill matching")
+    preferred_skill_weight = models.FloatField(default=0.20, help_text="Weight for preferred skills within skill matching")
+    
+    # Bonus weights
+    location_bonus_weight = models.FloatField(default=0.05, help_text="Bonus for location match")
+    experience_bonus_weight = models.FloatField(default=0.03, help_text="Bonus for experience level match")
+    remote_bonus_weight = models.FloatField(default=0.02, help_text="Bonus for remote work")
+    salary_fit_weight = models.FloatField(default=0.00, help_text="Weight for salary fit (disabled by default)")
+    
+    # Thresholds
+    min_score_threshold = models.FloatField(default=15.0, help_text="Minimum score to include in recommendations")
+    max_recommendations = models.IntegerField(default=10, help_text="Maximum number of recommendations")
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    class Meta:
+        verbose_name = "Scoring Weights"
+        verbose_name_plural = "Scoring Weights"
+        ordering = ['-is_active', '-created_at']
+    
+    def __str__(self):
+        return f"{self.name} ({'Active' if self.is_active else 'Inactive'})"
+    
+    def get_weights_dict(self):
+        """Return weights as dictionary for easy use"""
+        return {
+            'skill_match': self.skill_match_weight,
+            'content_similarity': self.content_similarity_weight,
+            'cluster_fit': self.cluster_fit_weight,
+            'required_skill_weight': self.required_skill_weight,
+            'preferred_skill_weight': self.preferred_skill_weight,
+            'location_bonus': self.location_bonus_weight,
+            'experience_bonus': self.experience_bonus_weight,
+            'remote_bonus': self.remote_bonus_weight,
+            'salary_fit': self.salary_fit_weight,
+            'min_score_threshold': self.min_score_threshold,
+            'max_recommendations': self.max_recommendations
+        }
+
+
+class JobRecommendationDetail(models.Model):
+    """
+    Detailed breakdown of job recommendation scores for transparency
+    """
+    job_offer = models.ForeignKey('JobOffer', on_delete=models.CASCADE, related_name='recommendation_details')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recommendation_details')
+    
+    # Overall scores
+    overall_score = models.FloatField(help_text="Overall recommendation score (0-100)")
+    content_score = models.FloatField(help_text="Content similarity score (0-100)")
+    skill_score = models.FloatField(help_text="Skill matching score (0-100)")
+    cluster_fit_score = models.FloatField(help_text="Cluster fit score (0-100)")
+    
+    # Skill breakdown
+    required_skill_score = models.FloatField(help_text="Required skills match score (0-100)")
+    preferred_skill_score = models.FloatField(help_text="Preferred skills match score (0-100)")
+    required_skills_count = models.IntegerField(default=0)
+    preferred_skills_count = models.IntegerField(default=0)
+    required_matched_count = models.IntegerField(default=0)
+    preferred_matched_count = models.IntegerField(default=0)
+    
+    # Bonuses
+    location_bonus = models.FloatField(default=0.0, help_text="Location match bonus")
+    experience_bonus = models.FloatField(default=0.0, help_text="Experience level bonus")
+    remote_bonus = models.FloatField(default=0.0, help_text="Remote work bonus")
+    salary_fit = models.FloatField(default=0.0, help_text="Salary fit score")
+    
+    # Matched skills (stored as JSON)
+    matched_skills = models.JSONField(default=list, help_text="List of matched skills")
+    missing_skills = models.JSONField(default=list, help_text="List of missing skills")
+    required_matched_skills = models.JSONField(default=list, help_text="Required skills that matched")
+    preferred_matched_skills = models.JSONField(default=list, help_text="Preferred skills that matched")
+    required_missing_skills = models.JSONField(default=list, help_text="Required skills that didn't match")
+    preferred_missing_skills = models.JSONField(default=list, help_text="Preferred skills that didn't match")
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Job Recommendation Detail"
+        verbose_name_plural = "Job Recommendation Details"
+        unique_together = ['job_offer', 'user']
+        ordering = ['-overall_score', '-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.job_offer.title} ({self.overall_score:.1f}%)"
+    
+    def get_skill_match_percentage(self):
+        """Calculate overall skill match percentage"""
+        total_skills = self.required_skills_count + self.preferred_skills_count
+        if total_skills == 0:
+            return 0
+        return (self.required_matched_count + self.preferred_matched_count) / total_skills * 100
+    
+    def get_required_skill_match_percentage(self):
+        """Calculate required skill match percentage"""
+        if self.required_skills_count == 0:
+            return 0
+        return self.required_matched_count / self.required_skills_count * 100
+    
+    def get_preferred_skill_match_percentage(self):
+        """Calculate preferred skill match percentage"""
+        if self.preferred_skills_count == 0:
+            return 0
+        return self.preferred_matched_count / self.preferred_skills_count * 100
+
 
 class JobOffer(models.Model):
-    """Job offers posted by companies"""
-    JOB_TYPES = [
-        ('CDI', 'CDI'),
-        ('CDD', 'CDD'),
-        ('Stage', 'Stage'),
-        ('Freelance', 'Freelance'),
-        ('Alternance', 'Alternance'),
-        ('Temps partiel', 'Temps partiel'),
+    """
+    Enhanced Job Offer model with additional fields for better recommendations
+    """
+    JOB_TYPE_CHOICES = [
+        ('full-time', 'Full Time'),
+        ('part-time', 'Part Time'),
+        ('contract', 'Contract'),
+        ('internship', 'Internship'),
+        ('freelance', 'Freelance'),
     ]
     
-    SENIORITY_LEVELS = [
-        ('junior', 'Junior (0-2 ans)'),
-        ('mid', 'Mid-level (2-5 ans)'),
-        ('senior', 'Senior (5-10 ans)'),
-        ('lead', 'Lead/Expert (10+ ans)'),
+    SENIORITY_CHOICES = [
+        ('junior', 'Junior'),
+        ('intermediate', 'Intermediate'),
+        ('senior', 'Senior'),
+        ('lead', 'Lead'),
+        ('principal', 'Principal'),
+        ('expert', 'Expert'),
     ]
     
-    STATUS_CHOICES = [
+    title = models.CharField(max_length=200)
+    company = models.CharField(max_length=200)
+    location = models.CharField(max_length=200)
+    city = models.CharField(max_length=100, blank=True)
+    job_type = models.CharField(max_length=20, choices=JOB_TYPE_CHOICES, default='full-time')
+    seniority = models.CharField(max_length=20, choices=SENIORITY_CHOICES, blank=True)
+    salary_min = models.IntegerField(null=True, blank=True)
+    salary_max = models.IntegerField(null=True, blank=True)
+    remote = models.BooleanField(default=False)
+    description = models.TextField()
+    requirements = models.TextField(blank=True)
+    benefits = models.TextField(blank=True)
+    industry = models.CharField(max_length=100, blank=True)
+    company_size = models.CharField(max_length=50, blank=True)
+    tags = models.JSONField(default=list, blank=True)
+    status = models.CharField(max_length=20, default='active', choices=[
         ('active', 'Active'),
-        ('paused', 'Paused'),
+        ('inactive', 'Inactive'),
         ('closed', 'Closed'),
-        ('draft', 'Draft'),
-    ]
+    ])
+    posted_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
-    # Basic job information
-    title = models.CharField(max_length=200, verbose_name="Titre du poste")
-    company = models.CharField(max_length=200, verbose_name="Entreprise")
-    description = models.TextField(verbose_name="Description")
-    requirements = models.TextField(verbose_name="Exigences")
-    responsibilities = models.TextField(verbose_name="Responsabilités")
-    
-    # Job details
-    job_type = models.CharField(max_length=20, choices=JOB_TYPES, verbose_name="Type de contrat")
-    seniority = models.CharField(max_length=20, choices=SENIORITY_LEVELS, verbose_name="Niveau d'expérience")
-    location = models.CharField(max_length=200, verbose_name="Localisation")
-    city = models.CharField(max_length=100, verbose_name="Ville")
-    remote = models.BooleanField(default=False, verbose_name="Télétravail possible")
-    
-    # Salary information
-    salary_min = models.IntegerField(null=True, blank=True, verbose_name="Salaire minimum (MAD)")
-    salary_max = models.IntegerField(null=True, blank=True, verbose_name="Salaire maximum (MAD)")
-    salary_currency = models.CharField(max_length=3, default='MAD', verbose_name="Devise")
-    
-    # Skills and requirements
-    required_skills = models.ManyToManyField(Skill, related_name='required_jobs', verbose_name="Compétences requises")
-    preferred_skills = models.ManyToManyField(Skill, related_name='preferred_jobs', blank=True, verbose_name="Compétences préférées")
-    tags = models.JSONField(default=list, verbose_name="Tags")
-    
-    # Status and metadata
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name="Statut")
-    posted_at = models.DateTimeField(auto_now_add=True, verbose_name="Publié le")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Modifié le")
-    expires_at = models.DateTimeField(null=True, blank=True, verbose_name="Expire le")
-    
-    # Contact information
-    contact_email = models.EmailField(verbose_name="Email de contact")
-    contact_phone = models.CharField(max_length=20, blank=True, verbose_name="Téléphone de contact")
-    
-    # Additional metadata
-    benefits = models.TextField(blank=True, verbose_name="Avantages")
-    company_size = models.CharField(max_length=50, blank=True, verbose_name="Taille de l'entreprise")
-    industry = models.CharField(max_length=100, blank=True, verbose_name="Secteur d'activité")
+    # Skills relationships
+    required_skills = models.ManyToManyField(Skill, related_name='required_jobs', blank=True)
+    preferred_skills = models.ManyToManyField(Skill, related_name='preferred_jobs', blank=True)
     
     class Meta:
+        verbose_name = "Job Offer"
+        verbose_name_plural = "Job Offers"
         ordering = ['-posted_at']
-        verbose_name = "Offre d'emploi"
-        verbose_name_plural = "Offres d'emploi"
     
     def __str__(self):
-        return f"{self.title} - {self.company}"
+        return f"{self.title} at {self.company}"
     
-    @property
-    def salary_range(self):
-        """Get formatted salary range"""
-        if self.salary_min and self.salary_max:
-            return f"{self.salary_min:,} - {self.salary_max:,} {self.salary_currency}"
-        elif self.salary_min:
-            return f"À partir de {self.salary_min:,} {self.salary_currency}"
-        elif self.salary_max:
-            return f"Jusqu'à {self.salary_max:,} {self.salary_currency}"
-        return "Salaire non spécifié"
+    def get_all_skills(self):
+        """Get all skills (required + preferred)"""
+        return list(self.required_skills.all()) + list(self.preferred_skills.all())
     
-    @property
-    def is_active(self):
-        """Check if job is currently active"""
-        if self.status != 'active':
-            return False
-        if self.expires_at and timezone.now() > self.expires_at:
-            return False
-        return True
+    def get_skill_names(self):
+        """Get skill names as list"""
+        return [skill.name for skill in self.get_all_skills()]
+
 
 class JobRecommendation(models.Model):
-    """Job recommendations for candidates"""
-    candidate = models.ForeignKey(CandidateProfile, on_delete=models.CASCADE, verbose_name="Candidat")
-    job = models.ForeignKey(JobOffer, on_delete=models.CASCADE, verbose_name="Offre d'emploi")
+    """
+    Job recommendation with enhanced tracking
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='job_recommendations')
+    job_offer = models.ForeignKey(JobOffer, on_delete=models.CASCADE, related_name='recommendations')
+    score = models.FloatField(default=0.0, help_text="Overall recommendation score")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
-    # Recommendation scores
-    overall_score = models.FloatField(verbose_name="Score global")
-    skill_match_score = models.FloatField(verbose_name="Score de correspondance des compétences")
-    salary_fit_score = models.FloatField(verbose_name="Score d'adéquation salariale")
-    location_match_score = models.FloatField(verbose_name="Score de correspondance de localisation")
-    seniority_match_score = models.FloatField(verbose_name="Score de correspondance d'expérience")
-    remote_bonus = models.FloatField(default=0, verbose_name="Bonus télétravail")
-    
-    # Recommendation metadata
-    matched_skills = models.JSONField(default=list, verbose_name="Compétences correspondantes")
-    missing_skills = models.JSONField(default=list, verbose_name="Compétences manquantes")
-    recommendation_reason = models.TextField(blank=True, verbose_name="Raison de la recommandation")
-    
-    # Status and interaction
-    status = models.CharField(
-        max_length=20,
-        choices=[
-            ('new', 'Nouveau'),
-            ('viewed', 'Consulté'),
-            ('applied', 'Candidaté'),
-            ('interested', 'Intéressé'),
-            ('not_interested', 'Pas intéressé'),
-        ],
-        default='new',
-        verbose_name="Statut"
-    )
-    
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Créé le")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Modifié le")
+    # Additional tracking
+    algorithm_version = models.CharField(max_length=50, default="enhanced_v1")
+    cluster_id = models.IntegerField(null=True, blank=True, help_text="K-Means cluster ID")
     
     class Meta:
-        unique_together = ['candidate', 'job']
-        ordering = ['-overall_score', '-created_at']
-        verbose_name = "Recommandation d'emploi"
-        verbose_name_plural = "Recommandations d'emploi"
+        verbose_name = "Job Recommendation"
+        verbose_name_plural = "Job Recommendations"
+        unique_together = ['user', 'job_offer']
+        ordering = ['-score', '-created_at']
     
     def __str__(self):
-        return f"{self.candidate} - {self.job} ({self.overall_score:.1f}%)"
+        return f"{self.user.username} - {self.job_offer.title} ({self.score:.1f}%)"
+
 
 class UserJobPreference(models.Model):
-    """User preferences for job recommendations"""
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Utilisateur")
+    """
+    User job preferences for better recommendations
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='job_preferences')
     
     # Location preferences
-    preferred_cities = models.JSONField(default=list, verbose_name="Villes préférées")
-    preferred_countries = models.JSONField(default=list, verbose_name="Pays préférés")
-    accepts_remote = models.BooleanField(default=True, verbose_name="Accepte le télétravail")
+    preferred_locations = models.JSONField(default=list, help_text="List of preferred cities/countries")
+    willing_to_relocate = models.BooleanField(default=True)
     
     # Job type preferences
-    preferred_job_types = models.JSONField(default=list, verbose_name="Types de contrat préférés")
-    preferred_seniority = models.CharField(
-        max_length=20,
-        choices=JobOffer.SENIORITY_LEVELS,
-        blank=True,
-        verbose_name="Niveau d'expérience préféré"
-    )
+    preferred_job_types = models.JSONField(default=list, help_text="Preferred job types")
+    preferred_seniority = models.CharField(max_length=20, blank=True)
     
     # Salary preferences
-    target_salary_min = models.IntegerField(null=True, blank=True, verbose_name="Salaire minimum cible (MAD)")
-    target_salary_max = models.IntegerField(null=True, blank=True, verbose_name="Salaire maximum cible (MAD)")
-    salary_currency = models.CharField(max_length=3, default='MAD', verbose_name="Devise préférée")
+    target_salary_min = models.IntegerField(null=True, blank=True)
+    target_salary_max = models.IntegerField(null=True, blank=True)
     
-    # Skill preferences
-    preferred_skills = models.ManyToManyField(Skill, blank=True, verbose_name="Compétences préférées")
-    skill_weights = models.JSONField(default=dict, verbose_name="Poids des compétences")
+    # Remote work preferences
+    remote_preference = models.CharField(max_length=20, default='flexible', choices=[
+        ('remote', 'Remote Only'),
+        ('hybrid', 'Hybrid'),
+        ('office', 'Office Only'),
+        ('flexible', 'Flexible'),
+    ])
     
     # Industry preferences
-    preferred_industries = models.JSONField(default=list, verbose_name="Secteurs préférés")
-    preferred_company_sizes = models.JSONField(default=list, verbose_name="Tailles d'entreprise préférées")
+    preferred_industries = models.JSONField(default=list, help_text="Preferred industries")
     
-    # Recommendation settings
-    max_recommendations = models.IntegerField(default=10, verbose_name="Nombre maximum de recommandations")
-    min_score_threshold = models.FloatField(default=50.0, verbose_name="Score minimum pour recommandation")
+    # Company size preferences
+    preferred_company_sizes = models.JSONField(default=list, help_text="Preferred company sizes")
     
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Créé le")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Modifié le")
+    # Skill preferences
+    skill_priorities = models.JSONField(default=dict, help_text="Skill importance weights")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = "Préférences d'emploi"
-        verbose_name_plural = "Préférences d'emploi"
+        verbose_name = "User Job Preference"
+        verbose_name_plural = "User Job Preferences"
     
     def __str__(self):
-        return f"Préférences de {self.user.username}"
+        return f"{self.user.username} Job Preferences"
+
+
+class RecommendationAnalytics(models.Model):
+    """
+    Analytics for recommendation system performance
+    """
+    date = models.DateField(default=timezone.now)
+    
+    # Recommendation metrics
+    total_recommendations = models.IntegerField(default=0)
+    avg_score = models.FloatField(default=0.0)
+    min_score = models.FloatField(default=0.0)
+    max_score = models.FloatField(default=0.0)
+    
+    # Skill matching metrics
+    avg_skill_match = models.FloatField(default=0.0)
+    avg_required_skill_match = models.FloatField(default=0.0)
+    avg_preferred_skill_match = models.FloatField(default=0.0)
+    
+    # Cluster metrics
+    cluster_distribution = models.JSONField(default=dict, help_text="Distribution of jobs across clusters")
+    avg_cluster_fit = models.FloatField(default=0.0)
+    
+    # User engagement
+    recommendations_viewed = models.IntegerField(default=0)
+    applications_from_recommendations = models.IntegerField(default=0)
+    jobs_saved_from_recommendations = models.IntegerField(default=0)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Recommendation Analytics"
+        verbose_name_plural = "Recommendation Analytics"
+        unique_together = ['date']
+        ordering = ['-date']
+    
+    def __str__(self):
+        return f"Analytics for {self.date} ({self.total_recommendations} recommendations)"
+
+
+class SavedJob(models.Model):
+    """
+    Model to track jobs saved by users
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_jobs')
+    job_id = models.IntegerField(help_text="ID of the saved job")
+    job_title = models.CharField(max_length=200, blank=True, help_text="Title of the saved job")
+    job_company = models.CharField(max_length=200, blank=True, help_text="Company of the saved job")
+    saved_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Saved Job"
+        verbose_name_plural = "Saved Jobs"
+        ordering = ['-saved_at']
+        unique_together = ('user', 'job_id')
+    
+    def __str__(self):
+        return f"{self.user.username} saved job {self.job_id}"
+
 
 class JobApplication(models.Model):
-    """Job applications by candidates"""
+    """
+    Model to track job applications by users
+    """
     STATUS_CHOICES = [
-        ('applied', 'Candidature envoyée'),
-        ('under_review', 'En cours d\'examen'),
-        ('shortlisted', 'Présélectionné'),
-        ('interview_scheduled', 'Entretien programmé'),
-        ('interviewed', 'Entretien passé'),
-        ('rejected', 'Rejeté'),
-        ('accepted', 'Accepté'),
-        ('withdrawn', 'Retiré'),
+        ('applied', 'Applied'),
+        ('under_review', 'Under Review'),
+        ('shortlisted', 'Shortlisted'),
+        ('interview_scheduled', 'Interview Scheduled'),
+        ('interviewed', 'Interviewed'),
+        ('rejected', 'Rejected'),
+        ('accepted', 'Accepted'),
+        ('withdrawn', 'Withdrawn'),
     ]
     
-    candidate = models.ForeignKey(CandidateProfile, on_delete=models.CASCADE, verbose_name="Candidat")
-    job = models.ForeignKey(JobOffer, on_delete=models.CASCADE, verbose_name="Offre d'emploi")
-    recommendation = models.ForeignKey(
-        JobRecommendation, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True,
-        verbose_name="Recommandation associée"
-    )
-    
-    # Application details
-    cover_letter = models.TextField(blank=True, verbose_name="Lettre de motivation")
-    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='applied', verbose_name="Statut")
-    
-    # Application metadata
-    applied_at = models.DateTimeField(auto_now_add=True, verbose_name="Candidaté le")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Modifié le")
-    notes = models.TextField(blank=True, verbose_name="Notes")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='job_applications')
+    job_id = models.IntegerField(help_text="ID of the job being applied to")
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='applied')
+    cover_letter = models.TextField(blank=True, help_text="Cover letter for the application")
+    resume_url = models.URLField(blank=True, help_text="URL to the resume file")
+    applied_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    notes = models.TextField(blank=True, help_text="Additional notes about the application")
     
     class Meta:
-        unique_together = ['candidate', 'job']
+        verbose_name = "Job Application"
+        verbose_name_plural = "Job Applications"
         ordering = ['-applied_at']
-        verbose_name = "Candidature"
-        verbose_name_plural = "Candidatures"
+        unique_together = ('user', 'job_id')
     
     def __str__(self):
-        return f"{self.candidate} - {self.job} ({self.status})"
+        return f"{self.user.username} applied to job {self.job_id}"
+

@@ -11,8 +11,8 @@ from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
-from .models import JobOffer, JobRecommendation, UserJobPreference, CandidateProfile
-from skills.models import Skill, TestResult
+from .models import JobOffer, JobRecommendation, UserJobPreference
+from skills.models import Skill, TestResult, CandidateProfile
 
 
 class RecommendationEngine:
