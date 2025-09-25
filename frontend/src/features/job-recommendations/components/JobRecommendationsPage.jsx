@@ -97,8 +97,8 @@ const JobRecommendationsPage = () => {
               email: candidateData.email,
               location: candidateData.location || '',
               about: candidateData.bio || '',
-              skills: candidateData.skills?.map(skill => skill.name) || [],
-              skillsWithProficiency: candidateData.skills?.map(skill => ({
+              skills: candidateData.skills_with_proficiency?.map(skill => skill.name) || candidateData.skills?.map(skill => skill.name) || [],
+              skillsWithProficiency: candidateData.skills_with_proficiency || candidateData.skills?.map(skill => ({
                 id: skill.id,
                 name: skill.name,
                 proficiency: 'intermediate'
@@ -108,7 +108,10 @@ const JobRecommendationsPage = () => {
             };
 
             console.log('🔍 JobRecommendationsPage - Transformed profile from candidate API:', transformedProfile);
-            console.log('🔍 JobRecommendationsPage - Setting userProfile with skills:', transformedProfile.skills);
+            console.log('🔍 JobRecommendationsPage - Skills from skills_with_proficiency:', candidateData.skills_with_proficiency);
+            console.log('🔍 JobRecommendationsPage - Skills from skills (ManyToMany):', candidateData.skills);
+            console.log('🔍 JobRecommendationsPage - Final skills array:', transformedProfile.skills);
+            console.log('🔍 JobRecommendationsPage - Final skillsWithProficiency array:', transformedProfile.skillsWithProficiency);
             setUserProfile(transformedProfile);
             console.log('🔍 JobRecommendationsPage - userProfile state set, skills should be visible now');
             return; // Success, exit early
@@ -133,8 +136,8 @@ const JobRecommendationsPage = () => {
             email: profileData.email,
             location: profileData.location,
             about: profileData.about,
-            skills: profileData.skills?.map(skill => skill.name) || [],
-            skillsWithProficiency: profileData.skills?.map(skill => ({
+            skills: profileData.skills_with_proficiency?.map(skill => skill.name) || profileData.skills?.map(skill => skill.name) || [],
+            skillsWithProficiency: profileData.skills_with_proficiency || profileData.skills?.map(skill => ({
               id: skill.id,
               name: skill.name,
               proficiency: 'intermediate'
@@ -225,9 +228,25 @@ const JobRecommendationsPage = () => {
   //   };
   // }, [userProfile]);
 
-  const userSkills = userProfile?.skillsWithProficiency?.map(skill => skill.name) || userProfile?.skills || [];
-  const hasSkills = userSkills.length > 0;
+  const [userSkills, setUserSkills] = useState([]);
 
+  // Recalculate userSkills when userProfile changes
+  useEffect(() => {
+    if (userProfile) {
+      console.log('🔍 JobRecommendationsPage - userProfile changed, recalculating userSkills');
+      console.log('  - userProfile.skills:', userProfile.skills);
+      console.log('  - userProfile.skillsWithProficiency:', userProfile.skillsWithProficiency);
+
+      const skills = userProfile?.skillsWithProficiency?.map(skill => skill.name) || userProfile?.skills || [];
+      console.log('🔍 JobRecommendationsPage - Calculated userSkills:', skills);
+      setUserSkills(skills);
+    } else {
+      console.log('🔍 JobRecommendationsPage - userProfile is null, setting userSkills to empty array');
+      setUserSkills([]);
+    }
+  }, [userProfile]);
+
+  const hasSkills = userSkills.length > 0;
   console.log('🔍 JobRecommendationsPage - userSkills:', userSkills);
   console.log('🔍 JobRecommendationsPage - hasSkills:', hasSkills);
 

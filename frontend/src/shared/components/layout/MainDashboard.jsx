@@ -591,7 +591,7 @@ const MainDashboard = () => {
                               : 'text-gray-700 hover:bg-blue-50 hover:text-blue-500'
                               }`}
                           >
-                            {skill}
+                               {skill}
                           </button>
                         ))}
                       </div>

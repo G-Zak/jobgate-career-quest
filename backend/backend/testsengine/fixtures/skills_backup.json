@@ -1,0 +1,1182 @@
+[
+{
+  "model": "skills.skill",
+  "pk": 80,
+  "fields": {
+    "name": "Deep Learning",
+    "category": "ai",
+    "description": "Deep Learning skill",
+    "created_at": "2025-09-24T02:14:55.019Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 79,
+  "fields": {
+    "name": "Machine Learning",
+    "category": "ai",
+    "description": "Machine Learning skill",
+    "created_at": "2025-09-24T02:14:55.002Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 82,
+  "fields": {
+    "name": "PyTorch",
+    "category": "ai",
+    "description": "PyTorch skill",
+    "created_at": "2025-09-24T02:14:55.044Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 83,
+  "fields": {
+    "name": "Scikit-learn",
+    "category": "ai",
+    "description": "Scikit-learn skill",
+    "created_at": "2025-09-24T02:14:55.052Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 81,
+  "fields": {
+    "name": "TensorFlow",
+    "category": "ai",
+    "description": "TensorFlow skill",
+    "created_at": "2025-09-24T02:14:55.032Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 110,
+  "fields": {
+    "name": "Microservices",
+    "category": "architecture",
+    "description": "Microservices skill",
+    "created_at": "2025-09-24T02:14:56.781Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 111,
+  "fields": {
+    "name": "Serverless",
+    "category": "architecture",
+    "description": "Serverless skill",
+    "created_at": "2025-09-24T02:14:56.791Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 62,
+  "fields": {
+    "name": "ASP.NET",
+    "category": "backend",
+    "description": "ASP.NET skill",
+    "created_at": "2025-09-24T02:14:54.791Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 17,
+  "fields": {
+    "name": "Django",
+    "category": "backend",
+    "description": "High-level Python web framework",
+    "created_at": "2025-09-22T01:08:59.705Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 20,
+  "fields": {
+    "name": "Express.js",
+    "category": "backend",
+    "description": "Web application framework for Node.js",
+    "created_at": "2025-09-22T01:08:59.707Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 22,
+  "fields": {
+    "name": "FastAPI",
+    "category": "backend",
+    "description": "Modern Python web framework for APIs",
+    "created_at": "2025-09-22T01:08:59.708Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 18,
+  "fields": {
+    "name": "Flask",
+    "category": "backend",
+    "description": "Lightweight Python web framework",
+    "created_at": "2025-09-22T01:08:59.706Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 53,
+  "fields": {
+    "name": "GraphQL",
+    "category": "backend",
+    "description": "GraphQL skill",
+    "created_at": "2025-09-24T02:08:52.143Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 108,
+  "fields": {
+    "name": "gRPC",
+    "category": "backend",
+    "description": "gRPC skill",
+    "created_at": "2025-09-24T02:14:56.765Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 23,
+  "fields": {
+    "name": "Laravel",
+    "category": "backend",
+    "description": "PHP web application framework",
+    "created_at": "2025-09-22T01:08:59.709Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 19,
+  "fields": {
+    "name": "Node.js",
+    "category": "backend",
+    "description": "JavaScript runtime for server-side development",
+    "created_at": "2025-09-22T01:08:59.706Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 61,
+  "fields": {
+    "name": "Rails",
+    "category": "backend",
+    "description": "Rails skill",
+    "created_at": "2025-09-24T02:14:54.783Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 52,
+  "fields": {
+    "name": "REST API",
+    "category": "backend",
+    "description": "REST API skill",
+    "created_at": "2025-09-24T02:08:52.122Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 24,
+  "fields": {
+    "name": "Ruby on Rails",
+    "category": "backend",
+    "description": "Ruby web application framework",
+    "created_at": "2025-09-22T01:08:59.709Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 21,
+  "fields": {
+    "name": "Spring Boot",
+    "category": "backend",
+    "description": "Java framework for microservices and web applications",
+    "created_at": "2025-09-22T01:08:59.707Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 109,
+  "fields": {
+    "name": "WebSocket",
+    "category": "backend",
+    "description": "WebSocket skill",
+    "created_at": "2025-09-24T02:14:56.770Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 73,
+  "fields": {
+    "name": "GCP",
+    "category": "cloud",
+    "description": "GCP skill",
+    "created_at": "2025-09-24T02:14:54.966Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 92,
+  "fields": {
+    "name": "Airflow",
+    "category": "data",
+    "description": "Airflow skill",
+    "created_at": "2025-09-24T02:14:55.717Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 89,
+  "fields": {
+    "name": "Apache Spark",
+    "category": "data",
+    "description": "Apache Spark skill",
+    "created_at": "2025-09-24T02:14:55.388Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 90,
+  "fields": {
+    "name": "Hadoop",
+    "category": "data",
+    "description": "Hadoop skill",
+    "created_at": "2025-09-24T02:14:55.399Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 88,
+  "fields": {
+    "name": "Jupyter",
+    "category": "data",
+    "description": "Jupyter skill",
+    "created_at": "2025-09-24T02:14:55.358Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 91,
+  "fields": {
+    "name": "Kafka",
+    "category": "data",
+    "description": "Kafka skill",
+    "created_at": "2025-09-24T02:14:55.581Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 86,
+  "fields": {
+    "name": "Matplotlib",
+    "category": "data",
+    "description": "Matplotlib skill",
+    "created_at": "2025-09-24T02:14:55.247Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 85,
+  "fields": {
+    "name": "NumPy",
+    "category": "data",
+    "description": "NumPy skill",
+    "created_at": "2025-09-24T02:14:55.222Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 84,
+  "fields": {
+    "name": "Pandas",
+    "category": "data",
+    "description": "Pandas skill",
+    "created_at": "2025-09-24T02:14:55.158Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 87,
+  "fields": {
+    "name": "Seaborn",
+    "category": "data",
+    "description": "Seaborn skill",
+    "created_at": "2025-09-24T02:14:55.300Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 31,
+  "fields": {
+    "name": "Cassandra",
+    "category": "database",
+    "description": "Distributed NoSQL database",
+    "created_at": "2025-09-22T01:08:59.713Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 70,
+  "fields": {
+    "name": "DynamoDB",
+    "category": "database",
+    "description": "DynamoDB skill",
+    "created_at": "2025-09-24T02:14:54.943Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 30,
+  "fields": {
+    "name": "Elasticsearch",
+    "category": "database",
+    "description": "Search and analytics engine",
+    "created_at": "2025-09-22T01:08:59.713Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 72,
+  "fields": {
+    "name": "InfluxDB",
+    "category": "database",
+    "description": "InfluxDB skill",
+    "created_at": "2025-09-24T02:14:54.949Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 27,
+  "fields": {
+    "name": "MongoDB",
+    "category": "database",
+    "description": "NoSQL document database",
+    "created_at": "2025-09-22T01:08:59.711Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 26,
+  "fields": {
+    "name": "MySQL",
+    "category": "database",
+    "description": "Popular open-source relational database",
+    "created_at": "2025-09-22T01:08:59.710Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 71,
+  "fields": {
+    "name": "Neo4j",
+    "category": "database",
+    "description": "Neo4j skill",
+    "created_at": "2025-09-24T02:14:54.947Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 68,
+  "fields": {
+    "name": "Oracle",
+    "category": "database",
+    "description": "Oracle skill",
+    "created_at": "2025-09-24T02:14:54.909Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 25,
+  "fields": {
+    "name": "PostgreSQL",
+    "category": "database",
+    "description": "Advanced open-source relational database",
+    "created_at": "2025-09-22T01:08:59.710Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 28,
+  "fields": {
+    "name": "Redis",
+    "category": "database",
+    "description": "In-memory data structure store",
+    "created_at": "2025-09-22T01:08:59.712Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 118,
+  "fields": {
+    "name": "SQL",
+    "category": "database",
+    "description": "",
+    "created_at": "2025-09-24T20:45:07.897Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 69,
+  "fields": {
+    "name": "SQL Server",
+    "category": "database",
+    "description": "SQL Server skill",
+    "created_at": "2025-09-24T02:14:54.933Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 29,
+  "fields": {
+    "name": "SQLite",
+    "category": "database",
+    "description": "Lightweight embedded database",
+    "created_at": "2025-09-22T01:08:59.712Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 99,
+  "fields": {
+    "name": "Adobe XD",
+    "category": "design",
+    "description": "Adobe XD skill",
+    "created_at": "2025-09-24T02:14:56.379Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 97,
+  "fields": {
+    "name": "Figma",
+    "category": "design",
+    "description": "Figma skill",
+    "created_at": "2025-09-24T02:14:56.190Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 101,
+  "fields": {
+    "name": "Illustrator",
+    "category": "design",
+    "description": "Illustrator skill",
+    "created_at": "2025-09-24T02:14:56.449Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 100,
+  "fields": {
+    "name": "Photoshop",
+    "category": "design",
+    "description": "Photoshop skill",
+    "created_at": "2025-09-24T02:14:56.431Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 98,
+  "fields": {
+    "name": "Sketch",
+    "category": "design",
+    "description": "Sketch skill",
+    "created_at": "2025-09-24T02:14:56.267Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 96,
+  "fields": {
+    "name": "UI/UX Design",
+    "category": "design",
+    "description": "UI/UX Design skill",
+    "created_at": "2025-09-24T02:14:56.177Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 74,
+  "fields": {
+    "name": "Ansible",
+    "category": "devops",
+    "description": "Ansible skill",
+    "created_at": "2025-09-24T02:14:54.976Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 34,
+  "fields": {
+    "name": "AWS",
+    "category": "devops",
+    "description": "Amazon Web Services cloud platform",
+    "created_at": "2025-09-22T01:08:59.715Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 35,
+  "fields": {
+    "name": "Azure",
+    "category": "devops",
+    "description": "Microsoft cloud computing platform",
+    "created_at": "2025-09-22T01:08:59.715Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 77,
+  "fields": {
+    "name": "CircleCI",
+    "category": "devops",
+    "description": "CircleCI skill",
+    "created_at": "2025-09-24T02:14:54.996Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 32,
+  "fields": {
+    "name": "Docker",
+    "category": "devops",
+    "description": "Containerization platform",
+    "created_at": "2025-09-22T01:08:59.714Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 76,
+  "fields": {
+    "name": "GitHub Actions",
+    "category": "devops",
+    "description": "GitHub Actions skill",
+    "created_at": "2025-09-24T02:14:54.983Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 75,
+  "fields": {
+    "name": "GitLab CI",
+    "category": "devops",
+    "description": "GitLab CI skill",
+    "created_at": "2025-09-24T02:14:54.980Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 38,
+  "fields": {
+    "name": "GitLab CI/CD",
+    "category": "devops",
+    "description": "Continuous integration and deployment",
+    "created_at": "2025-09-22T01:08:59.717Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 36,
+  "fields": {
+    "name": "Google Cloud",
+    "category": "devops",
+    "description": "Google cloud computing platform",
+    "created_at": "2025-09-22T01:08:59.716Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 37,
+  "fields": {
+    "name": "Jenkins",
+    "category": "devops",
+    "description": "Open-source automation server",
+    "created_at": "2025-09-22T01:08:59.717Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 33,
+  "fields": {
+    "name": "Kubernetes",
+    "category": "devops",
+    "description": "Container orchestration platform",
+    "created_at": "2025-09-22T01:08:59.714Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 39,
+  "fields": {
+    "name": "Terraform",
+    "category": "devops",
+    "description": "Infrastructure as code tool",
+    "created_at": "2025-09-22T01:08:59.718Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 78,
+  "fields": {
+    "name": "Travis CI",
+    "category": "devops",
+    "description": "Travis CI skill",
+    "created_at": "2025-09-24T02:14:54.998Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 115,
+  "fields": {
+    "name": "AR/VR",
+    "category": "emerging",
+    "description": "AR/VR skill",
+    "created_at": "2025-09-24T02:14:56.823Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 112,
+  "fields": {
+    "name": "Blockchain",
+    "category": "emerging",
+    "description": "Blockchain skill",
+    "created_at": "2025-09-24T02:14:56.800Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 114,
+  "fields": {
+    "name": "IoT",
+    "category": "emerging",
+    "description": "IoT skill",
+    "created_at": "2025-09-24T02:14:56.817Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 113,
+  "fields": {
+    "name": "Web3",
+    "category": "emerging",
+    "description": "Web3 skill",
+    "created_at": "2025-09-24T02:14:56.812Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 11,
+  "fields": {
+    "name": "Angular",
+    "category": "frontend",
+    "description": "TypeScript-based web application framework",
+    "created_at": "2025-09-22T01:08:59.701Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 106,
+  "fields": {
+    "name": "Bootstrap",
+    "category": "frontend",
+    "description": "Bootstrap skill",
+    "created_at": "2025-09-24T02:14:56.701Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 102,
+  "fields": {
+    "name": "CSS",
+    "category": "frontend",
+    "description": "CSS skill",
+    "created_at": "2025-09-24T02:14:56.546Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 13,
+  "fields": {
+    "name": "CSS3",
+    "category": "frontend",
+    "description": "Styling language for web presentation",
+    "created_at": "2025-09-22T01:08:59.703Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 12,
+  "fields": {
+    "name": "HTML5",
+    "category": "frontend",
+    "description": "Markup language for structuring web content",
+    "created_at": "2025-09-22T01:08:59.702Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 107,
+  "fields": {
+    "name": "Material-UI",
+    "category": "frontend",
+    "description": "Material-UI skill",
+    "created_at": "2025-09-24T02:14:56.751Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 63,
+  "fields": {
+    "name": "Next.js",
+    "category": "frontend",
+    "description": "Next.js skill",
+    "created_at": "2025-09-24T02:14:54.800Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 64,
+  "fields": {
+    "name": "Nuxt.js",
+    "category": "frontend",
+    "description": "Nuxt.js skill",
+    "created_at": "2025-09-24T02:14:54.809Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 9,
+  "fields": {
+    "name": "React",
+    "category": "frontend",
+    "description": "JavaScript library for building user interfaces",
+    "created_at": "2025-09-22T01:08:59.700Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 104,
+  "fields": {
+    "name": "Sass",
+    "category": "frontend",
+    "description": "Sass skill",
+    "created_at": "2025-09-24T02:14:56.651Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 15,
+  "fields": {
+    "name": "Sass/SCSS",
+    "category": "frontend",
+    "description": "CSS preprocessor for enhanced styling capabilities",
+    "created_at": "2025-09-22T01:08:59.704Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 103,
+  "fields": {
+    "name": "SCSS",
+    "category": "frontend",
+    "description": "SCSS skill",
+    "created_at": "2025-09-24T02:14:56.608Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 60,
+  "fields": {
+    "name": "Svelte",
+    "category": "frontend",
+    "description": "Svelte skill",
+    "created_at": "2025-09-24T02:14:54.777Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 65,
+  "fields": {
+    "name": "SvelteKit",
+    "category": "frontend",
+    "description": "SvelteKit skill",
+    "created_at": "2025-09-24T02:14:54.812Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 105,
+  "fields": {
+    "name": "Tailwind CSS",
+    "category": "frontend",
+    "description": "Tailwind CSS skill",
+    "created_at": "2025-09-24T02:14:56.681Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 14,
+  "fields": {
+    "name": "TypeScript",
+    "category": "frontend",
+    "description": "Typed superset of JavaScript for large-scale applications",
+    "created_at": "2025-09-22T01:08:59.703Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 10,
+  "fields": {
+    "name": "Vue.js",
+    "category": "frontend",
+    "description": "Progressive JavaScript framework for building UIs",
+    "created_at": "2025-09-22T01:08:59.701Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 16,
+  "fields": {
+    "name": "Webpack",
+    "category": "frontend",
+    "description": "Module bundler for JavaScript applications",
+    "created_at": "2025-09-22T01:08:59.704Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 43,
+  "fields": {
+    "name": "Android Development",
+    "category": "mobile",
+    "description": "Google mobile platform development",
+    "created_at": "2025-09-22T01:08:59.720Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 67,
+  "fields": {
+    "name": "Cordova",
+    "category": "mobile",
+    "description": "Cordova skill",
+    "created_at": "2025-09-24T02:14:54.832Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 41,
+  "fields": {
+    "name": "Flutter",
+    "category": "mobile",
+    "description": "Google UI toolkit for mobile apps",
+    "created_at": "2025-09-22T01:08:59.719Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 66,
+  "fields": {
+    "name": "Ionic",
+    "category": "mobile",
+    "description": "Ionic skill",
+    "created_at": "2025-09-24T02:14:54.817Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 42,
+  "fields": {
+    "name": "iOS Development",
+    "category": "mobile",
+    "description": "Apple mobile platform development",
+    "created_at": "2025-09-22T01:08:59.720Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 40,
+  "fields": {
+    "name": "React Native",
+    "category": "mobile",
+    "description": "Cross-platform mobile development framework",
+    "created_at": "2025-09-22T01:08:59.719Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 44,
+  "fields": {
+    "name": "Xamarin",
+    "category": "mobile",
+    "description": "Microsoft cross-platform mobile development",
+    "created_at": "2025-09-22T01:08:59.721Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 51,
+  "fields": {
+    "name": "Git",
+    "category": "other",
+    "description": "Git skill",
+    "created_at": "2025-09-24T02:08:52.101Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 5,
+  "fields": {
+    "name": "C#",
+    "category": "programming",
+    "description": "Microsoft programming language for .NET applications",
+    "created_at": "2025-09-22T01:08:59.698Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 4,
+  "fields": {
+    "name": "C++",
+    "category": "programming",
+    "description": "High-performance programming language for system programming and game development",
+    "created_at": "2025-09-22T01:08:59.697Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 6,
+  "fields": {
+    "name": "Go",
+    "category": "programming",
+    "description": "Google programming language for cloud-native applications",
+    "created_at": "2025-09-22T01:08:59.698Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 3,
+  "fields": {
+    "name": "Java",
+    "category": "programming",
+    "description": "Object-oriented programming language for enterprise applications",
+    "created_at": "2025-09-22T01:08:59.696Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 2,
+  "fields": {
+    "name": "JavaScript",
+    "category": "programming",
+    "description": "Dynamic programming language for web development and server-side applications",
+    "created_at": "2025-09-22T01:08:59.695Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 56,
+  "fields": {
+    "name": "Kotlin",
+    "category": "programming",
+    "description": "Kotlin skill",
+    "created_at": "2025-09-24T02:14:54.715Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 59,
+  "fields": {
+    "name": "MATLAB",
+    "category": "programming",
+    "description": "MATLAB skill",
+    "created_at": "2025-09-24T02:14:54.760Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 8,
+  "fields": {
+    "name": "PHP",
+    "category": "programming",
+    "description": "Server-side scripting language for web development",
+    "created_at": "2025-09-22T01:08:59.700Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 1,
+  "fields": {
+    "name": "Python",
+    "category": "programming",
+    "description": "High-level programming language for web development, data science, and automation",
+    "created_at": "2025-09-22T01:08:59.691Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 58,
+  "fields": {
+    "name": "R",
+    "category": "programming",
+    "description": "R skill",
+    "created_at": "2025-09-24T02:14:54.731Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 54,
+  "fields": {
+    "name": "Ruby",
+    "category": "programming",
+    "description": "Ruby skill",
+    "created_at": "2025-09-24T02:14:54.697Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 7,
+  "fields": {
+    "name": "Rust",
+    "category": "programming",
+    "description": "Systems programming language focused on safety and performance",
+    "created_at": "2025-09-22T01:08:59.699Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 57,
+  "fields": {
+    "name": "Scala",
+    "category": "programming",
+    "description": "Scala skill",
+    "created_at": "2025-09-24T02:14:54.720Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 117,
+  "fields": {
+    "name": "Scrum",
+    "category": "programming",
+    "description": "Scrum skill",
+    "created_at": "2025-09-24T18:25:48.708Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 55,
+  "fields": {
+    "name": "Swift",
+    "category": "programming",
+    "description": "Swift skill",
+    "created_at": "2025-09-24T02:14:54.713Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 116,
+  "fields": {
+    "name": "Team Leadership",
+    "category": "programming",
+    "description": "Team Leadership skill",
+    "created_at": "2025-09-24T14:11:17.264Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 95,
+  "fields": {
+    "name": "Chai",
+    "category": "testing",
+    "description": "Chai skill",
+    "created_at": "2025-09-24T02:14:56.125Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 48,
+  "fields": {
+    "name": "Cypress",
+    "category": "testing",
+    "description": "End-to-end testing framework",
+    "created_at": "2025-09-22T01:08:59.723Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 50,
+  "fields": {
+    "name": "Integration Testing",
+    "category": "testing",
+    "description": "Testing component interactions",
+    "created_at": "2025-09-22T01:08:59.724Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 45,
+  "fields": {
+    "name": "Jest",
+    "category": "testing",
+    "description": "JavaScript testing framework",
+    "created_at": "2025-09-22T01:08:59.721Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 93,
+  "fields": {
+    "name": "JUnit",
+    "category": "testing",
+    "description": "JUnit skill",
+    "created_at": "2025-09-24T02:14:55.822Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 94,
+  "fields": {
+    "name": "Mocha",
+    "category": "testing",
+    "description": "Mocha skill",
+    "created_at": "2025-09-24T02:14:55.952Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 46,
+  "fields": {
+    "name": "Pytest",
+    "category": "testing",
+    "description": "Python testing framework",
+    "created_at": "2025-09-22T01:08:59.722Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 47,
+  "fields": {
+    "name": "Selenium",
+    "category": "testing",
+    "description": "Web application testing framework",
+    "created_at": "2025-09-22T01:08:59.723Z"
+  }
+},
+{
+  "model": "skills.skill",
+  "pk": 49,
+  "fields": {
+    "name": "Unit Testing",
+    "category": "testing",
+    "description": "Testing individual components in isolation",
+    "created_at": "2025-09-22T01:08:59.724Z"
+  }
+}
+]
