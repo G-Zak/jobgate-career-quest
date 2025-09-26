@@ -29,8 +29,11 @@ import { BookmarkIcon as BookmarkSolidIcon, HeartIcon as HeartSolidIcon } from '
 import { useAuth } from '../../../contexts/AuthContext';
 import { jobOffers } from '../../../data/jobOffers';
 import { loadUserProfile } from '../../../utils/profileUtils';
+import { getUserSkillsWithFallback, getUserProfileWithFallback } from '../../../utils/skillsFallback';
 import jobRecommendationsApi from '../../../services/jobRecommendationsApi';
 import { mockJobOffers } from '../../../data/mockJobOffers';
+import { calculateEnhancedJobMatch, getAllSkillTestScores } from '../../../utils/testScoreIntegration';
+import { getValidatedSkills, filterToValidatedSkills, getValidationStats } from '../../../utils/validatedSkills';
 
 // Safe skill normalization utility
 const normalizeSkill = (skill) => {
@@ -118,7 +121,7 @@ const JobRecommendations = ({
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [testResults, setTestResults] = useState([]);
 
-  // Use profile from props (passed from JobRecommendationsPage)
+  // Use profile from props (passed from JobRecommendationsPage) or load from localStorage
   useEffect(() => {
     console.log('🔍 JobRecommendations - Props received:');
     console.log('  - userId:', userId);
@@ -129,14 +132,30 @@ const JobRecommendations = ({
     if (userProfile) {
       console.log('🔍 JobRecommendations - Setting userProfile from props:', userProfile);
       setUserProfile(userProfile);
+    } else {
+      // If no profile from props, try to load from localStorage using enhanced fallback
+      const fallbackProfile = getUserProfileWithFallback(userProfile, userId, user);
+      if (fallbackProfile) {
+        console.log('🔍 JobRecommendations - Loading profile from localStorage fallback:', fallbackProfile);
+        setUserProfile(fallbackProfile);
+      }
     }
-  }, [userId, userSkills, userLocation, userProfile]);
+  }, [userId, userSkills, userLocation, userProfile, user?.id]);
 
   // Listen for profile changes with real-time updates
   useEffect(() => {
     const handleStorageChange = async () => {
-      console.log('Profile updated, refreshing from database...');
-      // Reload from database instead of localStorage
+      console.log('Profile updated, refreshing from localStorage...');
+      // First try to reload from localStorage (more reliable when API fails)
+      const fallbackProfile = getUserProfileWithFallback(userProfile, userId, user);
+      if (fallbackProfile) {
+        console.log('🔍 JobRecommendations - handleStorageChange setting profile from localStorage:', fallbackProfile);
+        setUserProfile(fallbackProfile);
+        setLastUpdateTime(Date.now());
+        return;
+      }
+
+      // Fallback to database if localStorage fails
       try {
         const response = await jobRecommendationsApi.getUserProfile();
         if (response.success && response.profile) {
@@ -156,7 +175,7 @@ const JobRecommendations = ({
             education: [],
             experience: []
           };
-          console.log('🔍 JobRecommendations - handleStorageChange setting profile:', transformedProfile);
+          console.log('🔍 JobRecommendations - handleStorageChange setting profile from database:', transformedProfile);
           setUserProfile(transformedProfile);
           setLastUpdateTime(Date.now());
         }
@@ -205,21 +224,17 @@ const JobRecommendations = ({
     }
   }, []);
 
-  // Get current user skills (prioritize from profile, fallback to props)
+  // Get current user skills using enhanced fallback strategy
   const currentUserSkills = useMemo(() => {
     console.log('🔍 JobRecommendations - useMemo triggered with:');
     console.log('  - userProfile:', userProfile);
-    console.log('  - userProfile?.skillsWithProficiency:', userProfile?.skillsWithProficiency);
     console.log('  - userSkills (props):', userSkills);
+    console.log('  - userId:', userId);
+    console.log('  - user?.id:', user?.id);
 
-    if (userProfile?.skillsWithProficiency) {
-      const skills = userProfile.skillsWithProficiency.map(skill => skill.name);
-      console.log('🔍 JobRecommendations - currentUserSkills from profile:', skills);
-      return skills;
-    }
-    console.log('🔍 JobRecommendations - currentUserSkills from props:', userSkills);
-    return userSkills;
-  }, [userProfile, userSkills]);
+    const skills = getUserSkillsWithFallback(userProfile, userSkills, userId, user);
+    return skills;
+  }, [userProfile, userSkills, user?.id, userId]);
 
   const currentUserLocation = userProfile?.location || userLocation;
 
@@ -235,17 +250,38 @@ const JobRecommendations = ({
     }
   };
 
-  // Enhanced job scoring algorithm
+  // Enhanced job scoring algorithm with validated skills integration
   const calculateJobScore = useMemo(() => {
-    return (job, skills, location, userProf = null, testResults = []) => {
+    return async (job, skills, location, userProf = null, testResults = []) => {
       let score = 0;
 
-      // Skills matching (50% weight) - Enhanced with proficiency and test results
-      const validSkills = filterValidSkills(skills);
+      // Get user ID for test score lookup
+      const userId = userProf?.id || 1;
+
+      // Get only validated skills (skills with passed tests)
+      const validatedSkills = await getValidatedSkills(userId);
+      const validSkills = await filterToValidatedSkills(skills, userId);
+
+      console.log('🔍 Job scoring with validated skills:', {
+        jobTitle: job.title,
+        originalSkills: skills,
+        validatedSkills: validatedSkills,
+        validSkillsForScoring: validSkills,
+        userId: userId,
+        currentUserSkills: currentUserSkills
+      });
 
       // Get required and preferred skills from job
-      let requiredSkills = filterValidSkills(job.required_skills?.map(skill => skill.name || skill) || []);
-      let preferredSkills = filterValidSkills(job.preferred_skills?.map(skill => skill.name || skill) || []);
+      let requiredSkills = filterValidSkills(job.required_skills?.map(skill => {
+        if (typeof skill === 'string') return skill;
+        if (typeof skill === 'object' && skill.name) return skill.name;
+        return String(skill);
+      }) || []);
+      let preferredSkills = filterValidSkills(job.preferred_skills?.map(skill => {
+        if (typeof skill === 'string') return skill;
+        if (typeof skill === 'object' && skill.name) return skill.name;
+        return String(skill);
+      }) || []);
 
       // Fallback: if no required_skills, use tags as required skills
       if (requiredSkills.length === 0 && job.tags && job.tags.length > 0) {
@@ -253,94 +289,96 @@ const JobRecommendations = ({
         requiredSkills = filterValidSkills(job.tags);
       }
 
-      const allJobSkills = [...requiredSkills, ...preferredSkills];
+      // Use enhanced job match calculation with all user skills (not just validated ones)
+      const enhancedMatch = calculateEnhancedJobMatch(job, skills, userId);
 
-      // Calculate matches for required skills (higher weight)
-      const requiredMatches = requiredSkills.filter(jobSkill =>
-        validSkills.some(userSkill => compareSkills(userSkill, jobSkill))
-      );
+      // Get validation statistics
+      const validationStats = getValidationStats(skills, userId);
 
-      // Calculate matches for preferred skills (lower weight)
-      const preferredMatches = preferredSkills.filter(jobSkill =>
-        validSkills.some(userSkill => compareSkills(userSkill, jobSkill))
-      );
+      // Calculate individual components using proportional test scoring
+      // 1. Skills Match (50% weight) - most important factor
+      const skillsScore = enhancedMatch.matchPercentage / 100; // Convert to 0-1 scale
 
-      const allMatches = [...requiredMatches, ...preferredMatches];
+      // 2. Technical Tests (30% weight) - proportional to relevant tests passed
+      let testScore = 0;
+      let passedTests = 0;
+      let totalRelevantTests = 0;
 
-      // Base skill match percentage (70% required, 30% preferred)
-      const requiredWeight = 0.7;
-      const preferredWeight = 0.3;
-      const requiredScore = requiredSkills.length > 0 ? (requiredMatches.length / requiredSkills.length) * requiredWeight * 50 : 0;
-      const preferredScore = preferredSkills.length > 0 ? (preferredMatches.length / preferredSkills.length) * preferredWeight * 50 : 0;
-      let skillMatchPercentage = requiredScore + preferredScore;
+      if (enhancedMatch.hasTestScores && Object.keys(enhancedMatch.skillTestScores).length > 0) {
+        // Count passed tests (tests with 70%+ score)
+        passedTests = Object.values(enhancedMatch.skillTestScores).filter(score =>
+          score.percentage >= 70
+        ).length;
 
-      // Debug logging
-      console.log('🔍 Job Score Calculation:', {
-        jobTitle: job.title,
-        userSkills: validSkills,
-        requiredSkills: requiredSkills,
-        preferredSkills: preferredSkills,
-        requiredMatches: requiredMatches,
-        preferredMatches: preferredMatches,
-        requiredScore: requiredScore,
-        preferredScore: preferredScore,
-        skillMatchPercentage: skillMatchPercentage,
-        jobRequiredSkills: job.required_skills,
-        jobPreferredSkills: job.preferred_skills,
-        jobTags: job.tags
-      });
+        // Count total relevant tests for this job (tests for required skills)
+        const allJobSkills = [...requiredSkills, ...preferredSkills];
+        const relevantTestSkills = allJobSkills.filter(skill =>
+          Object.keys(enhancedMatch.skillTestScores).includes(skill)
+        );
+        totalRelevantTests = relevantTestSkills.length;
 
-      // Enhance score with test results
-      if (testResults.length > 0) {
-        const testBonus = allMatches.reduce((bonus, skill) => {
-          const proficiency = calculateSkillProficiency(skill, testResults);
-          return bonus + (proficiency * 10); // Up to 10 points per skill
-        }, 0);
-        skillMatchPercentage = Math.min(skillMatchPercentage + testBonus, 50);
+        // Calculate proportional test score (0-1 scale)
+        testScore = totalRelevantTests > 0 ? passedTests / totalRelevantTests : 0;
       }
 
-      score += skillMatchPercentage;
-
-      // Location matching (20% weight)
+      // 3. Location (20% weight) - important factor
+      let locationScore = 0;
       if (location && job.location) {
         const locationMatch = location.toLowerCase().includes(job.location.toLowerCase()) ||
           job.location.toLowerCase().includes(location.toLowerCase());
-        score += locationMatch ? 20 : 0;
+        locationScore = locationMatch ? 1 : 0; // 1 if location matches, 0 if not
       }
 
-      // Experience level matching (15% weight)
-      if (userProf?.experienceLevel && job.experience) {
-        const userExp = userProf.experienceLevel.toLowerCase();
-        const jobExp = job.experience.toLowerCase();
+      // Calculate weighted total score (0-1 scale, then convert to percentage)
+      const weightedScore = 0.5 * skillsScore + 0.3 * testScore + 0.2 * locationScore;
+      score = Math.round(weightedScore * 100);
 
-        if (userExp.includes('senior') && (jobExp.includes('senior') || jobExp.includes('lead'))) {
-          score += 15;
-        } else if (userExp.includes('mid') && (jobExp.includes('mid') || jobExp.includes('intermediate'))) {
-          score += 15;
-        } else if (userExp.includes('junior') && (jobExp.includes('junior') || jobExp.includes('entry'))) {
-          score += 15;
-        } else if (userExp.includes('entry') && jobExp.includes('entry')) {
-          score += 15;
-        }
-      }
+      // Return detailed scoring breakdown
+      return {
+        score: score,
+        skillsScore: skillsScore,
+        testScore: testScore,
+        locationScore: locationScore,
+        passedTests: passedTests,
+        totalRelevantTests: totalRelevantTests,
+        enhancedMatch: enhancedMatch,
+        validationStats: validationStats
+      };
 
-      // Job type preference (10% weight)
-      if (userProf?.jobTypePreference && job.type) {
-        const userPref = userProf.jobTypePreference.toLowerCase();
-        const jobType = job.type.toLowerCase();
-        if (userPref.includes(jobType) || jobType.includes(userPref)) {
-          score += 10;
-        }
-      }
+      // Debug logging
+      console.log('🔍 Proportional Test Score Calculation:', {
+        jobTitle: job.title,
+        originalSkills: skills,
+        validatedSkills: validatedSkills,
+        validSkillsForScoring: validSkills,
+        requiredSkills: requiredSkills,
+        preferredSkills: preferredSkills,
+        enhancedMatch: enhancedMatch,
+        skillsScore: `${Math.round(skillsScore * 100)}% (50% weight)`,
+        testScore: `${Math.round(testScore * 100)}% (30% weight) - ${passedTests}/${totalRelevantTests} tests passed`,
+        locationScore: `${Math.round(locationScore * 100)}% (20% weight)`,
+        weightedScore: weightedScore,
+        totalScore: `${score}%`,
+        validationStats: validationStats,
+        hasTestScores: enhancedMatch.hasTestScores,
+        skillTestScores: enhancedMatch.skillTestScores,
+        testScoreDetails: enhancedMatch.hasTestScores ? {
+          passedTests: Object.values(enhancedMatch.skillTestScores).filter(score => score.percentage >= 70).length,
+          totalRelevantTests: [...requiredSkills, ...preferredSkills].filter(skill =>
+            Object.keys(enhancedMatch.skillTestScores).includes(skill)
+          ).length,
+          testProportion: testScore,
+          testContribution: Math.round(testScore * 30) + '%'
+        } : null
+      });
 
-      // Salary expectation (5% weight)
-      if (userProf?.salaryExpectation && job.salary) {
-        const userSalary = parseInt(userProf.salaryExpectation.replace(/[^\d]/g, ''));
-        const jobSalary = parseInt(job.salary.replace(/[^\d]/g, ''));
-        if (userSalary && jobSalary) {
-          const salaryRatio = Math.min(userSalary, jobSalary) / Math.max(userSalary, jobSalary);
-          score += salaryRatio * 5;
-        }
+      // Log validation status
+      if (validSkills.length > 0) {
+        console.log('✅ Using validated skills for job scoring:', validSkills);
+        console.log('📊 Validation stats:', validationStats);
+      } else {
+        console.log('⚠️ No validated skills found - job score will be lower');
+        console.log('📊 All skills need to pass tests to be counted:', validationStats.unvalidatedSkills);
       }
 
       return Math.min(Math.round(score), 100);
@@ -422,335 +460,310 @@ const JobRecommendations = ({
           location: currentUserLocation
         };
 
-        try {
-          // Try to get recommendations from backend API
-          console.log('🔄 Calling backend API for recommendations with profile:', userProfileData);
-          console.log('🔍 User profile data:', userProfile);
-          console.log('🔍 Current user skills:', currentUserSkills);
+        // Use frontend proportional test scoring
+        console.log('🔄 Using frontend proportional test scoring for job recommendations');
+        console.log('🔍 User profile data:', userProfile);
+        console.log('🔍 Current user skills:', currentUserSkills);
 
-          const response = await jobRecommendationsApi.getAdvancedRecommendations(
-            userProfileData,
-            { limit: maxJobs }
-          );
+        // Use frontend scoring instead of API
+        const useMockData = true;
 
-          console.log('📡 Backend API response:', response);
-          if (response.success && response.recommendations && response.recommendations.length > 0) {
-            // Transform enhanced algorithm response to frontend format
-            const transformedJobs = response.recommendations.map(rec => {
-              // Handle both old and new response formats
-              const isNewFormat = rec.ai_powered_match && rec.ai_powered_match.overall_score !== undefined;
-              console.log('🔍 Processing recommendation:', rec.title);
-              console.log('🔍 Is new format:', isNewFormat);
-              console.log('🔍 AI match data:', rec.ai_powered_match);
+        if (!useMockData) {
+          try {
+            // Try to get recommendations from the new proportional test scoring API
+            console.log('🔄 Calling proportional test scoring API for recommendations');
 
-              if (isNewFormat) {
-                // New enhanced format
-                const aiMatch = rec.ai_powered_match;
-                const skillMatch = aiMatch.breakdown.skill_match;
-                const requiredSkills = skillMatch.required_skills;
-                const preferredSkills = skillMatch.preferred_skills;
-
-                return {
-                  id: rec.id,
-                  title: rec.title,
-                  company: rec.company,
-                  location: rec.location,
-                  city: rec.city || rec.location?.split(',')[0] || rec.location,
-                  type: rec.job_type,
-                  experience: rec.seniority,
-                  description: rec.description || `Enhanced algorithm recommendation: ${rec.title} at ${rec.company}`,
-                  requirements: rec.requirements || `Required skills: ${rec.required_skills?.join(', ') || 'Not specified'}`,
-                  salary: rec.salary_min && rec.salary_max
-                    ? `${rec.salary_min.toLocaleString()} - ${rec.salary_max.toLocaleString()} MAD`
-                    : 'Salary not specified',
-                  remote: rec.remote,
-                  posted: new Date().toISOString(),
-                  requiredSkills: rec.required_skills || [],
-                  preferredSkills: rec.preferred_skills || [],
-                  tags: rec.tags || [],
-                  recommendationScore: aiMatch.overall_score,
-                  skillMatchScore: skillMatch.score,
-                  requiredSkillScore: requiredSkills.percentage,
-                  preferredSkillScore: preferredSkills.percentage,
-                  contentScore: aiMatch.breakdown.content_similarity.score,
-                  salaryFitScore: aiMatch.breakdown.bonuses.salary_fit,
-                  locationMatchScore: aiMatch.breakdown.bonuses.location,
-                  experienceMatchScore: aiMatch.breakdown.bonuses.experience,
-                  remoteBonus: aiMatch.breakdown.bonuses.remote,
-                  matchedSkills: requiredSkills.matched_skills.concat(preferredSkills.matched_skills),
-                  missingSkills: requiredSkills.missing_skills.concat(preferredSkills.missing_skills),
-                  requiredMatchedSkills: requiredSkills.matched_skills,
-                  preferredMatchedSkills: preferredSkills.matched_skills,
-                  requiredMissingSkills: requiredSkills.missing_skills,
-                  preferredMissingSkills: preferredSkills.missing_skills,
-                  requiredSkillsCount: requiredSkills.total,
-                  preferredSkillsCount: preferredSkills.total,
-                  requiredMatchedCount: requiredSkills.matched,
-                  preferredMatchedCount: preferredSkills.matched,
-                  // Calculate percentages for consistency
-                  requiredMatchPercentage: requiredSkills.percentage,
-                  preferredMatchPercentage: preferredSkills.percentage,
-                  aiMatchPercentage: aiMatch.overall_score,
-                  recommendationReason: aiMatch.explanation || `Based on ${requiredSkills.matched} out of ${requiredSkills.total} required skills`,
-                  status: 'new',
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                  isHighMatch: aiMatch.overall_score >= 70,
-                  // Enhanced View Details fields
-                  clusterFitScore: aiMatch.breakdown.cluster_fit.score,
-                  clusterId: aiMatch.breakdown.cluster_fit.cluster_id,
-                  clusterName: aiMatch.breakdown.cluster_fit.cluster_name,
-                  locationMatch: aiMatch.breakdown.location_remote_fit.location_match,
-                  remoteAvailable: aiMatch.breakdown.location_remote_fit.remote_available,
-                  userExperience: aiMatch.breakdown.experience_seniority.user_experience,
-                  jobSeniority: aiMatch.breakdown.experience_seniority.job_seniority,
-                  overallBreakdown: aiMatch.breakdown.overall_breakdown,
-                };
-              } else {
-                // Old format (fallback)
-                return {
-                  id: rec.job.id,
-                  title: rec.job.title,
-                  company: rec.job.company,
-                  location: rec.job.location,
-                  city: rec.job.location?.split(',')[0] || rec.job.location,
-                  type: rec.job.job_type,
-                  experience: rec.job.seniority,
-                  description: `Advanced algorithm recommendation: ${rec.job.title} at ${rec.job.company}`,
-                  requirements: `Required skills: ${rec.job.required_skills?.join(', ') || 'Not specified'}`,
-                  salary: rec.job.salary_min && rec.job.salary_max
-                    ? `${rec.job.salary_min.toLocaleString()} - ${rec.job.salary_max.toLocaleString()} MAD`
-                    : 'Salary not specified',
-                  remote: rec.job.remote,
-                  posted: new Date().toISOString(),
-                  requiredSkills: rec.job.required_skills || [],
-                  preferredSkills: rec.job.preferred_skills || [],
-                  tags: rec.job.tags || [],
-                  recommendationScore: rec.score,
-                  skillMatchScore: rec.skill_score,
-                  requiredSkillScore: rec.required_skill_score,
-                  preferredSkillScore: rec.preferred_skill_score,
-                  contentScore: rec.content_score,
-                  salaryFitScore: rec.salary_fit,
-                  locationMatchScore: rec.location_bonus,
-                  experienceMatchScore: rec.experience_bonus,
-                  remoteBonus: rec.remote_bonus,
-                  matchedSkills: rec.matched_skills || [],
-                  missingSkills: rec.missing_skills || [],
-                  requiredMatchedSkills: rec.required_matched_skills || [],
-                  preferredMatchedSkills: rec.preferred_matched_skills || [],
-                  requiredMissingSkills: rec.required_missing_skills || [],
-                  preferredMissingSkills: rec.preferred_missing_skills || [],
-                  requiredSkillsCount: rec.required_skills_count || 0,
-                  preferredSkillsCount: rec.preferred_skills_count || 0,
-                  requiredMatchedCount: rec.required_matched_count || 0,
-                  preferredMatchedCount: rec.preferred_matched_count || 0,
-                  // Calculate percentages for consistency
-                  requiredMatchPercentage: rec.required_skills_count > 0 ? Math.round((rec.required_matched_count || 0) / rec.required_skills_count * 100) : 0,
-                  preferredMatchPercentage: rec.preferred_skills_count > 0 ? Math.round((rec.preferred_matched_count || 0) / rec.preferred_skills_count * 100) : 0,
-                  aiMatchPercentage: rec.required_skills_count > 0
-                    ? Math.round((rec.required_matched_count || 0) / rec.required_skills_count * 100)
-                    : 0,
-                  recommendationReason: rec.recommendation_reason || `Based on ${rec.required_matched_count || 0} out of ${rec.required_skills_count || 0} required skills`,
-                  status: 'new',
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                  isHighMatch: rec.score >= 70,
-                };
-              }
+            const response = await fetch('http://localhost:8000/api/recommendations/proportional-test/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                skills: currentUserSkills.map(skill =>
+                  typeof skill === 'string' ? skill : skill.name || skill
+                ),
+                location: currentUserLocation,
+                limit: maxJobs
+              })
             });
 
-            console.log('🔍 Transformed jobs:', transformedJobs);
-            console.log('🔍 First job data:', transformedJobs[0]);
-            console.log('🔍 First job requiredMatchPercentage:', transformedJobs[0]?.requiredMatchPercentage);
-            console.log('🔍 First job requiredMatchedCount:', transformedJobs[0]?.requiredMatchedCount);
-            console.log('🔍 First job requiredSkillsCount:', transformedJobs[0]?.requiredSkillsCount);
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-            // If backend returns 2 or fewer jobs, supplement with mock data for better UX
-            if (response.recommendations.length <= 2) {
-              console.log(`⚠️ Backend API returned only ${response.recommendations.length} job(s), supplementing with mock data for better UX`);
+            const apiResponse = await response.json();
 
-              // Use mock data fallback to get more jobs
-              const activeJobs = mockJobOffers.filter(job => job.status === 'active');
-              const mockJobsWithScores = activeJobs.map(job => {
-                const score = calculateJobScore(job, currentUserSkills, currentUserLocation, userProfile);
+            console.log('📡 Proportional test scoring API response:', apiResponse);
+            if (apiResponse.success && apiResponse.recommendations && apiResponse.recommendations.length > 0) {
+              // Transform proportional test scoring response to frontend format
+              const transformedJobs = apiResponse.recommendations.map(rec => {
+                // Handle proportional test scoring format
+                console.log('🔍 Processing recommendation:', rec.job_title);
+                console.log('🔍 Score breakdown:', rec.score_breakdown);
+                console.log('🔍 Current user skills:', currentUserSkills);
+                console.log('🔍 User profile:', userProfile);
 
-                // Get matched skills from both required_skills and tags
-                const requiredSkills = filterValidSkills(job.required_skills?.map(skill => skill.name || skill) || []);
-                const preferredSkills = filterValidSkills(job.preferred_skills?.map(skill => skill.name || skill) || []);
-                const allJobSkills = [...requiredSkills, ...preferredSkills, ...filterValidSkills(job.tags || [])];
+                // Transform proportional test scoring response
+                const scoreBreakdown = rec.score_breakdown;
+                const jobData = rec.job_data;
 
-                // Calculate matched skills for each category
-                const matchedRequiredSkills = requiredSkills.filter(jobSkill => {
-                  return filterValidSkills(currentUserSkills).some(userSkill => {
-                    return compareSkills(jobSkill, userSkill);
-                  });
-                });
+                // Calculate skill matches for display
+                const requiredSkills = jobData.required_skills || [];
+                const preferredSkills = jobData.preferred_skills || [];
+                const userSkillNames = currentUserSkills.map(skill =>
+                  typeof skill === 'string' ? skill.toLowerCase() : skill.name?.toLowerCase() || ''
+                );
 
-                const matchedPreferredSkills = preferredSkills.filter(jobSkill => {
-                  return filterValidSkills(currentUserSkills).some(userSkill => {
-                    return compareSkills(jobSkill, userSkill);
-                  });
-                });
-
-                const allMatchedSkills = [...matchedRequiredSkills, ...matchedPreferredSkills];
-
-                // Calculate skill match percentages
-                const requiredMatchPercentage = requiredSkills.length > 0 ? (matchedRequiredSkills.length / requiredSkills.length) * 100 : 0;
-                const preferredMatchPercentage = preferredSkills.length > 0 ? (matchedPreferredSkills.length / preferredSkills.length) * 100 : 0;
-
-                // Calculate AI-powered match percentage using only required skills
-                const aiMatchPercentage = Math.round(requiredMatchPercentage);
+                const matchedRequiredSkills = requiredSkills.filter(skill =>
+                  userSkillNames.includes(skill.toLowerCase())
+                );
+                const matchedPreferredSkills = preferredSkills.filter(skill =>
+                  userSkillNames.includes(skill.toLowerCase())
+                );
 
                 return {
-                  ...job,
-                  recommendationScore: score,
-                  matchedSkills: allMatchedSkills,
-                  isHighMatch: score >= 70,
-                  isGoodMatch: score >= 50,
-                  skillMatchCount: allMatchedSkills.length,
-                  // Skill matching details
+                  id: rec.job_id,
+                  title: rec.job_title,
+                  company: rec.company,
+                  location: rec.location,
+                  city: rec.location?.split(',')[0] || rec.location,
+                  type: rec.job_type,
+                  experience: rec.seniority,
+                  description: rec.description || `Proportional test scoring recommendation: ${rec.job_title} at ${rec.company}`,
+                  requirements: jobData.description || `Required skills: ${requiredSkills.join(', ')}`,
+                  salary: jobData.salary_min && jobData.salary_max
+                    ? `${jobData.salary_min.toLocaleString()} - ${jobData.salary_max.toLocaleString()} MAD`
+                    : 'Salary not specified',
+                  remote: jobData.remote,
+                  posted: new Date().toISOString(),
                   requiredSkills: requiredSkills,
                   preferredSkills: preferredSkills,
+
+                  // Scoring data from proportional test scoring
+                  recommendationScore: scoreBreakdown.global_score,
+                  aiMatchPercentage: scoreBreakdown.global_score,
+                  requiredMatchPercentage: scoreBreakdown.skills_score,
+                  testScore: scoreBreakdown.test_score,
+                  locationScore: scoreBreakdown.location_score,
+
+                  // Skills matching data
                   requiredSkillsCount: requiredSkills.length,
                   preferredSkillsCount: preferredSkills.length,
                   requiredMatchedCount: matchedRequiredSkills.length,
                   preferredMatchedCount: matchedPreferredSkills.length,
-                  requiredMatchPercentage: Math.round(requiredMatchPercentage),
-                  preferredMatchPercentage: Math.round(preferredMatchPercentage),
-                  aiMatchPercentage: aiMatchPercentage,
-                  // Ensure all required fields are present for the UI
-                  salary: job.salary_min && job.salary_max
-                    ? `${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()} ${job.salary_currency}`
-                    : 'Salary not specified',
-                  type: job.job_type || 'full-time',
-                  experience: job.seniority || 'mid',
-                  remote: job.remote || false,
-                  posted: job.posted || new Date().toISOString(),
-                  requiredSkills: requiredSkills,
-                  preferredSkills: preferredSkills,
-                  tags: job.tags || [],
-                  // Calculate missing skills
-                  requiredMissingSkills: requiredSkills.filter(skill => !matchedRequiredSkills.includes(skill)),
-                  preferredMissingSkills: preferredSkills.filter(skill => !matchedPreferredSkills.includes(skill)),
-                  requiredMatchedSkills: matchedRequiredSkills,
-                  preferredMatchedSkills: matchedPreferredSkills,
-                  // Enhanced breakdown for View Details
-                  clusterFitScore: Math.round(Math.random() * 30 + 20), // Random 20-50%
-                  clusterId: Math.floor(Math.random() * 3) + 1,
-                  clusterName: `Career Cluster ${Math.floor(Math.random() * 3) + 1}`,
-                  locationMatch: currentUserLocation && job.location &&
-                    job.location.toLowerCase().includes(currentUserLocation.toLowerCase()),
-                  remoteAvailable: job.remote || false,
-                  userExperience: userProfile?.experienceLevel || 'intermediate',
-                  jobSeniority: job.seniority || 'mid',
-                  contentScore: Math.round(Math.random() * 40 + 10), // Random 10-50%
-                  locationMatchScore: currentUserLocation && job.location &&
-                    job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0,
-                  experienceMatchScore: 5, // Mock experience bonus
-                  remoteBonus: job.remote ? 5 : 0,
-                  // Add the ai_powered_match structure for enhanced breakdown
-                  ai_powered_match: {
-                    overall_score: score,
-                    breakdown: {
-                      skill_match: {
-                        score: Math.round(requiredMatchPercentage),
-                        required_skills: {
-                          percentage: Math.round(requiredMatchPercentage),
-                          matched_skills: matchedRequiredSkills,
-                          missing_skills: requiredSkills.filter(skill => !matchedRequiredSkills.includes(skill))
-                        },
-                        preferred_skills: {
-                          percentage: Math.round(preferredMatchPercentage),
-                          matched_skills: matchedPreferredSkills,
-                          missing_skills: preferredSkills.filter(skill => !matchedPreferredSkills.includes(skill))
-                        }
-                      },
-                      content_similarity: {
-                        score: Math.round(Math.random() * 40 + 10),
-                        description: 'Content similarity based on job description and requirements'
-                      },
-                      cluster_fit: {
-                        score: Math.round(Math.random() * 30 + 20),
-                        cluster_id: Math.floor(Math.random() * 3) + 1,
-                        cluster_name: `Career Cluster ${Math.floor(Math.random() * 3) + 1}`,
-                        description: 'Job fits well within your career cluster'
-                      },
-                      experience_seniority: {
-                        user_experience: userProfile?.experienceLevel || 'intermediate',
-                        job_seniority: job.seniority || 'mid',
-                        experience_bonus: 5,
-                        description: `Your level: ${userProfile?.experienceLevel || 'intermediate'} | Job level: ${job.seniority || 'mid'}`
-                      },
-                      bonuses: {
-                        location: currentUserLocation && job.location &&
-                          job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0,
-                        experience: 5,
-                        remote: job.remote ? 5 : 0,
-                        salary_fit: 0
-                      },
-                      overall_breakdown: {
-                        skill_match_contribution: Math.round(requiredMatchPercentage * 0.7),
-                        content_similarity_contribution: Math.round(Math.random() * 8 + 2),
-                        cluster_fit_contribution: Math.round(Math.random() * 3 + 1),
-                        location_contribution: currentUserLocation && job.location &&
-                          job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0,
-                        experience_contribution: 5,
-                        remote_contribution: job.remote ? 5 : 0,
-                        salary_contribution: 0,
-                        total_calculated: Math.round(requiredMatchPercentage * 0.7 + Math.random() * 20 + 10)
-                      }
-                    },
-                    explanation: `Good match! This job fits well with your skills and experience. You match ${Math.round(requiredMatchPercentage)}% of required skills - excellent!`
-                  }
+                  matchedSkills: [...matchedRequiredSkills, ...matchedPreferredSkills],
+                  tags: jobData.tags || [],
+                  recommendationReason: rec.explanation || `Based on ${matchedRequiredSkills.length} out of ${requiredSkills.length} required skills`,
+                  status: 'new',
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  isHighMatch: scoreBreakdown.global_score >= 70,
                 };
               });
 
-              // Sort by score and take top N
-              const sortedMockJobs = mockJobsWithScores
-                .sort((a, b) => {
-                  if (b.recommendationScore !== a.recommendationScore) {
-                    return b.recommendationScore - a.recommendationScore;
-                  }
-                  if (b.skillMatchCount !== a.skillMatchCount) {
-                    return b.skillMatchCount - a.skillMatchCount;
-                  }
-                  return new Date(b.posted) - new Date(a.posted);
-                })
-                .slice(0, maxJobs);
 
-              console.log('🔍 Mock jobs with scores:');
-              sortedMockJobs.forEach((job, index) => {
-                console.log(`  ${index + 1}. ${job.title} - Score: ${job.recommendationScore}, Matches: ${job.skillMatchCount}`);
-              });
+              // If backend returns 2 or fewer jobs, supplement with mock data for better UX
+              if (apiResponse.recommendations.length <= 2) {
 
-              setRecommendedJobs(sortedMockJobs);
-              console.log('✅ Loaded job recommendations from mock data (supplemented)');
-              return;
+                // Use mock data fallback to get more jobs
+                const activeJobs = mockJobOffers.filter(job => job.status === 'active');
+                const mockJobsWithScores = await Promise.all(activeJobs.map(async job => {
+                  const scoreResult = await calculateJobScore(job, currentUserSkills, currentUserLocation, userProfile);
+                  const score = scoreResult.score;
+
+                  // Get matched skills from both required_skills and tags
+                  const requiredSkills = filterValidSkills(job.required_skills?.map(skill => {
+                    if (typeof skill === 'string') return skill;
+                    if (typeof skill === 'object' && skill.name) return skill.name;
+                    return String(skill);
+                  }) || []);
+                  const preferredSkills = filterValidSkills(job.preferred_skills?.map(skill => {
+                    if (typeof skill === 'string') return skill;
+                    if (typeof skill === 'object' && skill.name) return skill.name;
+                    return String(skill);
+                  }) || []);
+                  const allJobSkills = [...requiredSkills, ...preferredSkills, ...filterValidSkills(job.tags || [])];
+
+                  // Calculate matched skills for each category
+                  const matchedRequiredSkills = requiredSkills.filter(jobSkill => {
+                    return filterValidSkills(currentUserSkills).some(userSkill => {
+                      return compareSkills(jobSkill, userSkill);
+                    });
+                  });
+
+                  const matchedPreferredSkills = preferredSkills.filter(jobSkill => {
+                    return filterValidSkills(currentUserSkills).some(userSkill => {
+                      return compareSkills(jobSkill, userSkill);
+                    });
+                  });
+
+                  const allMatchedSkills = [...matchedRequiredSkills, ...matchedPreferredSkills];
+
+                  // Calculate skill match percentages
+                  const requiredMatchPercentage = requiredSkills.length > 0 ? (matchedRequiredSkills.length / requiredSkills.length) * 100 : 0;
+                  const preferredMatchPercentage = preferredSkills.length > 0 ? (matchedPreferredSkills.length / preferredSkills.length) * 100 : 0;
+
+                  // Calculate AI-powered match percentage using only required skills
+                  const aiMatchPercentage = Math.round(requiredMatchPercentage);
+
+                  return {
+                    ...job,
+                    recommendationScore: score,
+                    matchedSkills: allMatchedSkills,
+                    isHighMatch: score >= 70,
+                    isGoodMatch: score >= 50,
+                    skillMatchCount: allMatchedSkills.length,
+
+                    // Proportional test scoring details
+                    testScore: Math.round(testScore * 100),
+                    passedTests: passedTests,
+                    totalRelevantTests: totalRelevantTests,
+                    locationScore: Math.round(locationScore * 100),
+                    // Skill matching details
+                    requiredSkills: requiredSkills,
+                    preferredSkills: preferredSkills,
+                    requiredSkillsCount: requiredSkills.length,
+                    preferredSkillsCount: preferredSkills.length,
+                    requiredMatchedCount: matchedRequiredSkills.length,
+                    preferredMatchedCount: matchedPreferredSkills.length,
+                    requiredMatchPercentage: Math.round(requiredMatchPercentage),
+                    preferredMatchPercentage: Math.round(preferredMatchPercentage),
+                    aiMatchPercentage: aiMatchPercentage,
+                    // Ensure all required fields are present for the UI
+                    salary: job.salary_min && job.salary_max
+                      ? `${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()} ${job.salary_currency}`
+                      : 'Salary not specified',
+                    type: job.job_type || 'full-time',
+                    experience: job.seniority || 'mid',
+                    remote: job.remote || false,
+                    posted: job.posted || new Date().toISOString(),
+                    requiredSkills: requiredSkills,
+                    preferredSkills: preferredSkills,
+                    tags: job.tags || [],
+                    // Calculate missing skills
+                    requiredMissingSkills: requiredSkills.filter(skill => !matchedRequiredSkills.includes(skill)),
+                    preferredMissingSkills: preferredSkills.filter(skill => !matchedPreferredSkills.includes(skill)),
+                    requiredMatchedSkills: matchedRequiredSkills,
+                    preferredMatchedSkills: matchedPreferredSkills,
+                    // Enhanced breakdown for View Details
+                    clusterFitScore: Math.round(Math.random() * 30 + 20), // Random 20-50%
+                    clusterId: Math.floor(Math.random() * 3) + 1,
+                    clusterName: `Career Cluster ${Math.floor(Math.random() * 3) + 1}`,
+                    locationMatch: currentUserLocation && job.location &&
+                      job.location.toLowerCase().includes(currentUserLocation.toLowerCase()),
+                    remoteAvailable: job.remote || false,
+                    userExperience: userProfile?.experienceLevel || 'intermediate',
+                    jobSeniority: job.seniority || 'mid',
+                    contentScore: Math.round(Math.random() * 40 + 10), // Random 10-50%
+                    locationMatchScore: currentUserLocation && job.location &&
+                      job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0,
+                    experienceMatchScore: 5, // Mock experience bonus
+                    remoteBonus: job.remote ? 5 : 0,
+                    // Add the ai_powered_match structure for enhanced breakdown
+                    ai_powered_match: {
+                      overall_score: score,
+                      breakdown: {
+                        skill_match: {
+                          score: Math.round(requiredMatchPercentage),
+                          required_skills: {
+                            percentage: Math.round(requiredMatchPercentage),
+                            matched_skills: matchedRequiredSkills,
+                            missing_skills: requiredSkills.filter(skill => !matchedRequiredSkills.includes(skill))
+                          },
+                          preferred_skills: {
+                            percentage: Math.round(preferredMatchPercentage),
+                            matched_skills: matchedPreferredSkills,
+                            missing_skills: preferredSkills.filter(skill => !matchedPreferredSkills.includes(skill))
+                          }
+                        },
+                        content_similarity: {
+                          score: Math.round(Math.random() * 40 + 10),
+                          description: 'Content similarity based on job description and requirements'
+                        },
+                        cluster_fit: {
+                          score: Math.round(Math.random() * 30 + 20),
+                          cluster_id: Math.floor(Math.random() * 3) + 1,
+                          cluster_name: `Career Cluster ${Math.floor(Math.random() * 3) + 1}`,
+                          description: 'Job fits well within your career cluster'
+                        },
+                        experience_seniority: {
+                          user_experience: userProfile?.experienceLevel || 'intermediate',
+                          job_seniority: job.seniority || 'mid',
+                          experience_bonus: 5,
+                          description: `Your level: ${userProfile?.experienceLevel || 'intermediate'} | Job level: ${job.seniority || 'mid'}`
+                        },
+                        bonuses: {
+                          location: currentUserLocation && job.location &&
+                            job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0,
+                          experience: 5,
+                          remote: job.remote ? 5 : 0,
+                          salary_fit: 0
+                        },
+                        overall_breakdown: {
+                          skill_match_contribution: Math.round(requiredMatchPercentage * 0.7),
+                          content_similarity_contribution: Math.round(Math.random() * 8 + 2),
+                          cluster_fit_contribution: Math.round(Math.random() * 3 + 1),
+                          location_contribution: currentUserLocation && job.location &&
+                            job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0,
+                          experience_contribution: 5,
+                          remote_contribution: job.remote ? 5 : 0,
+                          salary_contribution: 0,
+                          total_calculated: Math.round(requiredMatchPercentage * 0.7 + Math.random() * 20 + 10)
+                        }
+                      },
+                      explanation: `Good match! This job fits well with your skills and experience. You match ${Math.round(requiredMatchPercentage)}% of required skills - excellent!`
+                    }
+                  };
+                }));
+
+                // Sort by score and take top N
+                const sortedMockJobs = mockJobsWithScores
+                  .sort((a, b) => {
+                    if (b.recommendationScore !== a.recommendationScore) {
+                      return b.recommendationScore - a.recommendationScore;
+                    }
+                    if (b.skillMatchCount !== a.skillMatchCount) {
+                      return b.skillMatchCount - a.skillMatchCount;
+                    }
+                    return new Date(b.posted) - new Date(a.posted);
+                  })
+                  .slice(0, maxJobs);
+
+                console.log('🔍 Mock jobs with scores:');
+                sortedMockJobs.forEach((job, index) => {
+                  console.log(`  ${index + 1}. ${job.title} - Score: ${job.recommendationScore}, Matches: ${job.skillMatchCount}`);
+                });
+
+                setRecommendedJobs(sortedMockJobs);
+                console.log('✅ Loaded job recommendations from mock data (supplemented)');
+                return;
+              } else {
+                setRecommendedJobs(transformedJobs);
+                console.log('✅ Loaded job recommendations from proportional test scoring API');
+                return;
+              }
             } else {
-              setRecommendedJobs(transformedJobs);
-              console.log('✅ Loaded job recommendations from backend API');
-              return;
+              console.log('⚠️ Proportional test scoring API returned empty recommendations, using mock data fallback');
             }
-          } else {
-            console.log('⚠️ Backend API returned empty recommendations, using mock data fallback');
-          }
-        } catch (apiError) {
-          console.error('❌ Backend API call failed:', apiError);
-          console.error('❌ Error details:', {
-            message: apiError.message,
-            status: apiError.status,
-            response: apiError.response
-          });
+          } catch (apiError) {
+            console.error('❌ Proportional test scoring API call failed:', apiError);
+            console.error('❌ Error details:', {
+              message: apiError.message,
+              status: apiError.status,
+              response: apiError.response
+            });
 
-          // Check if it's an authentication error
-          if (apiError.message && apiError.message.includes('401')) {
-            console.error('🔐 Authentication failed - user may not be logged in or token expired');
-          } else if (apiError.message && apiError.message.includes('fetch')) {
-            console.error('🌐 Network error - backend server may not be running');
-          }
+            // Check if it's an authentication error
+            if (apiError.message && apiError.message.includes('401')) {
+              console.error('🔐 Authentication failed - user may not be logged in or token expired');
+            } else if (apiError.message && apiError.message.includes('fetch')) {
+              console.error('🌐 Network error - backend server may not be running');
+            }
 
-          console.warn('⚠️ Falling back to mock data due to API error');
+            console.warn('⚠️ Falling back to mock data due to API error');
+          }
         }
 
         // Fallback to mock data with enhanced scoring
@@ -761,35 +774,113 @@ const JobRecommendations = ({
           window.showNotification('Using sample data - please check your connection', 'warning');
         }
         const activeJobs = mockJobOffers.filter(job => job.status === 'active');
-        const jobsWithScores = activeJobs.map(job => {
-          const score = calculateJobScore(job, currentUserSkills, currentUserLocation, userProfile);
+        console.log('🔍 Processing mock jobs:', {
+          activeJobsCount: activeJobs.length,
+          currentUserSkills,
+          userProfile,
+          firstJob: activeJobs[0]
+        });
+
+        // Verify mock data structure
+        if (activeJobs.length > 0) {
+          const firstJob = activeJobs[0];
+          console.log('🔍 Mock data verification for first job:', {
+            title: firstJob.title,
+            hasRequiredSkills: !!firstJob.required_skills,
+            requiredSkillsCount: firstJob.required_skills?.length || 0,
+            requiredSkillsStructure: firstJob.required_skills,
+            hasPreferredSkills: !!firstJob.preferred_skills,
+            preferredSkillsCount: firstJob.preferred_skills?.length || 0,
+            preferredSkillsStructure: firstJob.preferred_skills
+          });
+        }
+
+        const jobsWithScores = await Promise.all(activeJobs.map(async job => {
+          const scoreResult = await calculateJobScore(job, currentUserSkills, currentUserLocation, userProfile);
+          const score = scoreResult.score;
+
+          // Get validated skills for this user
+          const validatedSkills = await getValidatedSkills(userProfile?.id || 1);
+          const validSkillsForScoring = await filterToValidatedSkills(currentUserSkills, userProfile?.id || 1);
+          const validationStats = await getValidationStats(currentUserSkills, userProfile?.id || 1);
+
+          // Get enhanced match data with all user skills (not just validated ones)
+          const enhancedMatch = calculateEnhancedJobMatch(job, currentUserSkills, userProfile?.id || 1);
 
           // Get matched skills from both required_skills and tags
-          const requiredSkills = filterValidSkills(job.required_skills?.map(skill => skill.name || skill) || []);
-          const preferredSkills = filterValidSkills(job.preferred_skills?.map(skill => skill.name || skill) || []);
+          console.log('🔍 Processing job:', job.title);
+          console.log('🔍 Job required_skills raw:', job.required_skills);
+          console.log('🔍 Job preferred_skills raw:', job.preferred_skills);
+
+          const requiredSkills = filterValidSkills(job.required_skills?.map(skill => {
+            if (typeof skill === 'string') return skill;
+            if (typeof skill === 'object' && skill.name) return skill.name;
+            return String(skill);
+          }) || []);
+          const preferredSkills = filterValidSkills(job.preferred_skills?.map(skill => {
+            if (typeof skill === 'string') return skill;
+            if (typeof skill === 'object' && skill.name) return skill.name;
+            return String(skill);
+          }) || []);
           const allJobSkills = [...requiredSkills, ...preferredSkills, ...filterValidSkills(job.tags || [])];
 
-          // Calculate matched skills for each category
-          const matchedRequiredSkills = requiredSkills.filter(jobSkill => {
-            return filterValidSkills(currentUserSkills).some(userSkill => {
-              return compareSkills(jobSkill, userSkill);
-            });
+          console.log('🔍 Extracted skills for', job.title, ':', {
+            requiredSkills,
+            preferredSkills,
+            allJobSkills
           });
 
-          const matchedPreferredSkills = preferredSkills.filter(jobSkill => {
-            return filterValidSkills(currentUserSkills).some(userSkill => {
-              return compareSkills(jobSkill, userSkill);
-            });
-          });
+          // Use enhanced match data
+          const matchedRequiredSkills = enhancedMatch.requiredMatches
+            .filter(match => match.hasSkill)
+            .map(match => match.skillName || '');
+          const matchedPreferredSkills = enhancedMatch.preferredMatches
+            .filter(match => match.hasSkill)
+            .map(match => match.skillName || '');
 
           const allMatchedSkills = [...matchedRequiredSkills, ...matchedPreferredSkills];
 
-          // Calculate skill match percentages
-          const requiredMatchPercentage = requiredSkills.length > 0 ? (matchedRequiredSkills.length / requiredSkills.length) * 100 : 0;
-          const preferredMatchPercentage = preferredSkills.length > 0 ? (matchedPreferredSkills.length / preferredSkills.length) * 100 : 0;
+          // Use enhanced match percentages
+          const requiredMatchPercentage = enhancedMatch.requiredScore * 100;
+          const preferredMatchPercentage = enhancedMatch.preferredScore * 100;
 
-          // Calculate AI-powered match percentage using only required skills
-          const aiMatchPercentage = Math.round(requiredMatchPercentage);
+          // Fallback: if no skills extracted, use tags as required skills
+          if (requiredSkills.length === 0 && job.tags && job.tags.length > 0) {
+            console.log('⚠️ No required skills extracted, using tags as fallback:', job.tags);
+            const fallbackRequiredSkills = filterValidSkills(job.tags);
+            const fallbackMatchedSkills = fallbackRequiredSkills.filter(jobSkill =>
+              filterValidSkills(currentUserSkills).some(userSkill =>
+                compareSkills(jobSkill, userSkill)
+              )
+            );
+
+            // Override the values with fallback data
+            requiredSkills.push(...fallbackRequiredSkills);
+            matchedRequiredSkills.push(...fallbackMatchedSkills);
+            const fallbackMatchPercentage = fallbackRequiredSkills.length > 0
+              ? (fallbackMatchedSkills.length / fallbackRequiredSkills.length) * 100
+              : 0;
+
+            console.log('🔧 Fallback skills applied:', {
+              fallbackRequiredSkills,
+              fallbackMatchedSkills,
+              fallbackMatchPercentage
+            });
+          }
+
+          console.log('🔍 Job processing debug:', {
+            jobTitle: job.title,
+            requiredSkills,
+            preferredSkills,
+            matchedRequiredSkills,
+            matchedPreferredSkills,
+            requiredMatchPercentage,
+            preferredMatchPercentage,
+            enhancedMatch
+          });
+
+          // Calculate AI-powered match percentage using enhanced data
+          const aiMatchPercentage = Math.round(enhancedMatch.matchPercentage);
 
           return {
             ...job,
@@ -798,6 +889,12 @@ const JobRecommendations = ({
             isHighMatch: score >= 70,
             isGoodMatch: score >= 50,
             skillMatchCount: allMatchedSkills.length,
+
+            // Proportional test scoring details
+            testScore: Math.round(scoreResult.testScore * 100),
+            passedTests: scoreResult.passedTests,
+            totalRelevantTests: scoreResult.totalRelevantTests,
+            locationScore: Math.round(scoreResult.locationScore * 100),
             // Skill matching details
             requiredSkills: requiredSkills,
             preferredSkills: preferredSkills,
@@ -808,6 +905,14 @@ const JobRecommendations = ({
             requiredMatchPercentage: Math.round(requiredMatchPercentage),
             preferredMatchPercentage: Math.round(preferredMatchPercentage),
             aiMatchPercentage: aiMatchPercentage,
+            // Enhanced test score data
+            enhancedMatch: enhancedMatch,
+            hasTestScores: enhancedMatch.hasTestScores,
+            skillTestScores: enhancedMatch.skillTestScores,
+            // Validated skills data
+            validatedSkills: validatedSkills,
+            validSkillsForScoring: validSkillsForScoring,
+            validationStats: validationStats,
             // Ensure all required fields are present for the UI
             salary: job.salary_min && job.salary_max
               ? `${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()} ${job.salary_currency}`
@@ -819,6 +924,7 @@ const JobRecommendations = ({
             requiredSkills: requiredSkills,
             preferredSkills: preferredSkills,
             tags: job.tags || [],
+
             // Calculate missing skills
             requiredMissingSkills: requiredSkills.filter(skill => !matchedRequiredSkills.includes(skill)),
             preferredMissingSkills: preferredSkills.filter(skill => !matchedPreferredSkills.includes(skill)),
@@ -835,9 +941,21 @@ const JobRecommendations = ({
             jobSeniority: job.seniority || 'mid',
             contentScore: Math.round(Math.random() * 40 + 10), // Random 10-50%
             locationMatchScore: currentUserLocation && job.location &&
-              job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 15 : 0,
+              job.location.toLowerCase().includes(currentUserLocation.toLowerCase()) ? 20 : 0,
             experienceMatchScore: 5, // Mock experience bonus
             remoteBonus: job.remote ? 5 : 0,
+            // Add test score for UI display (proportional approach)
+            testScore: enhancedMatch.hasTestScores && Object.keys(enhancedMatch.skillTestScores).length > 0 ?
+              (Object.values(enhancedMatch.skillTestScores).filter(score => score.percentage >= 70).length /
+                [...requiredSkills, ...preferredSkills].filter(skill =>
+                  Object.keys(enhancedMatch.skillTestScores).includes(skill)
+                ).length) * 30 : 0,
+            // Add test details for UI
+            passedTests: enhancedMatch.hasTestScores ?
+              Object.values(enhancedMatch.skillTestScores).filter(score => score.percentage >= 70).length : 0,
+            totalRelevantTests: [...requiredSkills, ...preferredSkills].filter(skill =>
+              Object.keys(enhancedMatch.skillTestScores || {}).includes(skill)
+            ).length,
             // Add the ai_powered_match structure for enhanced breakdown
             ai_powered_match: {
               overall_score: aiMatchPercentage,
@@ -909,7 +1027,7 @@ const JobRecommendations = ({
               explanation: `Good match! This job fits well with your skills and experience. You match ${Math.round(requiredMatchPercentage)}% of required skills - excellent!`
             }
           };
-        });
+        }));
 
         // Debug: Log all jobs before sorting
         console.log('🔍 All jobs with scores before sorting:');
@@ -1276,6 +1394,8 @@ const JobRecommendations = ({
           </div>
         </div>
 
+        {/* Debug Component - Only in development */}
+
         {/* Modern Job List */}
         {recommendedJobs.length > 0 && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -1398,7 +1518,8 @@ const JobRecommendations = ({
                               <span className="text-xs text-slate-500 dark:text-slate-400">
                                 {job.matchedSkills?.filter(skill => {
                                   const skillName = typeof skill === 'string' ? skill : skill.name;
-                                  return job.requiredSkills?.some(req => {
+                                  const requiredSkills = job.requiredSkills || [];
+                                  return requiredSkills.some(req => {
                                     const reqSkillName = typeof req === 'string' ? req : req.name;
                                     return reqSkillName.toLowerCase().includes(skillName.toLowerCase()) ||
                                       skillName.toLowerCase().includes(reqSkillName.toLowerCase());
@@ -1412,7 +1533,7 @@ const JobRecommendations = ({
                                 const isMatched = isSkillMatched(skill, job.matchedSkills);
                                 return (
                                   <span
-                                    key={skillIndex}
+                                    key={`${job.id}-required-skill-${skillIndex}`}
                                     className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${isMatched
                                       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700'
                                       : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-700'
@@ -1482,66 +1603,24 @@ const JobRecommendations = ({
                         {/* Advanced Score Breakdown */}
                         <div className="flex-1">
                           <div className="space-y-3">
-                            {/* Required Skills Match */}
+                            {/* Score Global */}
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                  Required Skills
+                                  Score Global
                                 </span>
-                                <span className={`text-sm font-semibold ${getScoreColor(job.requiredMatchPercentage || 0).split(' ')[0]}`}>
-                                  {job.requiredMatchPercentage || 0}%
+                                <span className={`text-sm font-semibold ${getScoreColor(job.recommendationScore || 0).split(' ')[0]}`}>
+                                  {job.recommendationScore || 0}%
                                 </span>
                               </div>
                               <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2">
                                 <div
-                                  className={`h-2 rounded-full transition-all duration-500 ease-out ${getScoreProgressColor(job.requiredMatchPercentage || 0)}`}
-                                  style={{ width: `${job.requiredMatchPercentage || 0}%` }}
+                                  className={`h-2 rounded-full transition-all duration-500 ease-out ${getScoreProgressColor(job.recommendationScore || 0)}`}
+                                  style={{ width: `${job.recommendationScore || 0}%` }}
                                 ></div>
                               </div>
-                              <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {job.requiredMatchedCount || 0} of {job.requiredSkillsCount || 0} required skills matched
-                              </p>
                             </div>
 
-                            {/* Location Match */}
-                            {(job.locationMatchScore || 0) > 0 && (
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Location Bonus
-                                  </span>
-                                  <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
-                                    +{Math.round(job.locationMatchScore || 0)}%
-                                  </span>
-                                </div>
-                                <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5">
-                                  <div
-                                    className="bg-orange-500 h-1.5 rounded-full transition-all duration-500 ease-out"
-                                    style={{ width: `${Math.min((job.locationMatchScore || 0) * 10, 100)}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Experience Match */}
-                            {(job.experienceMatchScore || 0) > 0 && (
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Experience Match
-                                  </span>
-                                  <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">
-                                    +{Math.round(job.experienceMatchScore || 0)}%
-                                  </span>
-                                </div>
-                                <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5">
-                                  <div
-                                    className="bg-purple-500 h-1.5 rounded-full transition-all duration-500 ease-out"
-                                    style={{ width: `${Math.min((job.experienceMatchScore || 0) * 10, 100)}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -1654,31 +1733,88 @@ const JobRecommendations = ({
                           Match Score Breakdown
                         </h4>
                         <div className="space-y-4">
-                          {/* Required Skills Match */}
+                          {/* Score Global */}
                           <div className="space-y-3">
                             <div className="flex items-center justify-between">
                               <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
-                                Required Skills Match
+                                Score Global
                               </span>
-                              <span className={`text-lg font-bold ${getScoreColor(job.requiredMatchPercentage || 0).split(' ')[0]}`}>
-                                {job.requiredMatchPercentage || 0}%
+                              <span className={`text-lg font-bold ${getScoreColor(job.recommendationScore || 0).split(' ')[0]}`}>
+                                {job.recommendationScore || 0}%
                               </span>
                             </div>
                             <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-3">
                               <div
-                                className={`h-3 rounded-full transition-all duration-500 ease-out ${getScoreProgressColor(job.requiredMatchPercentage || 0)}`}
-                                style={{ width: `${job.requiredMatchPercentage || 0}%` }}
+                                className={`h-3 rounded-full transition-all duration-500 ease-out ${getScoreProgressColor(job.recommendationScore || 0)}`}
+                                style={{ width: `${job.recommendationScore || 0}%` }}
                               ></div>
                             </div>
                             <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
                               <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {job.requiredMatchedCount || 0} out of {job.requiredSkillsCount || 0} required skills matched
+                                Overall job match score: Skills (50%) + Technical Tests (30%) + Location (20%)
                               </p>
                               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                Essential skills needed for this position (70% weight)
+                                Skills are the most important factor, followed by verified test abilities and location
                               </p>
                             </div>
                           </div>
+
+                          {/* Technical Tests Score */}
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
+                                Technical Tests
+                              </span>
+                              <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                                {job.hasTestScores ? `${Math.round(job.testScore || 0)}%` : '0%'}
+                              </span>
+                            </div>
+                            <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-3">
+                              <div
+                                className={`h-3 rounded-full transition-all duration-500 ease-out ${job.hasTestScores ? 'bg-green-500' : 'bg-gray-400'}`}
+                                style={{ width: `${job.hasTestScores ? Math.min((job.testScore || 0) / 30 * 100, 100) : 0}%` }}
+                              ></div>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
+                              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                {job.hasTestScores ?
+                                  `${job.passedTests || 0} out of ${job.totalRelevantTests || 0} relevant tests passed` :
+                                  'No tests passed - Unverified skills'
+                                }
+                              </p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                Technical tests show verified abilities (30% weight) - proportional scoring
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Location Bonus */}
+                          {(job.locationMatchScore || 0) > 0 && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
+                                  Location Bonus
+                                </span>
+                                <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                  +{Math.round(job.locationMatchScore || 0)}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-3">
+                                <div
+                                  className="bg-orange-500 h-3 rounded-full transition-all duration-500 ease-out"
+                                  style={{ width: `${Math.min((job.locationMatchScore || 0) * 5, 100)}%` }}
+                                ></div>
+                              </div>
+                              <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
+                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                  Location: {job.locationMatch ? 'Match' : 'No match'} | Job: {job.location || 'Not specified'}
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                  Bonus for location compatibility (20% weight)
+                                </p>
+                              </div>
+                            </div>
+                          )}
 
                           {/* Preferred Skills Match */}
                           {(job.preferredMatchPercentage || 0) > 0 && (
@@ -1760,68 +1896,6 @@ const JobRecommendations = ({
                             </div>
                           </div>
 
-                          {/* Location & Remote Fit */}
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
-                                Location & Remote Fit
-                              </span>
-                              <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
-                                +{Math.round((job.locationMatchScore || 0) + (job.remoteBonus || 0))}%
-                              </span>
-                            </div>
-                            <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-3">
-                              <div
-                                className="bg-orange-500 h-3 rounded-full transition-all duration-500 ease-out"
-                                style={{ width: `${Math.min(((job.locationMatchScore || 0) + (job.remoteBonus || 0)) * 5, 100)}%` }}
-                              ></div>
-                            </div>
-                            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
-                              <div className="flex items-center space-x-4 text-sm">
-                                <div className="flex items-center">
-                                  <span className={`w-2 h-2 rounded-full mr-2 ${job.locationMatch ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                                  <span className="text-slate-700 dark:text-slate-300">
-                                    Location: {job.locationMatch ? 'Match' : 'No match'}
-                                  </span>
-                                </div>
-                                <div className="flex items-center">
-                                  <span className={`w-2 h-2 rounded-full mr-2 ${job.remoteAvailable ? 'bg-green-500' : 'bg-gray-400'}`}></span>
-                                  <span className="text-slate-700 dark:text-slate-300">
-                                    Remote: {job.remoteAvailable ? 'Available' : 'Not available'}
-                                  </span>
-                                </div>
-                              </div>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                                Location bonus: +{Math.round(job.locationMatchScore || 0)}% | Remote bonus: +{Math.round(job.remoteBonus || 0)}%
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Experience & Seniority */}
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
-                                Experience & Seniority
-                              </span>
-                              <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-                                +{Math.round(job.experienceMatchScore || 0)}%
-                              </span>
-                            </div>
-                            <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-3">
-                              <div
-                                className="bg-indigo-500 h-3 rounded-full transition-all duration-500 ease-out"
-                                style={{ width: `${Math.min((job.experienceMatchScore || 0) * 10, 100)}%` }}
-                              ></div>
-                            </div>
-                            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
-                              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                Your level: {job.userExperience || 'intermediate'} | Job level: {job.jobSeniority || 'mid'}
-                              </p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                Experience level alignment bonus
-                              </p>
-                            </div>
-                          </div>
                         </div>
                       </div>
 
@@ -1852,7 +1926,7 @@ const JobRecommendations = ({
                                 const isMatched = isSkillMatched(skill, job.matchedSkills);
                                 return (
                                   <span
-                                    key={index}
+                                    key={`${job.id}-required-skill-${index}`}
                                     className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${isMatched
                                       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700'
                                       : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-700'
@@ -1872,6 +1946,134 @@ const JobRecommendations = ({
                         )}
 
 
+                        {/* Validated Skills Section */}
+                        {job.validationStats && job.validationStats.validatedCount > 0 && (
+                          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center space-x-2">
+                                <CheckCircleIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                <span className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                                  Validated Skills
+                                </span>
+                              </div>
+                              <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                {job.validationStats.validatedCount}/{job.validationStats.totalSkills} validated
+                              </span>
+                            </div>
+                            <div className="mb-3">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm text-slate-700 dark:text-slate-300">
+                                  Skills used for scoring
+                                </span>
+                                <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                                  {job.validationStats.validationPercentage}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2">
+                                <div
+                                  className="h-2 rounded-full transition-all duration-500 bg-gradient-to-r from-blue-500 to-indigo-500"
+                                  style={{ width: `${job.validationStats.validationPercentage}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {job.validatedSkills.map((skill, index) => (
+                                <span
+                                  key={`${job.id}-validated-skill-${index}`}
+                                  className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 rounded-full text-xs font-medium"
+                                >
+                                  <CheckCircleIcon className="w-3 h-3 mr-1.5" />
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                            {job.validationStats.unvalidatedSkills.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-xs text-slate-600 dark:text-slate-400">
+                                    Skills needing validation
+                                  </span>
+                                  <span className="text-xs text-orange-600 dark:text-orange-400">
+                                    {job.validationStats.unvalidatedCount} skills
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  {job.validationStats.unvalidatedSkills.slice(0, 5).map((skill, index) => (
+                                    <span
+                                      key={`${job.id}-unvalidated-skill-${index}`}
+                                      className="inline-flex items-center px-2 py-1 bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700 rounded-full text-xs"
+                                    >
+                                      {skill}
+                                    </span>
+                                  ))}
+                                  {job.validationStats.unvalidatedSkills.length > 5 && (
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                                      +{job.validationStats.unvalidatedSkills.length - 5} more
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Test Scores Section */}
+                        {job.hasTestScores && job.skillTestScores && Object.keys(job.skillTestScores).length > 0 && (
+                          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-4 border border-green-200 dark:border-green-700">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center space-x-2">
+                                <StarIcon className="w-5 h-5 text-green-600 dark:text-green-400" />
+                                <span className="text-sm font-semibold text-green-800 dark:text-green-200">
+                                  Test Scores
+                                </span>
+                              </div>
+                              <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                                ✓ Verified Skills
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {Object.entries(job.skillTestScores).map(([skillName, testScore]) => (
+                                <div
+                                  key={`${job.id}-test-score-${skillName}`}
+                                  className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-green-200 dark:border-green-700"
+                                >
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                      {skillName}
+                                    </span>
+                                    <span className={`text-sm font-bold ${testScore.passed
+                                      ? 'text-green-600 dark:text-green-400'
+                                      : 'text-orange-600 dark:text-orange-400'
+                                      }`}>
+                                      {testScore.percentage}%
+                                    </span>
+                                  </div>
+                                  <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2">
+                                    <div
+                                      className={`h-2 rounded-full transition-all duration-500 ${testScore.passed
+                                        ? 'bg-gradient-to-r from-green-500 to-emerald-500'
+                                        : 'bg-gradient-to-r from-orange-500 to-red-500'
+                                        }`}
+                                      style={{ width: `${testScore.percentage}%` }}
+                                    ></div>
+                                  </div>
+                                  <div className="flex items-center justify-between mt-1">
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                                      {testScore.correctAnswers}/{testScore.totalQuestions} correct
+                                    </span>
+                                    <span className={`text-xs font-medium ${testScore.passed
+                                      ? 'text-green-600 dark:text-green-400'
+                                      : 'text-orange-600 dark:text-orange-400'
+                                      }`}>
+                                      {testScore.passed ? 'Passed' : 'Failed'}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Missing Skills Summary */}
                         {job.missingSkills?.length > 0 && (
                           <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4">
@@ -1886,7 +2088,7 @@ const JobRecommendations = ({
                             <div className="flex flex-wrap gap-2">
                               {job.missingSkills.slice(0, 8).map((skill, index) => (
                                 <span
-                                  key={index}
+                                  key={`${job.id}-missing-skill-${index}`}
                                   className="inline-flex items-center px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700 rounded-full text-xs font-medium"
                                 >
                                   <XCircleIcon className="w-3 h-3 mr-1.5" />
