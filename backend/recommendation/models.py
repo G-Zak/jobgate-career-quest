@@ -14,10 +14,14 @@ class ScoringWeights(models.Model):
     name = models.CharField(max_length=100, default="Default Weights")
     is_active = models.BooleanField(default=True)
     
-    # Core scoring weights
-    skill_match_weight = models.FloatField(default=0.70, help_text="Weight for skill matching score")
-    content_similarity_weight = models.FloatField(default=0.20, help_text="Weight for content similarity score")
-    cluster_fit_weight = models.FloatField(default=0.10, help_text="Weight for cluster fit score")
+    # Core scoring weights - Updated for proportional test scoring
+    skill_match_weight = models.FloatField(default=0.50, help_text="Weight for skill matching score (50%)")
+    technical_test_weight = models.FloatField(default=0.30, help_text="Weight for technical test score (30%)")
+    location_weight = models.FloatField(default=0.20, help_text="Weight for location match (20%)")
+    
+    # Legacy weights (kept for backward compatibility)
+    content_similarity_weight = models.FloatField(default=0.00, help_text="Weight for content similarity score (disabled)")
+    cluster_fit_weight = models.FloatField(default=0.00, help_text="Weight for cluster fit score (disabled)")
     
     # Skill type weights
     required_skill_weight = models.FloatField(default=0.80, help_text="Weight for required skills within skill matching")
@@ -50,6 +54,8 @@ class ScoringWeights(models.Model):
         """Return weights as dictionary for easy use"""
         return {
             'skill_match': self.skill_match_weight,
+            'technical_test': self.technical_test_weight,
+            'location': self.location_weight,
             'content_similarity': self.content_similarity_weight,
             'cluster_fit': self.cluster_fit_weight,
             'required_skill_weight': self.required_skill_weight,
@@ -74,6 +80,8 @@ class JobRecommendationDetail(models.Model):
     overall_score = models.FloatField(help_text="Overall recommendation score (0-100)")
     content_score = models.FloatField(help_text="Content similarity score (0-100)")
     skill_score = models.FloatField(help_text="Skill matching score (0-100)")
+    technical_test_score = models.FloatField(default=0.0, help_text="Technical test score (0-100)")
+    location_score = models.FloatField(default=0.0, help_text="Location match score (0-100)")
     cluster_fit_score = models.FloatField(help_text="Cluster fit score (0-100)")
     
     # Skill breakdown
@@ -83,6 +91,11 @@ class JobRecommendationDetail(models.Model):
     preferred_skills_count = models.IntegerField(default=0)
     required_matched_count = models.IntegerField(default=0)
     preferred_matched_count = models.IntegerField(default=0)
+    
+    # Test details
+    passed_tests = models.IntegerField(default=0, help_text="Number of tests passed")
+    total_relevant_tests = models.IntegerField(default=0, help_text="Total relevant tests for this job")
+    test_proportion = models.FloatField(default=0.0, help_text="Proportion of tests passed (0-1)")
     
     # Bonuses
     location_bonus = models.FloatField(default=0.0, help_text="Location match bonus")
@@ -201,7 +214,7 @@ class JobRecommendation(models.Model):
     Job recommendation with enhanced tracking
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='job_recommendations')
-    job_offer = models.ForeignKey(JobOffer, on_delete=models.CASCADE, related_name='recommendations')
+    job_offer = models.ForeignKey(JobOffer, on_delete=models.CASCADE, related_name='recommendations', null=True, blank=True)
     score = models.FloatField(default=0.0, help_text="Overall recommendation score")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

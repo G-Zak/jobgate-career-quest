@@ -29,6 +29,201 @@ from .models import JobOffer, JobRecommendation, UserJobPreference, ScoringWeigh
 from skills.models import Skill, TestResult, CandidateProfile
 
 
+class ProportionalTestScoringEngine:
+    """
+    New proportional test scoring engine implementing:
+    - Skills (50%) - most important factor
+    - Technical Tests (30%) - proportional to relevant tests passed
+    - Location (20%) - important but not dominant
+    """
+    
+    def __init__(self):
+        self.skill_weight = 0.5  # 50% for skills
+        self.test_weight = 0.3   # 30% for technical tests
+        self.location_weight = 0.2  # 20% for location
+        self.test_pass_threshold = 70  # Minimum percentage to pass a test
+    
+    def calculate_proportional_job_score(self, user, job, user_skills=None, user_location=None) -> Dict:
+        """
+        Calculate job match score using proportional test scoring
+        
+        Args:
+            user: Django User instance
+            job: JobOffer instance
+            user_skills: List of user skill names
+            user_location: User's location string
+            
+        Returns:
+            Dictionary with detailed scoring breakdown
+        """
+        try:
+            # 1. Calculate Skills Score (50% weight)
+            skills_score = self._calculate_skills_score(user, job, user_skills)
+            
+            # 2. Calculate Technical Tests Score (30% weight) - proportional
+            test_score, test_details = self._calculate_proportional_test_score(user, job, user_skills)
+            
+            # 3. Calculate Location Score (20% weight)
+            location_score = self._calculate_location_score(user_location, job.location)
+            
+            # Calculate weighted total score
+            weighted_score = (
+                self.skill_weight * skills_score +
+                self.test_weight * test_score +
+                self.location_weight * location_score
+            )
+            
+            # Convert to percentage
+            global_score = round(weighted_score * 100)
+            
+            # Prepare detailed breakdown
+            score_breakdown = {
+                'global_score': global_score,
+                'skills_score': round(skills_score * 100, 1),
+                'test_score': round(test_score * 100, 1),
+                'location_score': round(location_score * 100, 1),
+                'test_details': test_details,
+                'weights': {
+                    'skills': self.skill_weight,
+                    'tests': self.test_weight,
+                    'location': self.location_weight
+                }
+            }
+            
+            logger.info(f"Proportional job score calculated for user {user.id}, job {job.id}: {global_score}%")
+            return score_breakdown
+            
+        except Exception as e:
+            logger.error(f"Error calculating proportional job score: {str(e)}")
+            return {
+                'global_score': 0,
+                'skills_score': 0,
+                'test_score': 0,
+                'location_score': 0,
+                'test_details': {'error': str(e)},
+                'weights': {
+                    'skills': self.skill_weight,
+                    'tests': self.test_weight,
+                    'location': self.location_weight
+                }
+            }
+    
+    def _calculate_skills_score(self, user, job, user_skills=None) -> float:
+        """Calculate skills match score (0-1 scale)"""
+        try:
+            # Get job skills
+            job_required_skills = [skill.name.lower() for skill in job.required_skills.all()]
+            job_preferred_skills = [skill.name.lower() for skill in job.preferred_skills.all()]
+            
+            if not user_skills:
+                # Get user skills from database
+                candidate_profile = CandidateProfile.objects.filter(user=user).first()
+                if candidate_profile:
+                    user_skills = [skill.name.lower() for skill in candidate_profile.skills.all()]
+                else:
+                    return 0.0
+            
+            # Normalize user skills
+            user_skills_normalized = [skill.lower() for skill in user_skills]
+            
+            # Calculate required skills match
+            required_matches = sum(1 for skill in job_required_skills if skill in user_skills_normalized)
+            required_score = required_matches / len(job_required_skills) if job_required_skills else 0
+            
+            # Calculate preferred skills match
+            preferred_matches = sum(1 for skill in job_preferred_skills if skill in user_skills_normalized)
+            preferred_score = preferred_matches / len(job_preferred_skills) if job_preferred_skills else 0
+            
+            # Weighted skills score (70% required, 30% preferred)
+            total_skills = len(job_required_skills) + len(job_preferred_skills)
+            if total_skills == 0:
+                return 0.0
+            
+            skills_score = (required_score * 0.7) + (preferred_score * 0.3)
+            return min(skills_score, 1.0)
+            
+        except Exception as e:
+            logger.error(f"Error calculating skills score: {str(e)}")
+            return 0.0
+    
+    def _calculate_proportional_test_score(self, user, job, user_skills=None) -> Tuple[float, Dict]:
+        """Calculate proportional test score (0-1 scale)"""
+        try:
+            # Get job skills that have tests
+            job_skills = [skill.name.lower() for skill in job.required_skills.all()] + \
+                        [skill.name.lower() for skill in job.preferred_skills.all()]
+            
+            # Get user's test results
+            test_results = TestResult.objects.filter(
+                candidate__user=user,
+                status='completed',
+                score__gte=self.test_pass_threshold  # Only consider passed tests (70%+)
+            ).select_related('test')
+            
+            # Filter tests relevant to this job
+            relevant_tests = []
+            for test_result in test_results:
+                test_skill = test_result.test.skill.name.lower() if test_result.test.skill else None
+                if test_skill and test_skill in job_skills:
+                    relevant_tests.append({
+                        'skill': test_skill,
+                        'score': test_result.score,
+                        'percentage': test_result.score,  # score is already a percentage
+                        'is_passed': test_result.score >= self.test_pass_threshold
+                    })
+            
+            # Calculate proportional score
+            total_relevant_tests = len(set(job_skills))  # Unique skills that have tests
+            passed_tests = len([t for t in relevant_tests if t['is_passed']])
+            
+            test_score = passed_tests / total_relevant_tests if total_relevant_tests > 0 else 0
+            
+            # Prepare test details
+            test_details = {
+                'passed_tests': passed_tests,
+                'total_relevant_tests': total_relevant_tests,
+                'test_proportion': test_score,
+                'test_contribution_percentage': round(test_score * 30, 1),
+                'relevant_tests': relevant_tests
+            }
+            
+            return test_score, test_details
+            
+        except Exception as e:
+            logger.error(f"Error calculating test score: {str(e)}")
+            return 0.0, {'error': str(e)}
+    
+    def _calculate_location_score(self, user_location, job_location) -> float:
+        """Calculate location match score (0-1 scale)"""
+        if not user_location or not job_location:
+            return 0.0
+        
+        try:
+            user_loc_lower = user_location.lower().strip()
+            job_loc_lower = job_location.lower().strip()
+            
+            # Check for exact match
+            if user_loc_lower == job_loc_lower:
+                return 1.0
+            
+            # Check for partial match
+            if user_loc_lower in job_loc_lower or job_loc_lower in user_loc_lower:
+                return 1.0
+            
+            # Check for city-level match
+            user_city = user_loc_lower.split(',')[0].strip()
+            job_city = job_loc_lower.split(',')[0].strip()
+            
+            if user_city == job_city:
+                return 1.0
+            
+            return 0.0
+            
+        except Exception as e:
+            logger.error(f"Error calculating location score: {str(e)}")
+            return 0.0
+
+
 class EnhancedRecommendationEngine:
     """
     Enhanced recommendation engine with improved skill matching,

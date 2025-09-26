@@ -7,10 +7,14 @@ from . import views, ml_views
 app_name = 'recommendation'
 
 urlpatterns = [
+    # Job offers
+    path('job-offers/', views.get_job_offers, name='get_job_offers'),
+    
     # Job recommendations
     path('', views.get_recommendations, name='get_recommendations'),
     path('jobs/', views.get_job_recommendations, name='get_job_recommendations'),
     path('advanced/', views.get_advanced_recommendations, name='get_advanced_recommendations'),
+    path('proportional-test/', views.get_proportional_test_recommendations, name='get_proportional_test_recommendations'),
     path('saved/', views.get_saved_recommendations, name='get_saved_recommendations'),
     
     # Profile management for recommendations
