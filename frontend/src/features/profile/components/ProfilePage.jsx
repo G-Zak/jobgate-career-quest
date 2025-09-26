@@ -3,6 +3,7 @@ import { useDarkMode } from '../../../contexts/DarkModeContext.jsx';
 import { useAuth } from '../../../contexts/AuthContext';
 import { saveUserProfile, loadUserProfile, defaultUserProfile, updateUserSkillsWithProficiency } from '../../../utils/profileUtils';
 import { profileApiService } from '../../../services/profileApi';
+import { getTestResults, getUserTestStats } from '../../../utils/testScoring';
 import SkillsSelector from './SkillsSelector';
 import '../styles/profile.css';
 import {
@@ -102,6 +103,38 @@ const ProfilePage = () => {
       loadUserSkillsFromDatabase(authUser.id);
     }
   }, [authUser]);
+
+  // Check test scores when component loads
+  useEffect(() => {
+    console.log('🔍 ProfilePage loaded - checking test scores...');
+    const userId = userData.id || authUser?.id || 1;
+    console.log('🔍 User ID:', userId);
+
+    // Get test results
+    const testResults = getTestResults(userId);
+    console.log('📊 Test Results:', testResults);
+
+    // Get test statistics
+    const testStats = getUserTestStats(userId);
+    console.log('📈 Test Statistics:', testStats);
+
+    // Log individual test details
+    if (testResults.length > 0) {
+      console.log('🎯 Test Details:');
+      testResults.forEach((result, index) => {
+        console.log(`  Test ${index + 1}:`, {
+          testId: result.testId,
+          score: result.result?.score || 'N/A',
+          percentage: result.result?.percentage || 'N/A',
+          passed: result.result?.passed || false,
+          completedAt: result.completedAt,
+          timeSpent: result.timeSpent || 'N/A'
+        });
+      });
+    } else {
+      console.log('❌ No test results found');
+    }
+  }, [userData.id, authUser?.id]);
 
   // Load user skills from database
   const loadUserSkillsFromDatabase = async (userId) => {

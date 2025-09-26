@@ -343,7 +343,7 @@ const ApplicationsPage = () => {
                     <div className="flex flex-wrap gap-2">
                       {job.tags.slice(0, 6).map((tag, index) => (
                         <span
-                          key={index}
+                          key={`${job.id}-tag-${index}`}
                           className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium"
                         >
                           <TagIcon className="w-3 h-3 mr-1" />
