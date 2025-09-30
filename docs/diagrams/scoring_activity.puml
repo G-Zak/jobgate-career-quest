@@ -1,0 +1,95 @@
+@startuml
+start
+
+:Open test (React frontend);
+:Complete questions (answers + metadata: times, events);
+
+:Collect session payload (answers, timings, browser metadata);
+note right
+  Frontend components:
+  - frontend/src/features/skills-assessment/components/*
+  - TestResultsPage.jsx shows UI of results
+end note
+
+-> POST /api/tests/submit
+
+:Receive session; persist raw session (audit table/session_store);
+note right
+  Backend endpoints & serializers:
+  - backend/testsengine/views.py (submission + scoring endpoints)
+  - backend/testsengine/serializers.py
+  - backend/testsengine/models.py (session, results models)
+end note
+
+if (Validation passed?) then (yes)
+  :Enqueue scoring job (async / Celery/RQ) or compute inline;
+  note right
+    Two paths supported:
+    * Async (recommended): enqueue heavy work to background worker
+    * Inline (prototype): compute synchronously and return
+  end note
+
+  fork
+    :Compute raw scores;
+    :Apply per-test rules (SJT rules, QCM evaluation);
+    :Apply time/penalty adjustments;
+    :Aggregate per-competence raw scores;
+  end fork
+
+  :Apply business weighting (by skill / test type);
+  :Normalize scores (percentiles / reference population);
+  note right
+    Normalization requires a reference population.
+    Percentile computation typically uses historical session table
+    (or precomputed distribution snapshots).
+  end note
+
+  :Persist computed scores (results table) and link to raw session;
+
+  if (Clustering enabled? [feature_flag]) then (yes)
+    if (Enough samples? [>= sample_threshold]) then (yes)
+      fork
+        :Schedule batch reclustering (nightly/weekly);
+      fork again
+        :Apply pretrained clustering model to features (realtime);
+        :Extract & scale features (StandardScaler / MinMax);
+        :Apply clustering model (k-means) -> assign cluster id;
+        :Persist cluster assignment + model version;
+      end fork
+    else
+      :Skip clustering (wait for more samples);
+    endif
+  else
+    :Clustering disabled by config;
+  endif
+
+  :Run recommendation engine;
+  :Combine rule-based filters (thresholds, business rules) + cluster similarity;
+  :Produce ranked suggestions / job matches;
+  :Persist recommendations / expose via API;
+
+  fork
+    :Notify Candidate / Update Dashboard (user-facing);
+  fork again
+    :Export Artefacts: CSV / PDF report generation (on demand);
+  end fork
+
+  stop
+else
+  :Mark session invalid / incomplete;
+  :Persist raw session with validation error metadata;
+  :Notify candidate (retry / manual review);
+  stop
+endif
+
+note left
+  Operational notes:
+  - Always keep raw session for audit & possible rescoring.
+  - Version scaler & clustering model params (k, seed, date).
+  - Provide admin CLI / management commands:
+    * recluster (recompute clusters)
+    * rescoring (recompute scores when rules change)
+  - Prefer indexing results table by candidate_id, test_id, cluster_id.
+end note
+
+@enduml

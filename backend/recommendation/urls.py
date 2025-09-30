@@ -2,7 +2,7 @@
 URL configuration for recommendation app
 """
 from django.urls import path
-from . import views, ml_views
+from . import views, ml_views, api_views
 
 app_name = 'recommendation'
 
@@ -42,5 +42,47 @@ urlpatterns = [
     # Saved Jobs API
     path('saved-jobs/', views.saved_jobs_api, name='saved_jobs'),
     path('saved-jobs/<int:job_id>/', views.delete_saved_job, name='delete_saved_job'),
+
+    # Enhanced Cognitive Recommendation API endpoints
+    path('api/cognitive/candidate/<int:candidate_id>/recommendations/',
+         api_views.get_recommendations_for_candidate,
+         name='api_cognitive_candidate_recommendations'),
+
+    path('api/cognitive/candidate/<int:candidate_id>/recompute/',
+         api_views.recompute_recommendations_for_candidate,
+         name='api_cognitive_recompute_candidate'),
+
+    path('api/cognitive/job/<int:job_offer_id>/recommendations/',
+         api_views.get_recommendations_for_job,
+         name='api_cognitive_job_recommendations'),
+
+    path('api/cognitive/batch-recompute/',
+         api_views.batch_recompute_all,
+         name='api_cognitive_batch_recompute'),
+
+    path('api/cognitive/train-clustering/',
+         api_views.train_clustering_model,
+         name='api_cognitive_train_clustering'),
+
+    path('api/cognitive/scoring-weights/',
+         api_views.get_scoring_weights,
+         name='api_cognitive_scoring_weights'),
+
+    path('api/cognitive/cluster-info/',
+         api_views.get_cluster_info,
+         name='api_cognitive_cluster_info'),
+
+    path('api/cognitive/webhook/test-submission/',
+         api_views.webhook_test_submission,
+         name='api_cognitive_webhook_test'),
+
+    path('api/cognitive/stats/',
+         api_views.get_recommendation_stats,
+         name='api_cognitive_stats'),
+
+    # Job offers API
+    path('api/job-offers/',
+         api_views.get_all_job_offers,
+         name='api_job_offers'),
 ]
 

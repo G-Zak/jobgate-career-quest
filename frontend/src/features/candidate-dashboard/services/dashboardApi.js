@@ -111,8 +111,28 @@ class DashboardApi {
       }
 
       const data = await response.json();
-      
-      // Transform category stats to breakdown format
+
+      // If API returns an array (new behavior), use it directly.
+      if (Array.isArray(data)) {
+        const categories = data;
+        const overall = categories.length > 0
+          ? Math.round(categories.reduce((sum, c) => sum + (c.average_score || 0), 0) / categories.length)
+          : 0;
+
+        return {
+          categories,
+          overallReadiness: overall,
+          strengths: categories.slice(0, 3),
+          areasForImprovement: categories.slice(-3).reverse(),
+          benchmark: {
+            industry: 75,
+            peer: 68,
+            target: 85
+          }
+        };
+      }
+
+      // Fallback for legacy wrapped object
       return {
         categories: data.category_stats || [],
         overallReadiness: data.overall_readiness || 0,

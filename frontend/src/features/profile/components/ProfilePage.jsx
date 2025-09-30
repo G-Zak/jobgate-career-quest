@@ -4,6 +4,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { saveUserProfile, loadUserProfile, defaultUserProfile, updateUserSkillsWithProficiency } from '../../../utils/profileUtils';
 import { profileApiService } from '../../../services/profileApi';
 import SkillsSelector from './SkillsSelector';
+import EnhancedProfileManager from '../../../components/EnhancedProfileManager';
 import '../styles/profile.css';
 import {
   PencilIcon,
@@ -30,17 +31,18 @@ const ProfilePage = () => {
   const { user: authUser, logout } = useAuth();
 
   // States for editable fields
-  const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [isEditingSkills, setIsEditingSkills] = useState(false);
   const [isEditingContact, setIsEditingContact] = useState(false);
   const [isEditingEducation, setIsEditingEducation] = useState(false);
   const [isEditingExperience, setIsEditingExperience] = useState(false);
+  const [isEditingProjects, setIsEditingProjects] = useState(false);
   const [newSkill, setNewSkill] = useState('');
 
   // Modal states
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAddEducationOpen, setIsAddEducationOpen] = useState(false);
   const [isAddExperienceOpen, setIsAddExperienceOpen] = useState(false);
+  const [isAddProjectOpen, setIsAddProjectOpen] = useState(false);
 
   // Form states for adding new items
   const [newEducation, setNewEducation] = useState({
@@ -52,6 +54,13 @@ const ProfilePage = () => {
   const [newExperience, setNewExperience] = useState({
     title: '',
     company: '',
+    dateRange: '',
+    description: ''
+  });
+
+  const [newProject, setNewProject] = useState({
+    name: '',
+    link: '',
     dateRange: '',
     description: ''
   });
@@ -161,7 +170,8 @@ const ProfilePage = () => {
     skills: userData?.skills || defaultUserProfile.skills || [],
     skillsWithProficiency: userData?.skillsWithProficiency || defaultUserProfile.skillsWithProficiency || [],
     education: userData?.education || defaultUserProfile.education || [],
-    experience: userData?.experience || defaultUserProfile.experience || []
+    experience: userData?.experience || defaultUserProfile.experience || [],
+    projects: userData?.projects || defaultUserProfile.projects || []
   };
 
   // Save changes to both localStorage and database
@@ -201,13 +211,7 @@ const ProfilePage = () => {
   };
 
   // Handle info update
-  const handleInfoUpdate = (field, value) => {
-    setUserData({
-      ...safeUserData,
-      [field]: value
-    });
-    setIsDataModified(true);
-  };
+  // (About / info section removed) handleInfoUpdate not needed
 
   // Handle contact update
   const handleContactUpdate = (field, value) => {
@@ -376,6 +380,30 @@ const ProfilePage = () => {
     }
   };
 
+  // Projects handlers
+  const handleAddProject = () => {
+    setIsAddProjectOpen(true);
+    setIsEditingProjects(false);
+  };
+
+  const closeAddProject = () => {
+    setIsAddProjectOpen(false);
+    setNewProject({ name: '', link: '', dateRange: '', description: '' });
+  };
+
+  const handleProjectSubmit = (e) => {
+    e.preventDefault();
+    if (newProject.name) {
+      const updatedProjects = [...safeUserData.projects, newProject];
+      setUserData({
+        ...safeUserData,
+        projects: updatedProjects
+      });
+      setIsDataModified(true);
+      closeAddProject();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header / Profile Banner */}
@@ -445,35 +473,6 @@ const ProfilePage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-            {/* About Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">About</h3>
-                  <button
-                    onClick={() => setIsEditingInfo(!isEditingInfo)}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    {isEditingInfo ? <CheckIcon className="w-4 h-4" /> : <PencilIcon className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-              <div className="px-6 py-4">
-                {isEditingInfo ? (
-                  <textarea
-                    value={safeUserData.about}
-                    onChange={(e) => handleInfoUpdate('about', e.target.value)}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    placeholder="Tell us about yourself..."
-                  />
-                ) : (
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                    {safeUserData.about || 'No bio available. Click edit to add information about yourself.'}
-                  </p>
-                )}
-              </div>
-            </div>
 
             {/* Contact Card */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -736,7 +735,85 @@ const ProfilePage = () => {
                 )}
               </div>
             </div>
+
+            {/* Projects Section */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                    <LinkIcon className="w-5 h-5 mr-2" />
+                    Projects
+                  </h2>
+                  <button
+                    onClick={() => setIsEditingProjects(!isEditingProjects)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    {isEditingProjects ? <CheckIcon className="w-5 h-5" /> : <PlusCircleIcon className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+              <div className="px-6 py-4">
+                {safeUserData.projects.length > 0 ? (
+                  <div className="space-y-4">
+                    {safeUserData.projects.map((proj, index) => (
+                      <div key={index} className="border-l-4 border-indigo-500 pl-4 py-2">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900 dark:text-white">{proj.name}</h3>
+                            {proj.link && (
+                              <a href={proj.link} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 dark:text-indigo-400 block truncate">
+                                {proj.link}
+                              </a>
+                            )}
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{proj.description}</p>
+                          </div>
+                          <div className="flex items-center space-x-2 ml-4">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">{proj.dateRange}</span>
+                            {isEditingProjects && (
+                              <>
+                                <button className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                  <PencilIcon className="w-4 h-4" />
+                                </button>
+                                <button className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400">
+                                  <TrashIcon className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <LinkIcon className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 dark:text-gray-400 mb-4">No projects added yet</p>
+                    <button
+                      onClick={handleAddProject}
+                      className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                    >
+                      <PlusCircleIcon className="w-4 h-4 mr-2" />
+                      Add Project
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Enhanced Profile Manager */}
+        <div className="mt-8">
+          <EnhancedProfileManager
+            userProfile={userData}
+            onUpdateProfile={(updatedProfile) => {
+              setUserData(updatedProfile);
+              saveUserProfile(updatedProfile, updatedProfile.id);
+              setIsDataModified(true);
+            }}
+          />
         </div>
       </div>
 
@@ -963,6 +1040,94 @@ const ProfilePage = () => {
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                 >
                   Add Experience
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Project Modal */}
+      {isAddProjectOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                  <LinkIcon className="w-5 h-5 mr-2" />
+                  Add Project
+                </h3>
+                <button
+                  onClick={closeAddProject}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+            <form onSubmit={handleProjectSubmit} className="px-6 py-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Project Name *
+                </label>
+                <input
+                  type="text"
+                  value={newProject.name}
+                  onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="e.g., Personal Portfolio"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Link
+                </label>
+                <input
+                  type="url"
+                  value={newProject.link}
+                  onChange={(e) => setNewProject({ ...newProject, link: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="https://github.com/yourname/project"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Date Range
+                </label>
+                <input
+                  type="text"
+                  value={newProject.dateRange}
+                  onChange={(e) => setNewProject({ ...newProject, dateRange: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="e.g., 2023"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={newProject.description}
+                  onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="Describe the project and your role..."
+                />
+              </div>
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={closeAddProject}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Add Project
                 </button>
               </div>
             </form>

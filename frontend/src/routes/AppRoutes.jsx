@@ -6,11 +6,13 @@ import { useAuth } from '../contexts/AuthContext';
 import HomePage from '../pages/HomePage';
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
+import JobListingsPage from '../pages/JobListingsPage';
 
 // Import your existing pages
 import MainDashboard from '../shared/components/layout/MainDashboard';
-import ProfilePage from '../features/profile/components/ProfilePage';
+import CleanProfilePage from '../features/profile/components/CleanProfilePage';
 import JobRecommendationsPage from '../features/job-recommendations/components/JobRecommendationsPage';
+import TestApiPage from '../pages/TestApiPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -72,7 +74,7 @@ const AppRoutes = () => {
             } />
             <Route path="/profile" element={
                 <ProtectedRoute>
-                    <ProfilePage />
+                    <CleanProfilePage />
                 </ProtectedRoute>
             } />
             <Route path="/jobs" element={
@@ -80,6 +82,12 @@ const AppRoutes = () => {
                     <JobRecommendationsPage />
                 </ProtectedRoute>
             } />
+            <Route path="/all-jobs" element={
+                <ProtectedRoute>
+                    <JobListingsPage />
+                </ProtectedRoute>
+            } />
+            <Route path="/test-api" element={<TestApiPage />} />
 
             {/* Catch all route */}
             <Route path="*" element={<Navigate to="/" replace />} />

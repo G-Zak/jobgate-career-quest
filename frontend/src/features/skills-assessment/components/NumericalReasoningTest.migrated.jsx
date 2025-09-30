@@ -187,6 +187,29 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId = null }) => {
     }
   };
 
+  // Safe text extractor to avoid rendering objects directly in JSX
+  const extractText = (value) => {
+    if (!value) return '';
+    if (typeof value === 'string') return value;
+    try {
+      const translations = value.translations || value.translation || null;
+      if (translations && typeof translations === 'object') {
+        if (translations.en) return translations.en.passage_text || translations.en.question_text || translations.en.text || '';
+        if (translations.fr) return translations.fr.passage_text || translations.fr.question_text || translations.fr.text || '';
+        const first = Object.values(translations).find(t => t && (t.passage_text || t.question_text || t.text));
+        if (first) return first.passage_text || first.question_text || first.text || '';
+      }
+      if (typeof value === 'object') {
+        if (value.passage_text) return value.passage_text;
+        if (value.question_text) return value.question_text;
+        if (value.title) return value.title;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return '';
+  };
+
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -346,7 +369,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId = null }) => {
                 </span>
               </div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                {currentQ.question_text}
+                {extractText(currentQ.question_text) || extractText(currentQ.question) || `Question ${currentQuestion}`}
               </h2>
             </div>
 
@@ -355,7 +378,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId = null }) => {
               <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                 <h3 className="font-medium text-gray-900 mb-2">Data:</h3>
                 <div className="text-gray-700 whitespace-pre-line">
-                  {currentQ.passage}
+                  {extractText(currentQ.passage)}
                 </div>
               </div>
             )}

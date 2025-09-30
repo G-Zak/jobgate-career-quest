@@ -1,66 +1,121 @@
 """
-Enhanced models for job recommendations with scoring weights and detailed tracking
+Enhanced models for job recommendations with cognitive skills, technical tests, and K-Means clustering
 """
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-from skills.models import Skill
+from skills.models import Skill, TechnicalTest
 
 
 class ScoringWeights(models.Model):
     """
-    Configurable scoring weights for recommendation algorithm
+    Configurable scoring weights for recommendation algorithm - Enhanced for technical tests and cognitive skills
     """
-    name = models.CharField(max_length=100, default="Default Weights")
+    name = models.CharField(max_length=100, default="default")
     is_active = models.BooleanField(default=True)
-    
-    # Core scoring weights
-    skill_match_weight = models.FloatField(default=0.70, help_text="Weight for skill matching score")
-    content_similarity_weight = models.FloatField(default=0.20, help_text="Weight for content similarity score")
-    cluster_fit_weight = models.FloatField(default=0.10, help_text="Weight for cluster fit score")
-    
-    # Skill type weights
-    required_skill_weight = models.FloatField(default=0.80, help_text="Weight for required skills within skill matching")
-    preferred_skill_weight = models.FloatField(default=0.20, help_text="Weight for preferred skills within skill matching")
-    
-    # Bonus weights
-    location_bonus_weight = models.FloatField(default=0.05, help_text="Bonus for location match")
-    experience_bonus_weight = models.FloatField(default=0.03, help_text="Bonus for experience level match")
-    remote_bonus_weight = models.FloatField(default=0.02, help_text="Bonus for remote work")
-    salary_fit_weight = models.FloatField(default=0.00, help_text="Weight for salary fit (disabled by default)")
-    
-    # Thresholds
-    min_score_threshold = models.FloatField(default=15.0, help_text="Minimum score to include in recommendations")
-    max_recommendations = models.IntegerField(default=10, help_text="Maximum number of recommendations")
-    
+
+    # Core scoring weights (must sum to reasonable total)
+    skill_match_weight = models.FloatField(default=0.30, help_text="Weight for skill matching score")
+    technical_test_weight = models.FloatField(default=0.25, help_text="Weight for technical test performance")
+    experience_weight = models.FloatField(default=0.15, help_text="Weight for experience level match")
+    salary_weight = models.FloatField(default=0.10, help_text="Weight for salary fit")
+    location_weight = models.FloatField(default=0.10, help_text="Weight for location match")
+    cluster_fit_weight = models.FloatField(default=0.10, help_text="Weight for K-Means cluster fit")
+
+    # Technical test configuration
+    test_pass_threshold = models.FloatField(default=70.0, help_text="Minimum score to consider test passed")
+    technical_test_default_weights = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Default weights for different technical tests {skill_name: weight}"
+    )
+
+    # Cognitive/employability scoring
+    employability_weight = models.FloatField(default=0.05, help_text="Weight for cognitive/employability score")
+
+    # Skill type weights (within skill matching)
+    required_skill_weight = models.FloatField(default=1.0, help_text="Weight for required skills")
+    preferred_skill_weight = models.FloatField(default=0.5, help_text="Weight for preferred skills")
+
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    
+
     class Meta:
         verbose_name = "Scoring Weights"
         verbose_name_plural = "Scoring Weights"
         ordering = ['-is_active', '-created_at']
-    
+
     def __str__(self):
         return f"{self.name} ({'Active' if self.is_active else 'Inactive'})"
-    
+
     def get_weights_dict(self):
         """Return weights as dictionary for easy use"""
         return {
             'skill_match': self.skill_match_weight,
-            'content_similarity': self.content_similarity_weight,
+            'technical_test': self.technical_test_weight,
+            'experience': self.experience_weight,
+            'salary': self.salary_weight,
+            'location': self.location_weight,
             'cluster_fit': self.cluster_fit_weight,
+            'employability': self.employability_weight,
             'required_skill_weight': self.required_skill_weight,
             'preferred_skill_weight': self.preferred_skill_weight,
-            'location_bonus': self.location_bonus_weight,
-            'experience_bonus': self.experience_bonus_weight,
-            'remote_bonus': self.remote_bonus_weight,
-            'salary_fit': self.salary_fit_weight,
-            'min_score_threshold': self.min_score_threshold,
-            'max_recommendations': self.max_recommendations
+            'test_pass_threshold': self.test_pass_threshold,
+            'technical_test_default_weights': self.technical_test_default_weights
         }
+
+
+class SkillTechnicalTestMapping(models.Model):
+    """
+    Mapping between skills and technical tests for job recommendations
+    """
+    skill = models.ForeignKey(Skill, on_delete=models.CASCADE, related_name='technical_test_mappings')
+    technical_test = models.ForeignKey(TechnicalTest, on_delete=models.CASCADE, related_name='skill_mappings')
+    default_weight = models.FloatField(default=1.0, help_text="Default weight for this skill-test mapping")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Skill-Technical Test Mapping"
+        verbose_name_plural = "Skill-Technical Test Mappings"
+        unique_together = ['skill', 'technical_test']
+        ordering = ['skill__name', 'technical_test__test_name']
+
+    def __str__(self):
+        return f"{self.skill.name} -> {self.technical_test.test_name} (weight: {self.default_weight})"
+
+
+class ClusterCenters(models.Model):
+    """
+    Store K-Means cluster centers for job-candidate matching
+    """
+    algorithm_version = models.CharField(max_length=50, default="kmeans_v1")
+    n_clusters = models.IntegerField(help_text="Number of clusters")
+    centers = models.JSONField(help_text="List of cluster centers (arrays)")
+    trained_at = models.DateTimeField(auto_now_add=True)
+    training_metadata = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Metadata about training: feature names, normalization params, etc."
+    )
+
+    # Training statistics
+    inertia = models.FloatField(null=True, blank=True, help_text="K-Means inertia score")
+    silhouette_score = models.FloatField(null=True, blank=True, help_text="Silhouette analysis score")
+    n_samples_trained = models.IntegerField(default=0, help_text="Number of samples used for training")
+
+    is_active = models.BooleanField(default=True, help_text="Whether this model is currently active")
+
+    class Meta:
+        verbose_name = "Cluster Centers"
+        verbose_name_plural = "Cluster Centers"
+        ordering = ['-trained_at']
+
+    def __str__(self):
+        return f"{self.algorithm_version} - {self.n_clusters} clusters ({self.trained_at.strftime('%Y-%m-%d')})"
 
 
 class JobRecommendationDetail(models.Model):
@@ -133,7 +188,7 @@ class JobRecommendationDetail(models.Model):
 
 class JobOffer(models.Model):
     """
-    Enhanced Job Offer model with additional fields for better recommendations
+    Enhanced Job Offer model with additional fields for better recommendations - Morocco context
     """
     JOB_TYPE_CHOICES = [
         ('full-time', 'Full Time'),
@@ -142,7 +197,7 @@ class JobOffer(models.Model):
         ('internship', 'Internship'),
         ('freelance', 'Freelance'),
     ]
-    
+
     SENIORITY_CHOICES = [
         ('junior', 'Junior'),
         ('intermediate', 'Intermediate'),
@@ -151,22 +206,28 @@ class JobOffer(models.Model):
         ('principal', 'Principal'),
         ('expert', 'Expert'),
     ]
-    
+
     title = models.CharField(max_length=200)
     company = models.CharField(max_length=200)
     location = models.CharField(max_length=200)
     city = models.CharField(max_length=100, blank=True)
     job_type = models.CharField(max_length=20, choices=JOB_TYPE_CHOICES, default='full-time')
     seniority = models.CharField(max_length=20, choices=SENIORITY_CHOICES, blank=True)
-    salary_min = models.IntegerField(null=True, blank=True)
-    salary_max = models.IntegerField(null=True, blank=True)
-    remote = models.BooleanField(default=False)
+    salary_min = models.IntegerField(null=True, blank=True, help_text="Salary in MAD")
+    salary_max = models.IntegerField(null=True, blank=True, help_text="Salary in MAD")
+    currency = models.CharField(max_length=3, default='MAD', help_text="Currency code")
+    remote_flag = models.BooleanField(default=False, help_text="Remote work available")
     description = models.TextField()
     requirements = models.TextField(blank=True)
     benefits = models.TextField(blank=True)
     industry = models.CharField(max_length=100, blank=True)
     company_size = models.CharField(max_length=50, blank=True)
     tags = models.JSONField(default=list, blank=True)
+
+    # Source tracking for seeded data
+    source_id = models.CharField(max_length=100, blank=True, help_text="External source ID")
+    source_type = models.CharField(max_length=50, default='manual', help_text="Source type: manual, seed, api, etc.")
+
     status = models.CharField(max_length=20, default='active', choices=[
         ('active', 'Active'),
         ('inactive', 'Inactive'),
@@ -174,50 +235,126 @@ class JobOffer(models.Model):
     ])
     posted_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     # Skills relationships
     required_skills = models.ManyToManyField(Skill, related_name='required_jobs', blank=True)
     preferred_skills = models.ManyToManyField(Skill, related_name='preferred_jobs', blank=True)
-    
+
     class Meta:
         verbose_name = "Job Offer"
         verbose_name_plural = "Job Offers"
         ordering = ['-posted_at']
-    
+
     def __str__(self):
         return f"{self.title} at {self.company}"
-    
+
     def get_all_skills(self):
         """Get all skills (required + preferred)"""
         return list(self.required_skills.all()) + list(self.preferred_skills.all())
-    
+
     def get_skill_names(self):
         """Get skill names as list"""
         return [skill.name for skill in self.get_all_skills()]
 
+    def get_relevant_technical_tests(self):
+        """Get technical tests relevant to this job based on required and preferred skills"""
+        from skills.models import TechnicalTest
+
+        all_skills = self.get_all_skills()
+        skill_ids = [skill.id for skill in all_skills]
+
+        # Get technical tests mapped to these skills
+        mappings = SkillTechnicalTestMapping.objects.filter(skill_id__in=skill_ids).select_related('technical_test')
+
+        # Return list of (technical_test, weight, is_required) tuples
+        relevant_tests = []
+        for mapping in mappings:
+            is_required = mapping.skill in self.required_skills.all()
+            weight = mapping.default_weight if is_required else mapping.default_weight * 0.5
+            relevant_tests.append((mapping.technical_test, weight, is_required))
+
+        return relevant_tests
+
 
 class JobRecommendation(models.Model):
     """
-    Job recommendation with enhanced tracking
+    Enhanced Job recommendation with technical tests, cognitive skills, and detailed breakdown
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='job_recommendations')
+    candidate_id = models.IntegerField(help_text="Candidate ID (User ID)")
     job_offer = models.ForeignKey(JobOffer, on_delete=models.CASCADE, related_name='recommendations')
-    score = models.FloatField(default=0.0, help_text="Overall recommendation score")
+
+    # Core scores (0-1 normalized)
+    overall_score = models.FloatField(default=0.0, help_text="Overall recommendation score (0-1)")
+    technical_test_score = models.FloatField(default=0.0, help_text="Technical test performance score (0-1)")
+    skill_match_score = models.FloatField(default=0.0, help_text="Skill matching score (0-1)")
+    experience_score = models.FloatField(default=0.0, help_text="Experience level match score (0-1)")
+    salary_score = models.FloatField(default=0.0, help_text="Salary fit score (0-1)")
+    location_score = models.FloatField(default=0.0, help_text="Location match score (0-1)")
+    cluster_fit_score = models.FloatField(default=0.0, help_text="K-Means cluster fit score (0-1)")
+
+    # Detailed breakdown stored as JSON
+    breakdown = models.JSONField(
+        default=dict,
+        help_text="Detailed breakdown: matched_skills, missing_skills, test_ids_and_scores, passed_ratio, etc."
+    )
+
+    # Algorithm tracking
+    algorithm_version = models.CharField(max_length=50, default="cognitive_kmeans_v1")
+    computed_at = models.DateTimeField(auto_now=True)
+    weights_snapshot_id = models.IntegerField(null=True, blank=True, help_text="ScoringWeights ID used")
+    source_snapshot_id = models.CharField(max_length=100, blank=True, help_text="Source data snapshot ID")
+
+    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-    # Additional tracking
-    algorithm_version = models.CharField(max_length=50, default="enhanced_v1")
-    cluster_id = models.IntegerField(null=True, blank=True, help_text="K-Means cluster ID")
-    
+
     class Meta:
         verbose_name = "Job Recommendation"
         verbose_name_plural = "Job Recommendations"
-        unique_together = ['user', 'job_offer']
-        ordering = ['-score', '-created_at']
-    
+        unique_together = ['candidate_id', 'job_offer']
+        ordering = ['-overall_score', '-computed_at']
+        indexes = [
+            models.Index(fields=['candidate_id', '-overall_score']),
+            models.Index(fields=['job_offer', '-overall_score']),
+            models.Index(fields=['computed_at']),
+        ]
+
     def __str__(self):
-        return f"{self.user.username} - {self.job_offer.title} ({self.score:.1f}%)"
+        return f"Candidate {self.candidate_id} - {self.job_offer.title} ({self.overall_score:.3f})"
+
+    def get_user(self):
+        """Get User object from candidate_id"""
+        try:
+            return User.objects.get(id=self.candidate_id)
+        except User.DoesNotExist:
+            return None
+
+
+class RecommendationAudit(models.Model):
+    """
+    Audit trail for recommendation changes
+    """
+    recommendation = models.ForeignKey(JobRecommendation, on_delete=models.CASCADE, related_name='audit_trail')
+    candidate_id = models.IntegerField()
+    job_offer = models.ForeignKey(JobOffer, on_delete=models.CASCADE)
+
+    old_overall_score = models.FloatField(null=True, blank=True)
+    new_overall_score = models.FloatField()
+
+    changed_at = models.DateTimeField(auto_now_add=True)
+    reason = models.CharField(max_length=200, help_text="Reason for change: weights_updated, new_test_result, etc.")
+
+    # Additional context
+    algorithm_version = models.CharField(max_length=50, blank=True)
+    weights_snapshot_id = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Recommendation Audit"
+        verbose_name_plural = "Recommendation Audits"
+        ordering = ['-changed_at']
+
+    def __str__(self):
+        return f"Candidate {self.candidate_id} - {self.job_offer.title} - {self.reason}"
 
 
 class UserJobPreference(models.Model):

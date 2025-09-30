@@ -34,29 +34,40 @@ class CandidateProfileViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def update_skills(self, request):
         """Mettre à jour les compétences d'un candidat"""
-        candidate_id = request.data.get('candidate_id', 1)  # Par défaut candidat 1
         skill_ids = request.data.get('skill_ids', [])
         skills_with_proficiency = request.data.get('skills_with_proficiency', [])
-        
-        # Créer ou récupérer le profil candidat
-        candidate, created = CandidateProfile.objects.get_or_create(
-            id=candidate_id,
-            defaults={
-                'first_name': f'Candidat',
-                'last_name': f'{candidate_id}',
-                'email': f'candidat{candidate_id}@example.com'
-            }
-        )
-        
+
+        # Resolve candidate profile: prefer authenticated user's profile
+        candidate = None
+        if request.user and request.user.is_authenticated:
+            # Try to get or create a CandidateProfile linked to the authenticated user
+            candidate, created = CandidateProfile.objects.get_or_create(
+                user=request.user,
+                defaults={
+                    'first_name': getattr(request.user, 'first_name', '') or 'Candidat',
+                    'last_name': getattr(request.user, 'last_name', '') or str(request.user.id),
+                    'email': getattr(request.user, 'email', '') or f'candidat{request.user.id}@example.com'
+                }
+            )
+        else:
+            # For anonymous requests, require a valid candidate_id and do not create profiles without a user
+            candidate_id = request.data.get('candidate_id')
+            if not candidate_id:
+                return Response({'error': 'candidate_id is required for anonymous requests'}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                candidate = CandidateProfile.objects.get(id=candidate_id)
+            except CandidateProfile.DoesNotExist:
+                return Response({'error': 'CandidateProfile not found for provided candidate_id'}, status=status.HTTP_404_NOT_FOUND)
+
         # Mettre à jour les compétences
         skills = Skill.objects.filter(id__in=skill_ids)
         candidate.skills.set(skills)
-        
+
         # Mettre à jour les compétences avec niveau de maîtrise
         if skills_with_proficiency:
             candidate.skills_with_proficiency = skills_with_proficiency
             candidate.save()
-        
+
         return Response({
             'message': 'Compétences mises à jour avec succès',
             'candidate': CandidateProfileSerializer(candidate).data

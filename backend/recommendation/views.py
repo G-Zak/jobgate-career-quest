@@ -154,12 +154,12 @@ def get_recommendations(request):
         engine = RecommendationEngine()
         
         # Check if we have existing recommendations for this candidate
-        existing_recommendations = JobRecommendation.objects.filter(candidate=candidate)
-        
+        existing_recommendations = JobRecommendation.objects.filter(candidate_id=candidate.id)
+
         # Only regenerate if we don't have recommendations or if user profile has changed significantly
         if not existing_recommendations.exists() or user_profile_data:
             # Clear existing recommendations for this candidate to force regeneration
-            JobRecommendation.objects.filter(candidate=candidate).delete()
+            JobRecommendation.objects.filter(candidate_id=candidate.id).delete()
             
             # Generate new recommendations with complete user profile data
             recommendations = engine.generate_recommendations(candidate, limit, user_profile_data)

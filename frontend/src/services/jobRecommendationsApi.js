@@ -5,7 +5,7 @@
 
 class JobRecommendationsApi {
     constructor() {
-        this.baseURL = 'http://localhost:8000/api/recommendations';
+        this.baseURL = 'http://localhost:8001/api/recommendations';
     }
 
     /**

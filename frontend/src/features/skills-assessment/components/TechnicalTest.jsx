@@ -233,6 +233,36 @@ const TechnicalTest = ({ onBackToDashboard, testId = 'technical' }) => {
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
+    // Safe extractor to avoid rendering raw objects in JSX
+    const extractText = (value) => {
+        if (!value) return '';
+        if (typeof value === 'string') return value;
+        try {
+            // Handle common translation/context shapes
+            const translations = value.translations || value.translation || null;
+            if (translations && typeof translations === 'object') {
+                if (translations.en) {
+                    return translations.en.passage_text || translations.en.question_text || translations.en.scenario || translations.en.text || '';
+                }
+                if (translations.fr) {
+                    return translations.fr.passage_text || translations.fr.question_text || translations.fr.scenario || translations.fr.text || '';
+                }
+                const first = Object.values(translations).find(t => t && (t.passage_text || t.question_text || t.scenario || t.text));
+                if (first) return first.passage_text || first.question_text || first.scenario || first.text || '';
+            }
+
+            if (typeof value === 'object') {
+                if (value.passage_text) return value.passage_text;
+                if (value.question_text) return value.question_text;
+                if (value.scenario) return value.scenario;
+                if (value.title) return value.title;
+            }
+        } catch (e) {
+            // ignore parsing errors
+        }
+        return '';
+    };
+
     const getProgressPercentage = () => {
         if (!questions?.length) return 0;
         return Math.round(((currentQuestionIndex + 1) / questions.length) * 100);
@@ -437,7 +467,7 @@ const TechnicalTest = ({ onBackToDashboard, testId = 'technical' }) => {
                     {currentQuestion.context && (
                         <div className="mt-4 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
                             <p className="text-sm text-blue-800 font-medium">
-                                <strong>Context:</strong> {currentQuestion.context}
+                                <strong>Context:</strong> {extractText(currentQuestion.context) || extractText(currentQuestion.scenario)}
                             </p>
                         </div>
                     )}

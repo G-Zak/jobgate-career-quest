@@ -3,32 +3,34 @@ import backendApi from '../api/backendApi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaCube, FaStop, FaArrowRight, FaFlag, FaSync, FaSearchPlus, FaExpand, FaEye, FaImage, FaLayerGroup, FaPlay, FaTimes, FaCheckCircle } from 'react-icons/fa';
 // Removed frontend data imports - using backend API instead
-import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
+import { submitTestAttempt } from '../lib/backendSubmissionHelper';
+import TestDataService from '../services/testDataService';
 import TestResultsPage from './TestResultsPage';
 
 const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
   // Map frontend test ID to backend database ID
   const getBackendTestId = (frontendId) => {
     const testIdMapping = {
-      'spatial': '15', // Default to Shape Assembly
+      'spatial': '15', // Default to Shape Assembly (legacy)
       'spatial_shape': '15',
       'spatial_rotation': '16',
       'spatial_visualization': '17',
       'spatial_identification': '18',
       'spatial_pattern': '19',
       'spatial_relations': '20',
-      'SR1': '15',
-      'SR2': '16',
-      'SR3': '17',
-      'SR4': '18',
-      'SR5': '19',
-      'SR6': '20',
-      'SRT1': '15', // Add SRT mappings
-      'SRT2': '16',
-      'SRT3': '17',
-      'SRT4': '18',
-      'SRT5': '19',
-      'SRT6': '20'
+      'SR1': '16',
+      'SR2': '17',
+      'SR3': '18',
+      'SR4': '19',
+      'SR5': '20',
+      'SR6': '21',
+      // SRT pools (shifted so SRT1 points to backend test set that contains spatial images)
+      'SRT1': '16',
+      'SRT2': '17',
+      'SRT3': '18',
+      'SRT4': '19',
+      'SRT5': '20',
+      'SRT6': '21'
     };
     return testIdMapping[frontendId] || frontendId || '15'; // Default to Shape Assembly
   };
@@ -88,9 +90,12 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
         setLoading(true);
         setError(null);
 
-        // Fetch test questions from backend (secure - no correct answers)
-        const fetchedQuestions = await fetchTestQuestions(backendTestId);
-        setQuestions(fetchedQuestions);
+        // Fetch test questions from backend and transform them for frontend
+        // Use TestDataService.fetchTestQuestions which returns a frontend-friendly
+        // object including `questions` (with parsed translations and main_image)
+        const fetched = await TestDataService.fetchTestQuestions(testId);
+        const fetchedQuestions = (fetched && fetched.questions) ? fetched.questions : fetched;
+        setQuestions(fetchedQuestions || []);
         
         setTimeRemaining(20 * 60); // 20 minutes default
         setStartedAt(new Date());
@@ -138,19 +143,7 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
     }));
   };
 
-  // Calculate current score
-  // REMOVED: calculateCurrentScore() - use backend API instead
-  const calculateCurrentScore = () => {
-    const correctAnswers = questions.filter(question => 
-      answers[question.id] === question.correctAnswer
-    ).length;
-    
-    return {
-      correct: correctAnswers,
-      total: questions.length,
-      percentage: questions.length > 0 ? Math.round((correctAnswers / questions.length) * 100) : 0
-    };
-  };
+
 
   const handleNextQuestion = () => {
     const totalQuestions = questions.length;
@@ -196,12 +189,68 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
         },
         onError: (error) => {
           console.error('Test submission failed:', error);
+
+          // Handle duplicate submission specially
+          if (error.message === 'DUPLICATE_SUBMISSION' && error.existingSubmission) {
+            console.log('Handling duplicate submission:', error.existingSubmission);
+
+            // Use existing submission data instead of showing error
+            const existingScore = parseFloat(error.existingSubmission.score) || 0;
+            const existingResults = {
+              id: error.existingSubmission.submissionId,
+              raw_score: existingScore.toFixed(2),
+              max_possible_score: "100.00",
+              percentage_score: existingScore.toFixed(2),
+              correct_answers: Math.round((existingScore / 100) * questions.length),
+              total_questions: questions.length,
+              grade_letter: existingScore >= 90 ? 'A' : existingScore >= 80 ? 'B' : existingScore >= 70 ? 'C' : existingScore >= 60 ? 'D' : 'F',
+              passed: existingScore >= 70,
+              test_title: "Spatial Reasoning Test",
+              test_type: "spatial_reasoning",
+              isDuplicateSubmission: true,
+              existingSubmissionMessage: error.existingSubmission.message
+            };
+
+            setResults(existingResults);
+            setTestStep('results');
+            scrollToTop();
+            return;
+          }
+
           setError(`Submission failed: ${error.message}`);
         }
       });
       
     } catch (error) {
       console.error('Error finishing test:', error);
+
+      // Handle duplicate submission at the catch level too
+      if (error.message === 'DUPLICATE_SUBMISSION' && error.existingSubmission) {
+        console.log('Handling duplicate submission in catch:', error.existingSubmission);
+
+        // Use existing submission data instead of showing error
+        const existingScore = parseFloat(error.existingSubmission.score) || 0;
+        const existingResults = {
+          id: error.existingSubmission.submissionId,
+          raw_score: existingScore.toFixed(2),
+          max_possible_score: "100.00",
+          percentage_score: existingScore.toFixed(2),
+          correct_answers: Math.round((existingScore / 100) * questions.length),
+          total_questions: questions.length,
+          grade_letter: existingScore >= 90 ? 'A' : existingScore >= 80 ? 'B' : existingScore >= 70 ? 'C' : existingScore >= 60 ? 'D' : 'F',
+          passed: existingScore >= 70,
+          test_title: "Spatial Reasoning Test",
+          test_type: "spatial_reasoning",
+          isDuplicateSubmission: true,
+          existingSubmissionMessage: error.existingSubmission.message
+        };
+
+        setResults(existingResults);
+        setTestStep('results');
+        scrollToTop();
+        return;
+      }
+
       setError('Failed to submit test. Please try again.');
     }
   };
@@ -218,6 +267,36 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
   const getCurrentQuestion = () => {
     if (!questions || !Array.isArray(questions) || questions.length === 0) return null;
     return questions[currentQuestionIndex] || null;
+  };
+
+  // Build a safe, displayable context string from various possible fields
+  const getContextText = (question) => {
+    if (!question) return '';
+
+    // If passage_text (produced by transformer) is available, prefer it
+    if (question.passage_text && typeof question.passage_text === 'string') return question.passage_text;
+
+    // If explanation or question_text fallback exists, prefer short explanation
+    if (question.explanation && typeof question.explanation === 'string') return question.explanation;
+
+    // If scenario or context is a string, use it
+    if (question.scenario && typeof question.scenario === 'string') return question.scenario;
+    if (question.context && typeof question.context === 'string') return question.context;
+
+    // If scenario is an object with translations, try to extract readable fields
+    const scenario = question.scenario || {};
+    const translations = scenario.translations || scenario.translation || null;
+    if (translations && typeof translations === 'object') {
+      if (translations.en && translations.en.passage_text) return translations.en.passage_text;
+      if (translations.en && translations.en.question_text) return translations.en.question_text;
+      if (translations.fr && translations.fr.passage_text) return translations.fr.passage_text;
+      if (translations.fr && translations.fr.question_text) return translations.fr.question_text;
+      const first = Object.values(translations).find(t => t && (t.passage_text || t.question_text));
+      if (first) return first.passage_text || first.question_text;
+    }
+
+    // Last resort: empty string (don't render object directly)
+    return '';
   };
 
   const getTotalAnswered = () => {
@@ -309,12 +388,6 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
 
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <div className="text-sm text-gray-500">Score</div>
-                <div className="text-lg font-bold text-green-600">
-                  {calculateCurrentScore().correct}/{calculateCurrentScore().total} ({calculateCurrentScore().percentage}%)
-                </div>
-              </div>
-              <div className="text-right">
                 <div className="text-sm text-gray-500">Time Remaining</div>
                 <div className={`text-lg font-bold font-mono ${timeRemaining <= 60 ? 'text-red-500' : 'text-blue-600'}`}>
                   {formatTime(timeRemaining)}
@@ -356,7 +429,15 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
                 <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
                   <div className="flex justify-center">
                     <img
-                      src={`/src/assets/images/spatial/questions/section_1/${currentQuestion.main_image.split('/').pop()}`}
+                      src={(() => {
+                        const img = currentQuestion.main_image || '';
+                        // If backend provides '/assets/...' convert to '/src/assets/...' which matches frontend static assets
+                        if (img.startsWith('/assets')) return `/src${img}`;
+                        if (img.startsWith('/src/assets')) return img;
+                        // Fallback to using filename in section_1 (legacy behavior)
+                        const fileName = img.split('/').pop();
+                        return fileName ? `/src/assets/images/spatial/questions/section_1/${fileName}` : '';
+                      })()}
                       alt={`Question ${currentQuestionIndex + 1}`}
                       className="max-w-xl max-h-[28rem] w-auto h-auto rounded-lg shadow-sm object-contain"
                       style={{ maxWidth: '528px', maxHeight: '422px' }}
@@ -374,9 +455,9 @@ const SpatialReasoningTest = ({ onBackToDashboard, testId = 'spatial' }) => {
               <h4 className="text-lg font-medium text-gray-800 leading-relaxed">
                 {currentQuestion?.question_text || currentQuestion?.question}
               </h4>
-              {currentQuestion?.context && (
+              {getContextText(currentQuestion) && (
                 <p className="text-gray-600 mt-2 text-sm">
-                  {currentQuestion.context}
+                  {getContextText(currentQuestion)}
                 </p>
               )}
             </div>

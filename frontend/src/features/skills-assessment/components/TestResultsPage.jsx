@@ -17,7 +17,8 @@ const TestResultsPage = ({
   onRetakeTest,
   onBackToTestList,
   showUniversalResults = false,
-  scoringSystem = null
+  scoringSystem = null,
+  testMeta = null // optional { title, description } from question fetch
 }) => {
   const { addAttempt } = useAssessmentStore();
   const hasAddedAttempt = useRef(false);
@@ -66,17 +67,47 @@ const TestResultsPage = ({
           isPassed: (parseFloat(results.percentage_score) || 0) >= 70
         };
       } else {
-        // Legacy unified scoring format
-        return {
-          testId: String(testId || results.attempt?.test_id || 'unknown'),
-          score: parseInt(results.correctAnswers || results.correct) || 0,
-          totalQuestions: parseInt(results.totalQuestions || results.total) || 0,
-          percentage: parseFloat(results.score || results.percentage) || 0,
-          timeSpent: parseInt(results.duration || results.attempt?.duration_seconds) || 0,
-          resultLabel: String(results.resultLabel || results.attempt?.result_label || 'Completed'),
-          isPassed: (parseFloat(results.score || results.percentage) || 0) >= 70
-        };
-      }
+          // Legacy unified scoring format or compact backendSubmissionHelper shape
+          // Normalize available fields from different possible shapes to avoid
+          // accidentally parsing objects (e.g. results.score may be an object).
+          const scoreValue = (typeof results.correctAnswers !== 'undefined')
+            ? results.correctAnswers
+            : (typeof results.correct !== 'undefined')
+              ? results.correct
+              : (results.score && typeof results.score.correct_answers !== 'undefined')
+                ? results.score.correct_answers
+                : undefined;
+
+          const totalValue = (typeof results.totalQuestions !== 'undefined')
+            ? results.totalQuestions
+            : (typeof results.total !== 'undefined')
+              ? results.total
+              : (results.score && typeof results.score.total_questions !== 'undefined')
+                ? results.score.total_questions
+                : undefined;
+
+          const percentageRaw = (typeof results.percentage !== 'undefined')
+            ? results.percentage
+            : (results.score && typeof results.score.percentage_score !== 'undefined')
+              ? results.score.percentage_score
+              : (typeof results.score === 'number' ? results.score : undefined);
+
+          const timeRaw = (typeof results.duration !== 'undefined')
+            ? results.duration
+            : (results.attempt && typeof results.attempt.duration_seconds !== 'undefined')
+              ? results.attempt.duration_seconds
+              : (typeof results.duration_seconds !== 'undefined' ? results.duration_seconds : undefined);
+
+          return {
+            testId: String(testId || results.attempt?.test_id || 'unknown'),
+            score: parseInt(scoreValue) || 0,
+            totalQuestions: parseInt(totalValue) || 0,
+            percentage: parseFloat(percentageRaw) || 0,
+            timeSpent: parseInt(timeRaw) || 0,
+            resultLabel: String(results.resultLabel || results.attempt?.result_label || 'Completed'),
+            isPassed: (parseFloat(percentageRaw) || 0) >= 70
+          };
+        }
     } else {
       // Legacy format
       return {
@@ -100,7 +131,15 @@ const TestResultsPage = ({
     testId: String(resultData.testId),
     score: parseInt(resultData.score) || 0,
     totalQuestions: parseInt(resultData.totalQuestions) || 0,
-    percentage: parseFloat(resultData.percentage) || 0,
+    // If backend didn't provide a percentage but we have score/total, compute it
+    percentage: (function() {
+      const p = parseFloat(resultData.percentage);
+      if (!isNaN(p) && p > 0) return p;
+      const s = parseInt(resultData.score);
+      const t = parseInt(resultData.totalQuestions);
+      if (!isNaN(s) && !isNaN(t) && t > 0) return Math.round((s / t) * 100);
+      return 0;
+    })(),
     timeSpent: parseInt(resultData.timeSpent) || 0,
     resultLabel: String(resultData.resultLabel),
     isPassed: Boolean(resultData.isPassed)
@@ -206,6 +245,24 @@ const TestResultsPage = ({
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="sa-container py-6">
+        {/* Top breadcrumb / test header area */}
+        <div className="mb-4 flex items-start justify-between">
+          <div>
+            <button
+              onClick={() => { if (onBackToDashboard) onBackToDashboard(); else window.location.href = '/dashboard'; }}
+              className="text-sm text-gray-600 hover:underline"
+            >
+              Back to Assessment Dashboard
+            </button>
+
+            {testMeta?.title || safeResultData.testId ? (
+              <div className="mt-2">
+                <div className="text-sm text-gray-500">{testMeta?.title || safeResultData.testId}</div>
+                {testMeta?.description && <div className="text-sm text-gray-600">{testMeta.description}</div>}
+              </div>
+            ) : null}
+          </div>
+        </div>
         {/* Header - Removed back button and date as they exist in Quick Actions */}
 
         {/* Main Content */}

@@ -153,34 +153,35 @@ class ScoringService:
         # Only score questions that have answers provided (for random selection tests)
         # Get question IDs from the answers_data keys
         answered_question_ids = set(answers_data.keys())
-        
+
         # Get questions that were actually answered
         questions = submission.test.questions.filter(id__in=answered_question_ids).order_by('order')
-        
+
         for question in questions:
             question_id_str = str(question.id)
-            selected_answer = answers_data.get(question_id_str, '').upper()
+            selected_answer = answers_data.get(question_id_str, '')
+            if isinstance(selected_answer, str):
+                selected_answer = selected_answer.strip().upper()
 
-            # Special scoring for Situational Judgment (per-option +2/+1/0/-1)
+            # Robust SJT handling: if QuestionOption exists, use highest-score option as correct
+            is_correct = False
             if submission.test.test_type == 'situational_judgment':
-                # Default to 0 if no mapping found
-                score_value = 0
                 try:
-                    opt = QuestionOption.objects.filter(
-                        question=question,
-                        option_letter=selected_answer
-                    ).first()
-                    if opt:
-                        score_value = int(opt.score_value)
+                    opts = list(QuestionOption.objects.filter(question=question))
+                    if opts:
+                        max_score = max(int(getattr(o, 'score_value', 0) or 0) for o in opts)
+                        sel_opt = next((o for o in opts if str(o.option_letter).strip().upper() == selected_answer), None)
+                        is_correct = bool(sel_opt and int(getattr(sel_opt, 'score_value', 0) or 0) == max_score)
+                    else:
+                        # Fallback to standard check if no options in DB
+                        is_correct = question.check_answer(selected_answer)
                 except Exception:
-                    score_value = 0
-                # Best choice counts as correct for reporting
-                is_correct = (score_value == 2)
-                points_awarded = Decimal(str(score_value))
+                    is_correct = question.check_answer(selected_answer)
             else:
                 # Standard MCQ scoring
                 is_correct = question.check_answer(selected_answer)
-                points_awarded = self.config.DIFFICULTY_COEFFICIENTS[question.difficulty_level] if is_correct else Decimal('0.0')
+
+            points_awarded = self.config.DIFFICULTY_COEFFICIENTS[question.difficulty_level] if is_correct else Decimal('0.0')
 
             # Create Answer record
             answer = Answer.objects.create(
@@ -213,12 +214,12 @@ class ScoringService:
         correct_answers = sum(1 for result in answer_results if result['is_correct'])
         raw_score = sum(result['points_awarded'] for result in answer_results)
         
-        # Calculate maximum possible score for this test
-        if submission.test.test_type == 'situational_judgment':
-            # Max per question is +2 in SJT
-            max_possible_score = Decimal('2.0') * Decimal(str(total_questions))
-        else:
-            max_possible_score = submission.test.calculate_max_score()
+        # Calculate maximum possible score for the questions actually answered
+        # Use standard difficulty-based scoring for all test types (including SJT)
+        max_possible_score = Decimal('0.0')
+        for result in answer_results:
+            difficulty = result['difficulty']
+            max_possible_score += self.config.DIFFICULTY_COEFFICIENTS[difficulty]
 
         # Calculate percentage
         if max_possible_score > 0:
@@ -356,35 +357,64 @@ class ScoringService:
         }
     
     def recalculate_score(self, submission: TestSubmission) -> Score:
-        """Recalculate score for an existing submission (for debugging/migration)"""
-        
+        """Recalculate score for an existing submission.
+        Re-evaluates correctness from selected answers (fixes old SJT/MCQ submissions).
+        """
         logger.info(f"Recalculating score for submission {submission.id}")
-        
+
         # Delete existing score if it exists
         if hasattr(submission, 'score'):
             submission.score.delete()
-        
-        # Get existing answers
+
         answers = submission.answers.all()
         answer_results = []
-        
-        for answer in answers:
-            answer_results.append({
-                'answer': answer,
-                'question': answer.question,
-                'is_correct': answer.is_correct,
-                'points_awarded': answer.points_awarded,
-                'difficulty': answer.question.difficulty_level
-            })
-        
-        # Recalculate comprehensive score
+
+        if answers.exists():
+            for answer in answers:
+                sel = str(answer.selected_answer or '').strip().upper()
+
+                # Recompute correctness fresh (with robust SJT handling)
+                try:
+                    if submission.test.test_type == 'situational_judgment':
+                        opts = list(QuestionOption.objects.filter(question=answer.question))
+                        if opts:
+                            max_score = max(int(getattr(o, 'score_value', 0) or 0) for o in opts)
+                            sel_opt = next((o for o in opts if str(o.option_letter).strip().upper() == sel), None)
+                            is_correct = bool(sel_opt and int(getattr(sel_opt, 'score_value', 0) or 0) == max_score)
+                        else:
+                            is_correct = answer.question.check_answer(sel)
+                    else:
+                        is_correct = answer.question.check_answer(sel)
+                except Exception:
+                    is_correct = answer.question.check_answer(sel)
+
+                answer.is_correct = is_correct
+                answer.points_awarded = self.config.DIFFICULTY_COEFFICIENTS[answer.question.difficulty_level] if is_correct else Decimal('0.0')
+                answer.save(update_fields=['is_correct', 'points_awarded'])
+
+                answer_results.append({
+                    'answer': answer,
+                    'question': answer.question,
+                    'is_correct': is_correct,
+                    'points_awarded': answer.points_awarded,
+                    'difficulty': answer.question.difficulty_level
+                })
+        else:
+            # No stored Answer rows: rebuild answers from stored answers_data, if any
+            try:
+                answers_data = submission.answers_data or {}
+            except Exception:
+                answers_data = {}
+            answer_results = self._create_and_score_answers(submission, answers_data)
+
+        # Compute comprehensive score
         score = self._calculate_comprehensive_score(submission, answer_results)
-        
+
         # Update submission
         submission.scored_at = timezone.now()
         submission.scoring_version = self.config.SCORING_VERSION
-        submission.save()
-        
+        submission.save(update_fields=['scored_at', 'scoring_version'])
+
         logger.info(f"Score recalculated: {score.percentage_score}%")
         return score
 

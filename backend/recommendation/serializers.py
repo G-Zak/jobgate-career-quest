@@ -23,12 +23,12 @@ class JobOfferSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobOffer
         fields = [
-            'id', 'title', 'company', 'description', 'requirements', 'responsibilities',
-            'job_type', 'seniority', 'location', 'city', 'remote',
-            'salary_min', 'salary_max', 'salary_currency', 'salary_range',
+            'id', 'title', 'company', 'description', 'requirements',
+            'job_type', 'seniority', 'location', 'city', 'remote_flag',
+            'salary_min', 'salary_max', 'currency', 'salary_range',
             'required_skills', 'preferred_skills', 'tags',
-            'status', 'posted_at', 'updated_at', 'expires_at', 'is_active',
-            'contact_email', 'contact_phone', 'benefits', 'company_size', 'industry'
+            'status', 'posted_at', 'updated_at', 'is_active',
+            'benefits', 'company_size', 'industry'
         ]
 
 
@@ -84,12 +84,12 @@ class JobSearchSerializer(serializers.Serializer):
     q = serializers.CharField(required=False, allow_blank=True)
     location = serializers.CharField(required=False, allow_blank=True)
     job_type = serializers.ChoiceField(
-        choices=JobOffer.JOB_TYPES,
+        choices=JobOffer.JOB_TYPE_CHOICES,
         required=False,
         allow_blank=True
     )
     seniority = serializers.ChoiceField(
-        choices=JobOffer.SENIORITY_LEVELS,
+        choices=JobOffer.SENIORITY_CHOICES,
         required=False,
         allow_blank=True
     )

@@ -27,10 +27,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { BookmarkIcon as BookmarkSolidIcon, HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { useAuth } from '../../../contexts/AuthContext';
-import { jobOffers } from '../../../data/jobOffers';
 import { loadUserProfile } from '../../../utils/profileUtils';
 import jobRecommendationsApi from '../../../services/jobRecommendationsApi';
-import { mockJobOffers } from '../../../data/mockJobOffers';
+import JobApplicationModal from '../../../components/JobApplicationModal';
 
 // Safe skill normalization utility
 const normalizeSkill = (skill) => {
@@ -113,6 +112,7 @@ const JobRecommendations = ({
   const [expandedDescriptions, setExpandedDescriptions] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
+  const [applicationModal, setApplicationModal] = useState({ isOpen: false, job: null });
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const [showScoreModal, setShowScoreModal] = useState(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -1055,12 +1055,20 @@ const JobRecommendations = ({
     }
   };
 
-  const handleApplyToJob = async (jobId) => {
+  const handleOpenApplicationModal = (job) => {
+    setApplicationModal({ isOpen: true, job });
+  };
+
+  const handleCloseApplicationModal = () => {
+    setApplicationModal({ isOpen: false, job: null });
+  };
+
+  const handleSubmitApplication = async (jobId, applicationData) => {
     setApplyingJobs(prev => new Set(prev).add(jobId));
     try {
       // Try to apply to job in backend
       try {
-        await jobRecommendationsApi.applyToJob(jobId, '', '');
+        await jobRecommendationsApi.applyToJob(jobId, applicationData.coverLetter, applicationData.notes);
 
         // Update recommendation status
         const job = recommendedJobs.find(j => j.id === jobId);
@@ -1561,7 +1569,7 @@ const JobRecommendations = ({
                           View Details
                         </button>
                         <button
-                          onClick={() => handleApplyToJob(job.id)}
+                          onClick={() => handleOpenApplicationModal(job)}
                           disabled={isApplying || job.status === 'applied' || appliedJobs.has(job.id)}
                           className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md ${job.status === 'applied' || appliedJobs.has(job.id)
                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300 cursor-default'
@@ -1912,6 +1920,14 @@ const JobRecommendations = ({
           </div>
         )}
       </main>
+
+      {/* Job Application Modal */}
+      <JobApplicationModal
+        isOpen={applicationModal.isOpen}
+        onClose={handleCloseApplicationModal}
+        job={applicationModal.job}
+        onSubmit={handleSubmitApplication}
+      />
     </div>
   );
 };

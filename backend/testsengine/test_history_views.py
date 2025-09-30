@@ -119,10 +119,10 @@ def test_history_summary(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def test_category_stats(request):
-    """Get statistics by test category"""
+    """Get statistics by test category (wrapped for dashboard consumption)"""
     # Get completed sessions grouped by test type for the authenticated user
     category_stats = []
-    
+
     for test_type, _ in Test.TEST_TYPES:
         sessions = TestSession.objects.filter(
             user=request.user,
@@ -130,7 +130,7 @@ def test_category_stats(request):
             status='completed',
             score__isnull=False
         )
-        
+
         if sessions.exists():
             stats = sessions.aggregate(
                 count=Count('id'),
@@ -138,7 +138,7 @@ def test_category_stats(request):
                 max_score=Max('score'),
                 last_taken=Max('start_time')
             )
-            
+
             category_stats.append({
                 'test_type': test_type,
                 'count': stats['count'],
@@ -146,9 +146,28 @@ def test_category_stats(request):
                 'best_score': stats['max_score'] or 0,
                 'last_taken': stats['last_taken']
             })
-    
+
+    # Serialize list
     serializer = TestCategoryStatsSerializer(category_stats, many=True)
-    return Response(serializer.data)
+    data_list = serializer.data
+
+    # Derive simple aggregates expected by the dashboard service
+    avg_overall = round(sum(item['average_score'] for item in data_list) / len(data_list), 2) if data_list else 0
+
+    # Sort copies for top/bottom (do not mutate original order)
+    sorted_by_score = sorted(data_list, key=lambda x: x['average_score'], reverse=True)
+    top_categories = sorted_by_score[:3]
+    bottom_categories = list(reversed(sorted_by_score))[:3]
+
+    # Wrap response for frontend expectations (dashboard components expect this structure)
+    wrapped = {
+        'category_stats': data_list,
+        'overall_readiness': avg_overall,
+        'top_categories': top_categories,
+        'bottom_categories': bottom_categories,
+    }
+
+    return Response(wrapped)
 
 
 @api_view(['GET'])

@@ -14,7 +14,7 @@ import TestDataService from '../services/testDataService';
 import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
 import TestResultsPage from './TestResultsPage';
 
-const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) => {
+const SituationalJudgmentTest = ({ testId = 30, onComplete, onBackToDashboard }) => {
   const navigate = useNavigate();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
@@ -175,7 +175,7 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
       });
 
       const result = await submitTestAttempt({
-        testId: '30', // Backend test ID for SJT1
+        testId: String(testId || 30), // Use provided testId prop if available, fallback to 30
         answers: letterAnswers,
         startedAt: startTime,
         finishedAt: endTime,
@@ -192,6 +192,33 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
         },
         onError: (error) => {
           console.error('Test submission failed:', error);
+
+          // Handle duplicate submission specially
+          if (error.message === 'DUPLICATE_SUBMISSION' && error.existingSubmission) {
+            console.log('Handling duplicate submission:', error.existingSubmission);
+
+            // Use existing submission data instead of fallback calculation
+            const existingScore = parseFloat(error.existingSubmission.score) || 0;
+            const existingResults = {
+              id: error.existingSubmission.submissionId,
+              raw_score: existingScore.toFixed(2),
+              max_possible_score: "100.00",
+              percentage_score: existingScore.toFixed(2),
+              correct_answers: Math.round((existingScore / 100) * testData.length),
+              total_questions: testData.length,
+              grade_letter: existingScore >= 90 ? 'A' : existingScore >= 80 ? 'B' : existingScore >= 70 ? 'C' : existingScore >= 60 ? 'D' : 'F',
+              passed: existingScore >= 70,
+              test_title: "SJT1 - Situational Judgment",
+              test_type: "situational_judgment",
+              isDuplicateSubmission: true,
+              existingSubmissionMessage: error.existingSubmission.message
+            };
+
+            setResults(existingResults);
+            setTestStep('results');
+            return;
+          }
+
           // Fallback to local calculation
           calculateScore();
           setShowResults(true);
@@ -199,6 +226,33 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
       });
     } catch (error) {
       console.error('Error submitting test:', error);
+
+      // Handle duplicate submission at the catch level too
+      if (error.message === 'DUPLICATE_SUBMISSION' && error.existingSubmission) {
+        console.log('Handling duplicate submission in catch:', error.existingSubmission);
+
+        // Use existing submission data instead of fallback calculation
+        const existingScore = parseFloat(error.existingSubmission.score) || 0;
+        const existingResults = {
+          id: error.existingSubmission.submissionId,
+          raw_score: existingScore.toFixed(2),
+          max_possible_score: "100.00",
+          percentage_score: existingScore.toFixed(2),
+          correct_answers: Math.round((existingScore / 100) * testData.length),
+          total_questions: testData.length,
+          grade_letter: existingScore >= 90 ? 'A' : existingScore >= 80 ? 'B' : existingScore >= 70 ? 'C' : existingScore >= 60 ? 'D' : 'F',
+          passed: existingScore >= 70,
+          test_title: "SJT1 - Situational Judgment",
+          test_type: "situational_judgment",
+          isDuplicateSubmission: true,
+          existingSubmissionMessage: error.existingSubmission.message
+        };
+
+        setResults(existingResults);
+        setTestStep('results');
+        return;
+      }
+
       // Fallback to local calculation
       calculateScore();
       setShowResults(true);
@@ -208,6 +262,111 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
   const startTest = () => {
     setIsTestStarted(true);
     setTestStartTime(Date.now());
+  };
+
+  // Safe text extractor to avoid rendering raw objects (some backend entries embed translations)
+  const getScenarioText = (question) => {
+    if (!question) return '';
+    if (typeof question.passage_text === 'string' && question.passage_text.trim()) return question.passage_text;
+    if (typeof question.explanation === 'string' && question.explanation.trim()) return question.explanation;
+    if (typeof question.scenario === 'string' && question.scenario.trim()) return question.scenario;
+
+    // Try translation objects (common shape: { translations: { en: {...}, fr: {...} } })
+    const parsed = question.scenario || question.context || {};
+    const translations = parsed?.translations || parsed?.translation || null;
+    if (translations && typeof translations === 'object') {
+      if (translations.en) {
+        if (translations.en.passage_text) return translations.en.passage_text;
+        if (translations.en.question_text) return translations.en.question_text;
+        if (translations.en.scenario) return translations.en.scenario;
+      }
+      if (translations.fr) {
+        if (translations.fr.passage_text) return translations.fr.passage_text;
+        if (translations.fr.question_text) return translations.fr.question_text;
+        if (translations.fr.scenario) return translations.fr.scenario;
+      }
+      const first = Object.values(translations).find(t => t && (t.passage_text || t.question_text || t.scenario));
+      if (first) return first.passage_text || first.question_text || first.scenario || '';
+    }
+
+    // Last resort: try to stringify short fields without dumping whole objects
+    try {
+      if (parsed && typeof parsed === 'object') {
+        // Prefer short summary fields if present
+        if (parsed.title && typeof parsed.title === 'string') return parsed.title;
+        if (parsed.summary && typeof parsed.summary === 'string') return parsed.summary;
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    return '';
+  };
+
+  // More robust extractor: finds the most likely full scenario text inside nested context objects
+  const getFullScenarioText = (question) => {
+    if (!question) return '';
+
+    // Prefer explicit passage_text or long scenario/explanation strings
+    const prefer = (s) => (typeof s === 'string' && s.trim() ? s.trim() : null);
+    const candidates = [];
+    const p = prefer(question.passage_text) || prefer(question.explanation) || prefer(question.scenario) || prefer(question.context) || null;
+    if (p) candidates.push(p);
+
+    // If scenario/context is an object with translations, inspect them
+    const ctx = question.scenario || question.context || {};
+    const translations = ctx?.translations || ctx?.translation || null;
+    if (translations && typeof translations === 'object') {
+      // Collect likely text fields from each locale
+      Object.values(translations).forEach(t => {
+        if (!t || typeof t !== 'object') return;
+        ['passage_text', 'scenario', 'question_text', 'text', 'description', 'body'].forEach(k => {
+          const v = prefer(t[k]);
+          if (v) candidates.push(v);
+        });
+      });
+    }
+
+    // Recursively collect string values from the context object and pick the longest
+    const collectStrings = (obj, out = []) => {
+      if (!obj) return out;
+      if (typeof obj === 'string') {
+        if (obj.trim()) out.push(obj.trim());
+        return out;
+      }
+      if (Array.isArray(obj)) {
+        obj.forEach(i => collectStrings(i, out));
+        return out;
+      }
+      if (typeof obj === 'object') {
+        Object.values(obj).forEach(v => collectStrings(v, out));
+      }
+      return out;
+    };
+
+    const nestedStrings = collectStrings(ctx, []);
+    nestedStrings.forEach(s => {
+      // avoid very short strings (like single-word locale codes)
+      if (s && s.length > 20) candidates.push(s);
+    });
+
+    // Choose the best candidate: longest string (most likely full scenario)
+    if (candidates.length > 0) {
+      candidates.sort((a, b) => b.length - a.length);
+      return candidates[0];
+    }
+
+    return '';
+  };
+
+  const getQuestionText = (question) => {
+    if (!question) return '';
+    if (typeof question.question_text === 'string' && question.question_text.trim()) return question.question_text;
+    if (typeof question.question === 'string' && question.question.trim()) return question.question;
+    // Fallback to scenario-based text
+    const scenarioText = getScenarioText(question);
+    if (scenarioText) return scenarioText.split('\n')[0];
+    return 'What is the most appropriate response?';
   };
 
 
@@ -453,10 +612,10 @@ const SituationalJudgmentTest = ({ testId = 1, onComplete, onBackToDashboard }) 
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Scenario:</h2>
             <p className="text-gray-700 leading-relaxed text-base mb-6 bg-gray-50 p-4 rounded-lg">
-              {currentQ.scenario}
+              {getFullScenarioText(currentQ) || getScenarioText(currentQ)}
             </p>
             <h3 className="text-lg font-semibold text-gray-800">
-              {currentQ.question_text || currentQ.question || "What is the most appropriate response?"}
+              {getQuestionText(currentQ)}
           </h3>
           </div>
 

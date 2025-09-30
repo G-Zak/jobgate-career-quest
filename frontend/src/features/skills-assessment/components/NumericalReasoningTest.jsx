@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaChartLine, FaClock, FaStop, FaArrowRight, FaArrowLeft, FaFlag, FaCalculator, FaQuestionCircle, FaTable, FaChartBar, FaCheckCircle, FaBrain, FaTimesCircle, FaPause, FaPlay, FaTimes, FaCog, FaSearch, FaLightbulb, FaPuzzlePiece, FaCheck } from 'react-icons/fa';
 import TestDataService from '../services/testDataService';
 // Removed complex scroll utilities - using simple scrollToTop function instead
-import { submitTestAttempt } from '../lib/submitHelper';
+import backendSubmissionHelper from '../lib/backendSubmissionHelper';
 import TestResultsPage from './TestResultsPage';
 import { getRuleFor } from '../testRules';
 import { buildAttempt } from '../lib/scoreUtils';
@@ -35,6 +35,11 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
   const totalSections = testData?.sections?.length || 0;
   const totalQuestions = rule?.totalQuestions || 20;
 
+  // Memoize flattened question list so the scoring hook sees a stable array reference
+  const flattenedQuestions = useMemo(() => {
+    return testData?.sections?.flatMap(s => s.questions) || [];
+  }, [testData]);
+
   // Initialize universal scoring system
   const {
     scoringSystem,
@@ -43,7 +48,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
     recordAnswer,
     completeTest,
     getFormattedResults
-  } = useUniversalScoring('numerical-reasoning', testData?.sections?.flatMap(s => s.questions) || [], null, {
+  } = useUniversalScoring('numerical-reasoning', flattenedQuestions, null, {
     enableConsoleLogging: true,
     logPrefix: '🔢',
     autoStartTest: false
@@ -178,7 +183,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
 
       // Submit to backend for scoring
       try {
-        const submissionResult = await submitTestAttempt({
+        await backendSubmissionHelper.submitTestAttempt({
           testId: 21, // Backend test ID for Numerical Reasoning - Basic Arithmetic
           answers: answersForBackend,
           startedAt: startedAtRef.current,
@@ -187,49 +192,82 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
           metadata: {
             testType: 'numerical-reasoning',
             timeLimit: rule?.timeLimitMin * 60 || 20 * 60
+          },
+          onSuccess: (submissionResult) => {
+            console.log('Test submitted successfully (time up):', submissionResult);
+
+            // Use backend scoring results
+            const testResults = {
+              testId: testId,
+              testType: 'numerical-reasoning',
+              score: submissionResult.score?.percentage_score || 0,
+              totalQuestions: submissionResult.score?.total_questions || 0,
+              correctAnswers: submissionResult.score?.correct_answers || 0,
+              duration: duration,
+              answers: answers,
+              completedAt: endTime.toISOString(),
+              startedAt: startedAt?.toISOString(),
+              submissionId: submissionResult.submission_id,
+              grade: submissionResult.score?.grade_letter || 'F'
+            };
+
+            setResults(testResults);
+            setTestStep('results');
+          },
+          onError: (error) => {
+            console.error('Test submission failed (time up):', error);
+
+            // Handle duplicate submission specially
+            if (error.message === 'DUPLICATE_SUBMISSION' && error.existingSubmission) {
+              console.log('Handling duplicate submission (time up):', error.existingSubmission);
+
+              // Use existing submission data instead of fallback scoring
+              const existingScore = parseFloat(error.existingSubmission.score) || 0;
+              const testResults = {
+                testId: testId,
+                testType: 'numerical-reasoning',
+                score: existingScore,
+                totalQuestions: 20, // Default for NRT1
+                correctAnswers: Math.round((existingScore / 100) * 20), // Estimate from percentage
+                duration: duration,
+                answers: answers,
+                completedAt: endTime.toISOString(),
+                startedAt: startedAt?.toISOString(),
+                submissionId: error.existingSubmission.submissionId,
+                isDuplicateSubmission: true,
+                existingSubmissionMessage: error.existingSubmission.message
+              };
+
+              setResults(testResults);
+              setTestStep('results');
+              return;
+            }
+
+            // Fallback to frontend scoring for other errors
+            const totalQuestions = rule?.totalQuestions || 20;
+            const correctAnswers = Object.values(answers).filter(answer =>
+              typeof answer === 'object' ? answer.isCorrect : false
+            ).length;
+            const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+
+            const testResults = {
+              testId: testId,
+              testType: 'numerical-reasoning',
+              score: score,
+              totalQuestions: totalQuestions,
+              correctAnswers: correctAnswers,
+              duration: duration,
+              answers: answers,
+              completedAt: endTime.toISOString(),
+              startedAt: startedAt?.toISOString()
+            };
+
+            setResults(testResults);
+            setTestStep('results');
           }
         });
-
-        // Use backend scoring results
-        const testResults = {
-          testId: testId,
-          testType: 'numerical-reasoning',
-          score: submissionResult.score?.percentage_score || 0,
-          totalQuestions: submissionResult.score?.total_questions || 0,
-          correctAnswers: submissionResult.score?.correct_answers || 0,
-          duration: duration,
-          answers: answers,
-          completedAt: endTime.toISOString(),
-          startedAt: startedAt?.toISOString(),
-          submissionId: submissionResult.submission_id,
-          grade: submissionResult.score?.grade_letter || 'F'
-        };
-
-        setResults(testResults);
-        setTestStep('results');
       } catch (error) {
-        console.error('Error submitting test attempt:', error);
-        // Fallback to frontend scoring if backend fails
-        const totalQuestions = rule?.totalQuestions || 20;
-        const correctAnswers = Object.values(answers).filter(answer => 
-          typeof answer === 'object' ? answer.isCorrect : false
-        ).length;
-        const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
-        
-        const testResults = {
-          testId: testId,
-          testType: 'numerical-reasoning',
-          score: score,
-          totalQuestions: totalQuestions,
-          correctAnswers: correctAnswers,
-          duration: duration,
-          answers: answers,
-          completedAt: endTime.toISOString(),
-          startedAt: startedAt?.toISOString()
-        };
-
-        setResults(testResults);
-        setTestStep('results');
+        console.error('Error handling time up:', error);
       }
     } catch (error) {
       console.error('Error handling time up:', error);
@@ -254,7 +292,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
 
       // Submit to backend for scoring
       try {
-        const submissionResult = await submitTestAttempt({
+        await backendSubmissionHelper.submitTestAttempt({
           testId: 21, // Backend test ID for Numerical Reasoning - Basic Arithmetic
           answers: answersForBackend,
           startedAt: startedAtRef.current,
@@ -263,49 +301,82 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
           metadata: {
             testType: 'numerical-reasoning',
             timeLimit: rule?.timeLimitMin * 60 || 20 * 60
+          },
+          onSuccess: (submissionResult) => {
+            console.log('Test submitted successfully (manual complete):', submissionResult);
+
+            // Use backend scoring results
+            const testResults = {
+              testId: testId,
+              testType: 'numerical-reasoning',
+              score: submissionResult.score?.percentage_score || 0,
+              totalQuestions: submissionResult.score?.total_questions || 0,
+              correctAnswers: submissionResult.score?.correct_answers || 0,
+              duration: duration,
+              answers: answers,
+              completedAt: endTime.toISOString(),
+              startedAt: startedAt?.toISOString(),
+              submissionId: submissionResult.submission_id,
+              grade: submissionResult.score?.grade_letter || 'F'
+            };
+
+            setResults(testResults);
+            setTestStep('results');
+          },
+          onError: (error) => {
+            console.error('Test submission failed (manual complete):', error);
+
+            // Handle duplicate submission specially
+            if (error.message === 'DUPLICATE_SUBMISSION' && error.existingSubmission) {
+              console.log('Handling duplicate submission:', error.existingSubmission);
+
+              // Use existing submission data instead of fallback scoring
+              const existingScore = parseFloat(error.existingSubmission.score) || 0;
+              const testResults = {
+                testId: testId,
+                testType: 'numerical-reasoning',
+                score: existingScore,
+                totalQuestions: 20, // Default for NRT1
+                correctAnswers: Math.round((existingScore / 100) * 20), // Estimate from percentage
+                duration: duration,
+                answers: answers,
+                completedAt: endTime.toISOString(),
+                startedAt: startedAt?.toISOString(),
+                submissionId: error.existingSubmission.submissionId,
+                isDuplicateSubmission: true,
+                existingSubmissionMessage: error.existingSubmission.message
+              };
+
+              setResults(testResults);
+              setTestStep('results');
+              return;
+            }
+
+            // Fallback to frontend scoring for other errors
+            const totalQuestions = rule?.totalQuestions || 20;
+            const correctAnswers = Object.values(answers).filter(answer =>
+              typeof answer === 'object' ? answer.isCorrect : false
+            ).length;
+            const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+
+            const testResults = {
+              testId: testId,
+              testType: 'numerical-reasoning',
+              score: score,
+              totalQuestions: totalQuestions,
+              correctAnswers: correctAnswers,
+              duration: duration,
+              answers: answers,
+              completedAt: endTime.toISOString(),
+              startedAt: startedAt?.toISOString()
+            };
+
+            setResults(testResults);
+            setTestStep('results');
           }
         });
-
-        // Use backend scoring results
-        const testResults = {
-          testId: testId,
-          testType: 'numerical-reasoning',
-          score: submissionResult.score?.percentage_score || 0,
-          totalQuestions: submissionResult.score?.total_questions || 0,
-          correctAnswers: submissionResult.score?.correct_answers || 0,
-          duration: duration,
-          answers: answers,
-          completedAt: endTime.toISOString(),
-          startedAt: startedAt?.toISOString(),
-          submissionId: submissionResult.submission_id,
-          grade: submissionResult.score?.grade_letter || 'F'
-        };
-
-        setResults(testResults);
-        setTestStep('results');
       } catch (error) {
-        console.error('Error submitting test attempt:', error);
-        // Fallback to frontend scoring if backend fails
-        const totalQuestions = rule?.totalQuestions || 20;
-        const correctAnswers = Object.values(answers).filter(answer => 
-          typeof answer === 'object' ? answer.isCorrect : false
-        ).length;
-        const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
-        
-        const testResults = {
-          testId: testId,
-          testType: 'numerical-reasoning',
-          score: score,
-          totalQuestions: totalQuestions,
-          correctAnswers: correctAnswers,
-          duration: duration,
-          answers: answers,
-          completedAt: endTime.toISOString(),
-          startedAt: startedAt?.toISOString()
-        };
-
-        setResults(testResults);
-        setTestStep('results');
+        console.error('Error completing test:', error);
       }
     } catch (error) {
       console.error('Error completing test:', error);
@@ -341,10 +412,11 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
     // Record answer in universal scoring system
     recordAnswer(questionId, answer);
 
+    // Store with `selectedAnswer` to match submission builder expectations
     setAnswers(prev => ({
       ...prev,
       [questionId]: {
-        answer,
+        selectedAnswer: answer,
         isCorrect,
         timestamp: new Date().toISOString()
       }
@@ -428,7 +500,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
 
   // Check if current question is answered for gated navigation
   const currentQuestionAnswered = currentQuestionData ? 
-    answers[currentQuestionData.id]?.answer != null : false;
+    answers[currentQuestionData.id]?.selectedAnswer != null : false;
 
   if (!testData) {
     return (
@@ -969,7 +1041,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
       </div>
 
       {/* Test Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 bg-white">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentQuestion}
@@ -1002,7 +1074,7 @@ const NumericalReasoningTest = ({ onBackToDashboard, testId }) => {
                   // Handle both string and object options
                   const optionText = typeof option === 'string' ? option : option.text || option.value || option.option_id;
                   const optionValue = typeof option === 'string' ? option : option.value || option.option_id || option.text;
-                  const isSelected = answers[question?.id]?.answer === optionValue;
+                  const isSelected = answers[question?.id]?.selectedAnswer === optionValue;
                   const letters = ['A', 'B', 'C', 'D', 'E'];
                   
                   return (

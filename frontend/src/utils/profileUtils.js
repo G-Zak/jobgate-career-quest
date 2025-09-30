@@ -17,6 +17,7 @@ export const defaultUserProfile = {
   resume: null,
   education: [],
   experience: [],
+  projects: [],
   contact: {
     email: "user@example.com",
     phone: "",

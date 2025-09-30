@@ -67,7 +67,8 @@ const TestHistoryDashboard = () => {
 
       setTestSessions(sessionsData);
       setSummary(summaryData);
-      setCategoryStats(categoryData);
+  // API now returns an array of category stats
+  setCategoryStats(Array.isArray(categoryData) ? categoryData : []);
       setChartData(chartsData);
     } catch (err) {
       console.error('❌ Error loading test history data:', err);

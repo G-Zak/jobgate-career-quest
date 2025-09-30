@@ -51,26 +51,52 @@ class QuestionForTestSerializer(serializers.ModelSerializer):
         # Add coefficient for transparency (frontend can show difficulty weighting)
         data['scoring_coefficient'] = instance.scoring_coefficient
         
-        # For SJT tests, include QuestionOption data instead of JSON options
+        # For SJT tests, normalize options to remove scoring values and present clean labels
         if (getattr(instance, 'question_type', '') == 'situational_judgment') or (instance.test_id in (4, 30)):
+            normalized = []
             try:
                 from .question_option_model import QuestionOption
                 question_options = QuestionOption.objects.filter(question=instance).order_by('option_letter')
                 if question_options.exists():
-                    # Replace the JSON options with QuestionOption data
-                    data['options'] = [
+                    # Use DB-backed option text and letters; DO NOT expose score_value
+                    normalized = [
                         {
                             'option_id': opt.option_letter,
+                            'letter': opt.option_letter,
                             'text': opt.option_text,
-                            'value': opt.option_letter,
-                            'score_value': opt.score_value
+                            'value': opt.option_letter
                         }
                         for opt in question_options
                     ]
-            except ImportError:
-                # Fallback to JSON options if QuestionOption model not available
+            except Exception:
+                # If QuestionOption not available or any error, fall back to existing options
                 pass
-        
+
+            if not normalized:
+                # Fallback: derive lettered options from existing JSON options
+                raw = data.get('options') or []
+                letters = ['A', 'B', 'C', 'D', 'E', 'F']
+                def looks_numeric(s):
+                    try:
+                        float(str(s).strip())
+                        return True
+                    except Exception:
+                        return False
+                for idx, opt in enumerate(raw[:len(letters)]):
+                    letter = letters[idx]
+                    # Prefer textual content; if numeric, replace with generic label
+                    if isinstance(opt, dict):
+                        txt = opt.get('text') or opt.get('label') or opt.get('value') or ''
+                        if looks_numeric(txt):
+                            txt = f"Option {letter}"
+                    else:
+                        txt = str(opt)
+                        if looks_numeric(txt):
+                            txt = f"Option {letter}"
+                    normalized.append({'option_id': letter, 'letter': letter, 'text': txt, 'value': letter})
+
+            data['options'] = normalized
+
         return data
 
 
@@ -89,12 +115,13 @@ class TestDetailSerializer(serializers.ModelSerializer):
             'id',
             'title',
             'test_type',
-            'description', 
+            'description',
             'duration_minutes',
             'total_questions',
             'passing_score',
             'is_active',
             'created_at',
+            'updated_at',
             'version',
             'max_possible_score',
             'difficulty_distribution',
@@ -178,15 +205,42 @@ class SubmissionInputSerializer(serializers.Serializer):
         """Validate that answers are in correct format"""
         if not value:
             raise serializers.ValidationError("At least one answer must be provided")
-            
+
         # Validate answer format (should be A, B, C, D, etc.)
-        valid_answers = ['A', 'B', 'C', 'D', 'E', 'F']
+        # If a Test is provided in the serializer context and it's a numerical reasoning test,
+        # allow numeric answers (e.g., '42', '3.14'). Otherwise restrict to option letters.
+        import re
+        valid_letters = ['A', 'B', 'C', 'D', 'E', 'F']
+        test = self.context.get('test') if hasattr(self, 'context') else None
+
+        # If test is provided, validate question IDs exist
+        if test:
+            from .models import Question
+            valid_question_ids = set(str(q.id) for q in test.questions.all())
+            provided_ids = set(value.keys())
+            invalid_ids = provided_ids - valid_question_ids
+            if invalid_ids:
+                raise serializers.ValidationError(f"Invalid question IDs: {list(invalid_ids)}")
+
         for question_id, answer in value.items():
-            if not question_id.isdigit():
+            if not str(question_id).isdigit():
                 raise serializers.ValidationError(f"Question ID '{question_id}' must be a number")
-            if answer.upper() not in valid_answers:
-                raise serializers.ValidationError(f"Answer '{answer}' must be one of: {valid_answers}")
-                
+
+            # Normalize answer for checks
+            ans = str(answer).strip()
+
+            if test and getattr(test, 'test_type', '') == 'numerical_reasoning':
+                # Allow either letter choice or numeric value (int/float)
+                if ans.upper() in valid_letters:
+                    continue
+                # Allow numeric formats like '42', '3.14', '-5'
+                if re.match(r'^-?\d+(?:\.\d+)?$', ans):
+                    continue
+                raise serializers.ValidationError(f"Answer '{answer}' is not a valid numeric or option for numerical reasoning tests")
+            else:
+                if ans.upper() not in valid_letters:
+                    raise serializers.ValidationError(f"Answer '{answer}' must be one of: {valid_letters}")
+
         return value
         
     def validate_time_taken_seconds(self, value):
@@ -200,17 +254,25 @@ class SubmissionInputSerializer(serializers.Serializer):
     def validate_submission_metadata(self, value):
         """Validate submission metadata"""
         if value:
-            # Ensure metadata doesn't contain sensitive information
-            allowed_keys = ['browser', 'device', 'session_id', 'user_agent', 'screen_resolution', 'timezone']
+            # Allow common frontend metadata keys and a few migration/back-compat keys
+            allowed_keys = [
+                'browser', 'device', 'session_id', 'user_agent', 'screen_resolution', 'timezone',
+                'testType', 'test_type', 'language', 'migrationSource', 'sectionBreakdown', 'timeLimit'
+            ]
             for key in value.keys():
                 if key not in allowed_keys:
                     raise serializers.ValidationError(f"Metadata key '{key}' is not allowed")
-                    
-            # Validate values are strings and reasonable length
+
+            # Validate values: strings under 200 chars or simple numeric values for timeLimit
             for key, val in value.items():
+                if isinstance(val, (int, float)):
+                    if key == 'timeLimit' and (val < 0 or val > 86400):
+                        raise serializers.ValidationError(f"Numeric metadata value for '{key}' is out of range")
+                    continue
+
                 if not isinstance(val, str) or len(val) > 200:
                     raise serializers.ValidationError(f"Metadata value for '{key}' must be a string under 200 characters")
-        
+
         return value
 
 
@@ -411,11 +473,31 @@ class ScoringConfigSerializer(serializers.Serializer):
     """
     Serializer for scoring configuration display.
     """
-    difficulty_coefficients = serializers.DictField()
-    test_duration_minutes = serializers.IntegerField()
-    scoring_version = serializers.CharField()
-    grade_thresholds = serializers.DictField()
-    passing_score_default = serializers.IntegerField()
+    difficulty_coefficients = serializers.SerializerMethodField()
+    test_duration_minutes = serializers.SerializerMethodField()
+    scoring_version = serializers.SerializerMethodField()
+    grade_thresholds = serializers.SerializerMethodField()
+    passing_score_default = serializers.SerializerMethodField()
+
+    def get_difficulty_coefficients(self, obj):
+        """Get difficulty coefficients from ScoringConfig"""
+        return {k: float(v) for k, v in obj.DIFFICULTY_COEFFICIENTS.items()}
+
+    def get_test_duration_minutes(self, obj):
+        """Get test duration from ScoringConfig"""
+        return obj.TEST_DURATION_MINUTES
+
+    def get_scoring_version(self, obj):
+        """Get scoring version from ScoringConfig"""
+        return obj.SCORING_VERSION
+
+    def get_grade_thresholds(self, obj):
+        """Get grade thresholds from ScoringConfig"""
+        return obj.GRADE_THRESHOLDS
+
+    def get_passing_score_default(self, obj):
+        """Get default passing score (70%)"""
+        return 70
 
 
 # ===============================================================================

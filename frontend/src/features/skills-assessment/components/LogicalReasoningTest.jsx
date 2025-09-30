@@ -4,24 +4,34 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaClock, FaBrain, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, FaFlag, FaCog, FaSearch, FaLightbulb, FaPuzzlePiece, FaPause, FaPlay, FaTimes } from 'react-icons/fa';
 // Removed frontend data imports - using backend API instead
 import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
+import useUniversalScoring from '../hooks/useUniversalScoring';
 import TestResultsPage from './TestResultsPage';
 
 const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
   // Map frontend test ID to backend database ID
   const getBackendTestId = (frontendId) => {
+    // Normalize and support multiple key forms
+    const key = (frontendId || '').toString();
     const testIdMapping = {
-      'lrt1': '30', // Default to Deductive Logic
-      'logical': '30',
-      'logical_deductive': '30',
-      'logical_inductive': '31',
-      'logical_critical': '32',
-      'LRT1': '30',
-      'LRT2': '31',
-      'LRT3': '32'
+      // Logical Reasoning canonical mapping (frontend -> backend id)
+      'LRT1': 13, 'lrt1': 13,
+      'LRT2': 14, 'lrt2': 14,
+      'LRT3': 15, 'lrt3': 15,
+      // legacy/alias names mapped to LRT1 by default
+      'logical': 13,
+      'logical_deductive': 13,
+      'logical_inductive': 14,
+      'logical_critical': 15
     };
-    return testIdMapping[frontendId] || frontendId || '30'; // Default to Deductive Logic
+
+    // If mapping exists, return it; otherwise try to coerce numeric id
+    if (testIdMapping.hasOwnProperty(key)) return testIdMapping[key];
+    const asNumber = Number(key);
+    if (!Number.isNaN(asNumber) && asNumber > 0) return asNumber;
+    // fallback to LRT1
+    return 13;
   };
-  
+
   const backendTestId = getBackendTestId(testId);
   
   const [testStep, setTestStep] = useState('loading');
@@ -36,6 +46,8 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
   const [showExitModal, setShowExitModal] = useState(false);
   const [startedAt, setStartedAt] = useState(null);
   const [results, setResults] = useState(null);
+  // Universal scoring integration (records answers, timings)
+  const { recordAnswer, startQuestion } = useUniversalScoring('logical', questions, null, { autoStartTest: false });
 
   // Smooth scroll-to-top function - only called on navigation
   const scrollToTop = () => {
@@ -121,14 +133,46 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
   };
 
   const handleAnswerSelect = (questionId, answer) => {
-    // Record answer in universal scoring system
-    recordAnswer(questionId, answer);
+    // Record answer in universal scoring system (if available)
+    // Normalize answer values to prevent mismatches (trim strings)
+    const normalize = (v) => {
+      if (v === null || v === undefined) return '';
+      return (typeof v === 'string') ? v.trim() : String(v);
+    };
 
+    const normalizedAnswer = normalize(answer);
+
+    try {
+      if (typeof recordAnswer === 'function') recordAnswer(questionId, normalizedAnswer);
+    } catch (e) {
+      // swallow - scoring integration should not block UI
+      console.warn('recordAnswer failed', e);
+    }
+
+    // Update local selection state so the UI highlights the chosen option
     setAnswers(prev => ({
       ...prev,
-      [questionId]: answer
+      [questionId]: normalizedAnswer
     }));
+
+    // Debug logging to help trace selection issues
+    try {
+      // eslint-disable-next-line no-console
+      console.log('Answer selected', { questionId, normalizedAnswer, previousAnswers: answers });
+    } catch (e) {}
   };
+
+  // Start per-question timer when the current question changes
+  useEffect(() => {
+    const currentQuestion = getCurrentQuestion();
+    if (currentQuestion && typeof startQuestion === 'function') {
+      try {
+        startQuestion(currentQuestion.id);
+      } catch (e) {
+        console.warn('startQuestion failed', e);
+      }
+    }
+  }, [currentQuestionIndex, questions, startQuestion]);
 
   const handleNextQuestion = () => {
     if (currentQuestionIndex + 1 >= questions.length) {
@@ -172,12 +216,68 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
         },
         onError: (error) => {
           console.error('Test submission failed:', error);
+
+          // Handle duplicate submission specially
+          if (error.message === 'DUPLICATE_SUBMISSION' && error.existingSubmission) {
+            console.log('Handling duplicate submission:', error.existingSubmission);
+
+            // Use existing submission data instead of showing error
+            const existingScore = parseFloat(error.existingSubmission.score) || 0;
+            const existingResults = {
+              id: error.existingSubmission.submissionId,
+              raw_score: existingScore.toFixed(2),
+              max_possible_score: "100.00", // Assume max possible for percentage calculation
+              percentage_score: existingScore.toFixed(2),
+              correct_answers: Math.round((existingScore / 100) * questions.length), // Estimate from percentage
+              total_questions: questions.length,
+              grade_letter: existingScore >= 90 ? 'A' : existingScore >= 80 ? 'B' : existingScore >= 70 ? 'C' : existingScore >= 60 ? 'D' : 'F',
+              passed: existingScore >= 70,
+              test_title: "LRT1 - Logical Reasoning",
+              test_type: "logical_reasoning",
+              isDuplicateSubmission: true,
+              existingSubmissionMessage: error.existingSubmission.message
+            };
+
+            setResults(existingResults);
+            setTestStep('results');
+            scrollToTop();
+            return;
+          }
+
           setError(`Submission failed: ${error.message}`);
         }
       });
       
     } catch (error) {
       console.error('Error finishing test:', error);
+
+      // Handle duplicate submission at the catch level too
+      if (error.message === 'DUPLICATE_SUBMISSION' && error.existingSubmission) {
+        console.log('Handling duplicate submission in catch:', error.existingSubmission);
+
+        // Use existing submission data instead of showing error
+        const existingScore = parseFloat(error.existingSubmission.score) || 0;
+        const existingResults = {
+          id: error.existingSubmission.submissionId,
+          raw_score: existingScore.toFixed(2),
+          max_possible_score: "100.00",
+          percentage_score: existingScore.toFixed(2),
+          correct_answers: Math.round((existingScore / 100) * questions.length),
+          total_questions: questions.length,
+          grade_letter: existingScore >= 90 ? 'A' : existingScore >= 80 ? 'B' : existingScore >= 70 ? 'C' : existingScore >= 60 ? 'D' : 'F',
+          passed: existingScore >= 70,
+          test_title: "LRT1 - Logical Reasoning",
+          test_type: "logical_reasoning",
+          isDuplicateSubmission: true,
+          existingSubmissionMessage: error.existingSubmission.message
+        };
+
+        setResults(existingResults);
+        setTestStep('results');
+        scrollToTop();
+        return;
+      }
+
       setError('Failed to submit test. Please try again.');
     }
   };
@@ -304,7 +404,7 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
           setStartedAt(new Date());
         }}
         showUniversalResults={!!results?.universalResults}
-        scoringSystem={scoringSystem}
+        scoringSystem={null}
       />
     );
   }
@@ -367,8 +467,8 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
         </div>
       </div>
 
-      {/* Test Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+  {/* Test Content */}
+  <div className="max-w-7xl mx-auto px-6 py-8 bg-white/60">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentQuestionIndex}
@@ -398,7 +498,9 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
                     // Handle both string and object options
                     const optionText = typeof option === 'string' ? option : option.text || option.value || option.option_id;
                     const optionValue = typeof option === 'string' ? option : option.value || option.option_id || option.text;
-                    const isSelected = answers[currentQuestion?.id] === optionValue;
+                    // Normalize optionValue for comparison
+                    const normalize = (v) => (v === null || v === undefined) ? '' : (typeof v === 'string' ? v.trim() : String(v));
+                    const isSelected = normalize(answers[currentQuestion?.id]) === normalize(optionValue);
                     const letters = ['A', 'B', 'C', 'D', 'E'];
                     
                     return (
@@ -415,7 +517,7 @@ const LogicalReasoningTest = ({ onBackToDashboard, testId = 'lrt1' }) => {
                         <input
                           type="radio"
                           name={`q-${currentQuestion?.id}`}
-                          value={optionValue}
+                          value={typeof optionValue === 'string' ? optionValue.trim() : optionValue}
                           className="sr-only"
                           checked={isSelected}
                           onChange={() => handleAnswerSelect(currentQuestion?.id, optionValue)}

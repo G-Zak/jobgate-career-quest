@@ -13,8 +13,21 @@ class TestDataService {
       'SJT1': 30,  // Situational Judgment Test
       'NRT1': 21,  // Numerical Reasoning Test - Basic Arithmetic
       'ART1': 10,  // Abstract Reasoning Test
-      'SRT1': 11,  // Spatial Reasoning Test
-      'DRT1': 12,  // Diagrammatic Reasoning Test
+  // Spatial reasoning mappings - ensure these match the frontend SpatialReasoningTest mappings
+  // Spatial reasoning mappings - adjusted so frontend pools point to backend sets that contain images
+  'SRT1': 16,  // Spatial Reasoning Test - Shape Assembly (images present)
+  'SRT2': 17,
+  'SRT3': 18,
+  'SRT4': 19,
+  'SRT5': 20,
+  'SRT6': 21,
+  'SR1': 16,
+  'SR2': 17,
+  'SR3': 18,
+  'SR4': 19,
+  'SR5': 20,
+  'SR6': 21,
+  'DRT1': 12,  // Diagrammatic Reasoning Test
       'LRT1': 13,  // Logical Reasoning Test
       'LRT2': 14,  // Logical Reasoning Test 2
       'LRT3': 15,  // Logical Reasoning Test 3
@@ -44,30 +57,69 @@ class TestDataService {
     
     // Transform each question to frontend format
     const transformedQuestions = questions.map((question, index) => {
+      // Try to parse context if it's a JSON string (some backend entries embed translations)
+      let parsedContext = null;
+      try {
+        if (question.context && typeof question.context === 'string') {
+          parsedContext = JSON.parse(question.context);
+        } else {
+          parsedContext = question.context || null;
+        }
+      } catch (e) {
+        // Keep parsedContext null if JSON.parse fails
+        parsedContext = null;
+      }
+
+      // Prefer translations in order: en -> fr -> any other available translation
+      // parsedContext.translations is expected to be an object like { en: {...}, fr: {...} }
+      const translations = parsedContext?.translations || null;
+      let preferredTranslation = null;
+      if (translations && typeof translations === 'object') {
+        if (translations.en) {
+          preferredTranslation = translations.en;
+        } else if (translations.fr) {
+          preferredTranslation = translations.fr;
+        } else {
+          // pick the first available translation object (other locales)
+          const other = Object.values(translations).find(t => t && typeof t === 'object');
+          preferredTranslation = other || null;
+        }
+      }
+
+      // Build options from translation if provided
+      const rawOptions = preferredTranslation?.options || question.options || [];
+      const options = (rawOptions || []).map((option) => {
+        if (typeof option === 'string') {
+          return { option_id: option, text: option, value: option };
+        }
+        // If the translation option shape uses { option_id, text }
+        if (option.option_id || option.optionId) {
+          return {
+            option_id: option.option_id || option.optionId,
+            text: option.text || option.label || option.value,
+            value: option.option_id || option.optionId || option.value || option.text
+          };
+        }
+        // If option is already an object with value/text
+        return option;
+      });
+
+  // Determine question text: prefer translated question_text (en > fr > other), else top-level question_text
+  const questionText = preferredTranslation?.question_text || question.question_text || '';
+
       return {
         id: question.id,
         question_id: question.id, // Map id to question_id for frontend compatibility
-        question_text: question.question_text,
-        passage_text: question.passage || question.context || question.passage_text,
-        scenario: question.context || question.scenario,
-        options: (question.options || []).map((option, optionIndex) => {
-          // Transform string options to objects with option_id
-          if (typeof option === 'string') {
-            return {
-              option_id: option,
-              text: option,
-              value: option
-            };
-          }
-          // If already an object, return as-is
-          return option;
-        }),
+        question_text: questionText,
+        passage_text: question.passage || (preferredTranslation?.passage_text || parsedContext?.passage) || question.passage_text || '',
+        scenario: parsedContext || question.scenario,
+        options: options,
         correct_answer: question.correct_answer,
         answer: question.correct_answer, // For compatibility
         difficulty: question.difficulty_level || 'medium',
         order: question.order || index + 1,
         main_image: question.main_image,
-        explanation: question.explanation
+        explanation: preferredTranslation?.explanation || question.explanation
       };
     });
 

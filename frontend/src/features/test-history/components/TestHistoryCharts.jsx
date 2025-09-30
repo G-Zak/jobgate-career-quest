@@ -2,7 +2,19 @@ import React from 'react';
 import { FaChartLine, FaChartPie, FaClock, FaTrophy } from 'react-icons/fa';
 
 const TestHistoryCharts = ({ chartData, categoryStats }) => {
-  if (!chartData || !categoryStats) {
+  // Defensive normalization: ensure we have the arrays/components the UI expects
+  const safeCategoryStats = Array.isArray(categoryStats)
+    ? categoryStats
+    : (categoryStats && Array.isArray(categoryStats.category_stats))
+      ? categoryStats.category_stats
+      : [];
+
+  const safeChartData = chartData || {};
+  safeChartData.labels = Array.isArray(safeChartData.labels) ? safeChartData.labels : [];
+  safeChartData.scores = Array.isArray(safeChartData.scores) ? safeChartData.scores : [];
+  safeChartData.time_spent = Array.isArray(safeChartData.time_spent) ? safeChartData.time_spent : [];
+
+  if (!safeChartData || !safeCategoryStats) {
     return (
       <div className="text-center py-12 bg-gray-50 rounded-xl">
         <div className="text-gray-400 text-6xl mb-4">📊</div>
@@ -37,21 +49,21 @@ const TestHistoryCharts = ({ chartData, categoryStats }) => {
           <h3 className="text-lg font-semibold text-gray-900">Score Trend Over Time</h3>
         </div>
         
-        {chartData.labels && chartData.labels.length > 0 ? (
+  {safeChartData.labels && safeChartData.labels.length > 0 ? (
           <div className="space-y-4">
             {/* Simple Line Chart Representation */}
             <div className="h-64 flex items-end justify-between space-x-2">
-              {chartData.scores.map((score, index) => {
+              {safeChartData.scores.map((score, index) => {
                 const height = (score / 100) * 200; // Scale to 200px max height
                 return (
                   <div key={index} className="flex flex-col items-center flex-1">
                     <div
                       className="bg-blue-500 rounded-t w-full transition-all duration-300 hover:bg-blue-600"
                       style={{ height: `${height}px` }}
-                      title={`${chartData.labels[index]}: ${score}%`}
+                      title={`${safeChartData.labels[index]}: ${score}%`}
                     ></div>
                     <div className="text-xs text-gray-500 mt-2 transform -rotate-45 origin-left">
-                      {chartData.labels[index]}
+                      {safeChartData.labels[index]}
                     </div>
                   </div>
                 );
@@ -78,13 +90,13 @@ const TestHistoryCharts = ({ chartData, categoryStats }) => {
           <h3 className="text-lg font-semibold text-gray-900">Performance by Category</h3>
         </div>
         
-        {categoryStats.length > 0 ? (
+        {safeCategoryStats.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Bar Chart */}
             <div>
               <h4 className="text-md font-medium text-gray-700 mb-4">Average Scores</h4>
               <div className="space-y-3">
-                {categoryStats.map((stat, index) => (
+                {safeCategoryStats.map((stat, index) => (
                   <div key={stat.test_type} className="flex items-center space-x-3">
                     <div className="w-24 text-sm text-gray-600 truncate">
                       {stat.test_type.replace('_', ' ').toUpperCase()}
@@ -107,8 +119,9 @@ const TestHistoryCharts = ({ chartData, categoryStats }) => {
             <div>
               <h4 className="text-md font-medium text-gray-700 mb-4">Test Distribution</h4>
               <div className="space-y-2">
-                {categoryStats.map((stat, index) => {
-                  const percentage = (stat.count / categoryStats.reduce((sum, s) => sum + s.count, 0)) * 100;
+                {safeCategoryStats.map((stat, index) => {
+                  const total = safeCategoryStats.reduce((sum, s) => sum + (s.count || 0), 0) || 1;
+                  const percentage = (stat.count / total) * 100;
                   return (
                     <div key={stat.test_type} className="flex items-center space-x-3">
                       <div className={`w-4 h-4 rounded ${getCategoryColor(index)}`}></div>
@@ -132,7 +145,7 @@ const TestHistoryCharts = ({ chartData, categoryStats }) => {
       </div>
 
       {/* Time Spent Analysis */}
-      {chartData.time_spent && chartData.time_spent.length > 0 && (
+  {safeChartData.time_spent && safeChartData.time_spent.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center mb-6">
             <FaClock className="text-purple-600 text-xl mr-3" />
@@ -142,18 +155,18 @@ const TestHistoryCharts = ({ chartData, categoryStats }) => {
           <div className="space-y-4">
             {/* Time Spent Bar Chart */}
             <div className="h-48 flex items-end justify-between space-x-2">
-              {chartData.time_spent.map((time, index) => {
-                const maxTime = Math.max(...chartData.time_spent);
+              {safeChartData.time_spent.map((time, index) => {
+                const maxTime = Math.max(...safeChartData.time_spent);
                 const height = (time / maxTime) * 150; // Scale to 150px max height
                 return (
                   <div key={index} className="flex flex-col items-center flex-1">
                     <div
                       className="bg-purple-500 rounded-t w-full transition-all duration-300 hover:bg-purple-600"
                       style={{ height: `${height}px` }}
-                      title={`${chartData.labels[index]}: ${time} minutes`}
+                      title={`${safeChartData.labels[index]}: ${time} minutes`}
                     ></div>
                     <div className="text-xs text-gray-500 mt-2 transform -rotate-45 origin-left">
-                      {chartData.labels[index]}
+                      {safeChartData.labels[index]}
                     </div>
                   </div>
                 );
@@ -164,19 +177,19 @@ const TestHistoryCharts = ({ chartData, categoryStats }) => {
             <div className="grid grid-cols-3 gap-4 text-center">
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="text-2xl font-bold text-gray-900">
-                  {Math.round(chartData.time_spent.reduce((a, b) => a + b, 0) / chartData.time_spent.length)}m
+                  {Math.round(safeChartData.time_spent.reduce((a, b) => a + b, 0) / safeChartData.time_spent.length)}m
                 </div>
                 <div className="text-sm text-gray-600">Average Time</div>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="text-2xl font-bold text-gray-900">
-                  {Math.max(...chartData.time_spent)}m
+                  {Math.max(...safeChartData.time_spent)}m
                 </div>
                 <div className="text-sm text-gray-600">Longest Test</div>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="text-2xl font-bold text-gray-900">
-                  {Math.min(...chartData.time_spent)}m
+                  {Math.min(...safeChartData.time_spent)}m
                 </div>
                 <div className="text-sm text-gray-600">Shortest Test</div>
               </div>
@@ -196,7 +209,7 @@ const TestHistoryCharts = ({ chartData, categoryStats }) => {
           <div>
             <h4 className="font-medium text-gray-700 mb-2">Strengths</h4>
             <ul className="space-y-1 text-sm text-gray-600">
-              {categoryStats
+              {safeCategoryStats
                 .filter(stat => stat.average_score >= 80)
                 .map(stat => (
                   <li key={stat.test_type} className="flex items-center">
@@ -204,7 +217,7 @@ const TestHistoryCharts = ({ chartData, categoryStats }) => {
                     {stat.test_type.replace('_', ' ').toUpperCase()} ({stat.average_score}%)
                   </li>
                 ))}
-              {categoryStats.filter(stat => stat.average_score >= 80).length === 0 && (
+              {safeCategoryStats.filter(stat => stat.average_score >= 80).length === 0 && (
                 <li className="text-gray-500">Keep practicing to identify your strengths!</li>
               )}
             </ul>
@@ -213,7 +226,7 @@ const TestHistoryCharts = ({ chartData, categoryStats }) => {
           <div>
             <h4 className="font-medium text-gray-700 mb-2">Areas for Improvement</h4>
             <ul className="space-y-1 text-sm text-gray-600">
-              {categoryStats
+              {safeCategoryStats
                 .filter(stat => stat.average_score < 70)
                 .map(stat => (
                   <li key={stat.test_type} className="flex items-center">
@@ -221,7 +234,7 @@ const TestHistoryCharts = ({ chartData, categoryStats }) => {
                     {stat.test_type.replace('_', ' ').toUpperCase()} ({stat.average_score}%)
                   </li>
                 ))}
-              {categoryStats.filter(stat => stat.average_score < 70).length === 0 && (
+              {safeCategoryStats.filter(stat => stat.average_score < 70).length === 0 && (
                 <li className="text-gray-500">Great job! All categories are performing well.</li>
               )}
             </ul>

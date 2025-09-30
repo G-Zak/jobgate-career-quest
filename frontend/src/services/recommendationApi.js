@@ -1,11 +1,32 @@
 /**
  * API service for job recommendations
  */
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Default to localhost:8001 to match local recommendation service used in the project (can be overridden by VITE_API_URL)
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
 
 class RecommendationApiService {
   constructor() {
     this.baseURL = `${API_BASE_URL}/api/recommendations`;
+  }
+
+  /**
+   * Get all job offers with optional filters (wraps backend get_all_job_offers)
+   */
+  async getAllJobOffers(params = {}) {
+    const queryParams = new URLSearchParams();
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        if (Array.isArray(value)) {
+          value.forEach(v => queryParams.append(key, v));
+        } else {
+          queryParams.append(key, value);
+        }
+      }
+    });
+
+    const endpoint = queryParams.toString() ? `/api/job-offers/?${queryParams.toString()}` : '/api/job-offers/';
+    return this.makeRequest(endpoint);
   }
 
   /**

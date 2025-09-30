@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createTestScoringIntegration, formatUniversalResults } from '../lib/universalScoringIntegration';
 
 /**
@@ -63,8 +63,8 @@ export const useUniversalScoring = (testType, questions = [], customConfig = nul
         }
     }, [testType, questions, customConfig, autoStartTest]);
 
-    // Start question timer
-    const startQuestion = (questionId) => {
+    // Start question timer (memoized)
+    const startQuestion = useCallback((questionId) => {
         if (!scoringSystem || !questionId) return;
 
         try {
@@ -77,10 +77,10 @@ export const useUniversalScoring = (testType, questions = [], customConfig = nul
         } catch (error) {
             console.error('❌ Error starting question timer:', error);
         }
-    };
+    }, [scoringSystem, testType]);
 
-    // Record answer
-    const recordAnswer = (questionId, answer) => {
+    // Record answer (memoized)
+    const recordAnswer = useCallback((questionId, answer) => {
         if (!scoringSystem || !questionId) return;
 
         try {
@@ -97,10 +97,10 @@ export const useUniversalScoring = (testType, questions = [], customConfig = nul
         } catch (error) {
             console.error('❌ Error recording answer:', error);
         }
-    };
+    }, [scoringSystem, testType]);
 
-    // Get current results
-    const getResults = () => {
+    // Get current results (memoized)
+    const getResults = useCallback(() => {
         if (!scoringSystem) return null;
 
         try {
@@ -111,10 +111,10 @@ export const useUniversalScoring = (testType, questions = [], customConfig = nul
             console.error('❌ Error getting results:', error);
             return null;
         }
-    };
+    }, [scoringSystem]);
 
-    // Get formatted results
-    const getFormattedResults = () => {
+    // Get formatted results (memoized)
+    const getFormattedResults = useCallback(() => {
         if (!scoringSystem) return null;
 
         try {
@@ -127,10 +127,10 @@ export const useUniversalScoring = (testType, questions = [], customConfig = nul
             console.error('❌ Error getting formatted results:', error);
             return null;
         }
-    };
+    }, [scoringSystem, testType]);
 
-    // Get score breakdown
-    const getScoreBreakdown = () => {
+    // Get score breakdown (memoized)
+    const getScoreBreakdown = useCallback(() => {
         if (!scoringSystem) return null;
 
         try {
@@ -141,10 +141,10 @@ export const useUniversalScoring = (testType, questions = [], customConfig = nul
             console.error('❌ Error getting score breakdown:', error);
             return null;
         }
-    };
+    }, [scoringSystem]);
 
-    // Get question timings
-    const getQuestionTimings = () => {
+    // Get question timings (memoized)
+    const getQuestionTimings = useCallback(() => {
         if (!scoringSystem) return null;
 
         try {
@@ -155,10 +155,10 @@ export const useUniversalScoring = (testType, questions = [], customConfig = nul
             console.error('❌ Error getting question timings:', error);
             return null;
         }
-    };
+    }, [scoringSystem]);
 
-    // Complete test
-    const completeTest = () => {
+    // Complete test (memoized)
+    const completeTest = useCallback(() => {
         if (!scoringSystem) return null;
 
         try {
@@ -176,10 +176,10 @@ export const useUniversalScoring = (testType, questions = [], customConfig = nul
             console.error('❌ Error completing test:', error);
             return null;
         }
-    };
+    }, [scoringSystem, getFormattedResults]);
 
-    // Reset scoring system
-    const resetScoring = () => {
+    // Reset scoring system (memoized)
+    const resetScoring = useCallback(() => {
         if (!scoringSystem) return;
 
         try {
@@ -192,10 +192,10 @@ export const useUniversalScoring = (testType, questions = [], customConfig = nul
         } catch (error) {
             console.error('❌ Error resetting scoring system:', error);
         }
-    };
+    }, [scoringSystem]);
 
-    // Get comprehensive test results for backend submission
-    const getTestResultsForSubmission = (testId, answers, additionalData = {}) => {
+    // Get comprehensive test results for backend submission (memoized)
+    const getTestResultsForSubmission = useCallback((testId, answers, additionalData = {}) => {
         if (!scoringSystem) return null;
 
         try {
@@ -220,7 +220,7 @@ export const useUniversalScoring = (testType, questions = [], customConfig = nul
             console.error('❌ Error generating test results for submission:', error);
             return null;
         }
-    };
+    }, [scoringSystem, getFormattedResults, getScoreBreakdown, getQuestionTimings, testType]);
 
     return {
         // State

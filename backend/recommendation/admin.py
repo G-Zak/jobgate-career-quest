@@ -1,11 +1,11 @@
 """
-Admin configuration for recommendation models
+Admin configuration for enhanced cognitive recommendation models
 """
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import (
-    JobOffer, JobRecommendation, UserJobPreference, 
-    ScoringWeights, JobRecommendationDetail, RecommendationAnalytics
+    JobOffer, JobRecommendation, ScoringWeights,
+    SkillTechnicalTestMapping, ClusterCenters, RecommendationAudit
 )
 
 
@@ -16,8 +16,8 @@ class JobOfferAdmin(admin.ModelAdmin):
         'salary_range', 'status', 'posted_at'
     ]
     list_filter = [
-        'job_type', 'seniority', 'status', 'remote', 'city', 
-        'posted_at', 'updated_at'
+        'job_type', 'seniority', 'status', 'remote_flag', 'city',
+        'posted_at', 'updated_at', 'source_type'
     ]
     search_fields = ['title', 'company', 'description', 'location']
     readonly_fields = ['posted_at', 'updated_at']
@@ -27,10 +27,10 @@ class JobOfferAdmin(admin.ModelAdmin):
             'fields': ('title', 'company', 'description', 'requirements')
         }),
         ('Détails du poste', {
-            'fields': ('job_type', 'seniority', 'location', 'city', 'remote')
+            'fields': ('job_type', 'seniority', 'location', 'city', 'remote_flag')
         }),
         ('Salaire', {
-            'fields': ('salary_min', 'salary_max')
+            'fields': ('salary_min', 'salary_max', 'currency')
         }),
         ('Compétences', {
             'fields': ('required_skills', 'preferred_skills', 'tags')
@@ -39,7 +39,7 @@ class JobOfferAdmin(admin.ModelAdmin):
             'fields': ('status', 'posted_at', 'updated_at')
         }),
         ('Informations supplémentaires', {
-            'fields': ('benefits', 'company_size', 'industry'),
+            'fields': ('benefits', 'company_size', 'industry', 'source_type', 'source_id'),
             'classes': ('collapse',)
         }),
     )
@@ -60,114 +60,73 @@ class JobOfferAdmin(admin.ModelAdmin):
 @admin.register(JobRecommendation)
 class JobRecommendationAdmin(admin.ModelAdmin):
     list_display = [
-        'user', 'job_title', 'company', 'score', 
-        'algorithm_version', 'created_at'
+        'candidate_display', 'job_title', 'company', 'overall_score',
+        'technical_test_score', 'algorithm_version', 'computed_at'
     ]
-    list_filter = ['algorithm_version', 'created_at', 'job_offer__job_type', 'job_offer__seniority']
+    list_filter = ['algorithm_version', 'computed_at', 'job_offer__job_type', 'job_offer__seniority']
     search_fields = [
-        'user__username', 'user__email', 
-        'job_offer__title', 'job_offer__company'
+        'candidate_id', 'job_offer__title', 'job_offer__company'
     ]
-    readonly_fields = ['created_at', 'updated_at']
-    
+    readonly_fields = ['created_at', 'updated_at', 'computed_at']
+
     fieldsets = (
-        ('Utilisateur et emploi', {
-            'fields': ('user', 'job_offer')
+        ('Candidat et emploi', {
+            'fields': ('candidate_id', 'job_offer')
         }),
-        ('Scores', {
-            'fields': ('score', 'algorithm_version', 'cluster_id')
+        ('Scores principaux', {
+            'fields': ('overall_score', 'technical_test_score', 'skill_match_score')
+        }),
+        ('Scores détaillés', {
+            'fields': ('experience_score', 'salary_score', 'location_score', 'cluster_fit_score')
+        }),
+        ('Métadonnées', {
+            'fields': ('algorithm_version', 'weights_snapshot_id', 'source_snapshot_id')
         }),
         ('Dates', {
-            'fields': ('created_at', 'updated_at')
+            'fields': ('computed_at', 'created_at', 'updated_at')
         }),
     )
-    
+
+    def candidate_display(self, obj):
+        try:
+            user = obj.get_user()
+            return f"Candidate {obj.candidate_id}" + (f" ({user.username})" if user else "")
+        except:
+            return f"Candidate {obj.candidate_id}"
+    candidate_display.short_description = 'Candidat'
+
     def job_title(self, obj):
         return obj.job_offer.title
     job_title.short_description = 'Titre du poste'
-    
+
     def company(self, obj):
         return obj.job_offer.company
     company.short_description = 'Entreprise'
-
-
-@admin.register(UserJobPreference)
-class UserJobPreferenceAdmin(admin.ModelAdmin):
-    list_display = [
-        'user', 'preferred_locations_display', 'remote_preference', 
-        'preferred_seniority', 'target_salary_range'
-    ]
-    list_filter = ['remote_preference', 'preferred_seniority', 'willing_to_relocate']
-    search_fields = ['user__username', 'user__email']
-    readonly_fields = ['created_at', 'updated_at']
-    
-    fieldsets = (
-        ('Utilisateur', {
-            'fields': ('user',)
-        }),
-        ('Préférences de localisation', {
-            'fields': ('preferred_locations', 'willing_to_relocate', 'remote_preference')
-        }),
-        ('Préférences d\'emploi', {
-            'fields': ('preferred_job_types', 'preferred_seniority')
-        }),
-        ('Préférences salariales', {
-            'fields': ('target_salary_min', 'target_salary_max')
-        }),
-        ('Préférences d\'entreprise', {
-            'fields': ('preferred_industries', 'preferred_company_sizes')
-        }),
-        ('Compétences préférées', {
-            'fields': ('skill_priorities',)
-        }),
-        ('Dates', {
-            'fields': ('created_at', 'updated_at')
-        }),
-    )
-    
-    def preferred_locations_display(self, obj):
-        locations = obj.preferred_locations[:3]  # Show first 3 locations
-        if len(obj.preferred_locations) > 3:
-            locations.append('...')
-        return ', '.join(locations) if locations else 'Aucune'
-    preferred_locations_display.short_description = 'Lieux préférés'
-    
-    def target_salary_range(self, obj):
-        if obj.target_salary_min and obj.target_salary_max:
-            return f"{obj.target_salary_min:,} - {obj.target_salary_max:,}"
-        elif obj.target_salary_min:
-            return f"À partir de {obj.target_salary_min:,}"
-        elif obj.target_salary_max:
-            return f"Jusqu'à {obj.target_salary_max:,}"
-        return 'Non spécifié'
-    target_salary_range.short_description = 'Fourchette de salaire cible'
 
 
 @admin.register(ScoringWeights)
 class ScoringWeightsAdmin(admin.ModelAdmin):
     list_display = [
-        'name', 'is_active', 'skill_match_weight', 'content_similarity_weight',
+        'name', 'is_active', 'skill_match_weight', 'technical_test_weight',
         'cluster_fit_weight', 'created_at'
     ]
     list_filter = ['is_active', 'created_at']
     search_fields = ['name', 'created_by__username']
     readonly_fields = ['created_at', 'updated_at']
-    
+
     fieldsets = (
         ('Configuration', {
             'fields': ('name', 'is_active', 'created_by')
         }),
         ('Poids principaux', {
-            'fields': ('skill_match_weight', 'content_similarity_weight', 'cluster_fit_weight')
+            'fields': ('skill_match_weight', 'technical_test_weight', 'experience_weight',
+                      'salary_weight', 'location_weight', 'cluster_fit_weight', 'employability_weight')
         }),
         ('Poids des compétences', {
             'fields': ('required_skill_weight', 'preferred_skill_weight')
         }),
-        ('Bonus', {
-            'fields': ('location_bonus_weight', 'experience_bonus_weight', 'remote_bonus_weight', 'salary_fit_weight')
-        }),
-        ('Seuils', {
-            'fields': ('min_score_threshold', 'max_recommendations')
+        ('Configuration des tests techniques', {
+            'fields': ('test_pass_threshold', 'technical_test_default_weights')
         }),
         ('Dates', {
             'fields': ('created_at', 'updated_at')
@@ -175,79 +134,67 @@ class ScoringWeightsAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(JobRecommendationDetail)
-class JobRecommendationDetailAdmin(admin.ModelAdmin):
+@admin.register(SkillTechnicalTestMapping)
+class SkillTechnicalTestMappingAdmin(admin.ModelAdmin):
     list_display = [
-        'user', 'job_title', 'company', 'overall_score', 
-        'skill_score', 'content_score', 'created_at'
+        'skill', 'technical_test', 'default_weight', 'created_at'
     ]
-    list_filter = ['created_at', 'job_offer__job_type', 'job_offer__seniority']
-    search_fields = [
-        'user__username', 'user__email',
-        'job_offer__title', 'job_offer__company'
-    ]
+    list_filter = ['skill__category', 'default_weight', 'created_at']
+    search_fields = ['skill__name', 'technical_test__test_name']
     readonly_fields = ['created_at', 'updated_at']
-    
+
     fieldsets = (
-        ('Utilisateur et emploi', {
-            'fields': ('user', 'job_offer')
-        }),
-        ('Scores principaux', {
-            'fields': ('overall_score', 'content_score', 'skill_score', 'cluster_fit_score')
-        }),
-        ('Scores des compétences', {
-            'fields': ('required_skill_score', 'preferred_skill_score')
-        }),
-        ('Compteurs de compétences', {
-            'fields': ('required_skills_count', 'preferred_skills_count', 'required_matched_count', 'preferred_matched_count')
-        }),
-        ('Bonus', {
-            'fields': ('location_bonus', 'experience_bonus', 'remote_bonus', 'salary_fit')
-        }),
-        ('Compétences correspondantes', {
-            'fields': ('matched_skills', 'missing_skills', 'required_matched_skills', 'preferred_matched_skills')
-        }),
-        ('Compétences manquantes', {
-            'fields': ('required_missing_skills', 'preferred_missing_skills')
+        ('Mapping', {
+            'fields': ('skill', 'technical_test', 'default_weight')
         }),
         ('Dates', {
             'fields': ('created_at', 'updated_at')
         }),
     )
-    
-    def job_title(self, obj):
-        return obj.job_offer.title
-    job_title.short_description = 'Titre du poste'
-    
-    def company(self, obj):
-        return obj.job_offer.company
-    company.short_description = 'Entreprise'
 
 
-@admin.register(RecommendationAnalytics)
-class RecommendationAnalyticsAdmin(admin.ModelAdmin):
+@admin.register(ClusterCenters)
+class ClusterCentersAdmin(admin.ModelAdmin):
     list_display = [
-        'date', 'total_recommendations', 'avg_score', 
-        'avg_skill_match', 'recommendations_viewed'
+        'algorithm_version', 'n_clusters', 'trained_at', 'is_active',
+        'n_samples_trained', 'silhouette_score'
     ]
-    list_filter = ['date']
-    search_fields = ['date']
-    readonly_fields = ['created_at']
-    
+    list_filter = ['is_active', 'algorithm_version', 'trained_at']
+    search_fields = ['algorithm_version']
+    readonly_fields = ['trained_at', 'inertia', 'silhouette_score', 'n_samples_trained']
+
     fieldsets = (
-        ('Métriques de recommandation', {
-            'fields': ('date', 'total_recommendations', 'avg_score', 'min_score', 'max_score')
+        ('Modèle', {
+            'fields': ('algorithm_version', 'n_clusters', 'is_active')
         }),
-        ('Métriques de compétences', {
-            'fields': ('avg_skill_match', 'avg_required_skill_match', 'avg_preferred_skill_match')
+        ('Métriques d\'entraînement', {
+            'fields': ('inertia', 'silhouette_score', 'n_samples_trained', 'trained_at')
         }),
-        ('Métriques de cluster', {
-            'fields': ('avg_cluster_fit', 'cluster_distribution')
+        ('Données', {
+            'fields': ('centers', 'training_metadata'),
+            'classes': ('collapse',)
         }),
-        ('Engagement utilisateur', {
-            'fields': ('recommendations_viewed', 'applications_from_recommendations', 'jobs_saved_from_recommendations')
+    )
+
+
+@admin.register(RecommendationAudit)
+class RecommendationAuditAdmin(admin.ModelAdmin):
+    list_display = [
+        'candidate_id', 'job_offer', 'old_overall_score', 'new_overall_score',
+        'reason', 'changed_at'
+    ]
+    list_filter = ['reason', 'changed_at', 'algorithm_version']
+    search_fields = ['candidate_id', 'job_offer__title', 'reason']
+    readonly_fields = ['changed_at']
+
+    fieldsets = (
+        ('Recommandation', {
+            'fields': ('recommendation', 'candidate_id', 'job_offer')
         }),
-        ('Dates', {
-            'fields': ('created_at',)
+        ('Changement de score', {
+            'fields': ('old_overall_score', 'new_overall_score', 'reason')
+        }),
+        ('Métadonnées', {
+            'fields': ('algorithm_version', 'weights_snapshot_id', 'changed_at')
         }),
     )

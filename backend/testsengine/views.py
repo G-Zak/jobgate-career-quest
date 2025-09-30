@@ -198,6 +198,8 @@ class TestQuestionsView(APIView):
         """Get 21 random reading comprehension questions (7 passages × 3 questions)"""
         import random
 
+        target_count = 21
+
         # Group questions by passage
         passages = {}
         for question in all_questions:
@@ -381,26 +383,22 @@ class SubmitTestView(APIView):
         # Handle anonymous users for testing
         user = request.user if request.user.is_authenticated else None
 
-        # Check if user already has a submission for this test (only for authenticated users)
-        existing_submission = None
+        # Check if user already has submissions for this test (only for authenticated users)
+        # Allow multiple attempts - just log for tracking
         if user:
-            existing_submission = TestSubmission.objects.filter(
+            existing_count = TestSubmission.objects.filter(
                 user=user,
                 test=test
-            ).first()
+            ).count()
 
-            if existing_submission:
-                logger.warning(f"User {user.username} already has submission for test {test.title}")
-                return Response({
-                    'error': 'Submission already exists for this test',
-                    'existing_submission_id': existing_submission.id,
-                    'existing_score': existing_submission.score.percentage_score if hasattr(existing_submission, 'score') else None,
-                    'submitted_at': existing_submission.submitted_at.isoformat(),
-                    'message': 'Use recalculate endpoint to update score if needed'
-                }, status=status.HTTP_409_CONFLICT)
+            if existing_count > 0:
+                logger.info(f"User {user.username} has {existing_count} previous submission(s) for test {test.title}. Creating new attempt.")
+
+        # Continue with creating new submission (multiple attempts allowed)
 
         # Validate input data
-        serializer = SubmissionInputSerializer(data=request.data)
+        # Pass the test into serializer context to allow type-specific validation (e.g., numeric answers)
+        serializer = SubmissionInputSerializer(data=request.data, context={'test': test})
         if not serializer.is_valid():
             return Response(
                 {'error': 'Invalid submission data', 'details': serializer.errors},
@@ -497,40 +495,40 @@ class SubmitTestView(APIView):
             logger.info(f"TestSession creation: user={user}, session_user={session_user}")
 
             # Create test session for authenticated user
-            # Use get_or_create to handle unique constraint, then update
-            test_session, created = TestSession.objects.get_or_create(
+            # Calculate next attempt number
+            last_attempt = TestSession.objects.filter(
+                user=session_user,
+                test=test
+            ).aggregate(max_attempt=models.Max('attempt_number'))['max_attempt']
+
+            next_attempt = (last_attempt or 0) + 1
+
+            # Always create a new TestSession for each attempt
+            test_session = TestSession.objects.create(
                 user=session_user,
                 test=test,
-                defaults={
-                    'status': 'completed',
-                    'start_time': submission.submitted_at,
-                    'end_time': timezone.now(),
-                    'score': float(score.percentage_score),
-                    'answers': answers_data,
-                    'time_spent': time_taken_seconds
-                }
+                attempt_number=next_attempt,
+                status='completed',
+                start_time=submission.submitted_at,
+                end_time=timezone.now(),
+                score=float(score.percentage_score),
+                answers=answers_data,
+                time_spent=time_taken_seconds
             )
-
-            # Update existing session if it wasn't created
-            if not created:
-                test_session.status = 'completed'
-                test_session.start_time = submission.submitted_at
-                test_session.end_time = timezone.now()
-                test_session.score = float(score.percentage_score)
-                test_session.answers = answers_data
-                test_session.time_spent = time_taken_seconds
-                test_session.save()
-                logger.info(f"Updated existing TestSession: {test_session.id}")
-            else:
-                logger.info(f"Created new TestSession: {test_session.id}")
+            logger.info(f"Created new TestSession: {test_session.id} (Attempt {next_attempt})")
 
             # Create detailed TestAnswer records
             TestAnswer.objects.filter(session=test_session).delete()  # Clear old answers
             for question_id, selected_answer in answers_data.items():
+                # Skip non-question keys (e.g., 'metadata')
+                if not str(question_id).isdigit():
+                    continue
                 try:
                     from .models import Question
                     question = Question.objects.get(id=question_id)
-                    is_correct = (question.correct_answer == selected_answer)
+                    # Normalize selected answer to string upper-case
+                    sel = str(selected_answer).strip().upper()
+                    is_correct = (str(question.correct_answer).strip().upper() == sel)
 
                     TestAnswer.objects.create(
                         session=test_session,
@@ -580,11 +578,26 @@ class SubmitTestView(APIView):
         if time_taken_seconds < 60:  # Less than 1 minute
             warnings.append(f"Very fast submission ({time_taken_seconds}s) - please verify answers")
 
-        # Check answer format
-        valid_answers = ['A', 'B', 'C', 'D', 'E', 'F']
+        # Check answer format (allow numeric answers for numerical reasoning tests)
+        valid_letters = ['A', 'B', 'C', 'D', 'E', 'F']
+        import re
+
         for question_id, answer in answers_data.items():
-            if answer.upper() not in valid_answers:
-                errors.append(f"Invalid answer format '{answer}' for question {question_id}")
+            ans = str(answer).strip()
+
+            # For numerical reasoning tests, allow both letter choices and numeric values
+            if test.test_type == 'numerical_reasoning':
+                # Allow letter choices (A, B, C, D, etc.)
+                if ans.upper() in valid_letters:
+                    continue
+                # Allow numeric formats like '42', '3.14', '-5'
+                if re.match(r'^-?\d+(?:\.\d+)?$', ans):
+                    continue
+                errors.append(f"Invalid answer format '{answer}' for numerical reasoning question {question_id}")
+            else:
+                # Standard validation for other test types
+                if ans.upper() not in valid_letters:
+                    errors.append(f"Invalid answer format '{answer}' for question {question_id}")
 
         return {
             'valid': len(errors) == 0,
@@ -768,7 +781,8 @@ class CalculateScoreView(APIView):
         test = get_object_or_404(Test, id=test_id, is_active=True)
 
         # Validate input data
-        serializer = SubmissionInputSerializer(data=request.data)
+        # Pass the test into serializer context to allow type-specific validation (e.g., numeric answers)
+        serializer = SubmissionInputSerializer(data=request.data, context={'test': test})
         if not serializer.is_valid():
             return Response(
                 {'error': 'Invalid submission data', 'details': serializer.errors},
@@ -815,22 +829,28 @@ class CalculateScoreView(APIView):
         difficulty_correct = {'easy': 0, 'medium': 0, 'hard': 0}
         answer_details = []
 
-        is_sjt = (test.test_type == 'situational_judgment')
-
+        # Preview scoring with robust SJT handling (uses highest-score option as correct when available)
         for question in questions:
             question_id_str = str(question.id)
-            selected_answer = answers_data.get(question_id_str, '').upper()
+            selected_answer = str(answers_data.get(question_id_str, '')).strip().upper()
 
-            if is_sjt:
-                # SJT preview scoring: use QuestionOption score_value (+2/+1/0/-1)
-                from .question_option_model import QuestionOption as _QO
-                opt = _QO.objects.filter(question=question, option_letter=selected_answer).first()
-                score_value = int(opt.score_value) if opt else 0
-                is_correct = (score_value == 2)
-                points = float(score_value)
+            is_correct = False
+            if test.test_type == 'situational_judgment':
+                try:
+                    from .question_option_model import QuestionOption as _QO
+                    opts = list(_QO.objects.filter(question=question))
+                    if opts:
+                        max_score = max(int(getattr(o, 'score_value', 0) or 0) for o in opts)
+                        sel_opt = next((o for o in opts if str(o.option_letter).strip().upper() == selected_answer), None)
+                        is_correct = bool(sel_opt and int(getattr(sel_opt, 'score_value', 0) or 0) == max_score)
+                    else:
+                        is_correct = question.check_answer(selected_answer)
+                except Exception:
+                    is_correct = question.check_answer(selected_answer)
             else:
                 is_correct = question.check_answer(selected_answer)
-                points = float(scoring_service.config.DIFFICULTY_COEFFICIENTS[question.difficulty_level]) if is_correct else 0.0
+
+            points = float(scoring_service.config.DIFFICULTY_COEFFICIENTS[question.difficulty_level]) if is_correct else 0.0
 
             raw_score += points
             if is_correct:
@@ -847,13 +867,14 @@ class CalculateScoreView(APIView):
                 'is_correct': is_correct,
                 'difficulty_level': question.difficulty_level,
                 'points_awarded': points,
-                'scoring_coefficient': float(scoring_service.config.DIFFICULTY_COEFFICIENTS[question.difficulty_level]) if not is_sjt else None
+                'scoring_coefficient': float(scoring_service.config.DIFFICULTY_COEFFICIENTS[question.difficulty_level])
             })
 
-        if is_sjt:
-            max_possible_score = float(questions.count() * 2)
-        else:
-            max_possible_score = float(test.calculate_max_score())
+        # Max score based only on questions actually answered (preview consistency)
+        max_possible_score = 0.0
+        for question in questions:
+            if str(question.id) in answers_data:
+                max_possible_score += float(scoring_service.config.DIFFICULTY_COEFFICIENTS[question.difficulty_level])
         percentage_score = (raw_score / max_possible_score * 100) if max_possible_score > 0 else 0
 
         # Calculate grade

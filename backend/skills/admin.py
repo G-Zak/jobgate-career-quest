@@ -3,7 +3,7 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 import json
-from .models import CandidateProfile, Skill, TechnicalTest, TestQuestion, TestResult
+from .models import CandidateProfile, Skill, TechnicalTest, TestQuestion, TestResult, Education, WorkExperience, Project
 
 @admin.register(CandidateProfile)
 class CandidateProfileAdmin(admin.ModelAdmin):
@@ -14,10 +14,10 @@ class CandidateProfileAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('👤 Informations personnelles', {
-            'fields': ('user', 'first_name', 'last_name', 'email', 'phone')
+            'fields': ('user', 'first_name', 'last_name', 'email', 'phone', 'photo', 'bio', 'location', 'linkedin')
         }),
         ('💼 Compétences et CV', {
-            'fields': ('skills', 'cv_file')
+            'fields': ('skills', 'skills_with_proficiency', 'cv_file')
         }),
         ('📊 Métadonnées', {
             'fields': ('created_at', 'updated_at'),
@@ -220,6 +220,61 @@ class TestResultAdmin(admin.ModelAdmin):
         except:
             return "Erreur dans les données"
     answers_summary.short_description = 'Résumé des réponses'
+
+
+class EducationInline(admin.TabularInline):
+    model = Education
+    extra = 1
+    fields = ['institution', 'degree', 'field_of_study', 'degree_level', 'start_date', 'end_date', 'is_current']
+
+
+class WorkExperienceInline(admin.TabularInline):
+    model = WorkExperience
+    extra = 1
+    fields = ['company', 'position', 'start_date', 'end_date', 'is_current']
+
+
+class ProjectInline(admin.TabularInline):
+    model = Project
+    extra = 1
+    fields = ['title', 'project_type', 'start_date', 'end_date', 'is_featured']
+
+
+@admin.register(Education)
+class EducationAdmin(admin.ModelAdmin):
+    list_display = ['candidate', 'degree', 'institution', 'degree_level', 'start_date', 'end_date', 'is_current']
+    list_filter = ['degree_level', 'is_current', 'start_date']
+    search_fields = ['candidate__first_name', 'candidate__last_name', 'institution', 'degree', 'field_of_study']
+    date_hierarchy = 'start_date'
+
+
+@admin.register(WorkExperience)
+class WorkExperienceAdmin(admin.ModelAdmin):
+    list_display = ['candidate', 'position', 'company', 'start_date', 'end_date', 'is_current', 'duration_display']
+    list_filter = ['is_current', 'start_date']
+    search_fields = ['candidate__first_name', 'candidate__last_name', 'company', 'position']
+    date_hierarchy = 'start_date'
+
+    def duration_display(self, obj):
+        months = obj.duration_months
+        years = months // 12
+        remaining_months = months % 12
+        if years > 0:
+            return f"{years}a {remaining_months}m"
+        return f"{months}m"
+    duration_display.short_description = 'Durée'
+
+
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
+    list_display = ['candidate', 'title', 'project_type', 'start_date', 'end_date', 'is_featured']
+    list_filter = ['project_type', 'is_featured', 'start_date']
+    search_fields = ['candidate__first_name', 'candidate__last_name', 'title', 'description']
+    date_hierarchy = 'start_date'
+
+
+# Add inlines to CandidateProfileAdmin
+CandidateProfileAdmin.inlines = [EducationInline, WorkExperienceInline, ProjectInline]
 
 # Personnalisation de l'interface d'administration
 admin.site.site_header = "🎯 Administration - Tests Techniques"

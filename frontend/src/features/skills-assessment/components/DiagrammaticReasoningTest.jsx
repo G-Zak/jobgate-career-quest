@@ -4,7 +4,7 @@ import { FaClock, FaFlag, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, Fa
 // Removed frontend data imports - using backend API instead
 import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
 import TestResultsPage from './TestResultsPage';
-import DuplicateSubmissionModal from './DuplicateSubmissionModal';
+
 
 const DiagrammaticReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory, testId = null }) => {
   // Map frontend test ID to backend database ID
@@ -32,8 +32,7 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory,
   const [error, setError] = useState(null);
   const [startedAt, setStartedAt] = useState(null);
   const [results, setResults] = useState(null);
-  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
-  const [duplicateSubmissionData, setDuplicateSubmissionData] = useState(null);
+
 
   // Smooth scroll-to-top function - only called on navigation
   const scrollToTop = () => {
@@ -160,13 +159,32 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory,
           console.error('Test submission failed:', error);
 
           // Handle duplicate submission specially
-          if (error.isDuplicateSubmission && error.existingSubmission) {
+          if (error.message === 'DUPLICATE_SUBMISSION' && error.existingSubmission) {
             console.log('Handling duplicate submission:', error.existingSubmission);
-            setDuplicateSubmissionData(error.existingSubmission);
-            setShowDuplicateModal(true);
-          } else {
-            setError('Failed to submit test. Please try again.');
+
+            // Use existing submission data instead of showing modal
+            const existingScore = parseFloat(error.existingSubmission.score) || 0;
+            const existingResults = {
+              id: error.existingSubmission.submissionId,
+              raw_score: existingScore.toFixed(2),
+              max_possible_score: "100.00",
+              percentage_score: existingScore.toFixed(2),
+              correct_answers: Math.round((existingScore / 100) * questions.length),
+              total_questions: questions.length,
+              grade_letter: existingScore >= 90 ? 'A' : existingScore >= 80 ? 'B' : existingScore >= 70 ? 'C' : existingScore >= 60 ? 'D' : 'F',
+              passed: existingScore >= 70,
+              test_title: "Diagrammatic Reasoning Test",
+              test_type: "diagrammatic_reasoning",
+              isDuplicateSubmission: true,
+              existingSubmissionMessage: error.existingSubmission.message
+            };
+
+            setResults(existingResults);
+            setTestStep('results');
+            return;
           }
+
+          setError('Failed to submit test. Please try again.');
         }
       });
 
@@ -174,13 +192,32 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory,
       console.error('Error finishing test:', error);
 
       // Handle duplicate submission at the catch level too
-      if (error.isDuplicateSubmission && error.existingSubmission) {
+      if (error.message === 'DUPLICATE_SUBMISSION' && error.existingSubmission) {
         console.log('Handling duplicate submission in catch:', error.existingSubmission);
-        setDuplicateSubmissionData(error.existingSubmission);
-        setShowDuplicateModal(true);
-      } else {
-        setError('Failed to submit test. Please try again.');
+
+        // Use existing submission data instead of showing modal
+        const existingScore = parseFloat(error.existingSubmission.score) || 0;
+        const existingResults = {
+          id: error.existingSubmission.submissionId,
+          raw_score: existingScore.toFixed(2),
+          max_possible_score: "100.00",
+          percentage_score: existingScore.toFixed(2),
+          correct_answers: Math.round((existingScore / 100) * questions.length),
+          total_questions: questions.length,
+          grade_letter: existingScore >= 90 ? 'A' : existingScore >= 80 ? 'B' : existingScore >= 70 ? 'C' : existingScore >= 60 ? 'D' : 'F',
+          passed: existingScore >= 70,
+          test_title: "Diagrammatic Reasoning Test",
+          test_type: "diagrammatic_reasoning",
+          isDuplicateSubmission: true,
+          existingSubmissionMessage: error.existingSubmission.message
+        };
+
+        setResults(existingResults);
+        setTestStep('results');
+        return;
       }
+
+      setError('Failed to submit test. Please try again.');
     }
   };
 
@@ -188,30 +225,7 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory,
     onBackToDashboard();
   };
 
-  // Duplicate submission modal handlers
-  const handleViewExistingResults = (submissionId) => {
-    console.log('Viewing existing results for submission:', submissionId);
-    // TODO: Navigate to results page with existing submission data
-    setShowDuplicateModal(false);
-    onBackToDashboard(); // For now, go back to dashboard
-  };
 
-  const handleRetakeTest = () => {
-    console.log('Retaking test - resetting state');
-    setShowDuplicateModal(false);
-    setDuplicateSubmissionData(null);
-    setAnswers({});
-    setCurrentQuestionIndex(0);
-    setTimeRemaining(25 * 60);
-    setStartedAt(Date.now());
-    setTestStep('test');
-    setError(null);
-  };
-
-  const handleCloseDuplicateModal = () => {
-    setShowDuplicateModal(false);
-    setDuplicateSubmissionData(null);
-  };
 
   const getCurrentQuestion = () => {
     if (!questions || !Array.isArray(questions) || questions.length === 0) return null;
@@ -242,7 +256,7 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory,
   // Error state
   if (testStep === 'error') {
     return (
-      <div className="bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center min-h-screen">
+      <div className="bg-gradient-to-br bg-white/60 items-center justify-center min-h-screen">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -270,7 +284,7 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory,
 
   if (!questions.length) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white/60 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -311,7 +325,7 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory,
   const isAnswered = answers[currentQuestion?.id] != null;
 
   return (
-    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="bg-white/60">
       {/* Modern Test Header - Matching Verbal Test Design */}
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -416,14 +430,15 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory,
                     const optionValue = typeof option === 'string' ? option : option.value || option.option_id || option.text;
                     const isSelected = answers[currentQuestion?.id] === optionValue;
                     const letters = ['A', 'B', 'C', 'D', 'E'];
-                    
+                    const optionLetter = letters[index] || String.fromCharCode(65 + index);
+
                     return (
                       <motion.label
                         key={`option-${index}-${optionValue}`}
-                        className={`flex items-center justify-center w-16 h-16 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                        className={`flex items-center justify-center w-20 h-16 rounded-xl border-2 cursor-pointer transition-all duration-200 text-2xl font-bold ${
                           isSelected 
                             ? "border-blue-500 bg-blue-50 text-blue-700 shadow-lg" 
-                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md"
+                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md text-gray-700"
                         }`}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -436,15 +451,7 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory,
                           checked={isSelected}
                           onChange={() => handleAnswerSelect(currentQuestion?.id, optionValue)}
                         />
-                        <div className="flex items-center justify-center">
-                          <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                            isSelected 
-                              ? 'bg-blue-500 text-white' 
-                              : 'bg-gray-200 text-gray-600'
-                          }`}>
-                            {letters[index]}
-                          </span>
-                        </div>
+                        <span>{optionLetter}</span>
                       </motion.label>
                     );
                   })}
@@ -493,17 +500,7 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory,
         </AnimatePresence>
       </div>
 
-      {/* Duplicate Submission Modal */}
-      <DuplicateSubmissionModal
-        isOpen={showDuplicateModal}
-        onClose={handleCloseDuplicateModal}
-        existingSubmission={duplicateSubmissionData}
-        testTitle="Diagrammatic Reasoning Test"
-        onViewResults={handleViewExistingResults}
-        onRetakeTest={handleRetakeTest}
-        onBackToDashboard={onBackToDashboard}
-        onNavigateToTestHistory={onNavigateToTestHistory}
-      />
+
     </div>
   );
 };

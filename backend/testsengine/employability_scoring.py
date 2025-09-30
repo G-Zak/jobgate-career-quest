@@ -337,15 +337,59 @@ class EmployabilityScorer:
         category_scores = self.calculate_category_scores()
         individual_test_scores = self.calculate_individual_test_scores()
 
-        # Calculate simple average of all completed individual test scores
-        # This is more straightforward and reflects actual test performance
-        completed_scores = []
-        for test_type, data in individual_test_scores.items():
-            if data['count'] > 0:
-                completed_scores.append(data['score'])
+        # Calculate overall score using profile-specific weights if profile is provided
+        if profile and category_scores:
+            # Get profile weights
+            profile_weights = self.profile_weights.get_weights_for_profile(profile)
 
-        # Calculate overall score as simple average of all test scores
-        overall_score = statistics.mean(completed_scores) if completed_scores else 0
+            # Aggregate individual test scores into high-level categories
+            aggregated_categories = {}
+
+            # Cognitive category: average of all cognitive test types
+            cognitive_tests = ['verbal_reasoning', 'numerical_reasoning', 'logical_reasoning',
+                             'abstract_reasoning', 'spatial_reasoning', 'diagrammatic_reasoning', 'analytical_reasoning']
+            cognitive_scores = [category_scores[test]['score'] for test in cognitive_tests
+                              if test in category_scores and category_scores[test]['count'] > 0]
+            if cognitive_scores:
+                aggregated_categories['cognitive'] = statistics.mean(cognitive_scores)
+
+            # Situational category
+            if 'situational' in category_scores and category_scores['situational']['count'] > 0:
+                aggregated_categories['situational'] = category_scores['situational']['score']
+
+            # Technical category
+            if 'technical' in category_scores and category_scores['technical']['count'] > 0:
+                aggregated_categories['technical'] = category_scores['technical']['score']
+
+            # Analytical category (could be separate or part of cognitive)
+            if 'analytical_reasoning' in category_scores and category_scores['analytical_reasoning']['count'] > 0:
+                aggregated_categories['analytical'] = category_scores['analytical_reasoning']['score']
+            elif cognitive_scores:  # Fallback to cognitive average
+                aggregated_categories['analytical'] = statistics.mean(cognitive_scores)
+
+            # Communication category (not implemented yet, use cognitive as fallback)
+            if cognitive_scores:
+                aggregated_categories['communication'] = statistics.mean(cognitive_scores)
+
+            # Calculate weighted score based on aggregated categories
+            weighted_score = 0.0
+            total_weight = 0.0
+
+            for category, weight in profile_weights.items():
+                if category in aggregated_categories:
+                    weighted_score += aggregated_categories[category] * weight
+                    total_weight += weight
+
+            # Normalize by actual weights used (in case some categories have no data)
+            overall_score = weighted_score / total_weight if total_weight > 0 else 0
+        else:
+            # Fallback: Calculate simple average of all completed individual test scores
+            completed_scores = []
+            for test_type, data in individual_test_scores.items():
+                if data['count'] > 0:
+                    completed_scores.append(data['score'])
+
+            overall_score = statistics.mean(completed_scores) if completed_scores else 0
 
         # Calculate additional metrics
         total_tests = sum(data['count'] for data in individual_test_scores.values())
@@ -362,6 +406,7 @@ class EmployabilityScorer:
         return {
             'overall_score': round(overall_score, 2),
             'profile': profile,
+            'profile_weights': self.profile_weights.get_weights_for_profile(profile) if profile else None,
             'categories': category_scores,
             'individual_test_scores': individual_test_scores,  # Add individual test scores
             'total_tests_completed': total_tests,

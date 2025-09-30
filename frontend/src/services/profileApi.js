@@ -1,7 +1,12 @@
 // Profile API Service for database operations
 class ProfileApiService {
   constructor() {
-    this.baseURL = 'http://localhost:8000';
+    this.baseURL = 'http://localhost:8001';
+  }
+
+  getAuthHeaders() {
+    const token = localStorage.getItem('access_token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
   }
 
   // Update user skills in database
@@ -13,6 +18,7 @@ class ProfileApiService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...this.getAuthHeaders(),
         },
         body: JSON.stringify({
           candidate_id: candidateId,
@@ -40,7 +46,12 @@ class ProfileApiService {
       const skillIds = [];
 
       // Get all existing skills first
-      const skillsResponse = await fetch(`${this.baseURL}/api/skills/`);
+      const skillsResponse = await fetch(`${this.baseURL}/api/skills/`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...this.getAuthHeaders()
+        }
+      });
       const existingSkills = await skillsResponse.json();
 
       for (const skillName of skillNames) {
@@ -55,6 +66,7 @@ class ProfileApiService {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              ...this.getAuthHeaders()
             },
             body: JSON.stringify({
               name: skillName,
@@ -87,6 +99,7 @@ class ProfileApiService {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          ...this.getAuthHeaders(),
         },
         body: JSON.stringify(profileData)
       });
@@ -112,6 +125,9 @@ class ProfileApiService {
 
       const response = await fetch(`${this.baseURL}/api/skills/candidates/${candidateId}/upload_photo/`, {
         method: 'POST',
+        headers: {
+          ...this.getAuthHeaders()
+        },
         body: formData
       });
 
@@ -135,6 +151,7 @@ class ProfileApiService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...this.getAuthHeaders(),
         }
       });
 

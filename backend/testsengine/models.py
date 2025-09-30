@@ -211,8 +211,46 @@ class Question(models.Model):
         return coefficients.get(self.difficulty_level, 1.0)
     
     def check_answer(self, user_answer):
-        """Check if the provided answer is correct"""
-        return str(user_answer).upper() == str(self.correct_answer).upper()
+        """Check if the provided answer is correct.
+
+        This method supports:
+        - Case-insensitive letter comparison for MCQs
+        - Numeric tolerant comparison for numerical reasoning questions
+          (e.g., '42', '42.0', ' 42 ', '-3.14')
+        Falls back to case-insensitive string compare when numeric parsing fails.
+        """
+        try:
+            # Normalize inputs
+            ua = str(user_answer).strip()
+            ca = str(self.correct_answer).strip()
+
+            # Try numeric comparison using Decimal for robustness
+            from decimal import Decimal, InvalidOperation
+
+            # Normalize decimal separators: allow commas as decimal separator if present
+            # Only replace comma with dot if there is no dot present to avoid thousands separators mishap
+            def _normalize_num(s: str) -> str:
+                s = s.replace(' ', '')
+                if ',' in s and '.' not in s:
+                    s = s.replace(',', '.')
+                return s
+
+            nua = _normalize_num(ua)
+            nca = _normalize_num(ca)
+
+            try:
+                da = Decimal(nua)
+                dc = Decimal(nca)
+                # Consider equal if difference within a small tolerance
+                tol = Decimal('0.0001')
+                return abs(da - dc) <= tol
+            except InvalidOperation:
+                # Not numeric — fall back to string compare
+                return ua.upper() == ca.upper()
+
+        except Exception:
+            # In case of unexpected errors, fall back to simple comparison
+            return str(user_answer).upper() == str(self.correct_answer).upper()
 
 
 class TestSession(models.Model):
@@ -222,7 +260,7 @@ class TestSession(models.Model):
         ('completed', 'Completed'),
         ('abandoned', 'Abandoned'),
     ]
-    
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     test = models.ForeignKey(Test, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_started')
@@ -232,13 +270,19 @@ class TestSession(models.Model):
     score = models.IntegerField(null=True, blank=True)  # Percentage score
     answers = models.JSONField(default=dict)  # Store user answers
     time_spent = models.IntegerField(default=0)  # Time spent in seconds
-    
+    attempt_number = models.PositiveIntegerField(default=1, help_text="Attempt number for this test")
+
     def __str__(self):
-        return f"{self.user.username} - {self.test.title} ({self.status})"
-    
+        return f"{self.user.username} - {self.test.title} (Attempt {self.attempt_number}) ({self.status})"
+
     class Meta:
-        unique_together = ['user', 'test']
+        # Allow multiple attempts of the same test
+        unique_together = ['user', 'test', 'attempt_number']
         ordering = ['-start_time']
+        indexes = [
+            models.Index(fields=['user', 'test', '-start_time']),
+            models.Index(fields=['user', '-start_time']),
+        ]
 
 
 class TestAnswer(models.Model):
@@ -475,13 +519,10 @@ class TestSubmission(models.Model):
             models.Index(fields=['user', 'test']),
             models.Index(fields=['submitted_at']),
             models.Index(fields=['test', 'submitted_at']),
+            models.Index(fields=['user', 'test', '-submitted_at']),
         ]
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'test'], 
-                name='unique_user_test_submission'
-            )
-        ]
+        # Remove unique constraint to allow multiple attempts
+        # Each submission is now unique by its primary key and timestamp
     
     def __str__(self):
         return f"{self.user.username} - {self.test.title} ({self.submitted_at.strftime('%Y-%m-%d %H:%M')})"

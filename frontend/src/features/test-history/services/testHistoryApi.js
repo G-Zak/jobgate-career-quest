@@ -160,7 +160,8 @@ class TestHistoryApi {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      return await response.json();
+  // API now returns the category stats array directly
+  return await response.json();
     } catch (error) {
       console.error('Error fetching test category stats:', error);
       throw error;

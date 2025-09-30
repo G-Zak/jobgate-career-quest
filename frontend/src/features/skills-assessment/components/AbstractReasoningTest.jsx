@@ -5,7 +5,7 @@ import { FaClock, FaBrain, FaStop, FaArrowRight, FaFlag, FaSync, FaSearchPlus, F
 // Removed frontend data imports - using backend API instead
 import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
 import TestResultsPage from './TestResultsPage';
-import DuplicateSubmissionModal from './DuplicateSubmissionModal';
+
 
 const AbstractReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory, testId = 'abstract' }) => {
   // Map frontend test ID to backend database ID
@@ -29,12 +29,13 @@ const AbstractReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory, tes
   const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes default
   const [answers, setAnswers] = useState({});
   const [questions, setQuestions] = useState([]);
+  const [testMeta, setTestMeta] = useState({ title: '', description: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showExitModal, setShowExitModal] = useState(false);
   const [startedAt, setStartedAt] = useState(null);
   const [results, setResults] = useState(null);
-  const [duplicateSubmission, setDuplicateSubmission] = useState(null);
+
 
   const testContainerRef = useRef(null);
 
@@ -78,9 +79,15 @@ const AbstractReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory, tes
         setLoading(true);
         setError(null);
 
-        // Fetch test questions from backend (secure - no correct answers)
-        const fetchedQuestions = await fetchTestQuestions(backendTestId);
+        // Fetch test questions and metadata from backend (secure - no correct answers)
+        // use backendApi directly so we can capture top-level test metadata (title/description)
+        const response = await backendApi.getTestQuestions(backendTestId);
+        const fetchedQuestions = response?.questions || [];
         setQuestions(fetchedQuestions);
+        setTestMeta({
+          title: response?.test_title || response?.title || '',
+          description: response?.test_description || response?.description || ''
+        });
         
         setTimeRemaining(20 * 60); // 20 minutes default
         setStartedAt(new Date());
@@ -123,18 +130,7 @@ const AbstractReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory, tes
     }));
   };
 
-  const handleDuplicateSubmissionViewResults = () => {
-    if (duplicateSubmission) {
-      setResults(duplicateSubmission);
-      setTestStep('results');
-      setDuplicateSubmission(null);
-    }
-  };
 
-  const handleDuplicateSubmissionRetakeLater = () => {
-    setDuplicateSubmission(null);
-    onBackToDashboard();
-  };
 
   const handleNextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
@@ -172,21 +168,67 @@ const AbstractReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory, tes
         },
         onError: (error) => {
           console.error('Test submission failed:', error);
+
+          // Handle duplicate submission specially
           if (error.message === 'DUPLICATE_SUBMISSION' && error.existingSubmission) {
-            setDuplicateSubmission(error.existingSubmission);
-          } else {
-            setError('Failed to submit test. Please try again.');
+            console.log('Handling duplicate submission:', error.existingSubmission);
+
+            // Use existing submission data instead of showing modal
+            const existingScore = parseFloat(error.existingSubmission.score) || 0;
+            const existingResults = {
+              id: error.existingSubmission.submissionId,
+              raw_score: existingScore.toFixed(2),
+              max_possible_score: "100.00",
+              percentage_score: existingScore.toFixed(2),
+              correct_answers: Math.round((existingScore / 100) * questions.length),
+              total_questions: questions.length,
+              grade_letter: existingScore >= 90 ? 'A' : existingScore >= 80 ? 'B' : existingScore >= 70 ? 'C' : existingScore >= 60 ? 'D' : 'F',
+              passed: existingScore >= 70,
+              test_title: "ART1 - Abstract Reasoning",
+              test_type: "abstract_reasoning",
+              isDuplicateSubmission: true,
+              existingSubmissionMessage: error.existingSubmission.message
+            };
+
+            setResults(existingResults);
+            setTestStep('results');
+            return;
           }
+
+          setError('Failed to submit test. Please try again.');
         }
       });
 
     } catch (error) {
       console.error('Error finishing test:', error);
+
+      // Handle duplicate submission at the catch level too
       if (error.message === 'DUPLICATE_SUBMISSION' && error.existingSubmission) {
-        setDuplicateSubmission(error.existingSubmission);
-      } else {
-        setError('Failed to submit test. Please try again.');
+        console.log('Handling duplicate submission in catch:', error.existingSubmission);
+
+        // Use existing submission data instead of showing modal
+        const existingScore = parseFloat(error.existingSubmission.score) || 0;
+        const existingResults = {
+          id: error.existingSubmission.submissionId,
+          raw_score: existingScore.toFixed(2),
+          max_possible_score: "100.00",
+          percentage_score: existingScore.toFixed(2),
+          correct_answers: Math.round((existingScore / 100) * questions.length),
+          total_questions: questions.length,
+          grade_letter: existingScore >= 90 ? 'A' : existingScore >= 80 ? 'B' : existingScore >= 70 ? 'C' : existingScore >= 60 ? 'D' : 'F',
+          passed: existingScore >= 70,
+          test_title: "ART1 - Abstract Reasoning",
+          test_type: "abstract_reasoning",
+          isDuplicateSubmission: true,
+          existingSubmissionMessage: error.existingSubmission.message
+        };
+
+        setResults(existingResults);
+        setTestStep('results');
+        return;
       }
+
+      setError('Failed to submit test. Please try again.');
     }
   };
 
@@ -251,15 +293,16 @@ const AbstractReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory, tes
         results={results}
         testType="abstract"
         testId={testId}
-        answers={answers}
-        testData={{ questions }}
+          answers={answers}
+          testData={{ questions }}
+          testMeta={testMeta}
         onBackToDashboard={onBackToDashboard}
       />
     );
   }
 
   return (
-    <div className="bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-100 min-h-screen">
+    <div className="bg-gradient-to-br from-slate-50 bg-white/60 min-h-screen">
       {/* Modern Test Header - Matching Spatial Test Design */}
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -313,7 +356,7 @@ const AbstractReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory, tes
       </div>
 
       {/* Test Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 bg-white/60">
         <AnimatePresence mode="wait">
         <motion.div
             key={currentQuestionIndex}
@@ -362,38 +405,28 @@ const AbstractReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory, tes
                   {currentQuestion?.options?.map((option, index) => {
                     // Handle both string and object options
                     const optionValue = typeof option === 'string' ? option : option.value || option.option_id || option.text;
-                    const isSelected = answers[currentQuestion?.id] === optionValue;
                     const letters = ['A', 'B', 'C', 'D', 'E'];
-                    
+                    const optionLetter = letters[index] || String.fromCharCode(65 + index);
+                    const optionsCount = currentQuestion?.options?.length || 0;
+                    const buttonWidth = optionsCount <= 3 ? 'w-20' : optionsCount === 4 ? 'w-16' : optionsCount === 5 ? 'w-14' : 'w-12';
+                    const isSelected = answers[currentQuestion?.id] === optionLetter;
+
                     return (
-                      <motion.label
+                      <motion.button
                         key={`option-${index}-${optionValue}`}
-                        className={`flex items-center justify-center w-16 h-16 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-                          isSelected 
-                            ? "border-purple-500 bg-purple-50 text-purple-700 shadow-lg" 
-                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md"
-                        }`}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        onClick={() => handleAnswerSelect(currentQuestion?.id, optionLetter)}
+                        className={`${buttonWidth} h-16 rounded-lg border-2 transition-all duration-200 flex items-center justify-center ${
+                          isSelected
+                            ? 'border-purple-500 bg-purple-500 text-white shadow-lg'
+                            : 'border-gray-300 hover:border-purple-400 hover:bg-purple-50 hover:shadow-md'
+                        }`}
                       >
-                        <input
-                          type="radio"
-                          name={`q-${currentQuestion?.id}`}
-                          value={optionValue}
-                          className="sr-only"
-                          checked={isSelected}
-                          onChange={() => handleAnswerSelect(currentQuestion?.id, optionValue)}
-                        />
-                        <div className="flex items-center justify-center">
-                          <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                            isSelected 
-                              ? 'bg-purple-500 text-white' 
-                              : 'bg-gray-200 text-gray-600'
-                          }`}>
-                            {letters[index]}
-                          </span>
-                        </div>
-                      </motion.label>
+                        <span className="text-2xl font-bold">
+                          {optionLetter}
+                        </span>
+                      </motion.button>
                     );
                   })}
                 </div>
@@ -482,17 +515,7 @@ const AbstractReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory, tes
         )}
       </AnimatePresence>
 
-      {/* Duplicate Submission Modal */}
-      <DuplicateSubmissionModal
-        isOpen={duplicateSubmission !== null}
-        onClose={() => setDuplicateSubmission(null)}
-        existingSubmission={duplicateSubmission}
-        testTitle="Abstract Reasoning Test"
-        onViewResults={handleDuplicateSubmissionViewResults}
-        onRetakeTest={handleDuplicateSubmissionRetakeLater}
-        onBackToDashboard={handleDuplicateSubmissionRetakeLater}
-        onNavigateToTestHistory={onNavigateToTestHistory}
-      />
+
     </div>
   );
 };

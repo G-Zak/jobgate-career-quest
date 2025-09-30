@@ -38,6 +38,14 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      // Explicitly specify application entry points so Vite can determine
+      // the correct inputs for Rollup and dependency pre-bundling.
+      input: {
+        // Primary HTML entry
+        index: resolve(__dirname, 'index.html'),
+        // App entry (also helpful for some tooling to find the JSX entry)
+        main: resolve(__dirname, 'src/app/main.jsx')
+      },
       output: {
         // Only create a separate chunk for Phaser if it actually exists in the graph
         manualChunks(id) {
@@ -47,6 +55,38 @@ export default defineConfig({
         }
       }
     }
+  },
+  // Help Vite pre-bundle core deps to avoid auto-detection warnings
+  optimizeDeps: {
+    include: [
+      // Core React deps
+      'react',
+      'react-dom',
+      'react-router-dom',
+
+      // State + utilities
+      'zustand',
+      'prop-types',
+
+      // UI libraries
+      '@emotion/react',
+      '@emotion/styled',
+      '@heroicons/react',
+      '@mui/material',
+      '@mui/icons-material',
+      'react-icons',
+
+      // Editors / charts / animations
+      'monaco-editor',
+      '@monaco-editor/react',
+      'chart.js',
+      'react-chartjs-2',
+      'framer-motion',
+
+      // HTTP client and misc
+      'axios',
+      'lucide-react'
+    ]
   },
   assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg', '**/*.webp', '**/*.mp3', '**/*.wav', '**/*.ogg', '**/*.jsonl']
 })

@@ -3,11 +3,48 @@
  * Replaces all frontend scoring logic with backend-only architecture
  */
 
+import authService from '../../../services/authService';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 class BackendApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
+  }
+
+  async fetchWithAuth(url, options = {}, retry = true) {
+    // Ensure headers object exists
+    options.headers = options.headers || {};
+
+    // Merge our auth headers (authService holds latest tokens)
+    const authHeaders = {
+      'Content-Type': 'application/json',
+      ...(localStorage.getItem('access_token') && { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` })
+    };
+
+    options.headers = { ...authHeaders, ...options.headers };
+
+    const response = await fetch(url, options);
+
+    // If unauthorized and we haven't retried yet, try refreshing the token
+    if (response.status === 401 && retry) {
+      console.debug('[backendApi] Received 401, attempting token refresh...');
+      try {
+        const refreshed = await authService.refreshAccessToken();
+        if (refreshed) {
+          console.debug('[backendApi] Token refresh successful, retrying request');
+          // Retry the original request with new token
+          options.headers.Authorization = `Bearer ${localStorage.getItem('access_token')}`;
+          return await this.fetchWithAuth(url, options, false);
+        }
+        console.debug('[backendApi] Token refresh failed or no refresh token available');
+      } catch (e) {
+        console.debug('[backendApi] Token refresh threw an error', e);
+        // fall through and return original response
+      }
+    }
+
+    return response;
   }
 
   /**
@@ -26,9 +63,8 @@ class BackendApiService {
    */
   async getTests() {
     try {
-      const response = await fetch(`${this.baseURL}/api/tests/`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
+      const response = await this.fetchWithAuth(`${this.baseURL}/api/tests/`, {
+        method: 'GET'
       });
 
       if (!response.ok) {
@@ -47,9 +83,8 @@ class BackendApiService {
    */
   async getTestDetails(testId) {
     try {
-      const response = await fetch(`${this.baseURL}/api/tests/${testId}/`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
+      const response = await this.fetchWithAuth(`${this.baseURL}/api/tests/${testId}/`, {
+        method: 'GET'
       });
 
       if (!response.ok) {
@@ -68,9 +103,8 @@ class BackendApiService {
    */
   async getTestQuestions(testId) {
     try {
-      const response = await fetch(`${this.baseURL}/api/tests/${testId}/questions/`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
+      const response = await this.fetchWithAuth(`${this.baseURL}/api/tests/${testId}/questions/`, {
+        method: 'GET'
       });
 
       if (!response.ok) {
@@ -89,8 +123,21 @@ class BackendApiService {
    */
   async submitTestAnswers(testId, answers, timeTakenSeconds, metadata = {}) {
     try {
+      // Preserve numeric answers for numerical reasoning tests.
+      // Accept several possible metadata.testType values for robustness.
+      const isNumericalType = metadata && (
+        metadata.testType === 'numerical-reasoning' ||
+        metadata.testType === 'numerical_reasoning' ||
+        metadata.testType === 'numerical' ||
+        metadata.test_type === 'numerical_reasoning'
+      );
+
+      const answersPayload = isNumericalType
+        ? Object.fromEntries(Object.entries(answers).map(([k, v]) => [String(k), String(v)]))
+        : this.formatAnswersForBackend(answers);
+
       const payload = {
-        answers: this.formatAnswersForBackend(answers),
+        answers: answersPayload,
         time_taken_seconds: timeTakenSeconds,
         submission_metadata: {
           browser: navigator.userAgent,
@@ -106,9 +153,8 @@ class BackendApiService {
         }
       };
 
-      const response = await fetch(`${this.baseURL}/api/tests/${testId}/submit/`, {
+      const response = await this.fetchWithAuth(`${this.baseURL}/api/tests/${testId}/submit/`, {
         method: 'POST',
-        headers: this.getAuthHeaders(),
         body: JSON.stringify(payload)
       });
 
@@ -143,9 +189,8 @@ class BackendApiService {
    */
   async getTestResults(submissionId) {
     try {
-      const response = await fetch(`${this.baseURL}/api/submissions/${submissionId}/results/`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
+      const response = await this.fetchWithAuth(`${this.baseURL}/api/submissions/${submissionId}/results/`, {
+        method: 'GET'
       });
 
       if (!response.ok) {
@@ -164,9 +209,8 @@ class BackendApiService {
    */
   async getUserSubmissions() {
     try {
-      const response = await fetch(`${this.baseURL}/api/my-submissions/`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
+      const response = await this.fetchWithAuth(`${this.baseURL}/api/my-submissions/`, {
+        method: 'GET'
       });
 
       if (!response.ok) {
@@ -190,9 +234,8 @@ class BackendApiService {
         time_taken_seconds: timeTakenSeconds
       };
 
-      const response = await fetch(`${this.baseURL}/api/tests/${testId}/calculate-score/`, {
+      const response = await this.fetchWithAuth(`${this.baseURL}/api/tests/${testId}/calculate-score/`, {
         method: 'POST',
-        headers: this.getAuthHeaders(),
         body: JSON.stringify(payload)
       });
 
@@ -212,9 +255,8 @@ class BackendApiService {
    */
   async getScoringConfig() {
     try {
-      const response = await fetch(`${this.baseURL}/api/scoring-config/`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
+      const response = await this.fetchWithAuth(`${this.baseURL}/api/scoring-config/`, {
+        method: 'GET'
       });
 
       if (!response.ok) {
@@ -237,9 +279,8 @@ class BackendApiService {
         answers: this.formatAnswersForBackend(answers)
       };
 
-      const response = await fetch(`${this.baseURL}/api/validate-answers/`, {
+      const response = await this.fetchWithAuth(`${this.baseURL}/api/validate-answers/`, {
         method: 'POST',
-        headers: this.getAuthHeaders(),
         body: JSON.stringify(payload)
       });
 
@@ -260,7 +301,7 @@ class BackendApiService {
    */
   async getHealthStatus() {
     try {
-      const response = await fetch(`${this.baseURL}/api/health/`, {
+      const response = await this.fetchWithAuth(`${this.baseURL}/api/health/`, {
         method: 'GET'
       });
 
@@ -283,18 +324,39 @@ class BackendApiService {
     const formattedAnswers = {};
     
     Object.entries(answers).forEach(([questionId, answer]) => {
-      // Convert question ID to string if it's a number
       const key = String(questionId);
-      
-      // Ensure answer is a single letter (A, B, C, D, etc.)
-      if (typeof answer === 'string' && answer.length === 1) {
-        formattedAnswers[key] = answer.toUpperCase();
-      } else if (typeof answer === 'number') {
-        // Convert number to letter (1 -> A, 2 -> B, etc.)
-        formattedAnswers[key] = String.fromCharCode(64 + answer);
-      } else {
-        // Default to A if answer is invalid
-        formattedAnswers[key] = 'A';
+
+      // Normalize simple string answers
+      if (typeof answer === 'string') {
+        const trimmed = answer.trim();
+        // If it's a numeric string (e.g. '42', '3.14'), preserve it as-is
+        if (/^-?\d+(?:\.\d+)?$/.test(trimmed)) {
+          formattedAnswers[key] = trimmed;
+          return;
+        }
+
+        // If single-char string, treat as choice letter
+        if (trimmed.length === 1) {
+          formattedAnswers[key] = trimmed.toUpperCase();
+          return;
+        }
+
+        // Otherwise preserve the string (may be a free-text numeric or other answer)
+        formattedAnswers[key] = trimmed;
+        return;
+      }
+
+      // Normalize numeric answers (preserve number as string)
+      if (typeof answer === 'number') {
+        formattedAnswers[key] = String(answer);
+        return;
+      }
+
+      // Fallback: convert to string if possible, otherwise skip
+      try {
+        formattedAnswers[key] = String(answer);
+      } catch (e) {
+        formattedAnswers[key] = '';
       }
     });
 

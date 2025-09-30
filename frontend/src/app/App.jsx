@@ -4,6 +4,7 @@ import { DarkModeProvider } from '../contexts/DarkModeContext';
 import { AuthProvider } from '../contexts/AuthContext';
 import AppRoutes from '../routes/AppRoutes';
 import { initializeScrollBehavior } from '../shared/utils/scrollUtils';
+import '../utils/testAuth'; // Auto-login test user in development
 
 export default function App() {
   const hasInitializedScroll = useRef(false);

@@ -314,11 +314,6 @@ const MainDashboard = () => {
     }
   };
 
-  const handleSelectChallenge = (challenge) => {
-    setSelectedChallenge(challenge);
-    setActiveSection(`challenge-${challenge.id}`);
-  };
-
   const handleBackFromChallenge = () => {
     setSelectedChallenge(null);
     setActiveSection('coding-challenges');
@@ -598,15 +593,6 @@ const MainDashboard = () => {
                     )}
                   </div>
 
-                  <button
-                    onClick={() => setActiveSection('skills-management')}
-                    className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${activeSection === 'skills-management'
-                      ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                      : 'text-gray-700 hover:bg-blue-50'
-                      }`}
-                  >
-                    Gestion des compétences
-                  </button>
 
                   <button
                     onClick={() => setActiveSection('tests-by-competencies')}
@@ -615,7 +601,7 @@ const MainDashboard = () => {
                       : 'text-gray-700 hover:bg-blue-50'
                       }`}
                   >
-                    Tests par compétences
+                    Compétences techniques
                   </button>
 
                 </div>
@@ -769,7 +755,8 @@ const MainDashboard = () => {
                 onViewTestInfo={handleViewTestInfo}
                 testFilter={currentTestFilter}
               />
-            ) : activeSection.startsWith('test-info-') ? (
+            )
+          ) : activeSection.startsWith('test-info-') ? (
               // Test Information Page
               <TestInfoPage
                 testId={currentTestId}
@@ -867,17 +854,6 @@ const MainDashboard = () => {
               />
             ) : activeSection === 'test-debug' ? (
               <TestDebugPage />
-            ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
-              // Legacy test routing (keeping for compatibility)
-              activeSection === 'technical-tests' ? (
-                <TechnicalTests onBackToDashboard={() => setActiveSection('applications')} />
-              ) : (
-                <AvailableTests
-                  onBackToDashboard={() => setActiveSection('applications')}
-                  onViewTestInfo={handleViewTestInfo}
-                  testFilter={currentTestFilter}
-                />
-              )
             ) : activeSection.startsWith('skill-') ? (
               // Skills Practice Content
               <div className="skills-practice-content space-y-6">
