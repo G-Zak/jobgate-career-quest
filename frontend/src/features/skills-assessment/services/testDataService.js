@@ -5,22 +5,22 @@ class TestDataService {
   // Map frontend test IDs to backend test IDs
   static getBackendTestId(frontendTestId) {
     const testIdMapping = {
-      'VRT1': 1,   // Reading Comprehension Test
-      'VRT2': 2,   // Verbal Reasoning Test 2 - Analogies
-      'VRT3': 3,   // Verbal Reasoning Test 3 - Classification
-      'VRT4': 4,   // Verbal Reasoning Test 4 - Coding & Decoding
-      'VRT5': 5,   // Verbal Reasoning Test 5 - Blood Relations
-      'SJT1': 30,  // Situational Judgment Test
-      'NRT1': 21,  // Numerical Reasoning Test - Basic Arithmetic
-      'ART1': 10,  // Abstract Reasoning Test
-      'SRT1': 11,  // Spatial Reasoning Test
-      'DRT1': 12,  // Diagrammatic Reasoning Test
-      'LRT1': 13,  // Logical Reasoning Test
-      'LRT2': 14,  // Logical Reasoning Test 2
-      'LRT3': 15,  // Logical Reasoning Test 3
-      'TCT1': 16,  // Technical Test
+      'VRT1': 4,   // Reading Comprehension Test (ID 4 has 30 questions)
+      'VRT2': 5,   // Verbal Reasoning Test 2 - Analogies (ID 5 has 36 questions)
+      'VRT3': 6,   // Verbal Reasoning Test 3 - Classification (ID 6 has 15 questions)
+      'VRT4': 7,   // Verbal Reasoning Test 4 - Coding & Decoding (ID 7 has 44 questions)
+      'VRT5': 8,   // Verbal Reasoning Test 5 - Blood Relations (ID 8 has 50 questions)
+      'SJT1': 32,  // Situational Judgment Test (ID 32 has 4 questions)
+      'NRT1': 23,  // Numerical Reasoning Test - Basic Arithmetic (ID 23 has 48 questions)
+      'ART1': 12,  // Abstract Reasoning Test (ID 12 has 19 questions)
+      'SRT1': 13,  // Spatial Reasoning Test (ID 13 has 7 questions)
+      'DRT1': 14,  // Diagrammatic Reasoning Test (ID 14 has 2 questions)
+      'LRT1': 15,  // Logical Reasoning Test (ID 15 has 44 questions)
+      'LRT2': 16,  // Logical Reasoning Test 2 (ID 16 has 39 questions)
+      'LRT3': 33,  // Logical Reasoning Test 3 (ID 33 has 30 questions)
+      'TCT1': 11,  // Technical Test (ID 11 has 4 questions)
     };
-    
+
     return testIdMapping[frontendTestId] || frontendTestId;
   }
 
@@ -29,7 +29,7 @@ class TestDataService {
     try {
       const backendTestId = this.getBackendTestId(frontendTestId);
       const response = await backendApi.getTestQuestions(backendTestId);
-      
+
       // Transform backend data to frontend format
       return this.transformBackendDataToFrontend(response, frontendTestId);
     } catch (error) {
@@ -41,7 +41,7 @@ class TestDataService {
   // Transform backend API response to frontend-compatible format
   static transformBackendDataToFrontend(backendData, testType) {
     const questions = backendData.questions || [];
-    
+
     // Transform each question to frontend format
     const transformedQuestions = questions.map((question, index) => {
       return {
@@ -73,16 +73,16 @@ class TestDataService {
 
     // Create sections first to get the correct question count
     const sections = this.createSections(transformedQuestions, testType);
-    
+
     // Calculate total questions from sections (not from all backend questions)
     const totalQuestionsFromSections = sections.reduce((total, section) => {
       if (section.passages) {
-        return total + section.passages.reduce((passageTotal, passage) => 
+        return total + section.passages.reduce((passageTotal, passage) =>
           passageTotal + (passage?.questions?.length || 0), 0);
       }
       return total + (section?.questions?.length || 0);
     }, 0);
-    
+
     // Return in frontend-compatible format
     return {
       id: backendData.test_id || testType,
@@ -103,7 +103,7 @@ class TestDataService {
         // Group questions into passages (assuming 3 questions per passage)
         const questionsPerPassage = 3;
         const passages = [];
-        
+
         // Sample reading comprehension passages with titles
         const samplePassages = [
           {
@@ -119,7 +119,7 @@ class TestDataService {
             text: "Ecosystem resilience has become a critical concern for organizations operating in highly interconnected systems. The COVID-19 pandemic demonstrated how disruptions in one part of a global supply chain could cascade through entire industries, affecting everything from manufacturing to healthcare. Organizations must therefore balance the benefits of deep ecosystem integration with the risks of excessive interdependence and potential systemic vulnerabilities."
           }
         ];
-        
+
         for (let i = 0; i < questions.length; i += questionsPerPassage) {
           const passageQuestions = questions.slice(i, i + questionsPerPassage);
           const passageIndex = Math.floor(i / questionsPerPassage);
@@ -134,7 +134,7 @@ class TestDataService {
             }))
           });
         }
-        
+
         return [{
           id: 1,
           title: 'Reading Comprehension',
@@ -149,7 +149,7 @@ class TestDataService {
         return [
           {
             id: 1,
-            title: 'Verbal Analogies', 
+            title: 'Verbal Analogies',
             description: 'Complete the analogy',
             questions: questions.slice(0, questionsPerSection),
             duration_minutes: 7
@@ -171,7 +171,7 @@ class TestDataService {
         ];
       }
     }
-    
+
     // For other tests, return single section
     return [{
       id: 1,
@@ -257,7 +257,7 @@ class TestDataService {
       "The passage implies that the greatest risk associated with this approach is:",
       "Based on the passage, the most significant advantage of this strategy is:"
     ];
-    
+
     return questionTemplates[questionIndex % questionTemplates.length];
   }
 

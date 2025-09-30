@@ -49,7 +49,7 @@ const JobRecommendationsPage = () => {
     experienceLevel: ""
   });
 
-  // Load user profile from database
+  // Load user profile from database with localStorage fallback
   useEffect(() => {
     const loadProfileFromDatabase = async () => {
       try {
@@ -64,6 +64,20 @@ const JobRecommendationsPage = () => {
         console.log('  - Token present:', !!token);
         console.log('  - User present (localStorage):', !!user);
         console.log('  - User data (localStorage):', user);
+
+        // First try to load from localStorage as fallback
+        try {
+          const fallbackProfile = loadUserProfile(user?.id || 1);
+          if (fallbackProfile && fallbackProfile.id) {
+            console.log('🔍 JobRecommendationsPage - Found profile in localStorage:', fallbackProfile);
+            console.log('🔍 JobRecommendationsPage - Skills in localStorage profile:', fallbackProfile.skills);
+            console.log('🔍 JobRecommendationsPage - skillsWithProficiency in localStorage profile:', fallbackProfile.skillsWithProficiency);
+            setUserProfile(fallbackProfile);
+            return; // Use localStorage data if available
+          }
+        } catch (error) {
+          console.warn('⚠️ Failed to load profile from localStorage:', error);
+        }
 
         if (!token || !user) {
           console.warn('❌ User not authenticated, redirecting to login...');
@@ -157,9 +171,19 @@ const JobRecommendationsPage = () => {
       } catch (error) {
         console.error('Error loading profile from database:', error);
         // Fallback to localStorage
-        const profile = loadUserProfile();
-        console.log('🔍 JobRecommendationsPage - Using localStorage fallback profile:', profile);
-        setUserProfile(profile);
+        try {
+          const profile = loadUserProfile(user?.id || 1);
+          if (profile && profile.id) {
+            console.log('🔍 JobRecommendationsPage - Using localStorage fallback profile:', profile);
+            console.log('🔍 JobRecommendationsPage - Skills in fallback profile:', profile.skills);
+            console.log('🔍 JobRecommendationsPage - skillsWithProficiency in fallback profile:', profile.skillsWithProficiency);
+            setUserProfile(profile);
+          } else {
+            console.warn('⚠️ No profile found in localStorage fallback');
+          }
+        } catch (fallbackError) {
+          console.error('❌ Fallback to localStorage also failed:', fallbackError);
+        }
       }
     };
 
@@ -229,6 +253,39 @@ const JobRecommendationsPage = () => {
   // }, [userProfile]);
 
   const [userSkills, setUserSkills] = useState([]);
+
+  // Listen for profile changes in localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      console.log('🔍 JobRecommendationsPage - Storage change detected, reloading profile...');
+      try {
+        const updatedProfile = loadUserProfile(user?.id || 1);
+        if (updatedProfile && updatedProfile.id) {
+          console.log('🔍 JobRecommendationsPage - Updated profile from localStorage:', updatedProfile);
+          setUserProfile(updatedProfile);
+        }
+      } catch (error) {
+        console.warn('⚠️ Failed to reload profile from localStorage:', error);
+      }
+    };
+
+    const handleCustomProfileUpdate = (event) => {
+      console.log('🔍 JobRecommendationsPage - Custom profile update event received:', event.detail);
+      const updatedProfile = event.detail.profile;
+      if (updatedProfile) {
+        setUserProfile(updatedProfile);
+      }
+    };
+
+    // Listen for storage changes
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('profileUpdated', handleCustomProfileUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('profileUpdated', handleCustomProfileUpdate);
+    };
+  }, [user?.id]);
 
   // Recalculate userSkills when userProfile changes
   useEffect(() => {
@@ -619,6 +676,7 @@ const JobRecommendationsPage = () => {
           userId={userProfile?.id}
           userSkills={userSkills}
           userLocation={userProfile?.location}
+          userProfile={userProfile}
           maxJobs={12}
           realTimeUpdate={true}
         />

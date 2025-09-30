@@ -300,15 +300,17 @@ const MainDashboard = () => {
       setActiveSection('lrt3-test');
     } else {
       // Check if it's a custom QCM test from our skill-based system
-      const isCustomQCMTest = (typeof testId === 'number' && testId >= 1 && testId <= 100) ||
+      const isCustomQCMTest = (typeof testId === 'number' && testId >= 1 && testId <= 2000) || // Extended range to include skill tests (1000+)
         (typeof testId === 'string' && testId.includes('test'));
 
       if (isCustomQCMTest) {
         console.log('✅ Routing to technical-assessment for custom QCM test:', testId);
+        console.log('✅ Test ID type:', typeof testId, 'Value:', testId);
         setActiveSection('technical-assessment');
       } else {
         // Handle other test types (numerical, etc.)
         console.log('❌ Routing to test-session for testId:', testId);
+        console.log('❌ Test ID type:', typeof testId, 'Value:', testId);
         setActiveSection('test-session');
       }
     }
@@ -566,7 +568,7 @@ const MainDashboard = () => {
             <div className="skills-section p-6">
               <div className="mb-4">
                 <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
-                  Compétences
+                  Validation des compétences
                 </h3>
                 <div className="space-y-2">
                   {/* Skills Validation Dropdown */}
@@ -575,7 +577,7 @@ const MainDashboard = () => {
                       onClick={() => setShowSkillsDropdown(!showSkillsDropdown)}
                       className="skills-dropdown-trigger w-full flex items-center justify-between px-4 py-3 rounded-lg text-left text-gray-700 text-sm font-semibold transition-colors hover:bg-blue-50"
                     >
-                      <span>Validation des compétences</span>
+                      <span>Compétences cognitives</span>
                       <ChevronDownIcon className={`dropdown-icon w-4 h-4 ml-2 transition-transform ${showSkillsDropdown ? 'rotate-180' : ''}`} />
                     </button>
 
@@ -584,29 +586,21 @@ const MainDashboard = () => {
                       <div id="skills-dropdown" className="skills-dropdown-menu mt-3 pl-4 space-y-2 max-h-48 overflow-y-auto">
                         {skillCategories.map((skill, index) => (
                           <button
-                            key={index}
+                            key={`skill-category-${skill}-${index}`}
                             onClick={() => handleSkillCategoryClick(skill)}
                             className={`skill-category-item block w-full text-left pl-4 pr-2 py-2 text-xs transition-colors rounded ${activeSection === skillToTestMap[skill.toLowerCase()] || activeSection === `skill-${skill.toLowerCase().replace(/\s+/g, '-')}`
                               ? 'bg-blue-50 text-blue-500 font-semibold border-l-2 border-blue-500'
                               : 'text-gray-700 hover:bg-blue-50 hover:text-blue-500'
                               }`}
                           >
-                               {skill}
+                            {skill}
                           </button>
                         ))}
                       </div>
                     )}
                   </div>
 
-                  <button
-                    onClick={() => setActiveSection('skills-management')}
-                    className={`sidebar-nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${activeSection === 'skills-management'
-                      ? 'text-blue-500 bg-blue-50 border-l-4 border-blue-500'
-                      : 'text-gray-700 hover:bg-blue-50'
-                      }`}
-                  >
-                    Gestion des compétences
-                  </button>
+                  
 
                   <button
                     onClick={() => setActiveSection('tests-by-competencies')}
@@ -615,7 +609,7 @@ const MainDashboard = () => {
                       : 'text-gray-700 hover:bg-blue-50'
                       }`}
                   >
-                    Tests par compétences
+                    Compétences techniques
                   </button>
 
                 </div>
@@ -985,7 +979,7 @@ const MainDashboard = () => {
                       <div className="carousel-indicators absolute bottom-4 left-1/2 transform -translate-x-1/2 flex justify-center space-x-3 z-10">
                         {carouselImages.map((_, index) => (
                           <button
-                            key={index}
+                            key={`carousel-indicator-${index}`}
                             onClick={() => setCurrentCarouselIndex(index)}
                             className={`indicator-dot transition-all duration-300 rounded-full ${index === currentCarouselIndex
                               ? 'bg-white w-8 h-3 shadow-lg'

@@ -70,7 +70,10 @@ class BackendApiService {
     try {
       const response = await fetch(`${this.baseURL}/api/tests/${testId}/questions/`, {
         method: 'GET',
-        headers: this.getAuthHeaders()
+        headers: {
+          'Content-Type': 'application/json'
+          // Removed auth headers for anonymous access to test questions
+        }
       });
 
       if (!response.ok) {
@@ -281,11 +284,11 @@ class BackendApiService {
    */
   formatAnswersForBackend(answers) {
     const formattedAnswers = {};
-    
+
     Object.entries(answers).forEach(([questionId, answer]) => {
       // Convert question ID to string if it's a number
       const key = String(questionId);
-      
+
       // Ensure answer is a single letter (A, B, C, D, etc.)
       if (typeof answer === 'string' && answer.length === 1) {
         formattedAnswers[key] = answer.toUpperCase();
@@ -327,7 +330,7 @@ class BackendApiService {
    */
   handleApiError(error, context = 'API call') {
     console.error(`${context} failed:`, error);
-    
+
     // Return a user-friendly error message
     if (error.message.includes('Failed to fetch')) {
       return 'Unable to connect to the server. Please check your internet connection.';

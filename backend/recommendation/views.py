@@ -10,7 +10,7 @@ from django.db import transaction
 import json
 import logging
 
-from .models import JobRecommendation, UserJobPreference, SavedJob
+from .models import JobRecommendation, UserJobPreference, SavedJob, JobOffer
 from .services import RecommendationEngine
 from .advanced_services import AdvancedRecommendationEngine
 from skills.models import CandidateProfile
@@ -1264,5 +1264,164 @@ def delete_saved_job(request, job_id):
         logger.error(f"Error deleting saved job: {str(e)}")
         return Response(
             {'error': f'Failed to delete saved job: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+@permission_classes([])  # Allow access without authentication
+def get_job_offers(request):
+    """
+    Get all active job offers
+    """
+    try:
+        # Get query parameters
+        limit = int(request.GET.get('limit', 50))
+        offset = int(request.GET.get('offset', 0))
+        
+        # Get active job offers
+        jobs = JobOffer.objects.filter(status='active').order_by('-posted_at')[offset:offset + limit]
+        
+        # Serialize job offers
+        job_data = []
+        for job in jobs:
+            job_data.append({
+                'id': job.id,
+                'title': job.title,
+                'company': job.company,
+                'location': job.location,
+                'city': job.city,
+                'job_type': job.job_type,
+                'seniority': job.seniority,
+                'salary_min': job.salary_min,
+                'salary_max': job.salary_max,
+                'remote': job.remote,
+                'description': job.description,
+                'requirements': job.requirements,
+                'benefits': job.benefits,
+                'industry': job.industry,
+                'company_size': job.company_size,
+                'tags': job.tags,
+                'posted_at': job.posted_at.isoformat() if job.posted_at else None,
+                'required_skills': [skill.name for skill in job.required_skills.all()],
+                'preferred_skills': [skill.name for skill in job.preferred_skills.all()]
+            })
+        
+        return Response({
+            'success': True,
+            'count': len(job_data),
+            'total': JobOffer.objects.filter(status='active').count(),
+            'jobs': job_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting job offers: {str(e)}")
+        return Response(
+            {'error': f'Failed to get job offers: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+# @permission_classes([IsAuthenticated])  # Temporarily disabled for testing
+def get_proportional_test_recommendations(request):
+    """
+    Get job recommendations using the new proportional test scoring system:
+    - Skills (50%) - most important factor
+    - Technical Tests (30%) - proportional to relevant tests passed
+    - Location (20%) - important but not dominant
+    """
+    try:
+        from .enhanced_services import ProportionalTestScoringEngine
+        from .models import JobRecommendationDetail
+        
+        # Get parameters
+        limit = int(request.data.get('limit', 10))
+        user_skills = request.data.get('skills', [])
+        user_location = request.data.get('location', '')
+        
+        # Handle unauthenticated users for testing
+        if not request.user.is_authenticated:
+            from django.contrib.auth.models import User
+            user, _ = User.objects.get_or_create(username='anonymous', defaults={'email': 'anonymous@example.com'})
+        else:
+            user = request.user
+        
+        # Initialize the proportional scoring engine
+        scoring_engine = ProportionalTestScoringEngine()
+        
+        # Get active job offers
+        jobs = JobOffer.objects.filter(status='active').order_by('-posted_at')[:limit * 2]
+        
+        recommendations = []
+        
+        for job in jobs:
+            # Calculate proportional score
+            score_breakdown = scoring_engine.calculate_proportional_job_score(
+                user=request.user,
+                job=job,
+                user_skills=user_skills,
+                user_location=user_location
+            )
+            
+            # Only include jobs with meaningful scores
+            if score_breakdown['global_score'] > 0:
+                # Save detailed breakdown to database
+                try:
+                    detail = JobRecommendationDetail.objects.update_or_create(
+                        user=request.user,
+                        job_offer=job,
+                        defaults={
+                            'overall_score': score_breakdown['global_score'],
+                            'skill_score': score_breakdown['skills_score'],
+                            'technical_test_score': score_breakdown['test_score'],
+                            'location_score': score_breakdown['location_score'],
+                            'passed_tests': score_breakdown['test_details'].get('passed_tests', 0),
+                            'total_relevant_tests': score_breakdown['test_details'].get('total_relevant_tests', 0),
+                            'test_proportion': score_breakdown['test_details'].get('test_proportion', 0),
+                        }
+                    )[0]
+                except Exception as e:
+                    logger.error(f"Error saving recommendation detail: {str(e)}")
+                
+                recommendations.append({
+                    'job_id': job.id,
+                    'job_title': job.title,
+                    'company': job.company,
+                    'location': job.location,
+                    'job_type': job.job_type,
+                    'seniority': job.seniority,
+                    'remote': job.remote,
+                    'salary_min': job.salary_min,
+                    'salary_max': job.salary_max,
+                    'description': job.description,
+                    'required_skills': [skill.name for skill in job.required_skills.all()],
+                    'preferred_skills': [skill.name for skill in job.preferred_skills.all()],
+                    'score_breakdown': score_breakdown,
+                    'explanation': f"Score: {score_breakdown['global_score']}% - Skills: {score_breakdown['skills_score']}%, Tests: {score_breakdown['test_score']}%, Location: {score_breakdown['location_score']}%"
+                })
+        
+        # Sort by global score and return top recommendations
+        recommendations.sort(key=lambda x: x['score_breakdown']['global_score'], reverse=True)
+        recommendations = recommendations[:limit]
+        
+        return Response({
+            'success': True,
+            'recommendations': recommendations,
+            'total_count': len(recommendations),
+            'algorithm_info': {
+                'method': 'Proportional Test Scoring',
+                'weights': {
+                    'skills': '50% - Most important factor',
+                    'technical_tests': '30% - Proportional to relevant tests passed',
+                    'location': '20% - Important but not dominant'
+                },
+                'test_scoring': 'Proportional: passed_tests / total_relevant_tests'
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting proportional test recommendations: {str(e)}")
+        return Response(
+            {'error': f'Failed to get recommendations: {str(e)}', 'success': False},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

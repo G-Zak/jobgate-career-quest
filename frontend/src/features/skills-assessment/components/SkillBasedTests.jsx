@@ -196,7 +196,7 @@ const SkillBasedTests = ({ userId, testId, skillId, onBackToDashboard }) => {
 
     // Utiliser la compétence explicite si fournie, sinon essayer de l'identifier
     let skillName = 'general';
-    
+
     if (explicitSkill) {
       skillName = explicitSkill.toLowerCase();
       console.log('🎯 Using explicit skill:', skillName);
@@ -759,7 +759,7 @@ const SkillBasedTests = ({ userId, testId, skillId, onBackToDashboard }) => {
     console.log('🚀 test.skill?.name:', test.skill?.name);
     console.log('🚀 test.title:', test.title);
     console.log('🚀 test.test_name:', test.test_name);
-    
+
     try {
       // Charger les questions du test depuis notre API des compétences
       const response = await fetch(`http://localhost:8000/api/skills/tests/${test.id}/questions/`);
@@ -911,41 +911,38 @@ const SkillBasedTests = ({ userId, testId, skillId, onBackToDashboard }) => {
 
       console.log(`⏱️ Time elapsed: ${minutes}:${seconds.toString().padStart(2, '0')}`);
 
-      // Calculer le score localement
+      // Calculer le score basé sur les vraies réponses
       const totalQuestions = selectedTest.questions.length;
       const answeredQuestions = Object.keys(answers).length;
-
-      // Simuler un score réaliste basé sur les réponses
       let correctAnswers = 0;
 
-      if (answeredQuestions === 0) {
-        correctAnswers = 0;
-      } else {
-        // Simuler des réponses correctes basées sur le taux de completion
-        const completionRate = answeredQuestions / totalQuestions;
-        let baseScore = 0.6; // 60% de base
+      // Calculer le nombre de bonnes réponses en comparant avec les réponses correctes
+      selectedTest.questions.forEach((question, index) => {
+        const userAnswer = answers[index];
+        if (userAnswer !== undefined && userAnswer !== null) {
+          // Vérifier si la réponse est correcte
+          let correctAnswer = question.correct_answer;
 
-        // Ajuster selon le taux de completion
-        if (completionRate >= 0.9) {
-          baseScore = 0.8; // 80% si 90%+ des questions répondues
-        } else if (completionRate >= 0.7) {
-          baseScore = 0.7; // 70% si 70-90% des questions répondues
-        } else if (completionRate >= 0.5) {
-          baseScore = 0.6; // 60% si 50-70% des questions répondues
-        } else {
-          baseScore = 0.4; // 40% si moins de 50% des questions répondues
+          // Gérer différents formats de réponses correctes
+          if (typeof correctAnswer === 'number') {
+            // Format numérique (0, 1, 2, 3)
+            if (userAnswer === correctAnswer) {
+              correctAnswers++;
+            }
+          } else if (typeof correctAnswer === 'string') {
+            // Format string (A, B, C, D)
+            const answerMap = { 0: 'A', 1: 'B', 2: 'C', 3: 'D' };
+            if (answerMap[userAnswer] === correctAnswer) {
+              correctAnswers++;
+            }
+          } else if (Array.isArray(correctAnswer)) {
+            // Format array (multiple correct answers)
+            if (correctAnswer.includes(userAnswer)) {
+              correctAnswers++;
+            }
+          }
         }
-
-        // Calculer le nombre de bonnes réponses
-        correctAnswers = Math.round(answeredQuestions * baseScore);
-
-        // Ajouter un facteur aléatoire pour plus de réalisme
-        const randomFactor = (Math.random() - 0.5) * 0.2; // ±10%
-        correctAnswers = Math.round(correctAnswers * (1 + randomFactor));
-
-        // S'assurer que le score est dans des limites raisonnables
-        correctAnswers = Math.max(0, Math.min(correctAnswers, totalQuestions));
-      }
+      });
 
       const percentage = Math.round((correctAnswers / totalQuestions) * 100);
 
@@ -971,6 +968,49 @@ const SkillBasedTests = ({ userId, testId, skillId, onBackToDashboard }) => {
         isPassed: percentage >= 70,
         grade: percentage >= 90 ? 'A' : percentage >= 80 ? 'B' : percentage >= 70 ? 'C' : 'D'
       };
+
+      // Submit to backend API
+      try {
+        console.log('📤 Submitting test result to backend...');
+        const { submitTestResultToBackend } = await import('../../../utils/backendTestResults');
+
+        // Convert answers to the format expected by backend
+        const backendAnswers = {};
+        selectedTest.questions.forEach((question, index) => {
+          const userAnswer = answers[index];
+          if (userAnswer !== undefined && userAnswer !== null) {
+            // Convert numeric answer to letter format for backend
+            const answerMap = { 0: 'A', 1: 'B', 2: 'C', 3: 'D' };
+            backendAnswers[question.id] = answerMap[userAnswer] || userAnswer;
+          }
+        });
+
+        await submitTestResultToBackend(
+          selectedTest.id,
+          backendAnswers,
+          timeElapsed,
+          {
+            skill: selectedTest.test?.skill || 'Unknown',
+            testName: selectedTest.test?.test_name || 'Test Technique',
+            frontend_submission: true
+          }
+        );
+
+        console.log('✅ Test result submitted to backend successfully');
+      } catch (backendError) {
+        console.error('❌ Error submitting to backend:', backendError);
+        // Continue with local storage fallback
+      }
+
+      // Also save to localStorage for backward compatibility
+      const { saveTestResult } = await import('../../../utils/testScoring');
+      saveTestResult(selectedTest.id, userId, {
+        score: correctAnswers,
+        percentage: percentage,
+        correctAnswers: correctAnswers,
+        totalQuestions: totalQuestions,
+        passed: percentage >= 70
+      }, answers, timeElapsed);
 
       setTestResult(testResultData);
       setTestStarted(false);

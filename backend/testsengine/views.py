@@ -32,7 +32,9 @@ class TestListView(generics.ListAPIView):
     GET /api/tests/
     """
     serializer_class = TestListSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    permission_classes = [permissions.AllowAny]  # Temporarily allow anonymous access for testing
+    
 
     def get_queryset(self):
         """Return only active tests with questions"""
@@ -371,7 +373,9 @@ class SubmitTestView(APIView):
         }
     }
     """
-    permission_classes = [permissions.IsAuthenticated]  # Require authentication for test submission
+
+    permission_classes = [permissions.AllowAny]  # Temporarily allow anonymous submissions for testing
+    
 
     @transaction.atomic
     def post(self, request, test_id):

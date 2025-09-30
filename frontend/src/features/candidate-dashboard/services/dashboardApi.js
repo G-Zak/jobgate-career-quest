@@ -111,7 +111,7 @@ class DashboardApi {
       }
 
       const data = await response.json();
-      
+
       // Transform category stats to breakdown format
       return {
         categories: data.category_stats || [],
@@ -150,7 +150,7 @@ class DashboardApi {
       return jobs.slice(0, limit);
     } catch (error) {
       console.error('Error fetching job recommendations:', error);
-      // Return mock data if API fails
+      // Return enhanced mock data if API fails
       return [
         {
           id: "101",
@@ -159,7 +159,10 @@ class DashboardApi {
           match: 89,
           salary: "$75k-$95k",
           location: "Remote",
-          skills: ["React", "JavaScript", "CSS"]
+          skills: ["React", "JavaScript", "CSS", "TypeScript"],
+          description: "Join our team to build amazing user interfaces using modern web technologies. You'll work on cutting-edge projects that impact millions of users.",
+          type: "Full-time",
+          posted: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
         },
         {
           id: "205",
@@ -168,7 +171,22 @@ class DashboardApi {
           match: 78,
           salary: "$65k-$85k",
           location: "San Francisco",
-          skills: ["Python", "Django", "SQL"]
+          skills: ["Python", "Django", "SQL", "PostgreSQL"],
+          description: "We're looking for a passionate Python developer to join our data engineering team. Work with large datasets and build scalable applications.",
+          type: "Full-time",
+          posted: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          id: "312",
+          title: "Full Stack Developer",
+          company: "TechStart",
+          match: 72,
+          salary: "$70k-$90k",
+          location: "New York",
+          skills: ["React", "Node.js", "MongoDB", "AWS"],
+          description: "Join our fast-growing startup as a full-stack developer. You'll work on both frontend and backend systems in a collaborative environment.",
+          type: "Full-time",
+          posted: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
         }
       ];
     }
@@ -224,7 +242,7 @@ class DashboardApi {
       }
 
       const data = await response.json();
-      
+
       return {
         totalTests: data.total_tests_completed || 0,
         averageScore: data.average_score || 0,
