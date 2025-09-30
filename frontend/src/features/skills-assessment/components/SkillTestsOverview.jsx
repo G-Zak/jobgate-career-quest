@@ -63,15 +63,35 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
   };
 
   // Function to retake a test (clear previous result and start fresh)
-  const retakeTest = (testId) => {
+  const retakeTest = async (testId) => {
     console.log('🔄 Retaking test:', testId);
-    // Clear the previous result from localStorage
-    const existingResults = getTestResults(userId);
-    const filteredResults = existingResults.filter(result => result.testId !== testId);
-    localStorage.setItem(`testResults_${userId}`, JSON.stringify(filteredResults));
 
-    // Start the test
-    startTechnicalTest(testId);
+    try {
+      // Import getTestResults dynamically to avoid module loading issues
+      const { getTestResults: getTestResultsFunc } = await import('../../../utils/testScoring');
+
+      // Check if getTestResults is available
+      if (typeof getTestResultsFunc !== 'function') {
+        console.error('❌ getTestResults is not a function:', typeof getTestResultsFunc);
+        return;
+      }
+
+      // Clear the previous result from localStorage
+      const existingResults = getTestResultsFunc(userId);
+      console.log('📋 Existing results before filtering:', existingResults);
+
+      const filteredResults = existingResults.filter(result => result.testId !== testId);
+      console.log('📋 Filtered results:', filteredResults);
+
+      localStorage.setItem(`testResults_${userId}`, JSON.stringify(filteredResults));
+      console.log('✅ Previous test result cleared');
+
+      // Start the test
+      startTechnicalTest(testId);
+
+    } catch (error) {
+      console.error('❌ Error in retakeTest:', error);
+    }
   };
 
   // Function to handle test completion

@@ -922,7 +922,7 @@ const SkillBasedTests = ({ userId, testId, skillId, onBackToDashboard }) => {
         if (userAnswer !== undefined && userAnswer !== null) {
           // Vérifier si la réponse est correcte
           let correctAnswer = question.correct_answer;
-          
+
           // Gérer différents formats de réponses correctes
           if (typeof correctAnswer === 'number') {
             // Format numérique (0, 1, 2, 3)
@@ -968,6 +968,49 @@ const SkillBasedTests = ({ userId, testId, skillId, onBackToDashboard }) => {
         isPassed: percentage >= 70,
         grade: percentage >= 90 ? 'A' : percentage >= 80 ? 'B' : percentage >= 70 ? 'C' : 'D'
       };
+
+      // Submit to backend API
+      try {
+        console.log('📤 Submitting test result to backend...');
+        const { submitTestResultToBackend } = await import('../../../utils/backendTestResults');
+
+        // Convert answers to the format expected by backend
+        const backendAnswers = {};
+        selectedTest.questions.forEach((question, index) => {
+          const userAnswer = answers[index];
+          if (userAnswer !== undefined && userAnswer !== null) {
+            // Convert numeric answer to letter format for backend
+            const answerMap = { 0: 'A', 1: 'B', 2: 'C', 3: 'D' };
+            backendAnswers[question.id] = answerMap[userAnswer] || userAnswer;
+          }
+        });
+
+        await submitTestResultToBackend(
+          selectedTest.id,
+          backendAnswers,
+          timeElapsed,
+          {
+            skill: selectedTest.test?.skill || 'Unknown',
+            testName: selectedTest.test?.test_name || 'Test Technique',
+            frontend_submission: true
+          }
+        );
+
+        console.log('✅ Test result submitted to backend successfully');
+      } catch (backendError) {
+        console.error('❌ Error submitting to backend:', backendError);
+        // Continue with local storage fallback
+      }
+
+      // Also save to localStorage for backward compatibility
+      const { saveTestResult } = await import('../../../utils/testScoring');
+      saveTestResult(selectedTest.id, userId, {
+        score: correctAnswers,
+        percentage: percentage,
+        correctAnswers: correctAnswers,
+        totalQuestions: totalQuestions,
+        passed: percentage >= 70
+      }, answers, timeElapsed);
 
       setTestResult(testResultData);
       setTestStarted(false);
