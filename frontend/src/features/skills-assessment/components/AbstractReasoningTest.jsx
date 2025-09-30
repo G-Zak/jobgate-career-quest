@@ -5,8 +5,9 @@ import { FaClock, FaBrain, FaStop, FaArrowRight, FaFlag, FaSync, FaSearchPlus, F
 // Removed frontend data imports - using backend API instead
 import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
 import TestResultsPage from './TestResultsPage';
+import DuplicateSubmissionModal from './DuplicateSubmissionModal';
 
-const AbstractReasoningTest = ({ onBackToDashboard, testId = 'abstract' }) => {
+const AbstractReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory, testId = 'abstract' }) => {
   // Map frontend test ID to backend database ID
   const getBackendTestId = (frontendId) => {
     const testIdMapping = {
@@ -33,6 +34,7 @@ const AbstractReasoningTest = ({ onBackToDashboard, testId = 'abstract' }) => {
   const [showExitModal, setShowExitModal] = useState(false);
   const [startedAt, setStartedAt] = useState(null);
   const [results, setResults] = useState(null);
+  const [duplicateSubmission, setDuplicateSubmission] = useState(null);
 
   const testContainerRef = useRef(null);
 
@@ -121,6 +123,19 @@ const AbstractReasoningTest = ({ onBackToDashboard, testId = 'abstract' }) => {
     }));
   };
 
+  const handleDuplicateSubmissionViewResults = () => {
+    if (duplicateSubmission) {
+      setResults(duplicateSubmission);
+      setTestStep('results');
+      setDuplicateSubmission(null);
+    }
+  };
+
+  const handleDuplicateSubmissionRetakeLater = () => {
+    setDuplicateSubmission(null);
+    onBackToDashboard();
+  };
+
   const handleNextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
@@ -157,13 +172,21 @@ const AbstractReasoningTest = ({ onBackToDashboard, testId = 'abstract' }) => {
         },
         onError: (error) => {
           console.error('Test submission failed:', error);
-          setError('Failed to submit test. Please try again.');
+          if (error.message === 'DUPLICATE_SUBMISSION' && error.existingSubmission) {
+            setDuplicateSubmission(error.existingSubmission);
+          } else {
+            setError('Failed to submit test. Please try again.');
+          }
         }
       });
-      
+
     } catch (error) {
       console.error('Error finishing test:', error);
-      setError('Failed to submit test. Please try again.');
+      if (error.message === 'DUPLICATE_SUBMISSION' && error.existingSubmission) {
+        setDuplicateSubmission(error.existingSubmission);
+      } else {
+        setError('Failed to submit test. Please try again.');
+      }
     }
   };
 
@@ -458,6 +481,18 @@ const AbstractReasoningTest = ({ onBackToDashboard, testId = 'abstract' }) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Duplicate Submission Modal */}
+      <DuplicateSubmissionModal
+        isOpen={duplicateSubmission !== null}
+        onClose={() => setDuplicateSubmission(null)}
+        existingSubmission={duplicateSubmission}
+        testTitle="Abstract Reasoning Test"
+        onViewResults={handleDuplicateSubmissionViewResults}
+        onRetakeTest={handleDuplicateSubmissionRetakeLater}
+        onBackToDashboard={handleDuplicateSubmissionRetakeLater}
+        onNavigateToTestHistory={onNavigateToTestHistory}
+      />
     </div>
   );
 };

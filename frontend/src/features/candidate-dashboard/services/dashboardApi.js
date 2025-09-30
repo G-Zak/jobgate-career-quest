@@ -58,6 +58,7 @@ class DashboardApi {
         // Core score data
         overallScore: data.overall_score || 0,
         categories: data.categories || {},
+        individual_test_scores: data.individual_test_scores || {}, // Add individual test scores
         testsCompleted: data.total_tests_completed || 0,
         improvement: data.improvement_trend || 0,
         lastUpdated: data.last_updated || new Date().toISOString(),
@@ -132,7 +133,7 @@ class DashboardApi {
   // Get job recommendations
   async getJobRecommendations(limit = 3) {
     try {
-      const response = await fetch(`${API_BASE_URL}/recommendations/jobs/?limit=${limit}`, {
+      const response = await fetch(`${API_BASE_URL}/auth/dashboard/summary/`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -145,7 +146,8 @@ class DashboardApi {
       }
 
       const data = await response.json();
-      return data.jobs || [];
+      const jobs = data.job_recommendations?.jobs || [];
+      return jobs.slice(0, limit);
     } catch (error) {
       console.error('Error fetching job recommendations:', error);
       // Return enhanced mock data if API fails
@@ -193,7 +195,7 @@ class DashboardApi {
   // Get recent tests
   async getRecentTests(limit = 5) {
     try {
-      const response = await fetch(`${API_BASE_URL}/test-sessions/?limit=${limit}`, {
+      const response = await fetch(`${API_BASE_URL}/test-history/summary/`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -206,7 +208,18 @@ class DashboardApi {
       }
 
       const data = await response.json();
-      return data.results || [];
+
+      // Extract recent sessions from the summary and limit them
+      const recentSessions = data.recent_sessions || [];
+      return recentSessions.slice(0, limit).map(session => ({
+        id: session.id,
+        test_name: session.test_title,
+        test_type: session.test_type,
+        score: session.score,
+        date: session.start_time,
+        duration_minutes: session.duration_minutes,
+        passed: session.passed || session.score >= 70 // Fallback pass criteria
+      }));
     } catch (error) {
       console.error('Error fetching recent tests:', error);
       throw error;

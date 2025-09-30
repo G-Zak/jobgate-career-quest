@@ -4,8 +4,9 @@ import { FaClock, FaFlag, FaCheckCircle, FaTimesCircle, FaStop, FaArrowRight, Fa
 // Removed frontend data imports - using backend API instead
 import { submitTestAttempt, fetchTestQuestions } from '../lib/backendSubmissionHelper';
 import TestResultsPage from './TestResultsPage';
+import DuplicateSubmissionModal from './DuplicateSubmissionModal';
 
-const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
+const DiagrammaticReasoningTest = ({ onBackToDashboard, onNavigateToTestHistory, testId = null }) => {
   // Map frontend test ID to backend database ID
   const getBackendTestId = (frontendId) => {
     const testIdMapping = {
@@ -31,6 +32,8 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
   const [error, setError] = useState(null);
   const [startedAt, setStartedAt] = useState(null);
   const [results, setResults] = useState(null);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateSubmissionData, setDuplicateSubmissionData] = useState(null);
 
   // Smooth scroll-to-top function - only called on navigation
   const scrollToTop = () => {
@@ -155,18 +158,59 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
         },
         onError: (error) => {
           console.error('Test submission failed:', error);
-          setError('Failed to submit test. Please try again.');
+
+          // Handle duplicate submission specially
+          if (error.isDuplicateSubmission && error.existingSubmission) {
+            console.log('Handling duplicate submission:', error.existingSubmission);
+            setDuplicateSubmissionData(error.existingSubmission);
+            setShowDuplicateModal(true);
+          } else {
+            setError('Failed to submit test. Please try again.');
+          }
         }
       });
-      
+
     } catch (error) {
       console.error('Error finishing test:', error);
-      setError('Failed to submit test. Please try again.');
+
+      // Handle duplicate submission at the catch level too
+      if (error.isDuplicateSubmission && error.existingSubmission) {
+        console.log('Handling duplicate submission in catch:', error.existingSubmission);
+        setDuplicateSubmissionData(error.existingSubmission);
+        setShowDuplicateModal(true);
+      } else {
+        setError('Failed to submit test. Please try again.');
+      }
     }
   };
 
   const handleExitTest = () => {
     onBackToDashboard();
+  };
+
+  // Duplicate submission modal handlers
+  const handleViewExistingResults = (submissionId) => {
+    console.log('Viewing existing results for submission:', submissionId);
+    // TODO: Navigate to results page with existing submission data
+    setShowDuplicateModal(false);
+    onBackToDashboard(); // For now, go back to dashboard
+  };
+
+  const handleRetakeTest = () => {
+    console.log('Retaking test - resetting state');
+    setShowDuplicateModal(false);
+    setDuplicateSubmissionData(null);
+    setAnswers({});
+    setCurrentQuestionIndex(0);
+    setTimeRemaining(25 * 60);
+    setStartedAt(Date.now());
+    setTestStep('test');
+    setError(null);
+  };
+
+  const handleCloseDuplicateModal = () => {
+    setShowDuplicateModal(false);
+    setDuplicateSubmissionData(null);
   };
 
   const getCurrentQuestion = () => {
@@ -448,6 +492,18 @@ const DiagrammaticReasoningTest = ({ onBackToDashboard, testId = null }) => {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* Duplicate Submission Modal */}
+      <DuplicateSubmissionModal
+        isOpen={showDuplicateModal}
+        onClose={handleCloseDuplicateModal}
+        existingSubmission={duplicateSubmissionData}
+        testTitle="Diagrammatic Reasoning Test"
+        onViewResults={handleViewExistingResults}
+        onRetakeTest={handleRetakeTest}
+        onBackToDashboard={onBackToDashboard}
+        onNavigateToTestHistory={onNavigateToTestHistory}
+      />
     </div>
   );
 };

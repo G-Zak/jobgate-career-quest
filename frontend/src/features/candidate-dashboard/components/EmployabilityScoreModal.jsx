@@ -273,9 +273,13 @@ const EmployabilityScoreModal = ({
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="8"
-                        strokeDasharray={`${((scoreData?.overallScore || 0) / 100) * 251.2} 251.2`}
+                        strokeDasharray="251.2"
+                        strokeDashoffset={251.2 - (251.2 * (scoreData?.overallScore || 0) / 100)}
                         className={getScoreColor(scoreData?.overallScore || 0).replace('text-', 'stroke-')}
                         strokeLinecap="round"
+                        style={{
+                          transition: 'stroke-dashoffset 1.2s ease-out'
+                        }}
                       />
                     </svg>
                   </div>
@@ -388,35 +392,56 @@ const EmployabilityScoreModal = ({
                   ) : scoreData?.categories ? (
                     <div className="space-y-6">
                       {/* Enhanced Radar Chart Section */}
-                      {Object.keys(scoreData.categories).length > 0 && (
+                      {((scoreData.individual_test_scores && Object.keys(scoreData.individual_test_scores).length > 0) ||
+                       (scoreData.categories && Object.keys(scoreData.categories).length > 0)) ? (
                         <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
                           <h4 className="text-lg font-semibold text-gray-900 mb-4 text-center">Skills Overview</h4>
                           <div className="flex justify-center">
                             <RadarChart
                               data={(() => {
-                                // Define all possible test types that can exist
+                                // Use individual test scores if available, otherwise fall back to categories
+                                if (scoreData.individual_test_scores && Object.keys(scoreData.individual_test_scores).length > 0) {
+                                  return Object.entries(scoreData.individual_test_scores)
+                                    .filter(([_, data]) => data.count > 0) // Only show tests that have been taken
+                                    .map(([testType, data]) => ({
+                                      name: {
+                                        'numerical_reasoning': 'Numerical',
+                                        'abstract_reasoning': 'Abstract',
+                                        'verbal_reasoning': 'Verbal',
+                                        'spatial_reasoning': 'Spatial',
+                                        'logical_reasoning': 'Logical',
+                                        'diagrammatic_reasoning': 'Diagrammatic',
+                                        'analytical_reasoning': 'Analytical',
+                                        'situational_judgment': 'Situational',
+                                        'technical': 'Technical'
+                                      }[testType] || testType.replace('_', ' '),
+                                      score: Math.round(data.score || 0)
+                                    }));
+                                }
+
+                                // Fallback: Show all individual test types with 0 scores if no data available
+                                console.log('Using fallback - showing all test types with 0 scores');
                                 const allTestTypes = {
                                   // Individual cognitive test types
-                                  'numerical_reasoning': 'Numerical Reasoning',
-                                  'abstract_reasoning': 'Abstract Reasoning',
-                                  'verbal_reasoning': 'Verbal Reasoning',
-                                  'spatial_reasoning': 'Spatial Reasoning',
-                                  'logical_reasoning': 'Logical Reasoning',
-                                  'diagrammatic_reasoning': 'Diagrammatic Reasoning',
-                                  'analytical_reasoning': 'Analytical Reasoning',
+                                  'numerical_reasoning': 'Numerical',
+                                  'abstract_reasoning': 'Abstract',
+                                  'verbal_reasoning': 'Verbal',
+                                  'spatial_reasoning': 'Spatial',
+                                  'logical_reasoning': 'Logical',
+                                  'diagrammatic_reasoning': 'Diagrammatic',
+                                  'analytical_reasoning': 'Analytical',
                                   // Other test categories
-                                  'situational': 'Situational Tests',
-                                  'technical': 'Technical Tests'
+                                  'situational_judgment': 'Situational',
+                                  'technical': 'Technical'
                                 };
 
                                 // Create data for all test types, showing 0 for untaken tests
                                 return Object.entries(allTestTypes).map(([key, displayName]) => {
-                                  const testData = scoreData.categories?.[key];
                                   return {
                                     name: displayName,
-                                    score: testData?.score || 0,
-                                    count: testData?.count || 0,
-                                    hasData: testData?.count > 0
+                                    score: 0,
+                                    count: 0,
+                                    hasData: false
                                   };
                                 });
                               })()}
@@ -425,6 +450,10 @@ const EmployabilityScoreModal = ({
                               showTooltips={true}
                             />
                           </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <p>No test data available for radar chart</p>
                         </div>
                       )}
 

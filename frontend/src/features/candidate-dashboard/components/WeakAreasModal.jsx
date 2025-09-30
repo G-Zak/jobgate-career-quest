@@ -4,36 +4,23 @@ import { useNavigate } from 'react-router-dom';
 import {
   XMarkIcon,
   ExclamationTriangleIcon,
-  ArrowRightIcon,
   ClockIcon,
   ChartBarIcon,
   PlayIcon,
   TrophyIcon
 } from '@heroicons/react/24/outline';
 
-const WeakAreasModal = ({ isOpen, onClose, recommendations = [] }) => {
+const WeakAreasModal = ({ isOpen, onClose, recommendations = [], onNavigateToTest }) => {
   const navigate = useNavigate();
 
   const handleTestClick = (test) => {
-    navigate(test.route);
     onClose();
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'High': return 'bg-red-100 text-red-800 border-red-200';
-      case 'Medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case 'Easy': return 'text-green-600 bg-green-50';
-      case 'Medium': return 'text-yellow-600 bg-yellow-50';
-      case 'Hard': return 'text-red-600 bg-red-50';
-      default: return 'text-gray-600 bg-gray-50';
+    if (onNavigateToTest && test.testRoute) {
+      // Use the MainDashboard navigation system
+      onNavigateToTest(test.testRoute);
+    } else if (test.route) {
+      // Fallback to React Router navigation
+      navigate(test.route);
     }
   };
 
@@ -68,8 +55,8 @@ const WeakAreasModal = ({ isOpen, onClose, recommendations = [] }) => {
                     <ExclamationTriangleIcon className="h-6 w-6" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold">Improve Weak Areas</h2>
-                    <p className="text-orange-100 text-sm">Targeted test recommendations to boost your scores</p>
+                    <h2 className="text-xl font-bold">Improve Your Skills</h2>
+                    <p className="text-orange-100 text-sm">Recommended tests to boost your employability score</p>
                   </div>
                 </div>
                 <button
@@ -83,118 +70,213 @@ const WeakAreasModal = ({ isOpen, onClose, recommendations = [] }) => {
 
             {/* Content */}
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-              {recommendations.length === 0 ? (
-                <div className="text-center py-12">
-                  <TrophyIcon className="h-16 w-16 text-green-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Great Job!</h3>
-                  <p className="text-gray-600 mb-6">
-                    You don't have any weak areas that need immediate attention. 
-                    All your scores are above 70%!
-                  </p>
-                  <button
-                    onClick={() => navigate('/tests')}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                  >
-                    Take More Tests
-                  </button>
+              {/* Summary Stats */}
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="text-2xl font-bold text-blue-600">6</div>
+                  <div className="text-sm text-blue-700">Tests Available</div>
                 </div>
-              ) : (
-                <div className="space-y-6">
-                  {/* Summary */}
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-orange-900 mb-2">
-                      Areas for Improvement ({recommendations.length})
-                    </h3>
-                    <p className="text-orange-800 text-sm">
-                      Focus on these areas to significantly boost your overall employability score. 
-                      Taking the recommended tests will help you improve in these specific skills.
-                    </p>
+                <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="text-2xl font-bold text-green-600">+245</div>
+                  <div className="text-sm text-green-700">Potential Points</div>
+                </div>
+                <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="text-2xl font-bold text-purple-600">2h</div>
+                  <div className="text-sm text-purple-700">Total Time</div>
+                </div>
+              </div>
+
+              {/* Test Cards */}
+              <div className="space-y-4">
+                {/* Numerical Reasoning Test */}
+                <motion.div
+                  className="border border-gray-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-lg transition-all duration-200 cursor-pointer group bg-white"
+                  onClick={() => handleTestClick({ testRoute: 'NRT1' })}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-4 flex-1">
+                      <div className="p-3 bg-blue-100 rounded-lg">
+                        <ChartBarIcon className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-700">
+                            Numerical Reasoning Test 1
+                          </h3>
+                          <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+                            HIGH PRIORITY
+                          </span>
+                        </div>
+                        <p className="text-gray-600 mb-3">
+                          Improve your numerical analysis and problem-solving skills
+                        </p>
+                        <div className="flex items-center space-x-6 text-sm text-gray-500 mb-3">
+                          <div className="flex items-center space-x-1">
+                            <ChartBarIcon className="w-4 h-4" />
+                            <span>Cognitive</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <TrophyIcon className="w-4 h-4" />
+                            <span>Intermediate</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <ClockIcon className="w-4 h-4" />
+                            <span>20 min</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">Mathematical Analysis</span>
+                          <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">Data Interpretation</span>
+                          <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">Problem Solving</span>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Not taken yet
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right ml-4">
+                      <div className="text-sm text-gray-500 mb-1">Current → Target</div>
+                      <div className="text-lg font-bold text-gray-900">45% → 75%</div>
+                      <div className="text-sm font-medium text-green-600">+30 points</div>
+                      <div className="w-24 bg-gray-200 rounded-full h-2 mt-2">
+                        <div className="bg-blue-600 h-2 rounded-full" style={{ width: '60%' }}></div>
+                      </div>
+                      <button className="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center space-x-2">
+                        <PlayIcon className="w-4 h-4" />
+                        <span>Start Test</span>
+                      </button>
+                    </div>
                   </div>
+                </motion.div>
 
-                  {/* Recommendations */}
-                  {recommendations.map((recommendation, index) => {
-                    const IconComponent = recommendation.icon;
-                    
-                    return (
-                      <motion.div
-                        key={recommendation.categoryId}
-                        className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        {/* Category Header */}
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center space-x-3">
-                            <div className={`p-2 rounded-lg ${recommendation.color}`}>
-                              <IconComponent className="h-5 w-5 text-white" />
-                            </div>
-                            <div>
-                              <h4 className="font-semibold text-gray-900">{recommendation.category}</h4>
-                              <p className="text-sm text-gray-600">{recommendation.description}</p>
-                            </div>
+                {/* Spatial Reasoning Test */}
+                <motion.div
+                  className="border border-gray-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-lg transition-all duration-200 cursor-pointer group bg-white"
+                  onClick={() => handleTestClick({ testRoute: 'SRT1' })}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-4 flex-1">
+                      <div className="p-3 bg-green-100 rounded-lg">
+                        <ChartBarIcon className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-700">
+                            Spatial Reasoning Test 1
+                          </h3>
+                          <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+                            HIGH PRIORITY
+                          </span>
+                        </div>
+                        <p className="text-gray-600 mb-3">
+                          Enhance your spatial visualization and pattern recognition
+                        </p>
+                        <div className="flex items-center space-x-6 text-sm text-gray-500 mb-3">
+                          <div className="flex items-center space-x-1">
+                            <ChartBarIcon className="w-4 h-4" />
+                            <span>Cognitive</span>
                           </div>
-                          <div className="text-right">
-                            <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(recommendation.priority)}`}>
-                              {recommendation.priority} Priority
-                            </div>
+                          <div className="flex items-center space-x-1">
+                            <TrophyIcon className="w-4 h-4" />
+                            <span>Intermediate</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <ClockIcon className="w-4 h-4" />
+                            <span>20 min</span>
                           </div>
                         </div>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">Spatial Visualization</span>
+                          <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">Pattern Recognition</span>
+                          <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">3D Thinking</span>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Not taken yet
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right ml-4">
+                      <div className="text-sm text-gray-500 mb-1">Current → Target</div>
+                      <div className="text-lg font-bold text-gray-900">0% → 70%</div>
+                      <div className="text-sm font-medium text-green-600">+70 points</div>
+                      <div className="w-24 bg-gray-200 rounded-full h-2 mt-2">
+                        <div className="bg-green-600 h-2 rounded-full" style={{ width: '0%' }}></div>
+                      </div>
+                      <button className="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center space-x-2">
+                        <PlayIcon className="w-4 h-4" />
+                        <span>Start Test</span>
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
 
-                        {/* Score Progress */}
-                        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center justify-between text-sm mb-2">
-                            <span className="text-gray-600">Current Score</span>
-                            <span className="font-semibold text-gray-900">{recommendation.currentScore}%</span>
+                {/* Verbal Reasoning Test */}
+                <motion.div
+                  className="border border-gray-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-lg transition-all duration-200 cursor-pointer group bg-white"
+                  onClick={() => handleTestClick({ testRoute: 'VRT1' })}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-4 flex-1">
+                      <div className="p-3 bg-yellow-100 rounded-lg">
+                        <ExclamationTriangleIcon className="w-6 h-6 text-yellow-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-700">
+                            Verbal Reasoning Test 1
+                          </h3>
+                          <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                            MEDIUM PRIORITY
+                          </span>
+                        </div>
+                        <p className="text-gray-600 mb-3">
+                          Improve your verbal comprehension and reasoning skills
+                        </p>
+                        <div className="flex items-center space-x-6 text-sm text-gray-500 mb-3">
+                          <div className="flex items-center space-x-1">
+                            <ChartBarIcon className="w-4 h-4" />
+                            <span>Cognitive</span>
                           </div>
-                          <div className="flex items-center justify-between text-sm mb-2">
-                            <span className="text-gray-600">Target Score</span>
-                            <span className="font-semibold text-green-600">{recommendation.targetScore}%</span>
+                          <div className="flex items-center space-x-1">
+                            <TrophyIcon className="w-4 h-4" />
+                            <span>Intermediate</span>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-gradient-to-r from-orange-400 to-orange-600 h-2 rounded-full"
-                              style={{ width: `${(recommendation.currentScore / recommendation.targetScore) * 100}%` }}
-                            />
+                          <div className="flex items-center space-x-1">
+                            <ClockIcon className="w-4 h-4" />
+                            <span>20 min</span>
                           </div>
                         </div>
-
-                        {/* Recommended Tests */}
-                        <div>
-                          <h5 className="font-medium text-gray-900 mb-3">Recommended Tests</h5>
-                          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                            {recommendation.tests.map((test, testIndex) => (
-                              <motion.button
-                                key={testIndex}
-                                onClick={() => handleTestClick(test)}
-                                className="text-left p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 group"
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                              >
-                                <div className="flex items-center justify-between mb-2">
-                                  <h6 className="font-medium text-gray-900 text-sm group-hover:text-blue-700">
-                                    {test.name}
-                                  </h6>
-                                  <ArrowRightIcon className="h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                                </div>
-                                <div className="flex items-center space-x-3 text-xs text-gray-500">
-                                  <div className="flex items-center space-x-1">
-                                    <ClockIcon className="h-3 w-3" />
-                                    <span>{test.duration}</span>
-                                  </div>
-                                  <div className={`px-2 py-1 rounded-full ${getDifficultyColor(test.difficulty)}`}>
-                                    {test.difficulty}
-                                  </div>
-                                </div>
-                              </motion.button>
-                            ))}
-                          </div>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">Reading Comprehension</span>
+                          <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">Critical Thinking</span>
+                          <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">Language Skills</span>
                         </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              )}
+                        <div className="text-sm text-gray-600">
+                          Retake recommended
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right ml-4">
+                      <div className="text-sm text-gray-500 mb-1">Current → Target</div>
+                      <div className="text-lg font-bold text-gray-900">55% → 80%</div>
+                      <div className="text-sm font-medium text-green-600">+25 points</div>
+                      <div className="w-24 bg-gray-200 rounded-full h-2 mt-2">
+                        <div className="bg-yellow-600 h-2 rounded-full" style={{ width: '69%' }}></div>
+                      </div>
+                      <button className="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center space-x-2">
+                        <PlayIcon className="w-4 h-4" />
+                        <span>Retake Test</span>
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
             </div>
 
             {/* Footer */}

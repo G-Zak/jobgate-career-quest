@@ -117,6 +117,20 @@ class BackendApiService {
 
       if (!response.ok) {
         const errorData = await response.json();
+
+        // Handle 409 Conflict (duplicate submission) specially
+        if (response.status === 409) {
+          const duplicateError = new Error(`Submission already exists for this test`);
+          duplicateError.status = 409;
+          duplicateError.existingSubmission = {
+            submissionId: errorData.existing_submission_id,
+            score: errorData.existing_score,
+            submittedAt: errorData.submitted_at,
+            message: errorData.message
+          };
+          throw duplicateError;
+        }
+
         throw new Error(`Failed to submit test: ${errorData.error || response.status}`);
       }
 

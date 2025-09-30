@@ -639,15 +639,127 @@ const MainDashboard = () => {
           {/* Scrollable Content Container */}
           <div className="h-[calc(100vh-7rem)] overflow-y-auto overflow-x-hidden">
 
-            {activeSection === 'dashboard' ? (
-              <div className="space-y-6">
-                <Dashboard onNavigateToSection={setActiveSection} />
-                <AssessmentDashboardMetrics />
-              </div>
-            ) : activeSection === 'assessments' ? (
-              // Unified Assessment Dashboard
-              <AvailableTests
-                onBackToDashboard={() => setActiveSection('applications')}
+          
+          {activeSection === 'dashboard' ? (
+            <div className="space-y-6">
+              <Dashboard onNavigateToSection={setActiveSection} onStartTest={handleStartTest} />
+              <AssessmentDashboardMetrics />
+            </div>
+          ) : activeSection === 'assessments' ? (
+            // Unified Assessment Dashboard
+            <AvailableTests 
+              onBackToDashboard={() => setActiveSection('applications')} 
+              onViewTestInfo={handleViewTestInfo}
+              testFilter={currentTestFilter}
+            />
+          ) : activeSection.startsWith('test-info-') ? (
+            // Test Information Page
+            <TestInfoPage 
+              testId={currentTestId}
+              onStartTest={handleStartTestFromInfo}
+              onBackToDashboard={handleBackToAssessments}
+            />
+          ) : activeSection.startsWith('test-run-') ? (
+            // Unified Test Runner
+            <UnifiedTestRunnerShell
+              testId={currentTestId}
+              testInfo={currentTestInfo}
+              onTestComplete={handleTestComplete}
+              onAbortTest={handleBackToAssessments}
+            />
+          ) : activeSection.startsWith('test-results-') ? (
+            // Test Results Page
+            <TestResultsPage 
+              testId={currentTestId}
+              results={testResults}
+              onBackToDashboard={handleBackToAssessments}
+              onRetakeTest={handleRetakeTest}
+            />
+          ) : activeSection === 'test-session' ? (
+            <TestLayout />
+          ) : activeSection.startsWith('verbal-reasoning-test') ? (
+            <VerbalReasoningTest 
+              onBackToDashboard={() => setActiveSection('assessments')} 
+              language={activeSection.includes('french') ? 'french' : 'english'}
+              testId={currentTestId}
+            />
+          ) : activeSection === 'numerical-reasoning-test' ? (
+            <NumericalReasoningTest 
+              onBack={() => setActiveSection('assessments')} 
+              onComplete={() => setActiveSection('assessments')}
+              testId={currentTestId}
+            />
+          ) : activeSection === 'spatial-reasoning-test' ? (
+            <SpatialReasoningTest 
+              onBackToDashboard={() => setActiveSection('assessments')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'diagrammatic-reasoning-test' ? (
+            <DiagrammaticReasoningTest
+              onBackToDashboard={() => setActiveSection('assessments')}
+              onNavigateToTestHistory={() => setActiveSection('tests-history')}
+              testId={currentTestId}
+            />
+          ) : activeSection === 'abstract-reasoning-test' ? (
+            <AbstractReasoningTest
+              onBackToDashboard={() => setActiveSection('assessments')}
+              onNavigateToTestHistory={() => setActiveSection('tests-history')}
+              testId={currentTestId}
+            />
+          ) : activeSection === 'logical-reasoning-test' ? (
+            <LogicalReasoningTest 
+              onBackToDashboard={() => setActiveSection('assessments')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'lrt2-test' ? (
+            <LRT2Test 
+              onBackToDashboard={() => setActiveSection('assessments')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'lrt3-test' ? (
+            <LRT3Test 
+              onBackToDashboard={() => setActiveSection('assessments')} 
+              testId={currentTestId}
+            />
+          ) : activeSection === 'skills-management' ? (
+            <SkillsSelector 
+              userId={1} 
+              onSkillsUpdated={() => console.log('Skills updated')}
+            />
+          ) : activeSection === 'tests-by-competencies' ? (
+            <SkillTestsOverview 
+              onBackToDashboard={() => setActiveSection('applications')} 
+              onStartTest={handleStartTest}
+              userId={1} 
+            />
+          ) : activeSection === 'practical-tests' ? (
+            <PracticalTests onBackToDashboard={() => setActiveSection('applications')} />
+          ) : activeSection === 'technical-assessment' ? (
+            <SkillBasedTests 
+              userId={1}
+              testId={currentTestId}
+              skillId={currentSkillId}
+              onBackToDashboard={() => setActiveSection('applications')}
+            />
+          ) : activeSection === 'situational-judgment-test' ? (
+            <SituationalJudgmentTest 
+              onBackToDashboard={() => setActiveSection('assessments')}
+              testId={currentTestId}
+            />
+          ) : activeSection === 'test-administration' ? (
+            <TestAdministration 
+              onBackToDashboard={() => setActiveSection('applications')}
+            />
+          ) : activeSection === 'test-debug' ? (
+            <TestDebugPage />
+          ) : activeSection === 'available-tests' || activeSection.includes('-tests') ? (
+            // Legacy test routing (keeping for compatibility)
+            activeSection === 'technical-tests' ? (
+              <TechnicalTests onBackToDashboard={() => setActiveSection('applications')} />
+            ) : (
+              <AvailableTests 
+                onBackToDashboard={() => setActiveSection('applications')} 
+
                 onViewTestInfo={handleViewTestInfo}
                 testFilter={currentTestFilter}
               />

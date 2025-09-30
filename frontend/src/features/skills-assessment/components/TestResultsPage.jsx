@@ -1,9 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaCheckCircle, FaTrophy, FaRedo, FaArrowLeft, FaClock, FaChartLine, FaBrain, FaStar, FaAward, FaMedal } from 'react-icons/fa';
-import { formatDuration, getPerformanceLevel } from '../lib/scoreUtils';
+import { FaTrophy, FaRedo, FaClock, FaAward, FaMedal, FaStar, FaLightbulb, FaHistory, FaHome, FaBullseye } from 'react-icons/fa';
+import { formatDuration } from '../lib/scoreUtils';
 import { useAssessmentStore } from '../store/useAssessmentStore';
 import { formatUniversalResults } from '../lib/universalScoringIntegration';
+import TestHistoryModal from '../../test-history/components/TestHistoryModal';
+import '../../candidate-dashboard/styles/dashboard-design-system.css';
 
 const TestResultsPage = ({
   testResults,
@@ -11,14 +13,15 @@ const TestResultsPage = ({
   testType,
   testId,
   answers,
-  testData,
   onBackToDashboard,
   onRetakeTest,
+  onBackToTestList,
   showUniversalResults = false,
   scoringSystem = null
 }) => {
   const { addAttempt } = useAssessmentStore();
   const hasAddedAttempt = useRef(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
   // Use results from unified scoring if available, otherwise fallback to legacy testResults
   const finalResults = results || testResults;
@@ -38,7 +41,7 @@ const TestResultsPage = ({
           <h2 className="text-xl font-semibold text-gray-800 mb-2">No results available</h2>
           <button
             onClick={onBackToDashboard}
-            className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="sa-btn sa-btn-primary"
           >
             Back to Dashboard
           </button>
@@ -103,21 +106,6 @@ const TestResultsPage = ({
     isPassed: Boolean(resultData.isPassed)
   };
   
-  const performanceLevel = getPerformanceLevel(safeResultData.percentage);
-
-  const getResultStatus = () => {
-    // Use performanceLevel from scoreUtils for consistent labeling
-    return {
-      icon: <FaCheckCircle className="text-green-600" />,
-      text: performanceLevel.label,
-      color: performanceLevel.color,
-      bgColor: performanceLevel.bgColor,
-      borderColor: performanceLevel.borderColor
-    };
-  };
-
-  const resultStatus = getResultStatus();
-
   const getTestTitle = (testId) => {
     const titleMap = {
       'NRT': 'Numerical Reasoning',
@@ -139,240 +127,258 @@ const TestResultsPage = ({
     return `${testId} - ${baseTitle}`;
   };
 
+  const getTestCategory = (testId) => {
+    const categoryMap = {
+      'NRT': 'cognitive',
+      'VRT': 'cognitive',
+      'LRT': 'cognitive',
+      'ART': 'cognitive',
+      'DRT': 'cognitive',
+      'SRT': 'cognitive',
+      'SJT': 'behavioral',
+      'TAT': 'technical'
+    };
+
+    const testPrefix = testId.substring(0, 3);
+    return categoryMap[testPrefix] || 'cognitive';
+  };
+
+  const getPerformanceBadge = (percentage) => {
+    if (percentage >= 90) {
+      return { icon: <FaTrophy className="text-yellow-500" />, label: 'Expert', color: 'text-yellow-600' };
+    } else if (percentage >= 75) {
+      return { icon: <FaMedal className="text-blue-500" />, label: 'Advanced', color: 'text-blue-600' };
+    } else if (percentage >= 60) {
+      return { icon: <FaAward className="text-green-500" />, label: 'Intermediate', color: 'text-green-600' };
+    } else {
+      return { icon: <FaStar className="text-gray-500" />, label: 'Novice', color: 'text-gray-600' };
+    }
+  };
+
+
+
+  const getAverageTimePerQuestion = () => {
+    if (safeResultData.timeSpent > 0 && safeResultData.totalQuestions > 0) {
+      return Math.round(safeResultData.timeSpent / safeResultData.totalQuestions);
+    }
+    return null;
+  };
+
+  const getImprovementSuggestion = (percentage, testId) => {
+    const testPrefix = testId.substring(0, 3);
+    const suggestions = {
+      'NRT': 'Focus on mathematical calculations and data interpretation exercises',
+      'VRT': 'Practice reading comprehension and vocabulary building',
+      'LRT': 'Work on pattern recognition and logical sequence problems',
+      'ART': 'Develop abstract thinking through visual pattern exercises',
+      'DRT': 'Practice flowchart analysis and process understanding',
+      'SRT': 'Enhance spatial visualization with 3D rotation exercises',
+      'SJT': 'Study workplace scenarios and decision-making frameworks',
+      'TAT': 'Review technical concepts and hands-on practice'
+    };
+
+    if (percentage >= 75) {
+      return 'Excellent performance! Consider taking advanced assessments to further challenge yourself.';
+    }
+
+    return suggestions[testPrefix] || 'Review the test material and practice similar questions to improve your score.';
+  };
+
+
+
+  const getScoreColor = (score) => {
+    if (score >= 75) return 'text-green-600';
+    if (score >= 60) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getScoreBgColor = (score) => {
+    if (score >= 75) return 'bg-green-50 border-green-200';
+    if (score >= 60) return 'bg-yellow-50 border-yellow-200';
+    return 'bg-red-50 border-red-200';
+  };
+
+  const handleViewHistory = () => {
+    // Open test history modal
+    setIsHistoryModalOpen(true);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6 }}
-        className="max-w-2xl w-full bg-white rounded-lg shadow-lg overflow-hidden"
-      >
-        {/* Header with result icon */}
-        <div className="text-center py-8 px-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className="sa-container py-6">
+        {/* Header - Removed back button and date as they exist in Quick Actions */}
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Score Card */}
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-            className="mb-6"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+            className="lg:col-span-2"
           >
-            <div className={`inline-flex items-center justify-center w-16 h-16 ${resultStatus.bgColor} ${resultStatus.borderColor} border-2 rounded-full`}>
-              <div className="text-3xl">
-                {resultStatus.icon}
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="text-3xl font-bold text-gray-900 mb-2"
-          >
-            Test Complete!
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="text-gray-600"
-          >
-            {getTestTitle(safeResultData.testId)} Results
-          </motion.p>
-        </div>
-
-        {/* Results Cards */}
-        <div className={`grid gap-6 px-8 pb-8 ${resultData.universalScoring ? 'grid-cols-2' : 'grid-cols-3'}`}>
-          {/* Score */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="text-center p-6 bg-blue-50 rounded-lg"
-          >
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">Score</h3>
-            <p className="text-3xl font-bold text-blue-600">
-              {safeResultData.score}/{safeResultData.totalQuestions}
-            </p>
-            {resultData.universalScoring && resultData.scoreBreakdown && (
-              <p className="text-sm text-blue-500 mt-1">
-                +{resultData.scoreBreakdown.difficultyBonus || 0} difficulty bonus
-              </p>
-            )}
-          </motion.div>
-
-          {/* Percentage */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className="text-center p-6 bg-green-50 rounded-lg"
-          >
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">Percentage</h3>
-            <p className="text-3xl font-bold text-green-600">
-              {safeResultData.percentage}%
-            </p>
-            {resultData.universalScoring && resultData.timeEfficiency && (
-              <p className="text-sm text-green-500 mt-1">
-                {resultData.timeEfficiency}% time efficiency
-              </p>
-            )}
-          </motion.div>
-
-          {/* Result */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-            className={`text-center p-6 ${resultStatus.bgColor} rounded-lg`}
-          >
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">Result</h3>
-            <p className={`text-2xl font-bold ${resultStatus.color}`}>
-              {resultStatus.text}
-            </p>
-            {resultData.universalScoring && resultData.performanceLevel && (
-              <p className="text-sm text-gray-600 mt-1">
-                {resultData.performanceLevel}
-              </p>
-            )}
-          </motion.div>
-        </div>
-
-        {/* Time Spent (if available) */}
-        {safeResultData.timeSpent > 0 && (
-          <div className="px-8 pb-4">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.85 }}
-              className="text-center p-4 bg-gray-50 rounded-lg"
-            >
-              <div className="flex items-center justify-center mb-2">
-                <FaClock className="text-gray-600 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-800">Time Taken</h3>
-              </div>
-              <p className="text-xl font-bold text-gray-700">
-                {formatDuration(safeResultData.timeSpent)}
-              </p>
-            </motion.div>
-          </div>
-        )}
-
-        {/* Universal Scoring Details */}
-        {resultData.universalScoring && (resultData.difficultyBreakdown || resultData.averageTimePerQuestion) && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.85 }}
-            className="mx-8 mb-6 p-6 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg"
-          >
-            <div className="flex items-center mb-4">
-              <FaBrain className="text-purple-600 mr-3" />
-              <h4 className="font-semibold text-purple-800">Advanced Scoring Analysis</h4>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {resultData.difficultyBreakdown && (
-                <div className="bg-white p-4 rounded-lg">
-                  <h5 className="font-medium text-gray-800 mb-2 flex items-center">
-                    <FaStar className="text-yellow-500 mr-2" />
-                    Difficulty Performance
-                  </h5>
-                  <div className="space-y-1">
-                    {Object.entries(resultData.difficultyBreakdown).map(([level, count]) => (
-                      <div key={level} className="flex justify-between text-sm">
-                        <span className="text-gray-600">Level {level}:</span>
-                        <span className="font-medium">{count} questions</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {resultData.averageTimePerQuestion && (
-                <div className="bg-white p-4 rounded-lg">
-                  <h5 className="font-medium text-gray-800 mb-2 flex items-center">
-                    <FaClock className="text-blue-500 mr-2" />
-                    Time Analysis
-                  </h5>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Avg per question:</span>
-                      <span className="font-medium">{Math.round(resultData.averageTimePerQuestion)}s</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Total time:</span>
-                      <span className="font-medium">{formatDuration(resultData.timeSpent)}</span>
+            <div className="sa-card h-full">
+              {/* Header */}
+              <div className="text-center mb-6">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="relative">
+                    <div className={`w-20 h-20 rounded-full flex items-center justify-center ${getScoreBgColor(safeResultData.percentage)} border-2`}>
+                      <FaTrophy className={`w-8 h-8 ${getScoreColor(safeResultData.percentage)}`} />
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
-          </motion.div>
-        )}
 
-        {/* Performance Message */}
-        {safeResultData.isPassed ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
-            className="mx-8 mb-6 p-4 bg-green-50 border border-green-200 rounded-lg"
-          >
-            <div className="flex items-center">
-              <FaTrophy className="text-green-600 mr-3" />
-              <div>
-                <h4 className="font-semibold text-green-800">Congratulations!</h4>
-                <p className="text-green-700 text-sm">You have successfully passed this assessment.</p>
+                <h1 className="sa-heading-1 mb-2">Test Completed</h1>
+                <p className="text-gray-600 mb-4">{getTestTitle(safeResultData.testId)}</p>
+
+                {/* Score Display */}
+                <div className={`inline-block px-6 py-3 rounded-xl border-2 ${getScoreBgColor(safeResultData.percentage)}`}>
+                  <div className="text-center">
+                    <div className={`text-4xl font-bold ${getScoreColor(safeResultData.percentage)} mb-1`}>
+                      {safeResultData.percentage}%
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {safeResultData.score}/{safeResultData.totalQuestions} questions correct
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <FaClock className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                  <div className="font-semibold text-gray-900">{formatDuration(safeResultData.timeSpent)}</div>
+                  <div className="text-sm text-gray-600">Time Spent</div>
+                </div>
+
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <FaBullseye className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+                  <div className="font-semibold text-gray-900">{getAverageTimePerQuestion() || 'N/A'}s</div>
+                  <div className="text-sm text-gray-600">Avg per Question</div>
+                </div>
+              </div>
+
+              {/* Performance Level */}
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-50 rounded-full">
+                  {getPerformanceBadge(safeResultData.percentage).icon}
+                  <span className={`font-medium ${getPerformanceBadge(safeResultData.percentage).color}`}>
+                    {getPerformanceBadge(safeResultData.percentage).label} Level
+                  </span>
+                </div>
               </div>
             </div>
           </motion.div>
-        ) : (
+
+          {/* Right Column - Actions & Info */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
-            className="mx-8 mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="space-y-6"
           >
-            <div className="flex items-center">
-              <FaRedo className="text-yellow-600 mr-3" />
-              <div>
-                <h4 className="font-semibold text-yellow-800">Keep practicing!</h4>
-                <p className="text-yellow-700 text-sm">Review the material and try again when you're ready.</p>
+            {/* Quick Actions Card */}
+            <div className="sa-card">
+              <div className="sa-card-header">
+                <h3 className="sa-heading-2">Quick Actions</h3>
+              </div>
+              <div className="space-y-3">
+                <button
+                  onClick={handleViewHistory}
+                  className="w-full sa-btn sa-btn-secondary flex items-center justify-center"
+                >
+                  <FaHistory className="w-4 h-4 mr-2" />
+                  View Test History
+                </button>
+
+                {onRetakeTest && (
+                  <button
+                    onClick={() => {
+                      try {
+                        onRetakeTest();
+                      } catch (error) {
+                        console.error('Error retaking test:', error);
+                      }
+                    }}
+                    className="w-full sa-btn sa-btn-primary flex items-center justify-center"
+                  >
+                    <FaRedo className="w-4 h-4 mr-2" />
+                    Retake Test
+                  </button>
+                )}
+
+                <button
+                  onClick={() => {
+                    try {
+                      if (onBackToDashboard) {
+                        onBackToDashboard();
+                      } else {
+                        // Fallback navigation
+                        window.location.href = '/dashboard';
+                      }
+                    } catch (error) {
+                      console.error('Error navigating to dashboard:', error);
+                      window.location.href = '/dashboard';
+                    }
+                  }}
+                  className="w-full sa-btn sa-btn-ghost flex items-center justify-center"
+                >
+                  <FaHome className="w-4 h-4 mr-2" />
+                  Back to Dashboard
+                </button>
+              </div>
+            </div>
+
+            {/* Performance Insights Card */}
+            <div className="sa-card">
+              <div className="sa-card-header">
+                <h3 className="sa-heading-2">Performance Insights</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Accuracy</span>
+                  <span className="font-semibold">{Math.round((safeResultData.score / safeResultData.totalQuestions) * 100)}%</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Category</span>
+                  <span className="font-semibold capitalize">{getTestCategory(safeResultData.testId)}</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Status</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    safeResultData.isPassed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {safeResultData.isPassed ? 'PASSED' : 'NEEDS IMPROVEMENT'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Improvement Tips Card */}
+            <div className="sa-card">
+              <div className="sa-card-header">
+                <h3 className="sa-heading-2 flex items-center">
+                  <FaLightbulb className="w-5 h-5 mr-2 text-yellow-500" />
+                  Next Steps
+                </h3>
+              </div>
+              <div className="text-sm text-gray-600 leading-relaxed">
+                {getImprovementSuggestion(safeResultData.percentage, safeResultData.testId)}
               </div>
             </div>
           </motion.div>
-        )}
+        </div>
+      </div>
 
-        {/* Action Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.0 }}
-          className="text-center p-8 bg-gray-50 border-t border-gray-200"
-        >
-          <div className="flex justify-center gap-4">
-            <button
-              onClick={onBackToDashboard}
-              className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
-            >
-              <FaArrowLeft className="w-4 h-4 mr-2" />
-              Back to Assessment Dashboard
-            </button>
-            {onRetakeTest && (
-              <button
-                onClick={() => onRetakeTest(safeResultData.testId)}
-                className="flex items-center px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors font-medium"
-              >
-                <FaRedo className="w-4 h-4 mr-2" />
-                Retake Test
-              </button>
-            )}
-          </div>
-        </motion.div>
-      </motion.div>
+      {/* Test History Modal */}
+      <TestHistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+      />
     </div>
   );
 };
-
 export default TestResultsPage;

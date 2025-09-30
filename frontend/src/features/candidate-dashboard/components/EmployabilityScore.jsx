@@ -7,7 +7,8 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
   XCircleIcon,
-  AcademicCapIcon
+  AcademicCapIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import dashboardApi from '../services/dashboardApi';
@@ -16,13 +17,14 @@ import EmployabilityScoreModal from './EmployabilityScoreModal';
 
 const EmployabilityScore = () => {
   const [selectedProfile, setSelectedProfile] = useState('Software Engineer');
-  const [employabilityScore, setEmployabilityScore] = useState(72);
-  const [previousScore, setPreviousScore] = useState(68);
+  const [employabilityScore, setEmployabilityScore] = useState(0); // Start with 0, will be updated from API
+  const [previousScore, setPreviousScore] = useState(0); // Start with 0, will be updated from API
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [scoreData, setScoreData] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
 
   const profiles = [
@@ -96,7 +98,20 @@ const EmployabilityScore = () => {
     };
 
     fetchScoreData();
-  }, [selectedProfile]); // Re-fetch when profile changes
+  }, [selectedProfile, refreshTrigger]); // Re-fetch when profile changes or refresh is triggered
+
+  // Refresh function that can be called externally
+  const refreshData = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  // Expose refresh function globally for other components to use
+  useEffect(() => {
+    window.refreshEmployabilityScore = refreshData;
+    return () => {
+      delete window.refreshEmployabilityScore;
+    };
+  }, []);
 
 
   const getScoreColor = (score) => {
@@ -250,15 +265,27 @@ const EmployabilityScore = () => {
             </div>
           </div>
 
-          {/* Profile Selector */}
-          <div className="relative flex-shrink-0">
+          {/* Profile Selector and Refresh Button */}
+          <div className="flex items-center space-x-2 flex-shrink-0">
+            {/* Refresh Button */}
             <button
-              onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-              className="flex items-center space-x-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors text-sm w-full sm:w-auto justify-between sm:justify-start"
+              onClick={refreshData}
+              disabled={loading}
+              className="p-2 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Refresh data"
             >
-              <span className="font-medium text-gray-700 truncate max-w-[180px]">{selectedProfile}</span>
-              <ChevronDownIcon className="w-3 h-3 text-gray-500 flex-shrink-0" />
+              <ArrowPathIcon className={`w-4 h-4 text-gray-600 ${loading ? 'animate-spin' : ''}`} />
             </button>
+
+            {/* Profile Selector */}
+            <div className="relative">
+              <button
+                onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                className="flex items-center space-x-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors text-sm w-full sm:w-auto justify-between sm:justify-start"
+              >
+                <span className="font-medium text-gray-700 truncate max-w-[180px]">{selectedProfile}</span>
+                <ChevronDownIcon className="w-3 h-3 text-gray-500 flex-shrink-0" />
+              </button>
 
             {isProfileDropdownOpen && (
               <div className="absolute right-0 mt-2 w-full sm:w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10 max-h-60 overflow-y-auto">
@@ -278,6 +305,7 @@ const EmployabilityScore = () => {
                 ))}
               </div>
             )}
+            </div>
           </div>
         </div>
 
@@ -297,12 +325,9 @@ const EmployabilityScore = () => {
                   </div>
                 </div>
                 {/* Enhanced Animated Progress Ring */}
-                <motion.svg
+                <svg
                   className="absolute inset-0 w-20 h-20 lg:w-24 lg:h-24 transform -rotate-90"
                   viewBox="0 0 100 100"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: (employabilityScore / 100) }}
-                  transition={{ duration: 1.2, ease: "easeOut" }}
                 >
                   <circle
                     cx="50"
@@ -312,11 +337,14 @@ const EmployabilityScore = () => {
                     stroke="currentColor"
                     strokeWidth="6"
                     strokeDasharray="251.2"
+                    strokeDashoffset={251.2 - (251.2 * employabilityScore / 100)}
                     className={getScoreColor(employabilityScore).replace('text-', 'stroke-')}
                     strokeLinecap="round"
-                    style={{ pathLength: (employabilityScore / 100) }}
+                    style={{
+                      transition: 'stroke-dashoffset 1.2s ease-out'
+                    }}
                   />
-                </motion.svg>
+                </svg>
               </div>
 
               {/* Enhanced Score Details */}

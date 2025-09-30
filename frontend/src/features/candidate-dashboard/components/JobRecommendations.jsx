@@ -7,19 +7,24 @@ import {
   ArrowTopRightOnSquareIcon,
   ExclamationTriangleIcon,
   ArrowPathIcon
+
+
 } from '@heroicons/react/24/outline';
 import dashboardApi from '../services/dashboardApi';
 import jobRecommendationsApi from '../../../services/jobRecommendationsApi';
 import { useAuth } from '../../../contexts/AuthContext';
 import { loadUserProfile } from '../../../utils/profileUtils';
 
+
 const JobRecommendations = ({ onViewAll, limit = 3 }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+
 
   // Load user profile
   useEffect(() => {
@@ -131,6 +136,13 @@ const JobRecommendations = ({ onViewAll, limit = 3 }) => {
     return 'Fair Match';
   };
 
+  const handleStartTest = (test) => {
+    console.log('Starting test:', test);
+    // Navigate to test or handle test start logic
+    setShowTestModal(false);
+    // You can add navigation logic here
+  };
+
   if (loading) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -190,7 +202,7 @@ const JobRecommendations = ({ onViewAll, limit = 3 }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-green-100 rounded-lg">
             <BriefcaseIcon className="w-6 h-6 text-green-600" />
@@ -230,9 +242,12 @@ const JobRecommendations = ({ onViewAll, limit = 3 }) => {
         </div>
       </div>
 
+
+
       {/* Job Cards */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {jobs.length === 0 ? (
+
           <div className="text-center py-8">
             <BriefcaseIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -267,12 +282,17 @@ const JobRecommendations = ({ onViewAll, limit = 3 }) => {
                   <p className="text-sm text-gray-600 mb-2">{job.company}</p>
                   <div className="flex items-center space-x-4 text-sm text-gray-500">
                     <div className="flex items-center space-x-1">
-                      <MapPinIcon className="w-4 h-4" />
-                      <span>{job.location}</span>
+                      <MapPinIcon className="w-3 h-3" />
+                      <span className="truncate">{job.location}</span>
+                      {job.remote && (
+                        <span className="ml-1 px-1 py-0.5 bg-green-100 text-green-700 text-xs rounded">
+                          Remote
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center space-x-1">
-                      <CurrencyDollarIcon className="w-4 h-4" />
-                      <span>{job.salary}</span>
+                      <CurrencyDollarIcon className="w-3 h-3" />
+                      <span className="truncate">{job.salary}</span>
                     </div>
                     {job.type && (
                       <div className="flex items-center space-x-1">
@@ -284,10 +304,10 @@ const JobRecommendations = ({ onViewAll, limit = 3 }) => {
                 </div>
 
                 {/* Match Score */}
-                <div className="text-right">
-                  <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getMatchColor(job.match)}`}>
-                    <StarIcon className="w-4 h-4 mr-1" />
-                    {job.match}% Match
+                <div className="text-right ml-2">
+                  <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getMatchColor(job.match)}`}>
+                    <StarIcon className="w-3 h-3 mr-1" />
+                    {job.match}%
                   </div>
                   <p className="text-xs text-gray-500 mt-1">{getMatchLabel(job.match)}</p>
                 </div>
@@ -300,13 +320,16 @@ const JobRecommendations = ({ onViewAll, limit = 3 }) => {
                     <span
                       key={index}
                       className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md border border-blue-200"
+
                     >
                       {skill}
                     </span>
                   ))}
+
                   {job.skills.length > 4 && (
                     <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">
                       +{job.skills.length - 4} more
+
                     </span>
                   )}
                 </div>
@@ -341,22 +364,21 @@ const JobRecommendations = ({ onViewAll, limit = 3 }) => {
         )}
       </div>
 
-      {/* Job Match Insights */}
-      {jobs.length > 0 && (
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Job Match Insights</h3>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-gray-600">
-                {jobs.filter(job => job.match >= 80).length} Excellent matches
-              </span>
+      {/* Quick Stats & Tips */}
+      {jobs.length > 0 ? (
+        <div className="mt-4 pt-3 border-t border-gray-200">
+          <div className="grid grid-cols-2 gap-3 text-center mb-3">
+            <div className="p-2 bg-green-50 rounded-lg">
+              <div className="text-sm font-bold text-green-600">
+                {jobs.filter(job => job.match >= 80).length}
+              </div>
+              <div className="text-xs text-green-700 font-medium">Excellent</div>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-gray-600">
-                {jobs.filter(job => job.match >= 60 && job.match < 80).length} Good matches
-              </span>
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <div className="text-sm font-bold text-blue-600">
+                {Math.round(jobs.reduce((sum, job) => sum + job.match, 0) / jobs.length)}%
+              </div>
+              <div className="text-xs text-blue-700 font-medium">Avg Match</div>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
@@ -389,8 +411,23 @@ const JobRecommendations = ({ onViewAll, limit = 3 }) => {
               ></div>
             </div>
           </div>
+          <div className="text-center">
+            <p className="text-xs text-gray-600">
+              Based on your skills and test performance
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-4 pt-3 border-t border-gray-200">
+          <h4 className="text-sm font-semibold text-gray-900 mb-2">Quick Tips</h4>
+          <div className="space-y-1 text-xs text-gray-600">
+            <p>• Complete more assessments to improve job matching accuracy</p>
+            <p>• Focus on skills that appear frequently in your target roles</p>
+            <p>• Consider taking specialized tests for your desired career path</p>
+          </div>
         </div>
       )}
+
 
       {/* Quick Tips */}
       <div className="mt-6 pt-4 border-t border-gray-200">
@@ -413,6 +450,7 @@ const JobRecommendations = ({ onViewAll, limit = 3 }) => {
           )}
         </div>
       </div>
+
     </div>
   );
 };
