@@ -768,8 +768,8 @@ const JobRecommendations = ({
                   const requiredMatchPercentage = requiredSkills.length > 0 ? (matchedRequiredSkills.length / requiredSkills.length) * 100 : 0;
                   const preferredMatchPercentage = preferredSkills.length > 0 ? (matchedPreferredSkills.length / preferredSkills.length) * 100 : 0;
 
-                  // Calculate AI-powered match percentage using only required skills
-                  const aiMatchPercentage = Math.round(requiredMatchPercentage);
+                  // Calculate AI-powered match percentage using the weighted score for consistency
+                  const aiMatchPercentage = Math.round(score);
 
                   return {
                     ...job,
@@ -779,10 +779,12 @@ const JobRecommendations = ({
                     isGoodMatch: score >= 50,
                     skillMatchCount: allMatchedSkills.length,
 
-                    // Proportional test scoring details
-                    testScore: Math.round(testScore * 100),
-                    passedTests: passedTests,
-                    totalRelevantTests: totalRelevantTests,
+                    // Proportional test scoring details - ensure consistency with actual matches
+                    skillsScore: Math.round((scoreResult.skillsScore || 0) * 100),
+                    testScore: Math.round(technicalTestScore * 100),
+                    cognitiveTestScore: Math.round(scoreResult.cognitiveTestScore * 100),
+                    passedTests: passedTechnicalTests,
+                    totalRelevantTests: totalRelevantTechnicalTests,
                     locationScore: Math.round(locationScore * 100),
                     // Skill matching details
                     requiredSkills: requiredSkills,
@@ -793,7 +795,7 @@ const JobRecommendations = ({
                     preferredMatchedCount: matchedPreferredSkills.length,
                     requiredMatchPercentage: Math.round(requiredMatchPercentage),
                     preferredMatchPercentage: Math.round(preferredMatchPercentage),
-                    aiMatchPercentage: aiMatchPercentage,
+                    aiMatchPercentage: score, // Use the same score for consistency
                     // Ensure all required fields are present for the UI
                     salary: job.salary_min && job.salary_max
                       ? `${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()} ${job.salary_currency}`
@@ -1828,18 +1830,18 @@ const JobRecommendations = ({
                               d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                             />
                             <path
-                              className={getScoreProgressColor(job.aiMatchPercentage || 0)}
+                              className={getScoreProgressColor(job.recommendationScore || 0)}
                               stroke="currentColor"
                               strokeWidth="3"
                               fill="none"
                               strokeLinecap="round"
-                              strokeDasharray={`${job.aiMatchPercentage || 0}, 100`}
+                              strokeDasharray={`${job.recommendationScore || 0}, 100`}
                               d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                             />
                           </svg>
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <span className={`text-sm font-bold leading-none ${getScoreColor(job.aiMatchPercentage || 0).split(' ')[0]}`}>
-                              {Math.round(job.aiMatchPercentage || 0)}%
+                            <span className={`text-sm font-bold leading-none ${getScoreColor(job.recommendationScore || 0).split(' ')[0]}`}>
+                              {Math.round(job.recommendationScore || 0)}%
                             </span>
                           </div>
                         </div>
@@ -1995,7 +1997,7 @@ const JobRecommendations = ({
                             </div>
                             <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
                               <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                 Job match score: Skills (40%) + Technical Tests (25%) + Cognitive Tests (15%) + Content Similarity (10%) + Career Cluster Fit (10%)
+                                Job match score: Skills (40%) + Technical Tests (25%) + Cognitive Tests (15%) + Content Similarity (10%) + Career Cluster Fit (10%)
                               </p>
                               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                                 Skills and technical tests are the most important factors, followed by cognitive abilities and content match
