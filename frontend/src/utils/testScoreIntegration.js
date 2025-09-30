@@ -4,6 +4,7 @@
  */
 
 import { getTestResults, getLatestTestResult } from './testScoring';
+import { getBackendTestResults, getLatestBackendTestResult, getSkillTestScoresFromBackend } from './backendTestResults';
 import { getAllTechnicalTests } from '../data/mockTechnicalTests';
 
 /**
@@ -49,34 +50,80 @@ export const getSkillTestScore = (skillName, userId) => {
  * Get all skill test scores for a user
  * @param {Array} userSkills - Array of user skills
  * @param {number} userId - The user ID
- * @returns {Object} - Object mapping skill names to their test scores
+ * @returns {Promise<Object>} - Object mapping skill names to their test scores
  */
-export const getAllSkillTestScores = (userSkills, userId) => {
-    const skillScores = {};
+export const getAllSkillTestScores = async (userSkills, userId) => {
+    try {
+        console.log('🔍 Getting skill test scores from backend for user:', userId);
 
-    if (!userSkills || !Array.isArray(userSkills)) {
-        console.log('🔍 No user skills provided');
+        // First try to get from backend
+        const backendSkillScores = await getSkillTestScoresFromBackend(userId);
+
+        if (Object.keys(backendSkillScores).length > 0) {
+            console.log('✅ Using backend skill test scores:', backendSkillScores);
+            return backendSkillScores;
+        }
+
+        // Fallback to localStorage if no backend data
+        console.log('⚠️ No backend data found, falling back to localStorage');
+        const skillScores = {};
+
+        if (!userSkills || !Array.isArray(userSkills)) {
+            console.log('🔍 No user skills provided');
+            return skillScores;
+        }
+
+        // Normalize user skills to handle both string and object formats
+        const normalizedSkills = userSkills.map(skill => {
+            if (typeof skill === 'string') return skill;
+            if (typeof skill === 'object' && skill.name) return skill.name;
+            return String(skill);
+        });
+
+        console.log('🔍 Getting test scores for skills:', normalizedSkills);
+
+        normalizedSkills.forEach(skillName => {
+            const testScore = getSkillTestScore(skillName, userId);
+            if (testScore) {
+                // For testing purposes, consider 50%+ as passed
+                const adjustedTestScore = {
+                    ...testScore,
+                    passed: testScore.percentage >= 50
+                };
+                skillScores[skillName] = adjustedTestScore;
+            }
+        });
+
+        console.log('📊 All skill test scores (localStorage):', skillScores);
+        return skillScores;
+
+    } catch (error) {
+        console.error('❌ Error getting skill test scores:', error);
+
+        // Fallback to localStorage on error
+        const skillScores = {};
+        if (userSkills && Array.isArray(userSkills)) {
+            const normalizedSkills = userSkills.map(skill => {
+                if (typeof skill === 'string') return skill;
+                if (typeof skill === 'object' && skill.name) return skill.name;
+                return String(skill);
+            });
+
+            normalizedSkills.forEach(skillName => {
+                const testScore = getSkillTestScore(skillName, userId);
+                if (testScore) {
+                    // For testing purposes, consider 50%+ as passed
+                    const adjustedTestScore = {
+                        ...testScore,
+                        passed: testScore.percentage >= 50
+                    };
+                    skillScores[skillName] = adjustedTestScore;
+                }
+            });
+        }
+
         return skillScores;
     }
-
-    // Normalize user skills to handle both string and object formats
-    const normalizedSkills = userSkills.map(skill => {
-        if (typeof skill === 'string') return skill;
-        if (typeof skill === 'object' && skill.name) return skill.name;
-        return String(skill);
-    });
-
-    console.log('🔍 Getting test scores for skills:', normalizedSkills);
-
-    normalizedSkills.forEach(skillName => {
-        const testScore = getSkillTestScore(skillName, userId);
-        if (testScore) {
-            skillScores[skillName] = testScore;
-        }
-    });
-
-    console.log('📊 All skill test scores:', skillScores);
-    return skillScores;
 };
 
 /**
@@ -169,9 +216,9 @@ export const getEnhancedSkillMatch = (skillName, userSkills, skillTestScores) =>
  * @param {Object} job - Job object
  * @param {Array} userSkills - User's skills
  * @param {number} userId - User ID
- * @returns {Object} - Enhanced job match information
+ * @returns {Promise<Object>} - Enhanced job match information
  */
-export const calculateEnhancedJobMatch = (job, userSkills, userId) => {
+export const calculateEnhancedJobMatch = async (job, userSkills, userId) => {
     console.log('🔍 calculateEnhancedJobMatch called with:', {
         jobTitle: job.title,
         userSkills,
@@ -181,7 +228,7 @@ export const calculateEnhancedJobMatch = (job, userSkills, userId) => {
     });
 
     // Get all skill test scores
-    const skillTestScores = getAllSkillTestScores(userSkills, userId);
+    const skillTestScores = await getAllSkillTestScores(userSkills, userId);
 
     // Extract job skills
     const requiredSkills = job.required_skills?.map(skill => {
