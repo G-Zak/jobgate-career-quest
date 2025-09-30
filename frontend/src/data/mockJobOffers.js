@@ -6,20 +6,20 @@
 export const mockJobOffers = [
     {
         id: 1,
-        title: 'Senior Python Developer',
+        title: 'Python Developer',
         company: 'TechCorp Inc.',
         location: 'Casablanca, Morocco',
         city: 'Casablanca',
-        description: 'We are looking for a senior Python developer with Django experience to join our team. You will work on building scalable web applications and APIs.',
-        requirements: '5+ years of Python experience, Django framework knowledge, REST API development, database design experience',
+        description: 'We are looking for a Python developer with Django experience to join our team. You will work on building scalable web applications and APIs.',
+        requirements: 'Python experience, Django framework knowledge, REST API development, database design experience',
         job_type: 'full-time',
-        seniority: 'senior',
-        salary_min: 15000,
-        salary_max: 25000,
+        seniority: 'mid',
+        salary_min: 12000,
+        salary_max: 18000,
         salary_currency: 'MAD',
         remote: true,
         status: 'active',
-        posted: new Date().toISOString(),
+        posted: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
         required_skills: [
             { id: 1, name: 'Python', category: 'programming' },
             { id: 2, name: 'Django', category: 'backend' },
@@ -32,7 +32,7 @@ export const mockJobOffers = [
             { id: 7, name: 'Git', category: 'other' }
         ],
         tags: ['Python', 'Django', 'Backend', 'API', 'PostgreSQL'],
-        experience_required: '5+ years',
+        experience_required: '2+ years',
         education_required: 'Bachelor\'s degree in Computer Science or related field'
     },
     {
@@ -67,6 +67,68 @@ export const mockJobOffers = [
     },
     {
         id: 3,
+        title: 'JavaScript Backend Developer',
+        company: 'ServerSide Tech',
+        location: 'Agadir, Morocco',
+        city: 'Agadir',
+        description: 'Join our backend team as a JavaScript developer. You will build scalable APIs and server-side applications using Node.js and modern JavaScript.',
+        requirements: 'JavaScript proficiency, Node.js experience, REST API development, SQLite knowledge',
+        job_type: 'full-time',
+        seniority: 'mid',
+        salary_min: 11000,
+        salary_max: 17000,
+        salary_currency: 'MAD',
+        remote: false,
+        status: 'active',
+        posted: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+        required_skills: [
+            { id: 12, name: 'JavaScript', category: 'programming' },
+            { id: 13, name: 'Node.js', category: 'backend' },
+            { id: 14, name: 'SQLite', category: 'database' },
+            { id: 15, name: 'REST API', category: 'backend' }
+        ],
+        preferred_skills: [
+            { id: 16, name: 'Express.js', category: 'backend' },
+            { id: 17, name: 'MongoDB', category: 'database' },
+            { id: 7, name: 'Git', category: 'other' }
+        ],
+        tags: ['JavaScript', 'Node.js', 'Backend', 'API', 'SQLite'],
+        experience_required: '2+ years',
+        education_required: 'Bachelor\'s degree or equivalent experience'
+    },
+    {
+        id: 4,
+        title: 'React Full-Stack Developer',
+        company: 'WebCraft Studio',
+        location: 'Casablanca, Morocco',
+        city: 'Casablanca',
+        description: 'We are seeking a React developer who can work on both frontend and backend. You will build modern web applications with React and Node.js.',
+        requirements: 'React experience, JavaScript proficiency, Node.js knowledge, REST API development',
+        job_type: 'full-time',
+        seniority: 'mid',
+        salary_min: 13000,
+        salary_max: 20000,
+        salary_currency: 'MAD',
+        remote: true,
+        status: 'active',
+        posted: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+        required_skills: [
+            { id: 8, name: 'React', category: 'frontend' },
+            { id: 9, name: 'JavaScript', category: 'programming' },
+            { id: 13, name: 'Node.js', category: 'backend' },
+            { id: 18, name: 'SQLite', category: 'database' }
+        ],
+        preferred_skills: [
+            { id: 19, name: 'TypeScript', category: 'programming' },
+            { id: 20, name: 'Express.js', category: 'backend' },
+            { id: 7, name: 'Git', category: 'other' }
+        ],
+        tags: ['React', 'JavaScript', 'Node.js', 'Full-Stack', 'SQLite'],
+        experience_required: '3+ years',
+        education_required: 'Bachelor\'s degree or equivalent experience'
+    },
+    {
+        id: 5,
         title: 'Full Stack Java Developer',
         company: 'Enterprise Solutions',
         location: 'Casablanca, Morocco',

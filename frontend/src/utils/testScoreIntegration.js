@@ -20,7 +20,16 @@ const SKILL_TO_TEST_MAPPING = {
     'SQLite': 6,
     'Java': 7,
     'Git': 8,
-    'HTML5': 9
+    'HTML5': 9,
+    // Additional mappings for common variations
+    'Node.js': 2,
+    'NodeJS': 2,
+    'JS': 2,
+    'Backend Developer': 2,
+    'ServerSide Tech': 2,
+    'REST API': 5,
+    'API': 5,
+    'REST': 5
 };
 
 /**
@@ -30,7 +39,31 @@ const SKILL_TO_TEST_MAPPING = {
  * @returns {Object|null} - Test score object or null if no test found
  */
 export const getSkillTestScore = (skillName, userId) => {
-    const testId = SKILL_TO_TEST_MAPPING[skillName];
+    // Try exact match first
+    let testId = SKILL_TO_TEST_MAPPING[skillName];
+
+    // If no exact match, try case-insensitive matching
+    if (!testId) {
+        const skillLower = skillName.toLowerCase();
+        for (const [key, value] of Object.entries(SKILL_TO_TEST_MAPPING)) {
+            if (key.toLowerCase() === skillLower) {
+                testId = value;
+                break;
+            }
+        }
+    }
+
+    // If still no match, try partial matching
+    if (!testId) {
+        const skillLower = skillName.toLowerCase();
+        for (const [key, value] of Object.entries(SKILL_TO_TEST_MAPPING)) {
+            if (key.toLowerCase().includes(skillLower) || skillLower.includes(key.toLowerCase())) {
+                testId = value;
+                break;
+            }
+        }
+    }
+
     if (!testId) {
         console.log(`🔍 No test found for skill: ${skillName}`);
         return null;

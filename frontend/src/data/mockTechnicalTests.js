@@ -1913,6 +1913,56 @@ export const mockTechnicalTests = {
                 explanation: "The <small> element represents side comments and small print."
             }
         ]
+    },
+
+    // Spring Boot Test
+    springboot: {
+        id: 10,
+        test_name: 'Spring Boot Framework Test',
+        skill: { name: 'Spring Boot', category: 'backend' },
+        description: 'Test your knowledge of Spring Boot framework',
+        difficulty: 'Intermediate',
+        time_limit: 20,
+        question_count: 15,
+        total_score: 100,
+        questions: [
+            {
+                id: 1,
+                question: "What is Spring Boot?",
+                options: [
+                    "A Java framework for building microservices",
+                    "A Python web framework",
+                    "A JavaScript library",
+                    "A database management system"
+                ],
+                correct_answer: 0,
+                explanation: "Spring Boot is a Java framework that simplifies the development of Java applications, especially microservices."
+            },
+            {
+                id: 2,
+                question: "Which annotation is used to mark a class as a Spring Boot application?",
+                options: [
+                    "@SpringBootApplication",
+                    "@Application",
+                    "@SpringApp",
+                    "@BootApplication"
+                ],
+                correct_answer: 0,
+                explanation: "@SpringBootApplication is the main annotation that marks a class as a Spring Boot application."
+            },
+            {
+                id: 3,
+                question: "What is the default embedded server in Spring Boot?",
+                options: [
+                    "Tomcat",
+                    "Jetty",
+                    "Undertow",
+                    "Apache"
+                ],
+                correct_answer: 0,
+                explanation: "Spring Boot uses Tomcat as the default embedded server, though Jetty and Undertow are also supported."
+            }
+        ]
     }
 };
 

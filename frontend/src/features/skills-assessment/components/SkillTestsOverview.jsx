@@ -516,14 +516,15 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
     const personalizedTests = [];
 
     // Normaliser les compétences utilisateur pour gérer différents formats
+    let skillIdCounter = 1;
     const normalizedSkills = userSkills.map(skill => {
       if (typeof skill === 'string') {
-        return { name: skill, category: 'other', id: Math.random() };
+        return { name: skill, category: 'other', id: skillIdCounter++ };
       }
       if (typeof skill === 'object' && skill.name) {
-        return { name: skill.name, category: skill.category || 'other', id: skill.id || Math.random() };
+        return { name: skill.name, category: skill.category || 'other', id: skill.id || skillIdCounter++ };
       }
-      return { name: String(skill), category: 'other', id: Math.random() };
+      return { name: String(skill), category: 'other', id: skillIdCounter++ };
     });
 
     // Ajouter des tests spécifiques pour les compétences de l'utilisateur
@@ -540,7 +541,7 @@ const SkillTestsOverview = ({ onBackToDashboard, onStartTest, userId = 1 }) => {
       // Créer un test personnalisé seulement si aucun test n'existe
       if (!existingTest) {
         const customTest = {
-          id: 1000 + skill.id, // ID unique pour les tests personnalisés
+          id: Math.floor(1000 + skill.id), // ID unique pour les tests personnalisés (ensure integer)
           test_name: `${skill.name} Assessment Test`,
           skill: { name: skill.name, category: skill.category },
           description: `Test your knowledge of ${skill.name} - personalized for your profile`,
