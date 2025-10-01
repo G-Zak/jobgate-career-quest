@@ -2,14 +2,14 @@
 
 ## Project Description
 
-JobGate is a comprehensive career assessment and job matching platform that leverages artificial intelligence and machine learning to evaluate candidates' skills across multiple dimensions and provide intelligent job recommendations. The platform combines cognitive testing, technical assessments, and behavioral evaluations to create detailed employability profiles and match candidates with suitable career opportunities.
+JobGate is a comprehensive career assessment and job matching platform that provides data-driven candidate evaluation across multiple dimensions and delivers personalized job recommendations. The platform combines cognitive testing, technical assessments, and behavioral evaluations to create detailed employability profiles and match candidates with suitable career opportunities.
 
 ### Business Context
 
 In today's competitive job market, traditional recruitment methods often fail to accurately assess candidate capabilities and match them with appropriate positions. JobGate addresses this challenge by providing:
 
 - **Multi-dimensional Assessment**: Comprehensive evaluation across cognitive, technical, situational, analytical, and communication skills
-- **AI-Powered Matching**: Intelligent job recommendations using hybrid filtering algorithms
+- **Smart Matching**: Intelligent job recommendations using hybrid filtering algorithms
 - **Data-Driven Insights**: Real-time analytics and performance tracking for both candidates and recruiters
 - **Scalable Platform**: Modern architecture supporting thousands of concurrent users
 
@@ -37,7 +37,7 @@ In today's competitive job market, traditional recruitment methods often fail to
 - Scoring Service: Multi-dimensional score calculation, employability metrics
 - Recommendation Engine: Job matching algorithms, candidate ranking
 
-**ML/AI Components Layer**
+**Recommendation Components Layer**
 - K-Means Clustering for candidate segmentation (Scikit-learn)
 - Collaborative Filtering for pattern-based recommendations
 - Content-Based Filtering for skill and requirement matching
@@ -66,7 +66,7 @@ In today's competitive job market, traditional recruitment methods often fail to
 - PostgreSQL 15
 - Celery for async task processing
 - Redis for caching
-- Scikit-learn for ML algorithms
+- Scikit-learn for recommendation algorithms
 - NumPy & Pandas for data processing
 
 **DevOps:**
@@ -121,7 +121,7 @@ In today's competitive job market, traditional recruitment methods often fail to
 - 60-69: Fair - Some skill gaps to address
 - Below 60: Needs Improvement - Focus on fundamentals
 
-### 3. AI-Powered Job Recommendations
+### 3. Smart Job Recommendations
 
 **Multi-Factor Matching Algorithm:**
 - Skill Matching (40%): Required and preferred skills comparison
@@ -159,7 +159,7 @@ In today's competitive job market, traditional recruitment methods often fail to
 ### 5. Job Matching & Application
 
 **Job Discovery:**
-- AI-powered job recommendations
+- Smart job recommendations
 - Advanced filtering (location, salary, experience, skills)
 - Match percentage display
 - Detailed job descriptions
@@ -210,7 +210,7 @@ In today's competitive job market, traditional recruitment methods often fail to
 - Profile-based weighting ensures role-specific relevance
 
 ### Job Matching Quality
-- 78% match accuracy in AI-powered recommendations
+- 78% match accuracy in smart recommendations
 - 65% reduction in irrelevant job suggestions
 - Hybrid filtering combines multiple data sources
 
@@ -242,7 +242,7 @@ In today's competitive job market, traditional recruitment methods often fail to
 - Database integration and optimization
 
 **September 2025 - Advanced Features & Deployment**
-- AI/ML recommendation engine implementation
+- Recommendation engine implementation
 - Candidate clustering algorithms
 - Dashboard analytics and visualization
 - Testing and quality assurance
@@ -272,7 +272,7 @@ In today's competitive job market, traditional recruitment methods often fail to
 
 **Yassine Mchereg**
 - Backend API development
-- ML/AI implementation (clustering, recommendations)
+- Data science implementation (clustering, recommendations)
 - Database management
 - Test engine implementation
 
@@ -300,8 +300,8 @@ In today's competitive job market, traditional recruitment methods often fail to
 - Skills certification and badging
 - Integration with ATS (Applicant Tracking Systems)
 
-### AI/ML Enhancements
-- Deep learning models for more accurate predictions
+### Advanced Analytics Enhancements
+- Enhanced statistical models for more accurate predictions
 - Natural language processing for resume analysis
 - Sentiment analysis for behavioral assessments
 - Automated interview question generation

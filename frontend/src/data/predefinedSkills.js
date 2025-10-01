@@ -51,14 +51,14 @@ export const skillCategories = {
  "Load Balancing", "Monitoring", "Logging", "Security"
  ]
  },
- "Data Science & AI": {
+ "Data Science & Analytics": {
  icon: "",
  color: "#EC4899",
  skills: [
- "Python", "R", "Pandas", "NumPy", "Scikit-learn",
- "TensorFlow", "PyTorch", "Keras", "OpenCV", "NLTK",
+ "Python", "R", "Pandas", "NumPy", "Statistics",
+ "Data Analysis", "Data Visualization", "Excel", "SQL", "NLTK",
  "Jupyter", "Apache Spark", "Hadoop", "Tableau",
- "Power BI", "Machine Learning", "Deep Learning", "NLP"
+ "Power BI", "Statistical Analysis", "Data Processing", "Analytics"
  ]
  },
  "UI/UX Design": {

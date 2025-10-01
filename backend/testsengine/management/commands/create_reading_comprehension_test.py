@@ -69,21 +69,21 @@ class Command(BaseCommand):
  ]
  },
  {
- 'passage': '''Artificial Intelligence (AI) is intelligence demonstrated by machines, in contrast to the natural intelligence displayed by humans. Leading AI textbooks define the field as the study of "intelligent agents": any device that perceives its environment and takes actions that maximize its chance of successfully achieving its goals. The term "artificial intelligence" is often used to describe machines that mimic "cognitive" functions that humans associate with the human mind, such as "learning" and "problem solving".''',
+ 'passage': '''Computer Science is the study of algorithmic processes and computational systems. Modern computer systems can be programmed to perceive their environment and take actions that maximize their chance of successfully achieving specific goals. Advanced computing systems can mimic certain cognitive functions traditionally associated with the human mind, such as pattern recognition and problem solving.''',
  'questions': [
  {
- 'question': 'What is artificial intelligence?',
- 'options': ['Human intelligence', 'Machine intelligence', 'Natural intelligence', 'Animal intelligence'],
+ 'question': 'What is computer science primarily focused on?',
+ 'options': ['Human behavior', 'Algorithmic processes and computational systems', 'Natural intelligence', 'Animal behavior'],
  'correct': 'B'
  },
  {
- 'question': 'What do AI agents do?',
+ 'question': 'What do advanced computer systems do?',
  'options': ['Only perceive', 'Only act', 'Perceive and act to achieve goals', 'Only learn'],
  'correct': 'C'
  },
  {
- 'question': 'What cognitive functions do AI machines mimic?',
- 'options': ['Only learning', 'Only problem solving', 'Learning and problem solving', 'All human functions'],
+ 'question': 'What cognitive functions do computer systems mimic?',
+ 'options': ['Only pattern recognition', 'Only problem solving', 'Pattern recognition and problem solving', 'All human functions'],
  'correct': 'C'
  }
  ]

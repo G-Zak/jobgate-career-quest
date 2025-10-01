@@ -544,21 +544,21 @@ class Command(BaseCommand):
  # Add more VRT3 questions to reach 30 (advanced level)
  advanced_vrt3_questions = [
  {
- 'passage': '''The epistemological foundations of artificial intelligence research rest upon complex philosophical assumptions about the nature of cognition, consciousness, and knowledge representation. Contemporary machine learning paradigms, while demonstrating remarkable empirical success, often lack theoretical frameworks that adequately explain their emergent behaviors or generalization capabilities. This explanatory gap poses significant challenges for developing robust, interpretable AI systems that can operate reliably in novel or adversarial contexts. Furthermore, the anthropomorphic bias inherent in many AI evaluation metrics may systematically underestimate the potential for machine intelligence to manifest in forms fundamentally different from human cognition, potentially limiting our conception of what constitutes intelligence itself.''',
+ 'passage': '''The epistemological foundations of computational research rest upon complex philosophical assumptions about the nature of cognition, consciousness, and knowledge representation. Contemporary data processing paradigms, while demonstrating remarkable empirical success, often lack theoretical frameworks that adequately explain their emergent behaviors or generalization capabilities. This explanatory gap poses significant challenges for developing robust, interpretable computational systems that can operate reliably in novel or adversarial contexts. Furthermore, the anthropomorphic bias inherent in many evaluation metrics may systematically underestimate the potential for computational systems to manifest in forms fundamentally different from human cognition, potentially limiting our conception of what constitutes systematic processing itself.''',
  'questions': [
  {
- 'question_text': 'What does the passage suggest is the primary challenge facing contemporary machine learning?',
+ 'question_text': 'What does the passage suggest is the primary challenge facing contemporary data processing?',
  'options': ['Lack of computational power', 'Absence of theoretical frameworks explaining emergent behaviors', 'Insufficient training data', 'Hardware limitations'],
  'correct_answer': 'B'
  },
  {
- 'question_text': 'According to the passage, how might anthropomorphic bias affect AI development?',
- 'options': ['It improves human-AI interaction', 'It may limit our conception of intelligence', 'It makes AI more reliable', 'It reduces development costs'],
+ 'question_text': 'According to the passage, how might anthropomorphic bias affect computational development?',
+ 'options': ['It improves human-computer interaction', 'It may limit our conception of systematic processing', 'It makes systems more reliable', 'It reduces development costs'],
  'correct_answer': 'B'
  },
  {
  'question_text': 'The "explanatory gap" mentioned in the passage refers to:',
- 'options': ['Differences between human and machine intelligence', 'The inability to explain machine learning behaviors theoretically', 'Communication problems between researchers', 'Funding shortages in AI research'],
+ 'options': ['Differences between human and computational processing', 'The inability to explain data processing behaviors theoretically', 'Communication problems between researchers', 'Funding shortages in computational research'],
  'correct_answer': 'B'
  }
  ],

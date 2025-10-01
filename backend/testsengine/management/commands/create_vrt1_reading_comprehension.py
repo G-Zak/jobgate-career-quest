@@ -93,22 +93,22 @@ class Command(BaseCommand):
  ]
  },
  {
- 'passage': 'The concept of artificial intelligence has evolved from science fiction to reality, with applications spanning healthcare, finance, transportation, and entertainment. Machine learning algorithms can now process vast amounts of data to identify patterns and make predictions with remarkable accuracy. However, this technological advancement raises important questions about job displacement, privacy, and the ethical implications of automated decision-making. As AI systems become more sophisticated, society must grapple with balancing innovation and human welfare.',
+ 'passage': 'Advanced computing technologies have evolved from theoretical concepts to practical reality, with applications spanning healthcare, finance, transportation, and entertainment. Modern data processing algorithms can now analyze vast amounts of information to identify patterns and make predictions with remarkable accuracy. However, these technological advancements raise important questions about job displacement, privacy, and the ethical implications of automated decision-making. As computing systems become more sophisticated, society must grapple with balancing innovation and human welfare.',
  'questions': [
  {
- 'question_text': 'What does the passage say about AI applications?',
+ 'question_text': 'What does the passage say about technology applications?',
  'options': [
- 'They are limited to science fiction.',
+ 'They are limited to theoretical concepts.',
  'They span multiple industries including healthcare and finance.',
  'They only affect entertainment.',
  'They have no real-world impact.'
  ],
  'correct_answer': 'B',
  'difficulty': 'easy',
- 'explanation': 'The passage states that AI applications span "healthcare, finance, transportation, and entertainment."'
+ 'explanation': 'The passage states that technology applications span "healthcare, finance, transportation, and entertainment."'
  },
  {
- 'question_text': 'What concerns does the passage raise about AI?',
+ 'question_text': 'What concerns does the passage raise about technology?',
  'options': [
  'Only technical limitations.',
  'Job displacement, privacy, and ethical implications.',
@@ -120,9 +120,9 @@ class Command(BaseCommand):
  'explanation': 'The passage mentions "important questions about job displacement, privacy, and the ethical implications of automated decision-making."'
  },
  {
- 'question_text': 'What does the passage suggest society must do as AI becomes more sophisticated?',
+ 'question_text': 'What does the passage suggest society must do as technology becomes more sophisticated?',
  'options': [
- 'Avoid using AI completely.',
+ 'Avoid using technology completely.',
  'Focus only on technical development.',
  'Balance innovation with human welfare.',
  'Eliminate all ethical considerations.'

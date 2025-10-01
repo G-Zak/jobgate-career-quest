@@ -212,18 +212,18 @@ export const getVerbalSection1 = () => ({
  }
  ]
  },
- // Passage 5: Moravec's Paradox
+ // Passage 5: Computational Complexity Paradox
  {
  id: 5,
- passage_title: "Moravec's Paradox",
- passage_text: `The Moravec's paradox is the counter intuitive discovery by artificial intelligence researchers that advanced reasoning requires very little computational power, but basic sensory-motor skills are incredibly computationally complex. Activities considered complex by human standards, such as calculating statistics and playing chess are very easily accomplished by artificial intelligences. However, extremely basic activities, such as recognising faces or walking up a set of stairs requires vast computational resources, and can only be accomplished by the most advanced artificial intelligences. Although futurists predict a supersession of human workers by artificial intelligences, Moravec's paradox implies that advanced professions will be usurped first, not the simple or routine occupations, as commonly featured in science fiction.`,
+ passage_title: "Computational Complexity Paradox",
+ passage_text: `A notable paradox in computational research is the counter-intuitive discovery that advanced reasoning requires very little computational power, but basic sensory-motor skills are incredibly computationally complex. Activities considered complex by human standards, such as calculating statistics and playing chess are very easily accomplished by modern computer systems. However, extremely basic activities, such as recognising faces or walking up a set of stairs requires vast computational resources, and can only be accomplished by the most advanced computing systems. Although futurists predict a replacement of human workers by automated systems, this paradox implies that advanced professions will be automated first, not the simple or routine occupations, as commonly featured in science fiction.`,
  questions: [
  {
  id: 17,
- question_text: `Artificial intelligences perform advanced reasoning more effectively than humans.`,
+ question_text: `Computer systems perform advanced reasoning more effectively than humans.`,
  options: ["True", "False", "Cannot Say"],
  correct_answer: "Cannot Say",
- explanation: `It is not stated whether artificial intelligences perform advanced reasoning more effectively than humans, only that advanced reasoning requires little computational power.`,
+ explanation: `It is not stated whether computer systems perform advanced reasoning more effectively than humans, only that advanced reasoning requires little computational power.`,
  order: 17,
  complexity_score: 3
  },
@@ -238,19 +238,19 @@ export const getVerbalSection1 = () => ({
  },
  {
  id: 19,
- question_text: `Simple artificial intelligences cannot recognise faces.`,
+ question_text: `Simple computer systems cannot recognise faces.`,
  options: ["True", "False", "Cannot Say"],
  correct_answer: "True",
- explanation: `The passage states that only the most advanced artificial intelligences can recognise faces. If only the most advanced artificial intelligences are capable of this, simple artificial intelligences cannot.`,
+ explanation: `The passage states that only the most advanced computer systems can recognise faces. If only the most advanced systems are capable of this, simple systems cannot.`,
  order: 19,
  complexity_score: 2
  },
  {
  id: 20,
- question_text: `Science fiction does not feature artificial intelligences.`,
+ question_text: `Science fiction does not feature automated systems.`,
  options: ["True", "False", "Cannot Say"],
  correct_answer: "False",
- explanation: `The passage states that artificial intelligences are commonly featured in science fiction.`,
+ explanation: `The passage states that automated systems are commonly featured in science fiction.`,
  order: 20,
  complexity_score: 1
  }

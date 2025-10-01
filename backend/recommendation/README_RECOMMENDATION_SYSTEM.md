@@ -1,14 +1,14 @@
-# Cognitive Job Recommendation System
+# Job Recommendation System
 
 ## Overview
 
-This enhanced job recommendation system integrates cognitive skills (employability scores), technical test results, and K-Means clustering to provide highly accurate job-candidate matching for the Moroccan job market.
+This enhanced job recommendation system integrates employability scores, technical test results, and clustering algorithms to provide accurate job-candidate matching for the Moroccan job market.
 
 ## Key Features
 
 - **Technical Test Integration**: Maps job skills to technical tests and computes weighted performance scores
-- **Cognitive Skills Assessment**: Incorporates employability scores from psychometric tests
-- **K-Means Clustering**: Uses machine learning to find similar candidate-job patterns
+- **Skills Assessment**: Incorporates employability scores from psychometric tests
+- **Clustering Algorithm**: Uses statistical methods to find similar candidate-job patterns
 - **Moroccan Market Focus**: Realistic salary ranges, local cities, MAD currency
 - **Background Processing**: Celery tasks for batch computation and real-time updates
 - **Comprehensive API**: RESTful endpoints for all operations
