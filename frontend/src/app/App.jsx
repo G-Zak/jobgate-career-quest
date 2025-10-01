@@ -7,27 +7,27 @@ import { initializeScrollBehavior } from '../shared/utils/scrollUtils';
 import '../utils/testAuth'; // Auto-login test user in development
 
 export default function App() {
-  const hasInitializedScroll = useRef(false);
+ const hasInitializedScroll = useRef(false);
 
-  // Initialize scroll behavior on app mount
-  useEffect(() => {
-    // Prevent double execution in Strict Mode
-    if (hasInitializedScroll.current) {
-      return;
-    }
-    hasInitializedScroll.current = true;
+ // Initialize scroll behavior on app mount
+ useEffect(() => {
+ // Prevent double execution in Strict Mode
+ if (hasInitializedScroll.current) {
+ return;
+ }
+ hasInitializedScroll.current = true;
 
-    const cleanup = initializeScrollBehavior();
-    return cleanup;
-  }, []);
+ const cleanup = initializeScrollBehavior();
+ return cleanup;
+ }, []);
 
-  return (
-    <DarkModeProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </AuthProvider>
-    </DarkModeProvider>
-  );
+ return (
+ <DarkModeProvider>
+ <AuthProvider>
+ <BrowserRouter>
+ <AppRoutes />
+ </BrowserRouter>
+ </AuthProvider>
+ </DarkModeProvider>
+ );
 }

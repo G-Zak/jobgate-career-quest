@@ -15,7 +15,9 @@ def invalidate_cache_on_test_session_save(sender, instance, created, **kwargs):
     try:
         user_id = instance.user.id
         cache_manager.invalidate_test_session_cache(user_id)
-        logger.info(f"Invalidated cache for user {user_id} after test session {'creation' if created else 'update'}")
+        logger.info(
+            f"Invalidated cache for user {user_id} after test session {'creation' if created else 'update'}"
+        )
     except Exception as e:
         logger.error(f"Error invalidating cache on test session save: {str(e)}")
 

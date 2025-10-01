@@ -1,376 +1,376 @@
 const API_BASE_URL = 'http://localhost:8001/api/auth';
 
 class AuthService {
-  constructor() {
-    this.token = localStorage.getItem('access_token');
-    this.refreshToken = localStorage.getItem('refresh_token');
-    const userData = JSON.parse(localStorage.getItem('user') || 'null');
+ constructor() {
+ this.token = localStorage.getItem('access_token');
+ this.refreshToken = localStorage.getItem('refresh_token');
+ const userData = JSON.parse(localStorage.getItem('user') || 'null');
 
-    // Ensure user has a name property
-    if (userData) {
-      this.user = {
-        ...userData,
-        name: userData.name || (userData.first_name && userData.last_name
-          ? `${userData.first_name} ${userData.last_name}`.trim()
-          : userData.first_name || userData.username || 'Utilisateur')
-      };
-    } else {
-      this.user = null;
-    }
-  }
+ // Ensure user has a name property
+ if (userData) {
+ this.user = {
+ ...userData,
+ name: userData.name || (userData.first_name && userData.last_name
+ ? `${userData.first_name} ${userData.last_name}`.trim()
+ : userData.first_name || userData.username || 'Utilisateur')
+ };
+ } else {
+ this.user = null;
+ }
+ }
 
-  // Register a new user
-  async register(userData) {
-    try {
-      console.log('🔍 AuthService.register called with:', userData);
+ // Register a new user
+ async register(userData) {
+ try {
+ console.log(' AuthService.register called with:', userData);
 
-      // Validate required fields
-      if (!userData.email || !userData.password) {
-        console.error('❌ Missing required fields:', { email: !!userData.email, password: !!userData.password });
-        return {
-          success: false,
-          errors: { general: ['Email and password are required'] }
-        };
-      }
+ // Validate required fields
+ if (!userData.email || !userData.password) {
+ console.error(' Missing required fields:', { email: !!userData.email, password: !!userData.password });
+ return {
+ success: false,
+ errors: { general: ['Email and password are required'] }
+ };
+ }
 
-      // Safely handle full_name
-      const fullName = userData.full_name || '';
-      const nameParts = fullName.split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || 'User'; // Default to 'User' if no last name
+ // Safely handle full_name
+ const fullName = userData.full_name || '';
+ const nameParts = fullName.split(' ');
+ const firstName = nameParts[0] || '';
+ const lastName = nameParts.slice(1).join(' ') || 'User'; // Default to 'User' if no last name
 
-      // Convert form data to API format
-      const apiData = {
-        username: userData.email, // Use email as username
-        email: userData.email,
-        password: userData.password,
-        first_name: firstName,
-        last_name: lastName,
-      };
+ // Convert form data to API format
+ const apiData = {
+ username: userData.email, // Use email as username
+ email: userData.email,
+ password: userData.password,
+ first_name: firstName,
+ last_name: lastName,
+ };
 
-      console.log('📤 Sending API data:', apiData);
+ console.log(' Sending API data:', apiData);
 
-      const response = await fetch(`${API_BASE_URL}/register/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(apiData),
-      });
+ const response = await fetch(`${API_BASE_URL}/register/`, {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ },
+ body: JSON.stringify(apiData),
+ });
 
-      const data = await response.json();
-      console.log('📥 API response:', data);
+ const data = await response.json();
+ console.log(' API response:', data);
 
-      if (data.success) {
-        // Store tokens and user data
-        this.setTokens(data.tokens);
-        this.setUser(data.user);
-        console.log('✅ Registration successful');
-        return { success: true, user: data.user };
-      } else {
-        console.error('❌ Registration failed:', data.message);
-        return { success: false, errors: { general: [data.message] } };
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      return {
-        success: false,
-        errors: { general: ['Registration failed. Please try again.'] }
-      };
-    }
-  }
+ if (data.success) {
+ // Store tokens and user data
+ this.setTokens(data.tokens);
+ this.setUser(data.user);
+ console.log(' Registration successful');
+ return { success: true, user: data.user };
+ } else {
+ console.error(' Registration failed:', data.message);
+ return { success: false, errors: { general: [data.message] } };
+ }
+ } catch (error) {
+ console.error('Registration error:', error);
+ return {
+ success: false,
+ errors: { general: ['Registration failed. Please try again.'] }
+ };
+ }
+ }
 
-  // Login user
-  async login(email, password) {
-    try {
-      console.log('🔍 Attempting login for:', email);
+ // Login user
+ async login(email, password) {
+ try {
+ console.log(' Attempting login for:', email);
 
-      const response = await fetch(`${API_BASE_URL}/login/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username: email, password }), // Use email as username
-      });
+ const response = await fetch(`${API_BASE_URL}/login/`, {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ },
+ body: JSON.stringify({ username: email, password }), // Use email as username
+ });
 
-      console.log('📡 Response status:', response.status);
+ console.log(' Response status:', response.status);
 
-      const data = await response.json();
-      console.log('📥 Response data:', data);
+ const data = await response.json();
+ console.log(' Response data:', data);
 
-      if (response.status === 401) {
-        // Handle 401 Unauthorized specifically
-        console.log('❌ 401 Unauthorized - Invalid credentials');
-        return {
-          success: false,
-          errors: { general: ['No account found with these credentials. Please sign up first.'] },
-          isUnauthorized: true
-        };
-      }
+ if (response.status === 401) {
+ // Handle 401 Unauthorized specifically
+ console.log(' 401 Unauthorized - Invalid credentials');
+ return {
+ success: false,
+ errors: { general: ['No account found with these credentials. Please sign up first.'] },
+ isUnauthorized: true
+ };
+ }
 
-      if (data.success) {
-        // Store tokens and user data
-        this.setTokens(data.tokens);
-        this.setUser(data.user);
-        console.log('✅ Login successful');
-        return { success: true, user: data.user };
-      } else {
-        console.log('❌ Login failed:', data.message);
-        return { success: false, errors: { general: [data.message || 'Login failed'] } };
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      return {
-        success: false,
-        errors: { general: ['Login failed. Please try again.'] }
-      };
-    }
-  }
+ if (data.success) {
+ // Store tokens and user data
+ this.setTokens(data.tokens);
+ this.setUser(data.user);
+ console.log(' Login successful');
+ return { success: true, user: data.user };
+ } else {
+ console.log(' Login failed:', data.message);
+ return { success: false, errors: { general: [data.message || 'Login failed'] } };
+ }
+ } catch (error) {
+ console.error('Login error:', error);
+ return {
+ success: false,
+ errors: { general: ['Login failed. Please try again.'] }
+ };
+ }
+ }
 
-  // Logout user
-  async logout() {
-    try {
-      if (this.token) {
-        const response = await fetch(`${API_BASE_URL}/logout/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.token}`,
-          },
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Logout failed: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        return { success: true, message: data.message };
-      }
-      
-      return { success: true, message: 'Logout successful' };
-    } catch (error) {
-      console.error('Logout error:', error);
-      return { success: false, error: error.message };
-    } finally {
-      // Clear local storage regardless of API call success
-      this.clearTokens();
-      this.clearUser();
-    }
-  }
+ // Logout user
+ async logout() {
+ try {
+ if (this.token) {
+ const response = await fetch(`${API_BASE_URL}/logout/`, {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ 'Authorization': `Bearer ${this.token}`,
+ },
+ });
 
-  // Refresh access token
-  async refreshAccessToken() {
-    try {
-      if (!this.refreshToken) {
-        throw new Error('No refresh token available');
-      }
+ if (!response.ok) {
+ throw new Error(`Logout failed: ${response.status}`);
+ }
 
-      const response = await fetch(`${API_BASE_URL}/token/refresh/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh: this.refreshToken }),
-      });
+ const data = await response.json();
+ return { success: true, message: data.message };
+ }
 
-      const data = await response.json();
+ return { success: true, message: 'Logout successful' };
+ } catch (error) {
+ console.error('Logout error:', error);
+ return { success: false, error: error.message };
+ } finally {
+ // Clear local storage regardless of API call success
+ this.clearTokens();
+ this.clearUser();
+ }
+ }
 
-      if (data.access) {
-        this.token = data.access;
-        localStorage.setItem('access_token', this.token);
-        return true;
-      } else {
-        throw new Error('Failed to refresh token');
-      }
-    } catch (error) {
-      console.error('Token refresh error:', error);
-      this.logout();
-      return false;
-    }
-  }
+ // Refresh access token
+ async refreshAccessToken() {
+ try {
+ if (!this.refreshToken) {
+ throw new Error('No refresh token available');
+ }
 
-  // Get user profile
-  async getProfile() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/profile/`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-        },
-      });
+ const response = await fetch(`${API_BASE_URL}/token/refresh/`, {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ },
+ body: JSON.stringify({ refresh: this.refreshToken }),
+ });
 
-      if (response.status === 401) {
-        // Token expired, try to refresh
-        const refreshed = await this.refreshAccessToken();
-        if (refreshed) {
-          return this.getProfile(); // Retry with new token
-        }
-        throw new Error('Authentication failed');
-      }
+ const data = await response.json();
 
-      const data = await response.json();
-      return data.success ? data.profile : null;
-    } catch (error) {
-      console.error('Get profile error:', error);
-      return null;
-    }
-  }
+ if (data.access) {
+ this.token = data.access;
+ localStorage.setItem('access_token', this.token);
+ return true;
+ } else {
+ throw new Error('Failed to refresh token');
+ }
+ } catch (error) {
+ console.error('Token refresh error:', error);
+ this.logout();
+ return false;
+ }
+ }
 
-  // Update user profile
-  async updateProfile(profileData) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/profile/`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`,
-        },
-        body: JSON.stringify(profileData),
-      });
+ // Get user profile
+ async getProfile() {
+ try {
+ const response = await fetch(`${API_BASE_URL}/profile/`, {
+ method: 'GET',
+ headers: {
+ 'Authorization': `Bearer ${this.token}`,
+ },
+ });
 
-      if (response.status === 401) {
-        const refreshed = await this.refreshAccessToken();
-        if (refreshed) {
-          return this.updateProfile(profileData);
-        }
-        throw new Error('Authentication failed');
-      }
+ if (response.status === 401) {
+ // Token expired, try to refresh
+ const refreshed = await this.refreshAccessToken();
+ if (refreshed) {
+ return this.getProfile(); // Retry with new token
+ }
+ throw new Error('Authentication failed');
+ }
 
-      const data = await response.json();
-      return data.success ? data.profile : null;
-    } catch (error) {
-      console.error('Update profile error:', error);
-      return null;
-    }
-  }
+ const data = await response.json();
+ return data.success ? data.profile : null;
+ } catch (error) {
+ console.error('Get profile error:', error);
+ return null;
+ }
+ }
 
-  // Change password
-  async changePassword(oldPassword, newPassword, confirmPassword) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/change-password/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`,
-        },
-        body: JSON.stringify({
-          old_password: oldPassword,
-          new_password: newPassword,
-          confirm_password: confirmPassword,
-        }),
-      });
+ // Update user profile
+ async updateProfile(profileData) {
+ try {
+ const response = await fetch(`${API_BASE_URL}/profile/`, {
+ method: 'PATCH',
+ headers: {
+ 'Content-Type': 'application/json',
+ 'Authorization': `Bearer ${this.token}`,
+ },
+ body: JSON.stringify(profileData),
+ });
 
-      if (response.status === 401) {
-        const refreshed = await this.refreshAccessToken();
-        if (refreshed) {
-          return this.changePassword(oldPassword, newPassword, confirmPassword);
-        }
-        throw new Error('Authentication failed');
-      }
+ if (response.status === 401) {
+ const refreshed = await this.refreshAccessToken();
+ if (refreshed) {
+ return this.updateProfile(profileData);
+ }
+ throw new Error('Authentication failed');
+ }
 
-      const data = await response.json();
-      return data.success;
-    } catch (error) {
-      console.error('Change password error:', error);
-      return false;
-    }
-  }
+ const data = await response.json();
+ return data.success ? data.profile : null;
+ } catch (error) {
+ console.error('Update profile error:', error);
+ return null;
+ }
+ }
 
-  // Get dashboard data
-  async getDashboardData() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/dashboard-data/`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-        },
-      });
+ // Change password
+ async changePassword(oldPassword, newPassword, confirmPassword) {
+ try {
+ const response = await fetch(`${API_BASE_URL}/change-password/`, {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ 'Authorization': `Bearer ${this.token}`,
+ },
+ body: JSON.stringify({
+ old_password: oldPassword,
+ new_password: newPassword,
+ confirm_password: confirmPassword,
+ }),
+ });
 
-      if (response.status === 401) {
-        const refreshed = await this.refreshAccessToken();
-        if (refreshed) {
-          return this.getDashboardData();
-        }
-        throw new Error('Authentication failed');
-      }
+ if (response.status === 401) {
+ const refreshed = await this.refreshAccessToken();
+ if (refreshed) {
+ return this.changePassword(oldPassword, newPassword, confirmPassword);
+ }
+ throw new Error('Authentication failed');
+ }
 
-      const data = await response.json();
-      return data.success ? data.data : null;
-    } catch (error) {
-      console.error('Get dashboard data error:', error);
-      return null;
-    }
-  }
+ const data = await response.json();
+ return data.success;
+ } catch (error) {
+ console.error('Change password error:', error);
+ return false;
+ }
+ }
 
-  // Helper methods
-  setTokens(tokens) {
-    this.token = tokens.access;
-    this.refreshToken = tokens.refresh;
-    localStorage.setItem('access_token', this.token);
-    localStorage.setItem('refresh_token', this.refreshToken);
-  }
+ // Get dashboard data
+ async getDashboardData() {
+ try {
+ const response = await fetch(`${API_BASE_URL}/dashboard-data/`, {
+ method: 'GET',
+ headers: {
+ 'Authorization': `Bearer ${this.token}`,
+ },
+ });
 
-  setUser(user) {
-    // Create a name property from first_name and last_name
-    const userWithName = {
-      ...user,
-      name: user.first_name && user.last_name
-        ? `${user.first_name} ${user.last_name}`.trim()
-        : user.first_name || user.username || 'Utilisateur'
-    };
+ if (response.status === 401) {
+ const refreshed = await this.refreshAccessToken();
+ if (refreshed) {
+ return this.getDashboardData();
+ }
+ throw new Error('Authentication failed');
+ }
 
-    this.user = userWithName;
-    localStorage.setItem('user', JSON.stringify(userWithName));
-  }
+ const data = await response.json();
+ return data.success ? data.data : null;
+ } catch (error) {
+ console.error('Get dashboard data error:', error);
+ return null;
+ }
+ }
 
-  clearTokens() {
-    this.token = null;
-    this.refreshToken = null;
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-  }
+ // Helper methods
+ setTokens(tokens) {
+ this.token = tokens.access;
+ this.refreshToken = tokens.refresh;
+ localStorage.setItem('access_token', this.token);
+ localStorage.setItem('refresh_token', this.refreshToken);
+ }
 
-  clearUser() {
-    this.user = null;
-    localStorage.removeItem('user');
-  }
+ setUser(user) {
+ // Create a name property from first_name and last_name
+ const userWithName = {
+ ...user,
+ name: user.first_name && user.last_name
+ ? `${user.first_name} ${user.last_name}`.trim()
+ : user.first_name || user.username || 'Utilisateur'
+ };
 
-  // Clear all user data and tokens
-  clearAll() {
-    this.clearTokens();
-    this.clearUser();
-  }
+ this.user = userWithName;
+ localStorage.setItem('user', JSON.stringify(userWithName));
+ }
 
-  // Check if user is authenticated
-  isAuthenticated() {
-    return !!this.token && !!this.user;
-  }
+ clearTokens() {
+ this.token = null;
+ this.refreshToken = null;
+ localStorage.removeItem('access_token');
+ localStorage.removeItem('refresh_token');
+ }
 
-  // Get current user
-  getCurrentUser() {
-    return this.user;
-  }
+ clearUser() {
+ this.user = null;
+ localStorage.removeItem('user');
+ }
 
-  // Force refresh user data from localStorage
-  refreshUserData() {
-    const userData = JSON.parse(localStorage.getItem('user') || 'null');
-    if (userData) {
-      this.user = {
-        ...userData,
-        name: userData.name || (userData.first_name && userData.last_name
-          ? `${userData.first_name} ${userData.last_name}`.trim()
-          : userData.first_name || userData.username || 'Utilisateur')
-      };
-    }
-    return this.user;
-  }
+ // Clear all user data and tokens
+ clearAll() {
+ this.clearTokens();
+ this.clearUser();
+ }
 
-  // Get auth headers for API calls
-  getAuthHeaders() {
-    return {
-      'Authorization': `Bearer ${this.token}`,
-    };
-  }
+ // Check if user is authenticated
+ isAuthenticated() {
+ return !!this.token && !!this.user;
+ }
+
+ // Get current user
+ getCurrentUser() {
+ return this.user;
+ }
+
+ // Force refresh user data from localStorage
+ refreshUserData() {
+ const userData = JSON.parse(localStorage.getItem('user') || 'null');
+ if (userData) {
+ this.user = {
+ ...userData,
+ name: userData.name || (userData.first_name && userData.last_name
+ ? `${userData.first_name} ${userData.last_name}`.trim()
+ : userData.first_name || userData.username || 'Utilisateur')
+ };
+ }
+ return this.user;
+ }
+
+ // Get auth headers for API calls
+ getAuthHeaders() {
+ return {
+ 'Authorization': `Bearer ${this.token}`,
+ };
+ }
 }
 
 // Create singleton instance

@@ -1,19 +1,9 @@
-"""
-Enhanced URL patterns for job recommendations with detailed breakdowns
-"""
 from django.urls import path
 from . import enhanced_views
 
 urlpatterns = [
     # Enhanced recommendation endpoints
-    path('enhanced/', enhanced_views.get_enhanced_recommendations, name='enhanced_recommendations'),
-    path('detail/<int:job_id>/', enhanced_views.get_recommendation_detail, name='recommendation_detail'),
-    
-    # Configuration endpoints
-    path('weights/', enhanced_views.get_scoring_weights, name='scoring_weights'),
-    path('weights/update/', enhanced_views.update_scoring_weights, name='update_scoring_weights'),
-    
-    # Analytics endpoints
-    path('clusters/', enhanced_views.get_cluster_info, name='cluster_info'),
-    path('analytics/', enhanced_views.get_recommendation_analytics, name='recommendation_analytics'),
+    path('', enhanced_views.enhanced_recommendations, name='enhanced-recommendations'),
+    path('personalized/', enhanced_views.personalized_recommendations, name='personalized-recommendations'),
+    path('health/', enhanced_views.enhanced_health_check, name='enhanced-health'),
 ]

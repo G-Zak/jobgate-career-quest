@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FaClock, 
-  FaBook, 
-  FaStop, 
-  FaArrowRight, 
-  FaArrowLeft, 
-  FaFlag, 
-  FaQuestionCircle, 
-  FaFileAlt,
-  FaCheckCircle,
-  FaTimes,
-  FaPlay,
-  FaHome
+import {
+ FaClock,
+ FaBook,
+ FaStop,
+ FaArrowRight,
+ FaArrowLeft,
+ FaFlag,
+ FaQuestionCircle,
+ FaFileAlt,
+ FaCheckCircle,
+ FaTimes,
+ FaPlay,
+ FaHome
 } from 'react-icons/fa';
 // Import backend data service and frontend scoring
 import TestDataService from '../services/testDataService';
@@ -23,854 +23,854 @@ import { saveAttempt } from '../lib/attemptStorage';
 import TestResultsPage from './TestResultsPage';
 
 const VerbalReasoningTest = ({ onBackToDashboard, testId = null, language = 'english' }) => {
-  const rule = getRuleFor(testId);
-  
-  // Determine starting section based on testId
-  const getStartingSection = (testId) => {
-    if (typeof testId === 'string') {
-      if (testId === 'VRT1') return 1;
-      const match = testId.match(/VRT(\d+)/);
-      if (match) {
-        const sectionNum = parseInt(match[1]);
-        return sectionNum <= 1 ? sectionNum : 1;
-      }
-    }
-    return 1;
-  };
+ const rule = getRuleFor(testId);
 
-  const startingSection = getStartingSection(testId);
-  
-  const [testStep, setTestStep] = useState('test'); // Start directly with test
-  const [currentSection, setCurrentSection] = useState(startingSection);
-  const [currentPassage, setCurrentPassage] = useState(0);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [timeRemaining, setTimeRemaining] = useState(rule?.timeLimitMin * 60 || 20 * 60); // Use rule time limit
-  const [answers, setAnswers] = useState({});
-  const [testData, setTestData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [startedAt, setStartedAt] = useState(null);
-  const [results, setResults] = useState(null);
+ // Determine starting section based on testId
+ const getStartingSection = (testId) => {
+ if (typeof testId === 'string') {
+ if (testId === 'VRT1') return 1;
+ const match = testId.match(/VRT(\d+)/);
+ if (match) {
+ const sectionNum = parseInt(match[1]);
+ return sectionNum <= 1 ? sectionNum : 1;
+ }
+ }
+ return 1;
+ };
 
-  const testContainerRef = useRef(null);
+ const startingSection = getStartingSection(testId);
 
-  // Smooth scroll-to-top function - only called on navigation
-  const scrollToTop = () => {
-    // Target the main scrollable container in MainDashboard
-    const mainScrollContainer = document.querySelector('.main-content-area .overflow-y-auto');
-    if (mainScrollContainer) {
-      // Smooth scroll to top
-      mainScrollContainer.scrollTo({ 
-        top: 0, 
-        behavior: 'smooth',
-        block: 'start'
-      });
-    } else {
-      // Fallback to window scroll
-      window.scrollTo({ 
-        top: 0, 
-        behavior: 'smooth',
-        block: 'start'
-      });
-    }
-  };
+ const [testStep, setTestStep] = useState('test'); // Start directly with test
+ const [currentSection, setCurrentSection] = useState(startingSection);
+ const [currentPassage, setCurrentPassage] = useState(0);
+ const [currentQuestion, setCurrentQuestion] = useState(0);
+ const [timeRemaining, setTimeRemaining] = useState(rule?.timeLimitMin * 60 || 20 * 60); // Use rule time limit
+ const [answers, setAnswers] = useState({});
+ const [testData, setTestData] = useState(null);
+ const [loading, setLoading] = useState(true);
+ const [error, setError] = useState(null);
+ const [showExitConfirm, setShowExitConfirm] = useState(false);
+ const [startedAt, setStartedAt] = useState(null);
+ const [results, setResults] = useState(null);
 
-  // Only scroll to top when question changes (not on every render)
-  useEffect(() => {
-    if (testStep === 'test' && currentQuestion > 0) {
-      // Small delay to ensure DOM has updated after question change
-      const timer = setTimeout(() => {
-        scrollToTop();
-      }, 100);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [currentQuestion, currentPassage]);
+ const testContainerRef = useRef(null);
 
-  // Load verbal reasoning test data
-  useEffect(() => {
-    const loadVerbalTestData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        let data;
+ // Smooth scroll-to-top function - only called on navigation
+ const scrollToTop = () => {
+ // Target the main scrollable container in MainDashboard
+ const mainScrollContainer = document.querySelector('.main-content-area .overflow-y-auto');
+ if (mainScrollContainer) {
+ // Smooth scroll to top
+ mainScrollContainer.scrollTo({
+ top: 0,
+ behavior: 'smooth',
+ block: 'start'
+ });
+ } else {
+ // Fallback to window scroll
+ window.scrollTo({
+ top: 0,
+ behavior: 'smooth',
+ block: 'start'
+ });
+ }
+ };
 
-        // Determine frontend test ID and fetch from backend
-        let frontendTestId = 'VRT1'; // default
-        if (testId === 'VRT1' || testId === '1' || testId === 1) {
-          frontendTestId = 'VRT1';
-        } else if (testId === 'VRT2' || testId === '2' || testId === 2) {
-          frontendTestId = 'VRT2';
-        } else if (testId === 'VRT3' || testId === '3' || testId === 3) {
-          frontendTestId = 'VRT3';
-        } else if (testId === 'VRT4' || testId === '4' || testId === 4) {
-          frontendTestId = 'VRT4';
-        } else if (testId === 'VRT5' || testId === '5' || testId === 5) {
-          frontendTestId = 'VRT5';
-        }
+ // Only scroll to top when question changes (not on every render)
+ useEffect(() => {
+ if (testStep === 'test' && currentQuestion > 0) {
+ // Small delay to ensure DOM has updated after question change
+ const timer = setTimeout(() => {
+ scrollToTop();
+ }, 100);
 
-        // Fetch data from backend
-        data = await TestDataService.fetchTestQuestions(frontendTestId);
-        
-        console.log('🔍 TEST DATA LOADED:', data);
-        console.log('🔍 QUESTIONS ARRAY:', data.questions);
-        if (data.questions && data.questions.length > 0) {
-          console.log('🔍 FIRST QUESTION:', data.questions[0]);
-          console.log('🔍 FIRST QUESTION ID:', data.questions[0].id, 'TYPE:', typeof data.questions[0].id);
-        }
-        
-        setTestData(data);
-        setStartedAt(new Date());
-        
-        // Set timer based on test duration
-        if (data.timeLimit) {
-          setTimeRemaining(data.timeLimit * 60);
-        } else if (data.duration_minutes) {
-          setTimeRemaining(data.duration_minutes * 60);
-        } else if (data.sections && data.sections[startingSection - 1]?.duration_minutes) {
-          setTimeRemaining(data.sections[startingSection - 1].duration_minutes * 60);
-        }
+ return () => clearTimeout(timer);
+ }
+ }, [currentQuestion, currentPassage]);
 
-        setLoading(false);
-      } catch (err) {
-        console.error('Error loading verbal test data:', err);
-        setError('Failed to load test data. Please try again.');
-        setLoading(false);
-      }
-    };
+ // Load verbal reasoning test data
+ useEffect(() => {
+ const loadVerbalTestData = async () => {
+ try {
+ setLoading(true);
+ setError(null);
 
-    loadVerbalTestData();
-  }, [testId, startingSection]);
+ let data;
 
-  // Timer countdown
-  useEffect(() => {
-    if (testStep === 'test' && timeRemaining > 0) {
-      const timer = setInterval(() => {
-        setTimeRemaining(prev => {
-          if (prev <= 1) {
-            handleSubmitTest();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+ // Determine frontend test ID and fetch from backend
+ let frontendTestId = 'VRT1'; // default
+ if (testId === 'VRT1' || testId === '1' || testId === 1) {
+ frontendTestId = 'VRT1';
+ } else if (testId === 'VRT2' || testId === '2' || testId === 2) {
+ frontendTestId = 'VRT2';
+ } else if (testId === 'VRT3' || testId === '3' || testId === 3) {
+ frontendTestId = 'VRT3';
+ } else if (testId === 'VRT4' || testId === '4' || testId === 4) {
+ frontendTestId = 'VRT4';
+ } else if (testId === 'VRT5' || testId === '5' || testId === 5) {
+ frontendTestId = 'VRT5';
+ }
 
-      return () => clearInterval(timer);
-    }
-  }, [testStep, timeRemaining]);
+ // Fetch data from backend
+ data = await TestDataService.fetchTestQuestions(frontendTestId);
 
-  // Helper functions
-  const getSectionPassages = (section) => {
-    if (!section) return [];
-    if (Array.isArray(section.passages)) return section.passages;
-    if (Array.isArray(section.questions)) {
-      const q = section.questions;
-      if (q.length > 0 && q[0] && Array.isArray(q[0].questions)) {
-        return q;
-      }
-      return [{ id: 'virtual', questions: q }];
-    }
-    return [];
-  };
+ console.log(' TEST DATA LOADED:', data);
+ console.log(' QUESTIONS ARRAY:', data.questions);
+ if (data.questions && data.questions.length > 0) {
+ console.log(' FIRST QUESTION:', data.questions[0]);
+ console.log(' FIRST QUESTION ID:', data.questions[0].id, 'TYPE:', typeof data.questions[0].id);
+ }
 
-  const getCurrentSection = () => {
-    if (testData && testData.questions && !testData.sections) {
-      return testData;
-    }
-    const section = testData?.sections?.[currentSection - 1];
-    return section;
-  };
+ setTestData(data);
+ setStartedAt(new Date());
 
-  const getCurrentPassage = () => {
-    // For reading comprehension, each question has its own passage
-    if (testData && Array.isArray(testData.questions) && testData.questions.length > 0) {
-      return testData.questions[currentQuestion] || testData.questions[0];
-    }
-    const section = getCurrentSection();
-    const passages = getSectionPassages(section);
-    return passages[currentPassage];
-  };
+ // Set timer based on test duration
+ if (data.timeLimit) {
+ setTimeRemaining(data.timeLimit * 60);
+ } else if (data.duration_minutes) {
+ setTimeRemaining(data.duration_minutes * 60);
+ } else if (data.sections && data.sections[startingSection - 1]?.duration_minutes) {
+ setTimeRemaining(data.sections[startingSection - 1].duration_minutes * 60);
+ }
 
-  const getCurrentQuestion = () => {
-    // For reading comprehension, questions are directly in the array
-    if (testData && Array.isArray(testData.questions) && testData.questions.length > 0) {
-      const question = testData.questions[currentQuestion] || testData.questions[0];
-      console.log('🔍 getCurrentQuestion (reading comprehension):', {
-        currentQuestion,
-        questionId: question?.id,
-        questionIdType: typeof question?.id,
-        questionExists: !!question
-      });
-      return question;
-    }
-    const passage = getCurrentPassage();
-    const question = passage?.questions?.[currentQuestion];
-    console.log('🔍 getCurrentQuestion (sections):', {
-      currentQuestion,
-      questionId: question?.id,
-      questionIdType: typeof question?.id,
-      questionExists: !!question
-    });
-    return question;
-  };
+ setLoading(false);
+ } catch (err) {
+ console.error('Error loading verbal test data:', err);
+ setError('Failed to load test data. Please try again.');
+ setLoading(false);
+ }
+ };
 
-  const getTotalQuestions = () => {
-    // Use the total_questions from testData if available (this is the correct count)
-    if (testData?.total_questions) {
-      return testData.total_questions;
-    }
-    
-    // For reading comprehension, questions are directly in the array
-    if (testData && Array.isArray(testData.questions) && testData.questions.length > 0) {
-      return testData.questions.length;
-    }
-    
-    // Fallback to counting from sections
-    if (testData?.sections) {
-      return testData.sections.reduce((total, section) => {
-        const passages = getSectionPassages(section);
-        return total + passages.reduce((sectionTotal, passage) => sectionTotal + (passage?.questions?.length || 0), 0);
-      }, 0);
-    }
-    
-    // Fallback to counting from questions array (for backward compatibility)
-    if (testData && Array.isArray(testData.questions) && !testData.sections) {
-      if (testData.questions.length > 0 && testData.questions[0] && Array.isArray(testData.questions[0].questions)) {
-        return testData.questions.reduce((total, passage) => total + (passage?.questions?.length || 0), 0);
-      }
-      return testData.questions.length;
-    }
-    
-    return 0;
-  };
+ loadVerbalTestData();
+ }, [testId, startingSection]);
 
-  const getQuestionNumber = () => {
-    // For reading comprehension, questions are directly in the array
-    if (testData && Array.isArray(testData.questions) && testData.questions.length > 0) {
-      return currentQuestion + 1;
-    }
-    
-    if (testData && Array.isArray(testData.questions) && !testData.sections) {
-      let questionNum = 1;
-      const section = getCurrentSection();
-      const passages = getSectionPassages(section);
-      for (let i = 0; i < currentPassage; i++) {
-        questionNum += (passages[i]?.questions?.length || 0);
-      }
-      questionNum += currentQuestion;
-      return questionNum;
-    }
-    
-    if (!testData?.sections) return 1;
-    
-    let questionNum = 1;
-    const section = getCurrentSection();
-    const passages = getSectionPassages(section);
-    
-    for (let i = 0; i < currentPassage; i++) {
-      questionNum += (passages[i]?.questions?.length || 0);
-    }
-    
-    questionNum += currentQuestion;
-    
-    return questionNum;
-  };
+ // Timer countdown
+ useEffect(() => {
+ if (testStep === 'test' && timeRemaining > 0) {
+ const timer = setInterval(() => {
+ setTimeRemaining(prev => {
+ if (prev <= 1) {
+ handleSubmitTest();
+ return 0;
+ }
+ return prev - 1;
+ });
+ }, 1000);
 
-  const getProgressPercentage = () => {
-    const currentQ = getQuestionNumber();
-    const totalQ = getTotalQuestions();
-    return totalQ > 0 ? Math.round((currentQ / totalQ) * 100) : 0;
-  };
+ return () => clearInterval(timer);
+ }
+ }, [testStep, timeRemaining]);
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+ // Helper functions
+ const getSectionPassages = (section) => {
+ if (!section) return [];
+ if (Array.isArray(section.passages)) return section.passages;
+ if (Array.isArray(section.questions)) {
+ const q = section.questions;
+ if (q.length > 0 && q[0] && Array.isArray(q[0].questions)) {
+ return q;
+ }
+ return [{ id: 'virtual', questions: q }];
+ }
+ return [];
+ };
 
-  const getTimeColor = () => {
-    if (timeRemaining <= 300) return 'text-red-500'; // Last 5 minutes
-    if (timeRemaining <= 600) return 'text-orange-500'; // Last 10 minutes
-    return 'text-blue-600';
-  };
+ const getCurrentSection = () => {
+ if (testData && testData.questions && !testData.sections) {
+ return testData;
+ }
+ const section = testData?.sections?.[currentSection - 1];
+ return section;
+ };
 
-  // Navigation functions
-  const handleAnswerSelect = (questionId, answer) => {
-    console.log('🔍 Answer selected:', { questionId, answer, type: typeof questionId });
-    console.log('🔍 Test data available:', !!testData);
-    console.log('🔍 Questions array:', testData?.questions?.length);
-    console.log('🔍 Current question index:', currentQuestion);
-    
-    // Safety check: Ensure questionId is valid
-    if (questionId === undefined || questionId === null) {
-      console.error('❌ Invalid question ID:', questionId);
-      return;
-    }
-    
-    // For reading comprehension, use just the question ID as the key
-    if (testData && Array.isArray(testData.questions) && testData.questions.length > 0) {
-      console.log('🔍 Using reading comprehension mode');
-      setAnswers(prev => {
-        const newAnswers = { ...prev, [questionId]: answer };
-        console.log('🔍 Updated answers (reading comprehension):', newAnswers);
-        console.log('🔍 Answer keys:', Object.keys(newAnswers));
-        return newAnswers;
-      });
-      return;
-    }
-    
-    console.log('🔍 Using sections mode');
-    
-    const answerKey = `${currentSection}_${currentPassage}_${questionId}`;
-    setAnswers(prev => ({
-      ...prev,
-      [answerKey]: answer
-    }));
-  };
+ const getCurrentPassage = () => {
+ // For reading comprehension, each question has its own passage
+ if (testData && Array.isArray(testData.questions) && testData.questions.length > 0) {
+ return testData.questions[currentQuestion] || testData.questions[0];
+ }
+ const section = getCurrentSection();
+ const passages = getSectionPassages(section);
+ return passages[currentPassage];
+ };
 
-  const handleNextQuestion = () => {
-    // For reading comprehension, questions are directly in the array
-    if (testData && Array.isArray(testData.questions) && testData.questions.length > 0) {
-      const isLastQuestion = currentQuestion >= testData.questions.length - 1;
-      if (isLastQuestion) {
-        handleSubmitTest();
-      } else {
-        setCurrentQuestion(prev => prev + 1);
-      }
-      // Smooth scroll to top after navigation
-      setTimeout(() => scrollToTop(), 150);
-      return;
-    }
-    
-    const passage = getCurrentPassage();
-    const isLastQuestionInPassage = currentQuestion >= ((passage?.questions?.length || 0) - 1);
-    const section = getCurrentSection();
-    const passages = getSectionPassages(section);
-    const isLastPassage = currentPassage >= passages.length - 1;
+ const getCurrentQuestion = () => {
+ // For reading comprehension, questions are directly in the array
+ if (testData && Array.isArray(testData.questions) && testData.questions.length > 0) {
+ const question = testData.questions[currentQuestion] || testData.questions[0];
+ console.log(' getCurrentQuestion (reading comprehension):', {
+ currentQuestion,
+ questionId: question?.id,
+ questionIdType: typeof question?.id,
+ questionExists: !!question
+ });
+ return question;
+ }
+ const passage = getCurrentPassage();
+ const question = passage?.questions?.[currentQuestion];
+ console.log(' getCurrentQuestion (sections):', {
+ currentQuestion,
+ questionId: question?.id,
+ questionIdType: typeof question?.id,
+ questionExists: !!question
+ });
+ return question;
+ };
 
-    if (isLastQuestionInPassage && isLastPassage) {
-      handleSubmitTest();
-    } else if (isLastQuestionInPassage) {
-      setCurrentPassage(prev => prev + 1);
-      setCurrentQuestion(0);
-    } else {
-      setCurrentQuestion(prev => prev + 1);
-    }
-    
-    // Smooth scroll to top after navigation
-    setTimeout(() => scrollToTop(), 150);
-  };
+ const getTotalQuestions = () => {
+ // Use the total_questions from testData if available (this is the correct count)
+ if (testData?.total_questions) {
+ return testData.total_questions;
+ }
 
-  const handlePrevQuestion = () => {
-    // For reading comprehension, questions are directly in the array
-    if (testData && Array.isArray(testData.questions) && testData.questions.length > 0) {
-      if (currentQuestion > 0) {
-        setCurrentQuestion(prev => prev - 1);
-      }
-      // Smooth scroll to top after navigation
-      setTimeout(() => scrollToTop(), 150);
-      return;
-    }
-    
-    if (currentQuestion > 0) {
-      setCurrentQuestion(prev => prev - 1);
-    } else if (currentPassage > 0) {
-      setCurrentPassage(prev => prev - 1);
-      const section = getCurrentSection();
-      const passages = getSectionPassages(section);
-      const prevPassage = passages[currentPassage - 1];
-      setCurrentQuestion(((prevPassage?.questions?.length) || 1) - 1);
-    }
-    
-    // Smooth scroll to top after navigation
-    setTimeout(() => scrollToTop(), 150);
-  };
+ // For reading comprehension, questions are directly in the array
+ if (testData && Array.isArray(testData.questions) && testData.questions.length > 0) {
+ return testData.questions.length;
+ }
 
-  const handleSubmitTest = async () => {
-    try {
-      console.log('🔍 SUBMIT TEST - Initial state check:');
-      console.log('🔍 Test Data loaded:', !!testData);
-      console.log('🔍 Test Data questions:', testData?.questions?.length);
-      console.log('🔍 Answers collected:', Object.keys(answers).length);
-      
-      // Safety check: Don't submit if test data isn't loaded
-      if (!testData || !testData.questions || testData.questions.length === 0) {
-        console.error('❌ Cannot submit: Test data not loaded');
-        return;
-      }
-      
-      // Use actual test data for calculations
-      const totalQuestions = testData?.questions?.length || 21;
-      const duration = Math.floor((Date.now() - startedAt.getTime()) / 1000);
-      
-      // Build attempt record
-      const attempt = buildAttempt(testId, totalQuestions, 0, startedAt.getTime(), 'user');
-      
-      // Save attempt locally
-      saveAttempt(attempt);
-      
-      const result = {
-        testId: testId || 'VRT',
-        testType: 'verbal-reasoning',
-        score: 0, // Will be updated from backend response
-        totalQuestions: totalQuestions,
-        correctAnswers: 0, // Will be updated from backend response
-        duration: duration,
-        answers: answers,
-        completedAt: new Date().toISOString(),
-        startedAt: startedAt?.toISOString(),
-        attempt: attempt
-      };
-      
-      // Submit to backend
-      try {
-        // Validate that all answer keys exist in test data
-        const validQuestionIds = testData?.questions?.map(q => q.id) || [];
-        const answerKeys = Object.keys(answers);
-        const invalidKeys = answerKeys.filter(key => !validQuestionIds.includes(parseInt(key)));
-        
-        // Use the collected answers (remove temporary debugging code)
-        if (Object.keys(answers).length === 0) {
-          console.error('❌ No answers collected, cannot submit test');
-          return;
-        }
-        
-        if (invalidKeys.length > 0) {
-          console.error('🚨 INVALID QUESTION IDS DETECTED:', invalidKeys);
-          
-          // Filter out invalid answers
-          const validAnswers = {};
-          answerKeys.forEach(key => {
-            if (validQuestionIds.includes(parseInt(key))) {
-              validAnswers[key] = answers[key];
-            }
-          });
-          console.log('🔍 Filtered valid answers:', validAnswers);
-          
-          // If no valid answers, create test answers
-          if (Object.keys(validAnswers).length === 0) {
-            console.log('🔍 No valid answers found, creating test answers...');
-            const testAnswers = {};
-            if (testData?.questions && testData.questions.length > 0) {
-              testData.questions.slice(0, 3).forEach((q, index) => {
-                testAnswers[q.id] = ['A', 'B', 'C'][index] || 'A';
-              });
-            }
-            console.log('🔍 Test answers created:', testAnswers);
-            
-            await submitTestAttempt({
-              testId: testId || 'VRT',
-              answers: testAnswers,
-              startedAt: startedAt,
-              finishedAt: Date.now(),
-              reason: 'user',
-              metadata: {}
-            });
-          } else {
-            const submissionResult = await submitTestAttempt({
-              testId: testId || 'VRT',
-              answers: validAnswers,
-              startedAt: startedAt,
-              finishedAt: Date.now(),
-              reason: 'user',
-              metadata: {}
-            });
-            
-            // Update result with backend response
-            if (submissionResult && submissionResult.score) {
-              result.score = submissionResult.score.percentage_score || 0;
-              result.correctAnswers = submissionResult.score.correct_answers || 0;
-              result.totalQuestions = submissionResult.score.total_questions || totalQuestions;
-              console.log('🔍 Updated result with backend response:', {
-                score: result.score,
-                correctAnswers: result.correctAnswers,
-                totalQuestions: result.totalQuestions
-              });
-            }
-          }
-        } else {
-          const submissionResult = await submitTestAttempt({
-            testId: testId || 'VRT',
-            answers: answers,
-            startedAt: startedAt,
-            finishedAt: Date.now(),
-            reason: 'user',
-            metadata: {}
-          });
-          
-          console.log('🔍 Backend submission result:', submissionResult);
-          
-          // Update result with backend response
-          if (submissionResult && submissionResult.score) {
-            result.score = submissionResult.score.percentage_score || 0;
-            result.correctAnswers = submissionResult.score.correct_answers || 0;
-            result.totalQuestions = submissionResult.score.total_questions || totalQuestions;
-            console.log('🔍 Updated result with backend response:', {
-              score: result.score,
-              correctAnswers: result.correctAnswers,
-              totalQuestions: result.totalQuestions
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error submitting test attempt:', error);
-      }
-      
-      setResults(result);
-      setTestStep('results');
-      scrollToTop();
-    } catch (error) {
-      console.error('Error submitting test:', error);
-      setTestStep('results'); // Still show results even if submission fails
-      scrollToTop();
-    }
-  };
+ // Fallback to counting from sections
+ if (testData?.sections) {
+ return testData.sections.reduce((total, section) => {
+ const passages = getSectionPassages(section);
+ return total + passages.reduce((sectionTotal, passage) => sectionTotal + (passage?.questions?.length || 0), 0);
+ }, 0);
+ }
 
-  const calculateScore = () => {
-    let correct = 0;
-    let total = 0;
+ // Fallback to counting from questions array (for backward compatibility)
+ if (testData && Array.isArray(testData.questions) && !testData.sections) {
+ if (testData.questions.length > 0 && testData.questions[0] && Array.isArray(testData.questions[0].questions)) {
+ return testData.questions.reduce((total, passage) => total + (passage?.questions?.length || 0), 0);
+ }
+ return testData.questions.length;
+ }
 
-    if (testData && testData.questions && !testData.sections) {
-      testData.questions.forEach((passage, passageIndex) => {
-        passage.questions.forEach((question) => {
-          const answerKey = `${currentSection}_${passageIndex}_${question.id}`;
-          const userAnswer = answers[answerKey];
-          total++;
-          if (userAnswer === question.correct_answer) {
-            correct++;
-          }
-        });
-      });
-    } else if (testData?.sections) {
-      testData.sections.forEach((section, sectionIndex) => {
-        const passages = getSectionPassages(section);
-        passages.forEach((passage, passageIndex) => {
-          passage.questions.forEach((question) => {
-            const answerKey = `${sectionIndex + 1}_${passageIndex}_${question.id}`;
-            const userAnswer = answers[answerKey];
-            total++;
-            if (userAnswer === question.correct_answer) {
-              correct++;
-            }
-          });
-        });
-      });
-    }
+ return 0;
+ };
 
-    return { correct, total, percentage: Math.round((correct / total) * 100) };
-  };
+ const getQuestionNumber = () => {
+ // For reading comprehension, questions are directly in the array
+ if (testData && Array.isArray(testData.questions) && testData.questions.length > 0) {
+ return currentQuestion + 1;
+ }
 
-  const handleExitTest = () => {
-    setShowExitConfirm(true);
-  };
+ if (testData && Array.isArray(testData.questions) && !testData.sections) {
+ let questionNum = 1;
+ const section = getCurrentSection();
+ const passages = getSectionPassages(section);
+ for (let i = 0; i < currentPassage; i++) {
+ questionNum += (passages[i]?.questions?.length || 0);
+ }
+ questionNum += currentQuestion;
+ return questionNum;
+ }
 
-  const confirmExit = () => {
-    scrollToTop();
-    onBackToDashboard();
-  };
+ if (!testData?.sections) return 1;
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center bg-white rounded-2xl shadow-xl p-12 max-w-md"
-        >
-          <div className="relative">
-            <FaBook className="text-7xl text-blue-600 mb-6 mx-auto animate-pulse" />
-            <div className="absolute top-0 left-1/2 transform -translate-x-1/2">
-              <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-            </div>
-            <div className="absolute top-2 left-1/2 transform -translate-x-1/2 -translate-x-4">
-              <div className="w-2 h-2 bg-blue-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-            </div>
-            <div className="absolute top-2 left-1/2 transform -translate-x-1/2 translate-x-4">
-              <div className="w-2 h-2 bg-blue-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-            </div>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-3">Loading Verbal Reasoning Test</h2>
-          <p className="text-gray-600">Preparing your personalized assessment...</p>
-        </motion.div>
-      </div>
-    );
-  }
+ let questionNum = 1;
+ const section = getCurrentSection();
+ const passages = getSectionPassages(section);
 
-  // Error state
-  if (error) {
-    return (
-      <div className="bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md"
-        >
-          <FaStop className="text-6xl text-red-500 mb-6 mx-auto" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Test Loading Error</h2>
-          <p className="text-gray-600 mb-8">{error}</p>
-          <button
-            onClick={onBackToDashboard}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-105"
-          >
-            <FaHome className="inline mr-2" />
-            Back to Dashboard
-          </button>
-        </motion.div>
-      </div>
-    );
-  }
+ for (let i = 0; i < currentPassage; i++) {
+ questionNum += (passages[i]?.questions?.length || 0);
+ }
 
-  return (
-    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100" ref={testContainerRef}>
-      <AnimatePresence mode="wait">
-        {testStep === 'test' && (
-          <motion.div
-            key="test"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className=""
-          >
-            {/* Modern Test Header */}
-            <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
-              <div className="max-w-7xl mx-auto px-6 py-4">
-                <div className="flex items-center justify-between">
-                  {/* Left: Test Info */}
-                  <div className="flex items-center space-x-6">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleExitTest}
-                      className="flex items-center text-gray-600 hover:text-red-600 transition-colors"
-                    >
-                      <FaTimes className="text-xl" />
-                    </motion.button>
-                    
-                    <div>
-                      <h1 className="text-xl font-bold text-gray-800">Verbal Reasoning Test</h1>
-                      <p className="text-sm text-gray-600">
-                        Question {getQuestionNumber()} of {getTotalQuestions()}
-                      </p>
-                    </div>
-                  </div>
+ questionNum += currentQuestion;
 
-                  {/* Center: Progress Bar */}
-                  <div className="flex-1 max-w-md mx-8">
-                    <div className="bg-gray-200 rounded-full h-2">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${getProgressPercentage()}%` }}
-                        transition={{ duration: 0.5 }}
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1 text-center">
-                      {getProgressPercentage()}% Complete
-                    </p>
-                  </div>
+ return questionNum;
+ };
 
-                  {/* Right: Timer & Controls */}
-                  <div className="flex items-center space-x-4">                    
-                    <div className={`text-right ${getTimeColor()}`}>
-                      <div className="text-2xl font-bold font-mono">
-                        <FaClock className="inline mr-2" />
-                        {formatTime(timeRemaining)}
-                      </div>
-                      <p className="text-xs opacity-75">Time Remaining</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+ const getProgressPercentage = () => {
+ const currentQ = getQuestionNumber();
+ const totalQ = getTotalQuestions();
+ return totalQ > 0 ? Math.round((currentQ / totalQ) * 100) : 0;
+ };
 
-            {/* Test Content */}
-            <div className="max-w-7xl mx-auto px-6 py-8">
-              <div className="flex flex-col gap-6">
-                {/* Passage Card (top) - Only show if there's actual passage content */}
-                {getCurrentPassage()?.passage_text && (
-                  <section className="bg-white rounded-2xl shadow-lg p-8">
-                    <div className="flex items-center mb-6">
-                      <FaFileAlt className="text-blue-600 text-xl mr-3" />
-                      <h2 className="text-xl font-bold text-gray-800">
-                        {getCurrentPassage()?.passage_title || 'Reading Passage'}
-                      </h2>
-                    </div>
-                    
-                    <div className="prose max-w-none">
-                      <p className="text-gray-700 leading-relaxed text-justify">
-                        {getCurrentPassage()?.passage_text}
-                      </p>
-                    </div>
-                  </section>
-                )}
+ const formatTime = (seconds) => {
+ const mins = Math.floor(seconds / 60);
+ const secs = seconds % 60;
+ return `${mins}:${secs.toString().padStart(2, '0')}`;
+ };
 
-                {/* Question & Options Card (bottom) */}
-                <section className="bg-white rounded-2xl shadow-lg p-8">
-                  <div className="mb-8">
-                    <p className="text-gray-700 mb-6 text-lg leading-relaxed">
-                      {getCurrentQuestion()?.question_text}
-                    </p>
-                    
-                    {/* Answer Options */}
-                    <div role="radiogroup" aria-labelledby={`q-${getCurrentQuestion()?.id}-label`} className="grid gap-4">
-                      {getCurrentQuestion()?.options?.map((option, index) => {
-                        // Handle both string and object options
-                        const optionText = typeof option === 'string' ? option : option.text || option.value || option.option_id;
-                        const optionValue = typeof option === 'string' ? option : option.value || option.option_id || option.text;
-                        // For reading comprehension, use just the question ID as the key
-                        const currentQuestionId = getCurrentQuestion()?.id;
-                        const answerKey = testData && Array.isArray(testData.questions) && testData.questions.length > 0 
-                          ? currentQuestionId 
-                          : `${currentSection}_${currentPassage}_${currentQuestionId}`;
-                        // Convert index to letter for comparison
-                        const optionLetter = String.fromCharCode(65 + index);
-                        const isSelected = answers[answerKey] === optionLetter;
-                        const letters = ['A', 'B', 'C', 'D', 'E'];
-                        
-                        return (
-                          <motion.label
-                            key={`option-${index}-${optionValue}`}
-                            className={`w-full rounded-xl border-2 px-6 py-4 cursor-pointer transition-all duration-200 ${
-                              isSelected 
-                                ? "border-blue-500 bg-blue-50 text-blue-700 shadow-lg" 
-                                : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md"
-                            }`}
-                            whileHover={{ scale: 1.01 }}
-                            whileTap={{ scale: 0.99 }}
-                          >
-                            <input
-                              type="radio"
-                              name={`q-${getCurrentQuestion()?.id}`}
-                              value={optionValue}
-                              className="sr-only"
-                              checked={isSelected}
-                              onChange={() => {
-                                const currentQ = getCurrentQuestion();
-                                const questionId = currentQ?.id;
-                                // Convert index to letter (0 -> A, 1 -> B, 2 -> C, 3 -> D)
-                                const optionLetter = String.fromCharCode(65 + index);
-                                console.log('🔍 Option clicked:', {
-                                  questionId,
-                                  questionIdType: typeof questionId,
-                                  optionValue,
-                                  optionLetter,
-                                  currentQ: currentQ ? 'exists' : 'null',
-                                  currentQuestionIndex: currentQuestion
-                                });
-                                handleAnswerSelect(questionId, optionLetter);
-                              }}
-                            />
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center">
-                                <span className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 text-sm font-bold ${
-                                  isSelected 
-                                    ? 'bg-blue-500 text-white' 
-                                    : 'bg-gray-200 text-gray-600'
-                                }`}>
-                                  {letters[index]}
-                                </span>
-                                <span className="text-lg font-medium">{optionText}</span>
-                              </div>
-                              {isSelected && <FaCheckCircle className="w-5 h-5 text-blue-500" />}
-                            </div>
-                          </motion.label>
-                        );
-                      })}
-                    </div>
-                  </div>
+ const getTimeColor = () => {
+ if (timeRemaining <= 300) return 'text-red-500'; // Last 5 minutes
+ if (timeRemaining <= 600) return 'text-orange-500'; // Last 10 minutes
+ return 'text-blue-600';
+ };
 
-                  {/* Navigation */}
-                  <div className="flex justify-between items-center pt-6 border-t border-gray-200">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handlePrevQuestion}
-                      disabled={currentPassage === 0 && currentQuestion === 0}
-                      className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
-                    >
-                      <FaArrowLeft />
-                      Previous
-                    </motion.button>
+ // Navigation functions
+ const handleAnswerSelect = (questionId, answer) => {
+ console.log(' Answer selected:', { questionId, answer, type: typeof questionId });
+ console.log(' Test data available:', !!testData);
+ console.log(' Questions array:', testData?.questions?.length);
+ console.log(' Current question index:', currentQuestion);
 
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleNextQuestion}
-                      className="flex items-center gap-2 px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg"
-                    >
-                      {currentPassage === getCurrentSection()?.questions?.length - 1 && 
-                       currentQuestion === getCurrentPassage()?.questions?.length - 1 ? (
-                        <>
-                          <FaFlag />
-                          Submit Test
-                        </>
-                      ) : (
-                        <>
-                          Next
-                          <FaArrowRight />
-                        </>
-                      )}
-                    </motion.button>
-                  </div>
-                </section>
-              </div>
-            </div>
-            {/* Exit Confirmation */}
-            <AnimatePresence>
-              {showExitConfirm && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center"
-                >
-                  <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.9, opacity: 0 }}
-                    className="bg-white rounded-2xl p-8 text-center max-w-md"
-                  >
-                    <FaTimes className="text-4xl text-red-500 mb-4 mx-auto" />
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">Exit Test?</h3>
-                    <p className="text-gray-600 mb-6">Your progress will be lost. Are you sure you want to exit?</p>
-                    <div className="flex gap-4">
-                      <button
-                        onClick={() => setShowExitConfirm(false)}
-                        className="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-all"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={confirmExit}
-                        className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-xl font-semibold hover:from-red-700 hover:to-red-800 transition-all"
-                      >
-                        Exit Test
-                      </button>
-                    </div>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        )}
+ // Safety check: Ensure questionId is valid
+ if (questionId === undefined || questionId === null) {
+ console.error(' Invalid question ID:', questionId);
+ return;
+ }
 
-        {testStep === 'results' && (
-          <TestResultsPage 
-            results={results}
-            testType="verbal"
-            testId={testId || 'VRT'}
-            answers={answers}
-            testData={testData}
-            onBackToDashboard={onBackToDashboard}
-            onRetakeTest={() => window.location.reload()}
-          />
-        )}
-      </AnimatePresence>
-    </div>
-  );
+ // For reading comprehension, use just the question ID as the key
+ if (testData && Array.isArray(testData.questions) && testData.questions.length > 0) {
+ console.log(' Using reading comprehension mode');
+ setAnswers(prev => {
+ const newAnswers = { ...prev, [questionId]: answer };
+ console.log(' Updated answers (reading comprehension):', newAnswers);
+ console.log(' Answer keys:', Object.keys(newAnswers));
+ return newAnswers;
+ });
+ return;
+ }
+
+ console.log(' Using sections mode');
+
+ const answerKey = `${currentSection}_${currentPassage}_${questionId}`;
+ setAnswers(prev => ({
+ ...prev,
+ [answerKey]: answer
+ }));
+ };
+
+ const handleNextQuestion = () => {
+ // For reading comprehension, questions are directly in the array
+ if (testData && Array.isArray(testData.questions) && testData.questions.length > 0) {
+ const isLastQuestion = currentQuestion >= testData.questions.length - 1;
+ if (isLastQuestion) {
+ handleSubmitTest();
+ } else {
+ setCurrentQuestion(prev => prev + 1);
+ }
+ // Smooth scroll to top after navigation
+ setTimeout(() => scrollToTop(), 150);
+ return;
+ }
+
+ const passage = getCurrentPassage();
+ const isLastQuestionInPassage = currentQuestion >= ((passage?.questions?.length || 0) - 1);
+ const section = getCurrentSection();
+ const passages = getSectionPassages(section);
+ const isLastPassage = currentPassage >= passages.length - 1;
+
+ if (isLastQuestionInPassage && isLastPassage) {
+ handleSubmitTest();
+ } else if (isLastQuestionInPassage) {
+ setCurrentPassage(prev => prev + 1);
+ setCurrentQuestion(0);
+ } else {
+ setCurrentQuestion(prev => prev + 1);
+ }
+
+ // Smooth scroll to top after navigation
+ setTimeout(() => scrollToTop(), 150);
+ };
+
+ const handlePrevQuestion = () => {
+ // For reading comprehension, questions are directly in the array
+ if (testData && Array.isArray(testData.questions) && testData.questions.length > 0) {
+ if (currentQuestion > 0) {
+ setCurrentQuestion(prev => prev - 1);
+ }
+ // Smooth scroll to top after navigation
+ setTimeout(() => scrollToTop(), 150);
+ return;
+ }
+
+ if (currentQuestion > 0) {
+ setCurrentQuestion(prev => prev - 1);
+ } else if (currentPassage > 0) {
+ setCurrentPassage(prev => prev - 1);
+ const section = getCurrentSection();
+ const passages = getSectionPassages(section);
+ const prevPassage = passages[currentPassage - 1];
+ setCurrentQuestion(((prevPassage?.questions?.length) || 1) - 1);
+ }
+
+ // Smooth scroll to top after navigation
+ setTimeout(() => scrollToTop(), 150);
+ };
+
+ const handleSubmitTest = async () => {
+ try {
+ console.log(' SUBMIT TEST - Initial state check:');
+ console.log(' Test Data loaded:', !!testData);
+ console.log(' Test Data questions:', testData?.questions?.length);
+ console.log(' Answers collected:', Object.keys(answers).length);
+
+ // Safety check: Don't submit if test data isn't loaded
+ if (!testData || !testData.questions || testData.questions.length === 0) {
+ console.error(' Cannot submit: Test data not loaded');
+ return;
+ }
+
+ // Use actual test data for calculations
+ const totalQuestions = testData?.questions?.length || 21;
+ const duration = Math.floor((Date.now() - startedAt.getTime()) / 1000);
+
+ // Build attempt record
+ const attempt = buildAttempt(testId, totalQuestions, 0, startedAt.getTime(), 'user');
+
+ // Save attempt locally
+ saveAttempt(attempt);
+
+ const result = {
+ testId: testId || 'VRT',
+ testType: 'verbal-reasoning',
+ score: 0, // Will be updated from backend response
+ totalQuestions: totalQuestions,
+ correctAnswers: 0, // Will be updated from backend response
+ duration: duration,
+ answers: answers,
+ completedAt: new Date().toISOString(),
+ startedAt: startedAt?.toISOString(),
+ attempt: attempt
+ };
+
+ // Submit to backend
+ try {
+ // Validate that all answer keys exist in test data
+ const validQuestionIds = testData?.questions?.map(q => q.id) || [];
+ const answerKeys = Object.keys(answers);
+ const invalidKeys = answerKeys.filter(key => !validQuestionIds.includes(parseInt(key)));
+
+ // Use the collected answers (remove temporary debugging code)
+ if (Object.keys(answers).length === 0) {
+ console.error(' No answers collected, cannot submit test');
+ return;
+ }
+
+ if (invalidKeys.length > 0) {
+ console.error(' INVALID QUESTION IDS DETECTED:', invalidKeys);
+
+ // Filter out invalid answers
+ const validAnswers = {};
+ answerKeys.forEach(key => {
+ if (validQuestionIds.includes(parseInt(key))) {
+ validAnswers[key] = answers[key];
+ }
+ });
+ console.log(' Filtered valid answers:', validAnswers);
+
+ // If no valid answers, create test answers
+ if (Object.keys(validAnswers).length === 0) {
+ console.log(' No valid answers found, creating test answers...');
+ const testAnswers = {};
+ if (testData?.questions && testData.questions.length > 0) {
+ testData.questions.slice(0, 3).forEach((q, index) => {
+ testAnswers[q.id] = ['A', 'B', 'C'][index] || 'A';
+ });
+ }
+ console.log(' Test answers created:', testAnswers);
+
+ await submitTestAttempt({
+ testId: testId || 'VRT',
+ answers: testAnswers,
+ startedAt: startedAt,
+ finishedAt: Date.now(),
+ reason: 'user',
+ metadata: {}
+ });
+ } else {
+ const submissionResult = await submitTestAttempt({
+ testId: testId || 'VRT',
+ answers: validAnswers,
+ startedAt: startedAt,
+ finishedAt: Date.now(),
+ reason: 'user',
+ metadata: {}
+ });
+
+ // Update result with backend response
+ if (submissionResult && submissionResult.score) {
+ result.score = submissionResult.score.percentage_score || 0;
+ result.correctAnswers = submissionResult.score.correct_answers || 0;
+ result.totalQuestions = submissionResult.score.total_questions || totalQuestions;
+ console.log(' Updated result with backend response:', {
+ score: result.score,
+ correctAnswers: result.correctAnswers,
+ totalQuestions: result.totalQuestions
+ });
+ }
+ }
+ } else {
+ const submissionResult = await submitTestAttempt({
+ testId: testId || 'VRT',
+ answers: answers,
+ startedAt: startedAt,
+ finishedAt: Date.now(),
+ reason: 'user',
+ metadata: {}
+ });
+
+ console.log(' Backend submission result:', submissionResult);
+
+ // Update result with backend response
+ if (submissionResult && submissionResult.score) {
+ result.score = submissionResult.score.percentage_score || 0;
+ result.correctAnswers = submissionResult.score.correct_answers || 0;
+ result.totalQuestions = submissionResult.score.total_questions || totalQuestions;
+ console.log(' Updated result with backend response:', {
+ score: result.score,
+ correctAnswers: result.correctAnswers,
+ totalQuestions: result.totalQuestions
+ });
+ }
+ }
+ } catch (error) {
+ console.error('Error submitting test attempt:', error);
+ }
+
+ setResults(result);
+ setTestStep('results');
+ scrollToTop();
+ } catch (error) {
+ console.error('Error submitting test:', error);
+ setTestStep('results'); // Still show results even if submission fails
+ scrollToTop();
+ }
+ };
+
+ const calculateScore = () => {
+ let correct = 0;
+ let total = 0;
+
+ if (testData && testData.questions && !testData.sections) {
+ testData.questions.forEach((passage, passageIndex) => {
+ passage.questions.forEach((question) => {
+ const answerKey = `${currentSection}_${passageIndex}_${question.id}`;
+ const userAnswer = answers[answerKey];
+ total++;
+ if (userAnswer === question.correct_answer) {
+ correct++;
+ }
+ });
+ });
+ } else if (testData?.sections) {
+ testData.sections.forEach((section, sectionIndex) => {
+ const passages = getSectionPassages(section);
+ passages.forEach((passage, passageIndex) => {
+ passage.questions.forEach((question) => {
+ const answerKey = `${sectionIndex + 1}_${passageIndex}_${question.id}`;
+ const userAnswer = answers[answerKey];
+ total++;
+ if (userAnswer === question.correct_answer) {
+ correct++;
+ }
+ });
+ });
+ });
+ }
+
+ return { correct, total, percentage: Math.round((correct / total) * 100) };
+ };
+
+ const handleExitTest = () => {
+ setShowExitConfirm(true);
+ };
+
+ const confirmExit = () => {
+ scrollToTop();
+ onBackToDashboard();
+ };
+
+ // Loading state
+ if (loading) {
+ return (
+ <div className="bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+ <motion.div
+ initial={{ opacity: 0, scale: 0.9 }}
+ animate={{ opacity: 1, scale: 1 }}
+ className="text-center bg-white rounded-2xl shadow-xl p-12 max-w-md"
+ >
+ <div className="relative">
+ <FaBook className="text-7xl text-blue-600 mb-6 mx-auto animate-pulse" />
+ <div className="absolute top-0 left-1/2 transform -translate-x-1/2">
+ <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+ </div>
+ <div className="absolute top-2 left-1/2 transform -translate-x-1/2 -translate-x-4">
+ <div className="w-2 h-2 bg-blue-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+ </div>
+ <div className="absolute top-2 left-1/2 transform -translate-x-1/2 translate-x-4">
+ <div className="w-2 h-2 bg-blue-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+ </div>
+ </div>
+ <h2 className="text-2xl font-bold text-gray-800 mb-3">Loading Verbal Reasoning Test</h2>
+ <p className="text-gray-600">Preparing your personalized assessment...</p>
+ </motion.div>
+ </div>
+ );
+ }
+
+ // Error state
+ if (error) {
+ return (
+ <div className="bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center">
+ <motion.div
+ initial={{ opacity: 0, y: 20 }}
+ animate={{ opacity: 1, y: 0 }}
+ className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md"
+ >
+ <FaStop className="text-6xl text-red-500 mb-6 mx-auto" />
+ <h2 className="text-2xl font-bold text-gray-800 mb-4">Test Loading Error</h2>
+ <p className="text-gray-600 mb-8">{error}</p>
+ <button
+ onClick={onBackToDashboard}
+ className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-105"
+ >
+ <FaHome className="inline mr-2" />
+ Back to Dashboard
+ </button>
+ </motion.div>
+ </div>
+ );
+ }
+
+ return (
+ <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100" ref={testContainerRef}>
+ <AnimatePresence mode="wait">
+ {testStep === 'test' && (
+ <motion.div
+ key="test"
+ initial={{ opacity: 0 }}
+ animate={{ opacity: 1 }}
+ exit={{ opacity: 0 }}
+ className=""
+ >
+ {/* Modern Test Header */}
+ <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+ <div className="max-w-7xl mx-auto px-6 py-4">
+ <div className="flex items-center justify-between">
+ {/* Left: Test Info */}
+ <div className="flex items-center space-x-6">
+ <motion.button
+ whileHover={{ scale: 1.05 }}
+ whileTap={{ scale: 0.95 }}
+ onClick={handleExitTest}
+ className="flex items-center text-gray-600 hover:text-red-600 transition-colors"
+ >
+ <FaTimes className="text-xl" />
+ </motion.button>
+
+ <div>
+ <h1 className="text-xl font-bold text-gray-800">Verbal Reasoning Test</h1>
+ <p className="text-sm text-gray-600">
+ Question {getQuestionNumber()} of {getTotalQuestions()}
+ </p>
+ </div>
+ </div>
+
+ {/* Center: Progress Bar */}
+ <div className="flex-1 max-w-md mx-8">
+ <div className="bg-gray-200 rounded-full h-2">
+ <motion.div
+ initial={{ width: 0 }}
+ animate={{ width: `${getProgressPercentage()}%` }}
+ transition={{ duration: 0.5 }}
+ className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full"
+ />
+ </div>
+ <p className="text-xs text-gray-500 mt-1 text-center">
+ {getProgressPercentage()}% Complete
+ </p>
+ </div>
+
+ {/* Right: Timer & Controls */}
+ <div className="flex items-center space-x-4">
+ <div className={`text-right ${getTimeColor()}`}>
+ <div className="text-2xl font-bold font-mono">
+ <FaClock className="inline mr-2" />
+ {formatTime(timeRemaining)}
+ </div>
+ <p className="text-xs opacity-75">Time Remaining</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ {/* Test Content */}
+ <div className="max-w-7xl mx-auto px-6 py-8">
+ <div className="flex flex-col gap-6">
+ {/* Passage Card (top) - Only show if there's actual passage content */}
+ {getCurrentPassage()?.passage_text && (
+ <section className="bg-white rounded-2xl shadow-lg p-8">
+ <div className="flex items-center mb-6">
+ <FaFileAlt className="text-blue-600 text-xl mr-3" />
+ <h2 className="text-xl font-bold text-gray-800">
+ {getCurrentPassage()?.passage_title || 'Reading Passage'}
+ </h2>
+ </div>
+
+ <div className="prose max-w-none">
+ <p className="text-gray-700 leading-relaxed text-justify">
+ {getCurrentPassage()?.passage_text}
+ </p>
+ </div>
+ </section>
+ )}
+
+ {/* Question & Options Card (bottom) */}
+ <section className="bg-white rounded-2xl shadow-lg p-8">
+ <div className="mb-8">
+ <p className="text-gray-700 mb-6 text-lg leading-relaxed">
+ {getCurrentQuestion()?.question_text}
+ </p>
+
+ {/* Answer Options */}
+ <div role="radiogroup" aria-labelledby={`q-${getCurrentQuestion()?.id}-label`} className="grid gap-4">
+ {getCurrentQuestion()?.options?.map((option, index) => {
+ // Handle both string and object options
+ const optionText = typeof option === 'string' ? option : option.text || option.value || option.option_id;
+ const optionValue = typeof option === 'string' ? option : option.value || option.option_id || option.text;
+ // For reading comprehension, use just the question ID as the key
+ const currentQuestionId = getCurrentQuestion()?.id;
+ const answerKey = testData && Array.isArray(testData.questions) && testData.questions.length > 0
+ ? currentQuestionId
+ : `${currentSection}_${currentPassage}_${currentQuestionId}`;
+ // Convert index to letter for comparison
+ const optionLetter = String.fromCharCode(65 + index);
+ const isSelected = answers[answerKey] === optionLetter;
+ const letters = ['A', 'B', 'C', 'D', 'E'];
+
+ return (
+ <motion.label
+ key={`option-${index}-${optionValue}`}
+ className={`w-full rounded-xl border-2 px-6 py-4 cursor-pointer transition-all duration-200 ${
+ isSelected
+ ? "border-blue-500 bg-blue-50 text-blue-700 shadow-lg"
+ : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md"
+ }`}
+ whileHover={{ scale: 1.01 }}
+ whileTap={{ scale: 0.99 }}
+ >
+ <input
+ type="radio"
+ name={`q-${getCurrentQuestion()?.id}`}
+ value={optionValue}
+ className="sr-only"
+ checked={isSelected}
+ onChange={() => {
+ const currentQ = getCurrentQuestion();
+ const questionId = currentQ?.id;
+ // Convert index to letter (0 -> A, 1 -> B, 2 -> C, 3 -> D)
+ const optionLetter = String.fromCharCode(65 + index);
+ console.log(' Option clicked:', {
+ questionId,
+ questionIdType: typeof questionId,
+ optionValue,
+ optionLetter,
+ currentQ: currentQ ? 'exists' : 'null',
+ currentQuestionIndex: currentQuestion
+ });
+ handleAnswerSelect(questionId, optionLetter);
+ }}
+ />
+ <div className="flex items-center justify-between">
+ <div className="flex items-center">
+ <span className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 text-sm font-bold ${
+ isSelected
+ ? 'bg-blue-500 text-white'
+ : 'bg-gray-200 text-gray-600'
+ }`}>
+ {letters[index]}
+ </span>
+ <span className="text-lg font-medium">{optionText}</span>
+ </div>
+ {isSelected && <FaCheckCircle className="w-5 h-5 text-blue-500" />}
+ </div>
+ </motion.label>
+ );
+ })}
+ </div>
+ </div>
+
+ {/* Navigation */}
+ <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+ <motion.button
+ whileHover={{ scale: 1.05 }}
+ whileTap={{ scale: 0.95 }}
+ onClick={handlePrevQuestion}
+ disabled={currentPassage === 0 && currentQuestion === 0}
+ className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+ >
+ <FaArrowLeft />
+ Previous
+ </motion.button>
+
+ <motion.button
+ whileHover={{ scale: 1.05 }}
+ whileTap={{ scale: 0.95 }}
+ onClick={handleNextQuestion}
+ className="flex items-center gap-2 px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg"
+ >
+ {currentPassage === getCurrentSection()?.questions?.length - 1 &&
+ currentQuestion === getCurrentPassage()?.questions?.length - 1 ? (
+ <>
+ <FaFlag />
+ Submit Test
+ </>
+ ) : (
+ <>
+ Next
+ <FaArrowRight />
+ </>
+ )}
+ </motion.button>
+ </div>
+ </section>
+ </div>
+ </div>
+ {/* Exit Confirmation */}
+ <AnimatePresence>
+ {showExitConfirm && (
+ <motion.div
+ initial={{ opacity: 0 }}
+ animate={{ opacity: 1 }}
+ exit={{ opacity: 0 }}
+ className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center"
+ >
+ <motion.div
+ initial={{ scale: 0.9, opacity: 0 }}
+ animate={{ scale: 1, opacity: 1 }}
+ exit={{ scale: 0.9, opacity: 0 }}
+ className="bg-white rounded-2xl p-8 text-center max-w-md"
+ >
+ <FaTimes className="text-4xl text-red-500 mb-4 mx-auto" />
+ <h3 className="text-xl font-bold text-gray-800 mb-2">Exit Test?</h3>
+ <p className="text-gray-600 mb-6">Your progress will be lost. Are you sure you want to exit?</p>
+ <div className="flex gap-4">
+ <button
+ onClick={() => setShowExitConfirm(false)}
+ className="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-all"
+ >
+ Cancel
+ </button>
+ <button
+ onClick={confirmExit}
+ className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-xl font-semibold hover:from-red-700 hover:to-red-800 transition-all"
+ >
+ Exit Test
+ </button>
+ </div>
+ </motion.div>
+ </motion.div>
+ )}
+ </AnimatePresence>
+ </motion.div>
+ )}
+
+ {testStep === 'results' && (
+ <TestResultsPage
+ results={results}
+ testType="verbal"
+ testId={testId || 'VRT'}
+ answers={answers}
+ testData={testData}
+ onBackToDashboard={onBackToDashboard}
+ onRetakeTest={() => window.location.reload()}
+ />
+ )}
+ </AnimatePresence>
+ </div>
+ );
 };
 
 export default VerbalReasoningTest;

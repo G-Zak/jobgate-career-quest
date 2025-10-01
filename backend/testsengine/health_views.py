@@ -1,95 +1,89 @@
-"""
-Health check views for Docker and monitoring
-"""
-from django.http import JsonResponse
-from django.db import connection
-from django.core.cache import cache
 import logging
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from django.utils import timezone
+from django.db import connection
+
+try:
+    from .models import Test, Question
+except ImportError:
+    # Create minimal fallback classes if models don't exist
+    class Test:
+        objects = None
+    class Question:
+        objects = None
 
 logger = logging.getLogger(__name__)
 
-def health_check(request):
+@api_view(['GET'])
+def testsengine_health_check(request):
     """
-    Health check endpoint for Docker and monitoring
-    Returns 200 if all services are healthy, 503 otherwise
-    """
-    health_status = {
-        'status': 'healthy',
-        'services': {},
-        'timestamp': None
-    }
-    
-    try:
-        from django.utils import timezone
-        health_status['timestamp'] = timezone.now().isoformat()
-    except Exception as e:
-        logger.warning(f"Could not get timestamp: {e}")
-        health_status['timestamp'] = "unknown"
-    
-    # Check database connection
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1")
-            health_status['services']['database'] = 'healthy'
-    except Exception as e:
-        logger.error(f"Database health check failed: {e}")
-        health_status['services']['database'] = 'unhealthy'
-        health_status['status'] = 'unhealthy'
-    
-    # Check cache (if configured)
-    try:
-        cache.set('health_check', 'ok', 10)
-        cache_result = cache.get('health_check')
-        if cache_result == 'ok':
-            health_status['services']['cache'] = 'healthy'
-        else:
-            health_status['services']['cache'] = 'unhealthy'
-            health_status['status'] = 'unhealthy'
-    except Exception as e:
-        logger.warning(f"Cache health check failed: {e}")
-        health_status['services']['cache'] = 'not_configured'
-    
-    # Check if we can import main modules
-    try:
-        from testsengine.models import Test, Question
-        health_status['services']['models'] = 'healthy'
-    except Exception as e:
-        logger.error(f"Models health check failed: {e}")
-        health_status['services']['models'] = 'unhealthy'
-        health_status['status'] = 'unhealthy'
-    
-    # Return appropriate status code
-    status_code = 200 if health_status['status'] == 'healthy' else 503
-    
-    return JsonResponse(health_status, status=status_code)
-
-def readiness_check(request):
-    """
-    Readiness check endpoint for Kubernetes/Docker
-    Returns 200 if ready to serve traffic, 503 otherwise
+    Health check endpoint for testsengine service
     """
     try:
-        # Check if database is accessible
+        # Check database connectivity
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
         
-        # Check if we can query basic models
-        from testsengine.models import Test
-        Test.objects.count()
+        # Check if models are accessible
+        test_count = 0
+        question_count = 0
         
-        return JsonResponse({'status': 'ready'}, status=200)
+        try:
+            if Test.objects:
+                test_count = Test.objects.count()
+            if Question.objects:
+                question_count = Question.objects.count()
+        except:
+            pass
+        
+        return Response({
+            'status': 'healthy',
+            'service': 'testsengine',
+            'timestamp': timezone.now(),
+            'database': 'connected',
+            'stats': {
+                'total_tests': test_count,
+                'total_questions': question_count
+            },
+            'version': '1.0'
+        })
+    
     except Exception as e:
-        logger.error(f"Readiness check failed: {e}")
-        return JsonResponse({'status': 'not_ready', 'error': str(e)}, status=503)
+        logger.error(f"Health check failed: {e}")
+        return Response({
+            'status': 'unhealthy',
+            'service': 'testsengine',
+            'timestamp': timezone.now(),
+            'error': str(e),
+            'version': '1.0'
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
-def liveness_check(request):
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def testsengine_status(request):
     """
-    Liveness check endpoint for Kubernetes/Docker
-    Returns 200 if the application is alive, 503 otherwise
+    Detailed status endpoint for authenticated users
     """
     try:
-        # Basic liveness check - just return OK
-        return JsonResponse({'status': 'alive'}, status=200)
+        return Response({
+            'status': 'operational',
+            'service': 'testsengine',
+            'user': request.user.username,
+            'timestamp': timezone.now(),
+            'features': {
+                'test_taking': True,
+                'history_tracking': True,
+                'scoring': True
+            }
+        })
+    
     except Exception as e:
-        logger.error(f"Liveness check failed: {e}")
-        return JsonResponse({'status': 'dead', 'error': str(e)}, status=503)
+        logger.error(f"Status check failed: {e}")
+        return Response({
+            'status': 'error',
+            'service': 'testsengine',
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

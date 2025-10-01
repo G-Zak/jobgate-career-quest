@@ -2,32 +2,46 @@
 URL configuration for careerquest project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/4.2/topics/http/urls/
+ https://docs.djangoproject.com/en/4.2/topics/http/urls/
 Examples:
 Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+ 1. Add an import: from my_app import views
+ 2. Add a URL to urlpatterns: path('', views.home, name='home')
 Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
+ 1. Add an import: from other_app.views import Home
+ 2. Add a URL to urlpatterns: path('', Home.as_view(), name='home')
 Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+ 1. Import the include() function: from django.urls import include, path
+ 2. Add a URL to urlpatterns: path('blog/', include('blog.urls'))
 """
 
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
+
+def api_root(request):
+    return JsonResponse({
+        'message': 'JobGate Career Quest API',
+        'version': '1.0',
+        'endpoints': {
+            'auth': '/api/auth/',
+            'tests': '/api/tests/',
+            'recommendations': '/api/recommendations/',
+            'admin': '/admin/'
+        }
+    })
 
 urlpatterns = [
+    path("", api_root, name='api-root'),
     path("admin/", admin.site.urls),
-    # Authentication API
-    path("api/auth/", include("auth_api.urls")),
-    # Expose tests engine API under /api/
-    path("", include("testsengine.urls")),
-    # Expose skills API (skills, candidates, technical tests, results) under /api/
-    path("", include("skills.urls")),
-    # Expose recommendation API under /api/
-    path("api/recommendations/", include("recommendation.urls")),
-    # Expose enhanced recommendation API under /api/
-    path("api/recommendations/enhanced/", include("recommendation.enhanced_urls")),
+ # Authentication API
+ path("api/auth/", include("auth_api.urls")),
+ # Expose tests engine API under /api/
+ path("", include("testsengine.urls")),
+ # Expose skills API (skills, candidates, technical tests, results) under /api/
+ path("", include("skills.urls")),
+ # Expose recommendation API under /api/
+ path("api/recommendations/", include("recommendation.urls")),
+ # Expose enhanced recommendation API under /api/
+ path("api/recommendations/enhanced/", include("recommendation.enhanced_urls")),
 ]

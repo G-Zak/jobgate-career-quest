@@ -111,6 +111,155 @@ frontend/src/assets/asset-manifest.json
 # Documentation Exports
 exports/
 
+# Documentation artifacts (production cleanup)
+*.pdf
+/output/
+CLEANUP_PLAN.md
+INTERNSHIP_SHOWCASE.md
+LINKEDIN_POST_GUIDE.md
+DIAGRAM_SPECIFICATIONS.md
+MERMAID_DIAGRAMS.md
+DIAGRAM_QUICK_START.md
+dropgate_overview_linkedin.md
+SCORING_SYSTEM_GUIDE.md
+SCORING_SYSTEM_GUIDE_NO_EMOJIS.md
+GUIDE_SYSTEME_NOTATION_FR.md
+SCORING_QUICK_REFERENCE.md
+Scoring_Logic_Documentation.md
+COMPREHENSIVE_SCORING_SYSTEM.md
+COMPREHENSIVE_METRICS_DOCUMENTATION.md
+
+# Team setup guides (consolidated into README.md)
+TEAMMATE_QUICK_START.md
+TEAMMATE_CHECKLIST.md
+TEAMMATE_MESSAGE.md
+TEAMMATE_SETUP.md
+TEAMMATE_DATABASE_SETUP.md
+TEAM_SETUP_GUIDE.md
+TEAM_QUICK_START.md
+TEAM_ONBOARDING_MESSAGE.md
+TEAM_INSTRUCTIONS.md
+TEAM_COLLABORATION_SETUP.md
+TEAM_SKILLS_SETUP.md
+SIMPLE_TEAM_WORKFLOW.md
+
+# Setup guides (consolidated into README.md)
+SETUP.md
+SETUP_GUIDE.md
+README_SETUP.md
+QUICK_START.md
+DOCKER_SETUP_GUIDE.md
+DOCKER_README.md
+DATABASE_SETUP_GUIDE.md
+DATABASE_SHARING_README.md
+SHARE_DATABASE.md
+PROFILE_SYNC_GUIDE.md
+INTEGRATION_GUIDE.md
+
+# Implementation summaries
+ABSTRACT_TESTS_IMPLEMENTATION.md
+DIAGRAMMATIC_TESTS_IMPLEMENTATION.md
+COGNITIVE_SKILLS_BREAKDOWN_IMPLEMENTATION.md
+TECHNICAL_TESTS_IMPLEMENTATION_SUMMARY.md
+DASHBOARD_ENHANCEMENTS_IMPLEMENTATION_SUMMARY.md
+DASHBOARD_IMPROVEMENTS_SUMMARY.md
+DASHBOARD_UI_IMPROVEMENTS_SUMMARY.md
+DASHBOARD_COMPONENTS_DYNAMIC_DATA_ENHANCEMENT.md
+CAREER_READINESS_ENHANCEMENT_SUMMARY.md
+CAREER_READINESS_DYNAMIC_DATA_FIX.md
+EMPLOYABILITY_SCORE_IMPROVEMENT_SUMMARY.md
+EMPLOYABILITY_SCORE_UX_REDESIGN_SUMMARY.md
+LOGIN_AUTO_REFRESH_FIX_SUMMARY.md
+ISSUES_RESOLUTION_SUMMARY.md
+FIX_SUMMARY.md
+TEST_CATEGORIES_SUMMARY.md
+
+# Project status documents
+PROJECT_STATUS.md
+PROJECT_COMPLETE_DESCRIPTION.md
+ONE_LINER_DESCRIPTION.md
+REMAINING_TASKS.md
+SPRINT1_TASKS.md
+MERGE_READINESS.md
+CONVERTER_STATUS.md
+DATA_AUDIT_REPORT.md
+COPY_PASTE_SUMMARY.md
+
+# Technical guides (consolidated)
+TECHNICAL_TESTS_GUIDE.md
+RANDOMIZED_TESTS_GUIDE.md
+MANAGEMENT_COMMANDS.md
+test-information.md
+
+# AI & development notes
+AI_AGENT_PROMPT.md
+
+# Personal notes
+*_notes.md
+*_draft.md
+
+# Temporary files
+temp_*
+*.tmp
+temp_skillschart.jsx
+test_api.html
+*_export_*.json
+all_tests_export_*.json
+exemple_test_*.json
+test_javascript_exemple.json
+
+# PDF generation scripts
+generate_pdf.sh
+generate_pdf_with_emojis.sh
+generate_all_pdfs.sh
+generate_internship_showcase_pdf.sh
+
+# Development scripts (not needed in production)
+analyze_tests.py
+create_js_test.py
+debug_recommendations.py
+diagnose_json.py
+diagnostic.py
+fix_all_tests.py
+fix_django_test.py
+fix_test_data.py
+fix_tests.py
+test-api-endpoints.py
+test-backend-connection.js
+test-user-profile-integration.py
+verify_database.py
+
+# Setup scripts (keep essential ones, ignore others)
+setup_local.bat
+setup_local_quick.bat
+setup_local_instructions.bat
+setup_local_windows.bat
+setup_team_skills.bat
+setup_team_skills_docker.bat
+setup_team_skills_docker_fixed.bat
+setup_team_windows.bat
+setup_teammate_database.bat
+setup_teammate_database.sh
+setup_comprehensive_scoring.sh
+setup-docker-data.bat
+setup-docker-data.sh
+
+# Fix scripts
+fix-api-complete.bat
+fix-api-complete.sh
+fix-api-issues.bat
+fix-api-issues.sh
+fix-with-user-profile.bat
+fix-with-user-profile.sh
+test-profile-sync.bat
+test-profile-sync.sh
+
+# PowerShell scripts
+create-backup.ps1
+resolve-conflicts.ps1
+update-tests.ps1
+update-test-components.ps1
+
 #Yassine
 scripts/check-disk-space.bat
 .github/workflows/backend.yml__pycache__/

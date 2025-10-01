@@ -16,83 +16,83 @@ import TestApiPage from '../pages/TestApiPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-    const { isAuthenticated, loading } = useAuth();
+ const { isAuthenticated, loading } = useAuth();
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-                <div className="flex flex-col items-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                    <p className="mt-4 text-gray-600 dark:text-gray-400">Chargement...</p>
-                </div>
-            </div>
-        );
-    }
+ if (loading) {
+ return (
+ <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+ <div className="flex flex-col items-center">
+ <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+ <p className="mt-4 text-gray-600 dark:text-gray-400">Chargement...</p>
+ </div>
+ </div>
+ );
+ }
 
-    return isAuthenticated ? children : <Navigate to="/login" replace />;
+ return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
 // Public Route Component (for login/register)
 const PublicRoute = ({ children }) => {
-    const { isAuthenticated, loading } = useAuth();
+ const { isAuthenticated, loading } = useAuth();
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-                <div className="flex flex-col items-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                    <p className="mt-4 text-gray-600 dark:text-gray-400">Chargement...</p>
-                </div>
-            </div>
-        );
-    }
+ if (loading) {
+ return (
+ <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+ <div className="flex flex-col items-center">
+ <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+ <p className="mt-4 text-gray-600 dark:text-gray-400">Chargement...</p>
+ </div>
+ </div>
+ );
+ }
 
-    return !isAuthenticated ? children : <Navigate to="/dashboard" replace />;
+ return !isAuthenticated ? children : <Navigate to="/dashboard" replace />;
 };
 
 const AppRoutes = () => {
-    return (
-        <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={
-                <PublicRoute>
-                    <LoginPage />
-                </PublicRoute>
-            } />
-            <Route path="/register" element={
-                <PublicRoute>
-                    <RegisterPage />
-                </PublicRoute>
-            } />
+ return (
+ <Routes>
+ {/* Public routes */}
+ <Route path="/login" element={
+ <PublicRoute>
+ <LoginPage />
+ </PublicRoute>
+ } />
+ <Route path="/register" element={
+ <PublicRoute>
+ <RegisterPage />
+ </PublicRoute>
+ } />
 
-            {/* Home route - handles its own redirects */}
-            <Route path="/" element={<HomePage />} />
-            <Route path="/dashboard" element={
-                <ProtectedRoute>
-                    <MainDashboard />
-                </ProtectedRoute>
-            } />
-            <Route path="/profile" element={
-                <ProtectedRoute>
-                    <CleanProfilePage />
-                </ProtectedRoute>
-            } />
-            <Route path="/jobs" element={
-                <ProtectedRoute>
-                    <JobRecommendationsPage />
-                </ProtectedRoute>
-            } />
-            <Route path="/all-jobs" element={
-                <ProtectedRoute>
-                    <JobListingsPage />
-                </ProtectedRoute>
-            } />
-            <Route path="/test-api" element={<TestApiPage />} />
+ {/* Home route - handles its own redirects */}
+ <Route path="/" element={<HomePage />} />
+ <Route path="/dashboard" element={
+ <ProtectedRoute>
+ <MainDashboard />
+ </ProtectedRoute>
+ } />
+ <Route path="/profile" element={
+ <ProtectedRoute>
+ <CleanProfilePage />
+ </ProtectedRoute>
+ } />
+ <Route path="/jobs" element={
+ <ProtectedRoute>
+ <JobRecommendationsPage />
+ </ProtectedRoute>
+ } />
+ <Route path="/all-jobs" element={
+ <ProtectedRoute>
+ <JobListingsPage />
+ </ProtectedRoute>
+ } />
+ <Route path="/test-api" element={<TestApiPage />} />
 
-            {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-    );
+ {/* Catch all route */}
+ <Route path="*" element={<Navigate to="/" replace />} />
+ </Routes>
+ );
 };
 
 export default AppRoutes;
